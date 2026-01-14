@@ -1,0 +1,32 @@
+.bskm-card {
+  @apply bg-[#1e2533] dark:bg-gray-800 rounded-xl shadow-md p-5
+          transition-all duration-200;
+}
+
+.bskm-card:hover {
+  @apply shadow-xl -translate-y-1;
+}
+
+.bskm-title {
+  @apply text-lg font-bold text-white;
+}
+
+.bskm-subtitle {
+  @apply text-xs text-gray-400;
+}
+
+.bskm-line {
+  @apply border-t border-gray-700 my-2;
+}
+
+.bskm-badge {
+  @apply text-xs px-2 py-1 rounded-full font-semibold;
+}
+
+.bskm-badge-aktif {
+  @apply bg-green-600 text-white;
+}
+
+.bskm-badge-nonaktif {
+  @apply bg-red-600 text-white;
+}

@@ -1,0 +1,305 @@
+<!-- resources/js/spa/Pages/Dashboard.vue -->
+<template>
+    <DashboardLayout>
+        <!-- Jika belum terhubung ke anggota -->
+        <div v-if="auth.user?.anggota === null">
+            <UserLinkAnggota />
+        </div>
+
+        <!-- Jika sudah punya anggota -->
+        <div
+            v-else
+            class="p-6 transition-colors duration-500 bg-[var(--color-light-bg)] dark:bg-[var(--color-dark-bg)]"
+        >
+            <!-- Greeting + Quick Profile Card -->
+            <div class="max-w-4xl mx-auto space-y-4">
+                <BaseCard class="p-4">
+                    <div class="flex items-start gap-4">
+                        <div
+                            class="w-16 h-16 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 flex items-center justify-center"
+                        >
+                            <img
+                                v-if="auth.user.avatar"
+                                :src="auth.user.avatar"
+                                alt="avatar"
+                                class="w-full h-full object-cover"
+                            />
+                            <div
+                                v-else
+                                class="text-gray-500 dark:text-gray-300 font-semibold"
+                            >
+                                {{ initials }}
+                            </div>
+                        </div>
+
+                        <div class="flex-1">
+                            <h1
+                                class="text-2xl font-bold mb-1 text-gray-900 dark:text-gray-100"
+                            >
+                                Selamat datang, {{ auth.user.name }}
+                            </h1>
+                            <p class="text-gray-600 dark:text-gray-400 text-sm">
+                                Berikut ringkasan iuran dan informasi singkat
+                                akun Anda.
+                            </p>
+                        </div>
+
+                        <!-- Quick actions -->
+                        <div class="flex flex-col items-end gap-2">
+                            <router-link
+                                :to="`/anggota/${auth.user.anggota.id}`"
+                                class="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm transition"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    class="h-4 w-4"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M5.121 17.804A9 9 0 1119.88 6.196M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                                    />
+                                </svg>
+                                Lihat Detail
+                            </router-link>
+
+                            <router-link
+                                :to="`/anggota/${auth.user.anggota.id}/edit`"
+                                class="inline-flex items-center gap-2 px-3 py-2 bg-gray-200 dark:bg-gray-700 hover:dark:bg-gray-600 text-sm rounded transition"
+                            >
+                                Edit Profil
+                            </router-link>
+                        </div>
+                    </div>
+                </BaseCard>
+
+                <!-- Profil Ringkas -->
+                <BaseCard
+                    class="p-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-start"
+                >
+                    <div class="col-span-2">
+                        <h2
+                            class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3"
+                        >
+                            Informasi Anggota
+                        </h2>
+
+                        <div
+                            class="text-sm text-gray-700 dark:text-gray-300 space-y-2"
+                        >
+                            <div>
+                                <span class="font-medium">Nama:</span>
+                                {{ auth.user.anggota.nama }}
+                            </div>
+                            <div>
+                                <span class="font-medium">Kode Anggota:</span>
+                                {{ auth.user.anggota.kode }}
+                            </div>
+                            <div>
+                                <span class="font-medium">No HP:</span>
+                                {{ auth.user.anggota.no_hp }}
+                            </div>
+                            <div>
+                                <span class="font-medium">Alamat:</span>
+                                {{ formattedAddress }}
+                            </div>
+                            <div>
+                                <span class="font-medium">Status:</span>
+                                <span
+                                    :class="
+                                        auth.user.anggota.status === 'aktif'
+                                            ? 'text-green-500'
+                                            : 'text-red-500'
+                                    "
+                                >
+                                    {{ auth.user.anggota.status }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ringkasan Cepat Kanan -->
+                    <div class="self-start">
+                        <div
+                            class="text-sm text-gray-500 dark:text-gray-400 mb-3"
+                        >
+                            Ringkasan Iuran
+                        </div>
+
+                        <div class="space-y-2 mb-4">
+                            <div
+                                class="bg-white dark:bg-gray-800 shadow rounded p-3"
+                            >
+                                <p class="text-xs text-gray-400">
+                                    Total Sudah Dibayar
+                                </p>
+                                <p
+                                    class="text-lg font-semibold text-blue-600 dark:text-blue-400"
+                                >
+                                    Rp
+                                    {{
+                                        formatNumber(
+                                            summary.total_sudah_dibayar
+                                        )
+                                    }}
+                                </p>
+                            </div>
+
+                            <div
+                                class="bg-white dark:bg-gray-800 shadow rounded p-3"
+                            >
+                                <p class="text-xs text-gray-400">
+                                    Total Belum Dibayar
+                                </p>
+                                <p
+                                    class="text-lg font-semibold text-red-600 dark:text-red-400"
+                                >
+                                    Rp
+                                    {{
+                                        formatNumber(
+                                            summary.total_belum_dibayar
+                                        )
+                                    }}
+                                </p>
+                            </div>
+
+                            <div
+                                class="bg-white dark:bg-gray-800 shadow rounded p-3"
+                            >
+                                <p class="text-xs text-gray-400">
+                                    Jenis Iuran Aktif
+                                </p>
+                                <p
+                                    class="text-lg font-semibold text-cyan-600 dark:text-cyan-400"
+                                >
+                                    {{ summary.total_jenis_iuran }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Link ke detail iuran -->
+                        <router-link
+                            :to="{ name: 'iuran.saya' }"
+                            class="w-full inline-flex items-center justify-center gap-2 px-3 py-2 bg-cyan-600 hover:bg-cyan-700 dark:bg-cyan-700 dark:hover:bg-cyan-600 text-white rounded text-sm transition font-medium"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="h-4 w-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                />
+                            </svg>
+                            Lihat Detail Iuran
+                        </router-link>
+                    </div>
+                </BaseCard>
+            </div>
+
+            <!-- SKELETON LOADING -->
+            <div
+                v-if="isLoading"
+                class="max-w-4xl mx-auto mt-6 space-y-4 animate-pulse"
+            >
+                <div
+                    class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/3"
+                ></div>
+                <div class="h-40 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            </div>
+
+            <!-- KONTEN UTAMA: INFO ANGGOTA SAJA (Detail iuran ada di /iuran-saya) -->
+            <div v-else class="max-w-4xl mx-auto mt-6">
+                <!-- Info tambahan jika diperlukan bisa ditambahkan di sini -->
+            </div>
+        </div>
+    </DashboardLayout>
+</template>
+
+<script setup>
+import { ref, onMounted, computed } from "vue";
+import { useAuthStore } from "@/stores/auth";
+
+import DashboardLayout from "@/Layouts/DashboardLayout.vue";
+import UserLinkAnggota from "@/Pages/Anggota/UserLinkAnggota.vue";
+import BaseCard from "@/Components/Base/BaseCard.vue";
+import api from "@/utils/axios";
+
+const auth = useAuthStore();
+
+const summary = ref({
+    total_sudah_dibayar: 0,
+    total_belum_dibayar: 0,
+    total_jenis_iuran: 0,
+});
+
+const isLoading = ref(true);
+
+// helper format
+function formatNumber(n) {
+    if (n === null || n === undefined) return "0";
+    return new Intl.NumberFormat("id-ID").format(Number(n));
+}
+
+// format alamat dalam satu baris: nama perum, no rumah, desa
+const formattedAddress = computed(() => {
+    const anggota = auth.user?.anggota;
+    if (!anggota) return "-";
+
+    // jika alamat adalah array (relasi)
+    if (Array.isArray(anggota.alamat) && anggota.alamat.length) {
+        const addr = anggota.alamat[0];
+        const parts = [];
+
+        if (addr.perum?.nama) parts.push(addr.perum.nama);
+        if (addr.no_rumah) parts.push(`No. ${addr.no_rumah}`);
+        if (addr.village?.name) parts.push(addr.village.name);
+
+        return parts.length ? parts.join(", ") : "-";
+    }
+
+    // fallback
+    return "-";
+});
+
+// inisial avatar
+const initials = computed(() => {
+    const name = auth.user?.name || "";
+    const parts = name.split(" ");
+    return parts.length
+        ? (parts[0].charAt(0) + (parts[1]?.charAt(0) || "")).toUpperCase()
+        : name.substring(0, 2).toUpperCase();
+});
+
+async function loadSummary() {
+    isLoading.value = true;
+
+    try {
+        const res = await api.get("/api/v1/iuran/self");
+        if (res.data?.success) {
+            summary.value = res.data.data.summary || summary.value;
+        }
+    } catch (e) {
+    } finally {
+        setTimeout(() => {
+            isLoading.value = false;
+        }, 250);
+    }
+}
+
+onMounted(() => {
+    // jika user sudah punya anggota, load summary-nya
+    if (auth.user?.anggota !== null) {
+        loadSummary();
+    }
+});
+</script>

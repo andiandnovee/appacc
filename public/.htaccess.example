@@ -1,0 +1,56 @@
+# BSKM SPA - .htaccess Configuration Template
+# 
+# INSTRUCTIONS:
+# 1. Copy this file to .htaccess in production (/public/.htaccess)
+# 2. Adjust rewrite rules if needed for your server
+# 3. This file is NOT tracked in git (server-specific config)
+#
+# For more details, see: EMERGENCY_RECOVERY.md and HTACCESS_GUIDE.md
+
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Redirect Trailing Slashes If Not A Folder
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # If file or directory exists, serve it directly (MUST be first!)
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # **CRITICAL**: Serve /spa/assets/* directly without routing to Laravel
+    RewriteCond %{REQUEST_URI} ^/spa/assets/
+    RewriteRule ^ - [L]
+
+    # Map /assets/* directly to /spa/assets/* (bypass other rules)
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^assets/(.+)$ spa/assets/$1 [L]
+
+    # API requests go to Laravel
+    RewriteCond %{REQUEST_URI} ^/api
+    RewriteRule ^ index.php [L]
+
+    # Auth requests go to Laravel
+    RewriteCond %{REQUEST_URI} ^/auth
+    RewriteRule ^ index.php [L]
+
+    # Socialite requests go to Laravel
+    RewriteCond %{REQUEST_URI} ^/socialite
+    RewriteRule ^ index.php [L]
+
+    # SPA fallback: Everything else to spa/index.html
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ spa/index.html [L]
+</IfModule>

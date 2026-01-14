@@ -1,0 +1,39 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    
+    # =====================================================
+    # PRIORITY 1: Don't rewrite if file or directory exists
+    # =====================================================
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+    
+    # =====================================================
+    # PRIORITY 2: BACKEND API ROUTES → /public/index.php
+    # =====================================================
+    # All API requests go to Laravel backend (public/index.php)
+    RewriteCond %{REQUEST_URI} ^/api(/|$)
+    RewriteRule ^api/(.*)$ public/index.php [L,QSA,E=api:1]
+    
+    # Auth routes go to Laravel backend
+    RewriteCond %{REQUEST_URI} ^/auth(/|$)
+    RewriteRule ^auth/(.*)$ public/index.php [L,QSA]
+    
+    # OAuth/Socialite routes go to Laravel backend
+    RewriteCond %{REQUEST_URI} ^/socialite(/|$)
+    RewriteRule ^socialite/(.*)$ public/index.php [L,QSA]
+    
+    # =====================================================
+    # PRIORITY 3: SPA ASSETS → /public/spa/assets/
+    # =====================================================
+    # Map /assets/* to /public/spa/assets/*
+    RewriteCond %{REQUEST_URI} ^/assets/
+    RewriteRule ^assets/(.*)$ public/spa/assets/$1 [L,QSA]
+    
+    # =====================================================
+    # PRIORITY 4: EVERYTHING ELSE → /public/spa/index.html
+    # =====================================================
+    # All other requests go to SPA entry point
+    RewriteRule ^(.*)$ public/spa/index.html [L,QSA]
+</IfModule>

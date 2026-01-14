@@ -1,0 +1,45 @@
+# Environment & Configuration
+.env
+.env.backup
+.env.production
+
+# IDE & Editor
+/.fleet
+/.idea
+/.nova
+/.phpunit.cache
+/.vscode
+/.zed
+.phpactor.json
+
+# Dependencies
+/node_modules
+/vendor
+
+# Build & Storage
+/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+
+# Logs & System
+*.log
+npm-debug.log
+yarn-error.log
+.DS_Store
+Thumbs.db
+
+# Web Server Configuration (Server-Specific)
+# Each server may have different .htaccess rules
+# Use .htaccess.example or template files as reference
+/public/.htaccess
+/.htaccess
+
+# Symlinks (Auto-created on deployment)
+/public/assets
+
+# Project Files
+/auth.json
+Homestead.json
+Homestead.yaml
