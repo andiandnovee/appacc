@@ -12,7 +12,8 @@ class Kernel extends HttpKernel
     protected $middleware = [
         \Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests::class,
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
-        \App\Http\Middleware\TrimStrings::class,
+        // \App\Http\Middleware\TrimStrings::class,
+        \Illuminate\Foundation\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
         \App\Http\Middleware\TrustProxies::class,
     ];
@@ -22,13 +23,16 @@ class Kernel extends HttpKernel
      */
     protected $middlewareGroups = [
         'web' => [
-            \App\Http\Middleware\EncryptCookies::class,
+            //   \App\Http\Middleware\EncryptCookies::class,
+
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
             \Illuminate\Session\Middleware\StartSession::class,
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-            \App\Http\Middleware\VerifyCsrfToken::class,
+            //  \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
-        ],
+
+            \Illuminate\Cookie\Middleware\EncryptCookies::class,
+            \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class, ],
 
         'api' => [
 
@@ -42,14 +46,17 @@ class Kernel extends HttpKernel
      * Middleware individual (per route).
      */
     protected $routeMiddleware = [
-        'auth' => \App\Http\Middleware\Authenticate::class,
-        'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+
+        'auth', \Illuminate\Auth\Middleware\Authenticate::class,
+        'guest', \Illuminate\Auth\Middleware\RedirectIfAuthenticated::class,
+        'role', \Spatie\Permission\Middleware\RoleMiddleware::class,
+        'permission', \Spatie\Permission\Middleware\PermissionMiddleware::class,
+        'role_or_permission', \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
 
         // ← Tambahkan middleware dari Spatie
-        'role' => \Spatie\Permission\Middlewares\RoleMiddleware::class,
-        'permission' => \Spatie\Permission\Middlewares\PermissionMiddleware::class,
-        'role_or_permission' => \Spatie\Permission\Middlewares\RoleOrPermissionMiddleware::class,
+
         'permission_any' => \App\Http\Middleware\PermissionAny::class,
         'permission_combo' => \App\Http\Middleware\PermissionCombo::class,
     ];

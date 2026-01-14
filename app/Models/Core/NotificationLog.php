@@ -5,6 +5,14 @@ namespace App\Models\Core;
 use App\Models\Keanggotaan\Anggota;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property-read Anggota|null $anggota
+ * @property-read \App\Models\Core\User|null $user
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NotificationLog newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NotificationLog newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NotificationLog query()
+ * @mixin \Eloquent
+ */
 class NotificationLog extends Model
 {
     protected $fillable = [

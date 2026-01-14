@@ -45,6 +45,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anggota whereNoKtp($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anggota whereStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Anggota whereUpdatedAt($value)
+ * @property-read mixed $alamat
  * @mixin \Eloquent
  */
 class Anggota extends Model

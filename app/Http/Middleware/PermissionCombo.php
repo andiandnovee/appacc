@@ -4,12 +4,15 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Support\Facades\Log; // <-- Tambahkan ini
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class PermissionCombo
 {
     public function handle($request, Closure $next, $requirementString)
     {
-        $user = auth()->user();
+        /** @var User $user */
+$user = Auth::user();
 
         // Log Awal: Melihat string requirement yang masuk
         Log::info("PermissionCombo | Checking requirement: " . $requirementString . " for User ID: " . $user->id);

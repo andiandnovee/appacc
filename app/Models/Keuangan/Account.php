@@ -5,6 +5,19 @@ namespace App\Models\Keuangan;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Keuangan\AccountBalance> $account_balances
+ * @property-read int|null $account_balances_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Account> $children
+ * @property-read int|null $children_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Keuangan\JournalLine> $journal_lines
+ * @property-read int|null $journal_lines_count
+ * @property-read Account|null $parent
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Account newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Account newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Account query()
+ * @mixin \Eloquent
+ */
 class Account extends Model
 {
     use HasFactory;

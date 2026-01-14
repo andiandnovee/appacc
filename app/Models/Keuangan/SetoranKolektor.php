@@ -28,6 +28,8 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SetoranKolektor whereNominalTotal($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SetoranKolektor whereTanggal($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SetoranKolektor whereUpdatedAt($value)
+ * @property-read \App\Models\Core\User|null $bendahara
+ * @property-read \App\Models\Core\User|null $kolektor
  * @mixin \Eloquent
  */
 class SetoranKolektor extends Model

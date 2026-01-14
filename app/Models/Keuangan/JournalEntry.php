@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * @mixin IdeHelperJournalEntry
- *
  * @property int $id
  * @property string|null $kode
  * @property string $company_code
@@ -21,7 +20,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Keuangan\JournalLine> $journal_lines
  * @property-read int|null $journal_lines_count
  * @property-read \App\Models\Core\User|null $user
- *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|JournalEntry newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|JournalEntry newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|JournalEntry query()
@@ -35,7 +33,6 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|JournalEntry whereReference($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|JournalEntry whereSourceModule($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|JournalEntry whereUpdatedAt($value)
- *
  * @mixin \Eloquent
  */
 class JournalEntry extends Model

@@ -5,6 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property-read \App\Models\Keanggotaan\Anggota|null $anggota
+ * @property-read \App\Models\Core\User|null $createdBy
+ * @property-read \App\Models\Master\RefIuran|null $refIuran
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CollectorReceipt newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CollectorReceipt newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CollectorReceipt query()
+ * @mixin \Eloquent
+ */
 class CollectorReceipt extends Model
 {
     use HasFactory;
