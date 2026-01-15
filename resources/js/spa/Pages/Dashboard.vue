@@ -8,7 +8,7 @@
 
         <!-- Jika sudah punya anggota -->
         <div
-            v-else
+            v-else-if="auth.user?.anggota != null"
             class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-3 sm:p-6"
         >
             <!-- Hero Header -->
@@ -237,10 +237,17 @@
                     <div class="h-32 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl"></div>
                 </div>
             </div>
-
             <!-- KONTEN UTAMA: INFO ANGGOTA SAJA (Detail iuran ada di /iuran-saya) -->
             <div v-else class="max-w-4xl mx-auto mt-6">
                 <!-- Info tambahan jika diperlukan bisa ditambahkan di sini -->
+            </div>
+        </div>
+
+        <!-- Loading / not-ready fallback when `anggota` is undefined -->
+        <div v-else class="min-h-screen p-6">
+            <div class="max-w-7xl mx-auto animate-pulse space-y-4">
+                <div class="h-6 bg-gray-200 rounded w-1/3"></div>
+                <div class="h-40 bg-gray-200 rounded"></div>
             </div>
         </div>
     </DashboardLayout>
