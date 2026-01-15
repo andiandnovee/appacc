@@ -105,7 +105,7 @@ export async function registerFcmDeviceIfSupported() {
     }
 
     // Kirim ke backend (akan disimpan di user_devices)
-    await api.post('/api/v1/user/devices', {
+    await api.post('v1/user/devices', {
       device_token: deviceToken,
       platform: 'web',
       device_name: navigator.userAgent.slice(0, 100),
