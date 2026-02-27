@@ -26,7 +26,7 @@ class SocialiteController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'redirect_url' => $redirectUrl,
+                'GOOGLE_REDIRECT_URI' => $redirectUrl,
             ],
         ]);
     }
@@ -42,11 +42,11 @@ class SocialiteController extends Controller
             $user = $this->findOrCreateUser($googleUser, 'google');
             $token = $user->createToken('api-token')->plainTextToken;
 
-            $redirectUrl = config('app.frontend_url') . '/auth/callback?token=' . $token;
+            $redirectUrl = config('app.frontend_url').'/auth/callback?token='.$token;
 
             return redirect($redirectUrl);
         } catch (\Exception $e) {
-            return redirect(config('app.frontend_url') . '/login?error=OAuth failed');
+            return redirect(config('app.frontend_url').'/login?error=OAuth failed');
         }
     }
 
@@ -76,11 +76,11 @@ class SocialiteController extends Controller
             $user = $this->findOrCreateUser($facebookUser, 'facebook');
             $token = $user->createToken('api-token')->plainTextToken;
 
-            $redirectUrl = config('app.frontend_url') . '/auth/callback?token=' . $token;
+            $redirectUrl = config('app.frontend_url').'/auth/callback?token='.$token;
 
             return redirect($redirectUrl);
         } catch (\Exception $e) {
-            return redirect(config('app.frontend_url') . '/login?error=OAuth failed');
+            return redirect(config('app.frontend_url').'/login?error=OAuth failed');
         }
     }
 
@@ -107,6 +107,7 @@ class SocialiteController extends Controller
                 'provider_id' => $socialiteUser->getId(),
                 'avatar' => $socialiteUser->getAvatar(),
             ]);
+
             return $user;
         }
 

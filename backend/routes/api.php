@@ -1,14 +1,13 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\SocialiteController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\RoleController;
-use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,6 +22,11 @@ use App\Http\Controllers\SettingController;
 
 // Public Auth Routes
 Route::post('/auth/login', [AuthController::class, 'login']);
+// Generic social auth endpoints (only allow google and facebook)
+Route::get('/auth/{provider}/redirect', [\App\Http\Controllers\Auth\SocialAuthController::class, 'redirect'])
+    ->where('provider', 'google|facebook');
+Route::get('/auth/{provider}/callback', [\App\Http\Controllers\Auth\SocialAuthController::class, 'callback'])
+    ->where('provider', 'google|facebook');
 Route::get('/auth/google/redirect', [SocialiteController::class, 'googleRedirect']);
 Route::get('/auth/google/callback', [SocialiteController::class, 'googleCallback']);
 Route::get('/auth/facebook/redirect', [SocialiteController::class, 'facebookRedirect']);
