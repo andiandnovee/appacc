@@ -2,35 +2,34 @@
     <div class="bg-white rounded-lg shadow">
         <!-- Search Bar -->
         <div class="p-4 border-b border-gray-200">
-            <div class="flex gap-4 flex-wrap">
-                <TextInput v-model="searchQuery" @input="onSearch" type="text" placeholder="Search..."
-                    class="flex-1 min-w-64" />
-                <slot name="filters" />
+                <div class="flex gap-4 flex-wrap">
+                    <fwb-input v-model="searchQuery" @input="onSearch" type="text" placeholder="Search..." class="flex-1 min-w-64" />
+                    <slot name="filters" />
+                </div>
             </div>
-        </div>
 
         <!-- Table -->
         <div class="overflow-x-auto">
-            <Table>
-                <TableHead>
-                    <TableHeadCell v-for="column in columns" :key="column.key">
+            <fwb-table>
+                <fwb-table-head>
+                    <fwb-table-head-cell v-for="column in columns" :key="column.key">
                         {{ column.label }}
-                    </TableHeadCell>
-                    <TableHeadCell>Actions</TableHeadCell>
-                </TableHead>
-                <TableBody>
-                    <TableBodyRow v-for="row in data" :key="row.id">
-                        <TableBodyCell v-for="column in columns" :key="column.key">
+                    </fwb-table-head-cell>
+                    <fwb-table-head-cell>Actions</fwb-table-head-cell>
+                </fwb-table-head>
+                <fwb-table-body>
+                    <fwb-table-body-row v-for="row in data" :key="row.id">
+                        <fwb-table-body-cell v-for="column in columns" :key="column.key">
                             <slot :name="`cell-${column.key}`" :row="row">
                                 {{ getNestedValue(row, column.key) }}
                             </slot>
-                        </TableBodyCell>
-                        <TableBodyCell>
+                        </fwb-table-body-cell>
+                        <fwb-table-body-cell>
                             <slot name="actions" :row="row" />
-                        </TableBodyCell>
-                    </TableBodyRow>
-                </TableBody>
-            </Table>
+                        </fwb-table-body-cell>
+                    </fwb-table-body-row>
+                </fwb-table-body>
+            </fwb-table>
         </div>
 
         <!-- Pagination -->
@@ -40,16 +39,15 @@
                     meta.per_page, meta.total) }} of {{ meta.total }}
             </div>
             <div class="flex gap-2">
-                <Button size="sm" :disabled="meta.current_page === 1" @click="previousPage" color="light">
+                <fwb-button size="sm" :disabled="meta.current_page === 1" @click="previousPage" color="light">
                     Previous
-                </Button>
-                <Button v-for="page in pageNumbers" :key="page" size="sm" @click="goToPage(page)"
-                    :color="page === meta.current_page ? 'blue' : 'light'">
+                </fwb-button>
+                <fwb-button v-for="page in pageNumbers" :key="page" size="sm" @click="goToPage(page)" :color="page === meta.current_page ? 'blue' : 'light'">
                     {{ page }}
-                </Button>
-                <Button size="sm" :disabled="meta.current_page === meta.last_page" @click="nextPage" color="light">
+                </fwb-button>
+                <fwb-button size="sm" :disabled="meta.current_page === meta.last_page" @click="nextPage" color="light">
                     Next
-                </Button>
+                </fwb-button>
             </div>
         </div>
     </div>
@@ -57,7 +55,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { Table, TableHead, TableHeadCell, TableBody, TableBodyRow, TableBodyCell, Button, TextInput } from 'flowbite-vue'
+import { Table as FwbTable, TableHead as FwbTableHead, TableHeadCell as FwbTableHeadCell, TableBody as FwbTableBody, TableRow as FwbTableBodyRow, TableCell as FwbTableBodyCell, Button as FwbButton, Input as FwbInput } from 'flowbite-vue'
 const props = defineProps({
     columns: {
         type: Array,

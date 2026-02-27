@@ -13,37 +13,42 @@
         </div>
 
         <!-- Recent Users -->
-        <Card>
+        <fwb-card>
             <template #header>
                 <h3 class="text-lg font-bold text-gray-900">Recent Registrations</h3>
             </template>
+
             <div class="overflow-x-auto">
-                <Table>
-                    <TableHead>
-                        <TableHeadCell>Name</TableHeadCell>
-                        <TableHeadCell>Email</TableHeadCell>
-                        <TableHeadCell>Role</TableHeadCell>
-                        <TableHeadCell>Date</TableHeadCell>
-                    </TableHead>
-                    <TableBody>
-                        <TableBodyRow v-for="user in recentUsers" :key="user.id">
-                            <TableBodyCell>
+                <fwb-table>
+                    <fwb-table-head>
+                        <fwb-table-head-cell>Name</fwb-table-head-cell>
+                        <fwb-table-head-cell>Email</fwb-table-head-cell>
+                        <fwb-table-head-cell>Role</fwb-table-head-cell>
+                        <fwb-table-head-cell>Date</fwb-table-head-cell>
+                    </fwb-table-head>
+
+                    <fwb-table-body>
+                        <fwb-table-body-row v-for="user in recentUsers" :key="user.id">
+                            <fwb-table-body-cell>
                                 <div class="flex items-center gap-3">
                                     <img :src="user.avatar || 'https://ui-avatars.com/api/?name=' + user.name"
                                         :alt="user.name" class="w-8 h-8 rounded-full" />
                                     <span class="text-sm font-medium text-gray-900">{{ user.name }}</span>
                                 </div>
-                            </TableBodyCell>
-                            <TableBodyCell>{{ user.email }}</TableBodyCell>
-                            <TableBodyCell>
-                                <Badge type="info">{{ user.roles?.[0] || 'N/A' }}</Badge>
-                            </TableBodyCell>
-                            <TableBodyCell>{{ formatDate(user.created_at) }}</TableBodyCell>
-                        </TableBodyRow>
-                    </TableBody>
-                </Table>
+                            </fwb-table-body-cell>
+
+                            <fwb-table-body-cell>{{ user.email }}</fwb-table-body-cell>
+
+                            <fwb-table-body-cell>
+                                <fwb-badge type="info">{{ user.roles?.[0] || 'N/A' }}</fwb-badge>
+                            </fwb-table-body-cell>
+
+                            <fwb-table-body-cell>{{ formatDate(user.created_at) }}</fwb-table-body-cell>
+                        </fwb-table-body-row>
+                    </fwb-table-body>
+                </fwb-table>
             </div>
-        </Card>
+        </fwb-card>
     </div>
 </template>
 
@@ -51,19 +56,25 @@
 import { ref, onMounted } from 'vue'
 import api from '@/api/axios'
 import StatsCard from '@/components/shared/StatsCard.vue'
-import { Card, Badge, Table, TableHead, TableHeadCell, TableBody, TableBodyRow, TableBodyCell } from 'flowbite-vue'
-        }
+import { TheCard as FwbCard, Badge as FwbBadge, Table as FwbTable, TableHead as FwbTableHead, TableHeadCell as FwbTableHeadCell, TableBody as FwbTableBody, TableRow as FwbTableBodyRow, TableCell as FwbTableBodyCell } from 'flowbite-vue'
 
-const activityResponse = await api.get('/dashboard/activity')
-if (activityResponse.data.success) {
-    recentUsers.value = activityResponse.data.data
-}
-    } catch (error) {
-    console.error('Failed to load dashboard data:', error)
-}
+const stats = ref({ total_users: 0, active_users: 0, total_roles: 0, new_users_today: 0 })
+const recentUsers = ref([])
+
+onMounted(async () => {
+    try {
+        const statsResp = await api.get('/dashboard/stats')
+        if (statsResp.data?.success) stats.value = statsResp.data.data
+
+        const activityResp = await api.get('/dashboard/activity')
+        if (activityResp.data?.success) recentUsers.value = activityResp.data.data
+    } catch (err) {
+        console.error('Failed to load dashboard data:', err)
+    }
 })
 
 const formatDate = (dateString) => {
+    if (!dateString) return ''
     return new Date(dateString).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',

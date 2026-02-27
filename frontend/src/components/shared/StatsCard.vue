@@ -1,5 +1,5 @@
 <template>
-    <Card>
+    <fwb-card>
         <div class="flex items-start justify-between">
             <div>
                 <p class="text-sm font-medium text-gray-600">{{ title }}</p>
@@ -26,12 +26,12 @@
                 </svg>
             </div>
         </div>
-    </Card>
+    </fwb-card>
 </template>
 
 <script setup>
 import { computed } from 'vue'
-import { Card } from 'flowbite-vue'
+import { TheCard as FwbCard } from 'flowbite-vue'
 const props = defineProps({
     title: String,
     value: [String, Number],

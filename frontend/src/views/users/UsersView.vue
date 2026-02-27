@@ -3,20 +3,20 @@
         <!-- Header with Add Button -->
         <div class="flex items-center justify-between">
             <h1 class="text-3xl font-bold text-gray-900">Users</h1>
-            <Button v-if="hasPermission('create users')" @click="showCreateModal = true" color="blue">
+            <fwb-button v-if="hasPermission('create users')" @click="showCreateModal = true" color="blue">
                 + Add User
-            </Button>
+            </fwb-button>
         </div>
 
         <!-- Table -->
         <DataTable :columns="columns" :data="users" :meta="meta" @search="handleSearch" @page-change="handlePageChange">
             <template #filters>
-                <Select v-model="filters.role" @change="handleRoleFilter">
+                <fwb-select v-model="filters.role" @change="handleRoleFilter">
                     <option value="">All Roles</option>
                     <option v-for="role in availableRoles" :key="role" :value="role">
                         {{ role }}
                     </option>
-                </Select>
+                </fwb-select>
             </template>
 
             <template #cell-avatar="{ row }">
@@ -25,87 +25,93 @@
             </template>
 
             <template #cell-is_active="{ row }">
-                <Badge v-if="row.is_active" type="success">Active</Badge>
-                <Badge v-else type="danger">Inactive</Badge>
+                <fwb-badge v-if="row.is_active" type="success">Active</fwb-badge>
+                <fwb-badge v-else type="danger">Inactive</fwb-badge>
             </template>
 
             <template #cell-roles="{ row }">
-                <Badge v-if="row.roles?.[0]" type="info">{{ row.roles[0] }}</Badge>
+                <fwb-badge v-if="row.roles?.[0]" type="info">{{ row.roles[0] }}</fwb-badge>
             </template>
 
             <template #actions="{ row }">
                 <div class="flex items-center gap-2">
-                    <Button v-if="hasPermission('edit users')" @click="editUser(row)" color="info" size="sm">
+                    <fwb-button v-if="hasPermission('edit users')" @click="editUser(row)" color="info" size="sm">
                         Edit
-                    </Button>
-                    <Button v-if="hasPermission('delete users')" @click="deleteUser(row)" color="failure" size="sm">
+                    </fwb-button>
+                    <fwb-button v-if="hasPermission('delete users')" @click="deleteUser(row)" color="failure" size="sm">
                         Delete
-                    </Button>
+                    </fwb-button>
                 </div>
             </template>
         </DataTable>
 
         <!-- Create/Edit Modal -->
-        <Modal :show="showCreateModal || showEditModal" @close="closeModals">
-            <ModalHeader>
-                {{ showEditModal ? 'Edit User' : 'Add New User' }}
-            </ModalHeader>
-            <ModalBody>
-                <form @submit.prevent="handleSaveUser" class="space-y-4">
-                    <div>
-                        <Label for="name" value="Name" />
-                        <TextInput id="name" v-model="formData.name" type="text" required />
-                    </div>
+        <fwb-modal :show="showCreateModal || showEditModal" @close="closeModals">
+            <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+                <div class="flex items-center justify-between p-5 border-b rounded-t dark:border-gray-600">
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+                        {{ showEditModal ? 'Edit User' : 'Add New User' }}
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <form @submit.prevent="handleSaveUser" class="space-y-4">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
+                            <fwb-input id="name" v-model="formData.name" type="text" required />
+                        </div>
 
-                    <div>
-                        <Label for="email" value="Email" />
-                        <TextInput id="email" v-model="formData.email" type="email" required />
-                    </div>
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                            <fwb-input id="email" v-model="formData.email" type="email" required />
+                        </div>
 
-                    <div>
-                        <Label for="password"
-                            :value="`Password ${showEditModal ? '(Leave blank to keep current)' : ''}`" />
-                        <TextInput id="password" v-model="formData.password" type="password"
-                            :required="!showEditModal" />
-                    </div>
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-gray-700">{{ `Password ${showEditModal ? "(Leave blank to keep current)" : ""}` }}</label>
+                            <fwb-input id="password" v-model="formData.password" type="password" :required="!showEditModal" />
+                        </div>
 
-                    <div>
-                        <Label for="role" value="Role" />
-                        <Select id="role" v-model="formData.role">
-                            <option value="">Select a role</option>
-                            <option v-for="role in availableRoles" :key="role" :value="role">
-                                {{ role }}
-                            </option>
-                        </Select>
-                    </div>
+                        <div>
+                            <label for="role" class="block text-sm font-medium text-gray-700">Role</label>
+                            <fwb-select id="role" v-model="formData.role">
+                                <option value="">Select a role</option>
+                                <option v-for="role in availableRoles" :key="role" :value="role">
+                                    {{ role }}
+                                </option>
+                            </fwb-select>
+                        </div>
 
-                    <div v-if="showEditModal" class="flex items-center gap-2">
-                        <Checkbox id="is_active" v-model="formData.is_active" />
-                        <Label for="is_active" value="Active" />
-                    </div>
-                </form>
-            </ModalBody>
-            <ModalFooter>
-                <Button type="submit" @click="handleSaveUser" :disabled="formLoading" color="blue">
-                    {{ formLoading ? 'Saving...' : 'Save' }}
-                </Button>
-                <Button color="light" @click="closeModals">
-                    Cancel
-                </Button>
-            </ModalFooter>
-        </Modal>
+                        <div v-if="showEditModal" class="flex items-center gap-2">
+                            <fwb-checkbox id="is_active" v-model="formData.is_active" />
+                            <label for="is_active" class="ml-2 text-sm font-medium text-gray-700">Active</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="flex items-center justify-end p-6 space-x-3 border-t border-gray-200 rounded-b dark:border-gray-600">
+                    <fwb-button type="submit" @click="handleSaveUser" :disabled="formLoading" color="blue">
+                        {{ formLoading ? 'Saving...' : 'Save' }}
+                    </fwb-button>
+                    <fwb-button color="light" @click="closeModals">
+                        Cancel
+                    </fwb-button>
+                </div>
+            </div>
+        </fwb-modal>
 
         <!-- Delete Confirmation Modal -->
-        <Modal :show="showDeleteConfirm" @close="showDeleteConfirm = false" size="sm">
-            <ModalHeader>Delete User</ModalHeader>
-            <ModalBody>
-                Are you sure you want to delete this user? This action cannot be undone.
-            </ModalBody>
-            <ModalFooter>
-                <Button @click="confirmDelete" color="failure">Delete</Button>
-                <Button color="light" @click="showDeleteConfirm = false">Cancel</Button>
-            </ModalFooter>
-        </Modal>
+        <fwb-modal :show="showDeleteConfirm" @close="showDeleteConfirm = false" size="sm">
+            <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+                <div class="flex items-center justify-between p-5 border-b rounded-t dark:border-gray-600">
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Delete User</h3>
+                </div>
+                <div class="p-6">
+                    <p class="text-gray-600 dark:text-gray-400">Are you sure you want to delete this user? This action cannot be undone.</p>
+                </div>
+                <div class="flex items-center justify-end p-6 space-x-3 border-t border-gray-200 rounded-b dark:border-gray-600">
+                    <fwb-button @click="confirmDelete" color="failure">Delete</fwb-button>
+                    <fwb-button color="light" @click="showDeleteConfirm = false">Cancel</fwb-button>
+                </div>
+            </div>
+        </fwb-modal>
     </div>
 </template>
 
@@ -113,15 +119,14 @@
 import { ref, onMounted } from 'vue'
 import api from '@/api/axios'
 import DataTable from '@/components/shared/DataTable.vue'
-import {
-    Modal, ModalHeader, ModalBody, ModalFooter,
-    Button, Label, TextInput, Select, Badge, Checkbox
-} from 'flowbite-vue'
-{ key: 'avatar', label: 'Avatar' },
-{ key: 'name', label: 'Name' },
-{ key: 'email', label: 'Email' },
-{ key: 'roles', label: 'Role' },
-{ key: 'is_active', label: 'Status' },
+import { Modal as FwbModal, Button as FwbButton, Input as FwbInput, Select as FwbSelect, Badge as FwbBadge, Checkbox as FwbCheckbox } from 'flowbite-vue'
+
+const columns = [
+    { key: 'avatar', label: 'Avatar' },
+    { key: 'name', label: 'Name' },
+    { key: 'email', label: 'Email' },
+    { key: 'roles', label: 'Role' },
+    { key: 'is_active', label: 'Status' },
 ]
 
 const users = ref([])

@@ -1,16 +1,18 @@
 <template>
-    <Sidebar aria-label="Sidebar with navigation" class="h-full">
-        <SidebarItems>
-            <SidebarItem :href="item.path" v-for="item in menuItems" :key="item.path" :active="isActive(item.path)"
-                as="router-link">
-                <template #icon>
-                    <svg class="w-5 h-5" fill="currentColor" :viewBox="item.icon">
-                        <path :d="item.iconPath" />
-                    </svg>
-                </template>
-                {{ item.label }}
-            </SidebarItem>
-        </SidebarItems>
+    <fwb-sidebar aria-label="Sidebar with navigation" class="h-full">
+        <div class="overflow-y-auto py-4 px-3 bg-gray-50 rounded dark:bg-gray-800">
+            <ul class="space-y-2">
+                <li v-for="item in menuItems" :key="item.path">
+                    <router-link :to="item.path"
+                        class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <svg class="w-5 h-5 flex-shrink-0 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+                            <path :d="item.iconPath" />
+                        </svg>
+                        <span class="ml-3">{{ item.label }}</span>
+                    </router-link>
+                </li>
+            </ul>
+        </div>
 
         <!-- User Info Section -->
         <div class="mt-auto p-4 border-t border-gray-200 dark:border-gray-700">
@@ -23,13 +25,13 @@
                 </div>
             </div>
         </div>
-    </Sidebar>
+    </fwb-sidebar>
 </template>
 
 <script setup>
 import { computed } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
-import { Sidebar, SidebarItem, SidebarItems } from 'flowbite-vue'
+import { Sidebar as FwbSidebar } from 'flowbite-vue'
 import { useAuthStore } from '@/stores/auth'
 import { usePermission } from '@/composables/usePermission'
 

@@ -1,51 +1,33 @@
 <template>
     <div class="fixed bottom-4 right-4 space-y-2 z-50">
         <transition-group name="toast" tag="div">
-            <Alert v-for="toast in toasts" :key="toast.id" :type="toastType(toast.type)" :closable="true"
-                @close="removeToast(toast.id)" class="max-w-sm">
+            <fwb-alert v-for="toast in toasts" :key="toast.id" :type="toast.type" :closable="true" @close="removeToast(toast.id)" class="max-w-sm">
                 {{ toast.message }}
-            </Alert>
+            </fwb-alert>
         </transition-group>
     </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
-import { Alert } from 'flowbite-vue'
+import { Alert as FwbAlert } from 'flowbite-vue'
 
 const toasts = ref([])
-let toastId = 0
+let idCounter = 1
 
-const toastType = (type) => {
-    switch (type) {
-        case 'success':
-            return 'success'
-        case 'error':
-            return 'danger'
-        case 'warning':
-            return 'warning'
-        case 'info':
-        default:
-            return 'info'
+function showToast(message, type = 'info', duration = 3000) {
+    const id = idCounter++
+    toasts.value.push({ id, message, type })
+    if (duration > 0) {
+        setTimeout(() => removeToast(id), duration)
     }
 }
-toasts.value.push({ id, message, type })
 
-setTimeout(() => {
-    removeToast(id)
-}, duration)
-}
-
-const removeToast = (id) => {
+function removeToast(id) {
     toasts.value = toasts.value.filter((t) => t.id !== id)
 }
 
-// Make available globally in app
-if (window) {
-    window.showToast = showToast
-}
-
-// Export for use in other components
+// expose globally for ease of use across the app
 globalThis.showToast = showToast
 </script>
 

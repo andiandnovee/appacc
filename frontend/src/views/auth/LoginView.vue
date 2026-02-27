@@ -1,36 +1,38 @@
 <template>
     <div class="w-full max-w-md">
-        <Card>
+        <fwb-card>
             <div class="text-center mb-8">
                 <h1 class="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
                 <p class="text-gray-600 mt-2">Sign in to your account</p>
             </div>
 
             <!-- Error Message -->
-            <Alert v-if="error" type="danger" class="mb-4">
+            <fwb-alert v-if="error" type="danger" class="mb-4">
                 {{ error }}
-            </Alert>
+            </fwb-alert>
 
             <!-- Login Form -->
             <form @submit.prevent="handleLogin" class="space-y-4 mb-6">
                 <div>
-                    <Label for="email" value="Email" />
-                    <TextInput id="email" v-model="form.email" type="email" required placeholder="your@email.com" />
+                    <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                    <fwb-input id="email" v-model="form.email" type="email" required placeholder="your@email.com"
+                        class="mt-1" />
                 </div>
 
                 <div>
-                    <Label for="password" value="Password" />
-                    <TextInput id="password" v-model="form.password" type="password" required placeholder="••••••••" />
+                    <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                    <fwb-input id="password" v-model="form.password" type="password" required placeholder="••••••••"
+                        class="mt-1" />
                 </div>
 
-                <Button type="submit" :disabled="loading" class="w-full" size="lg">
+                <fwb-button type="submit" :disabled="loading" class="w-full" size="lg">
                     <svg v-if="loading" class="w-5 h-5 animate-spin mr-2" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
                     {{ loading ? 'Signing in...' : 'Sign in' }}
-                </Button>
+                </fwb-button>
             </form>
 
             <!-- Divider -->
@@ -45,7 +47,7 @@
 
             <!-- OAuth Buttons -->
             <div class="space-y-3">
-                <Button @click="loginWithGoogle" :disabled="loading" color="light" class="w-full justify-center">
+                <fwb-button @click="loginWithGoogle" :disabled="loading" color="light" class="w-full justify-center">
                     <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24">
                         <path fill="currentColor"
                             d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -57,31 +59,33 @@
                             d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                     </svg>
                     Continue with Google
-                </Button>
+                </fwb-button>
 
-                <Button @click="loginWithFacebook" :disabled="loading" color="light" class="w-full justify-center">
+                <fwb-button @click="loginWithFacebook" :disabled="loading" color="light" class="w-full justify-center">
                     <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                         <path
                             d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                     </svg>
                     Continue with Facebook
-                </Button>
+                </fwb-button>
             </div>
 
             <!-- Demo Credentials -->
-            <Alert type="info" class="mt-6">
+            <fwb-alert type="info" class="mt-6">
                 <strong>Demo Credentials:</strong><br />
                 Email: admin@admin.com<br />
                 Password: password
-            </Alert>
-        </Card>
+            </fwb-alert>
+        </fwb-card>
     </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Card, Alert, Button, Label, TextInput } from 'flowbite-vue'
+import { TheCard as FwbCard, Alert as FwbAlert, Button as FwbButton, Input as FwbInput } from 'flowbite-vue'
+import { useAuthStore } from '@/stores/auth'
+
 const router = useRouter()
 const authStore = useAuthStore()
 
