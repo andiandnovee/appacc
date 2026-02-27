@@ -1,0 +1,42 @@
+# Node & PHP dependencies
+/vendor/
+/node_modules/
+
+# Laravel specific
+.env
+.env.backup
+.env.production
+/storage/*.key
+/storage/app/public/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/testing/*
+/storage/framework/views/*
+/storage/logs/*
+/bootstrap/cache/*
+!/storage/app/public/.gitkeep
+!/storage/framework/cache/.gitkeep
+!/storage/framework/sessions/.gitkeep
+!/storage/framework/testing/.gitkeep
+!/storage/framework/views/.gitkeep
+!/storage/logs/.gitkeep
+!/bootstrap/cache/.gitkeep
+
+# Composer
+composer.phar
+
+# Database
+*.sqlite
+*.sqlite-journal
+database/*.sqlite
+
+# Logs & temp
+*.log
+Thumbs.db
+.DS_Store
+.idea/
+.vscode/
+
+# Testing
+.phpunit.result.cache
+coverage/

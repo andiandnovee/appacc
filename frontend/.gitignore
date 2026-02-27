@@ -1,0 +1,43 @@
+# Dependencies
+/node_modules/
+
+# Build output
+/dist/
+/.output/
+/.vite/
+.vite/
+
+# Nuxt (not used but harmless)
+/.nuxt/
+
+# Env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Vite cache
+/.vite
+
+# Optional lockfiles (uncomment if you do not commit lockfiles)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml

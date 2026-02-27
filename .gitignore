@@ -1,0 +1,19 @@
+.DS_Store
+Thumbs.db
+
+# Editor
+.idea/
+.vscode/
+*.suo
+*.sw?
+
+# Logs
+*.log
+
+# Env (catch-all safety net)
+.env
+.env.local
+
+# Archives
+*.zip
+*.tar.gz
