@@ -3,13 +3,17 @@
         <div class="overflow-y-auto py-4 px-3 bg-gray-50 rounded dark:bg-gray-800">
             <ul class="space-y-2">
                 <li v-for="item in menuItems" :key="item.path">
-                    <router-link :to="item.path"
-                        class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
-                        <svg class="w-5 h-5 flex-shrink-0 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+                    <RouterLink :to="item.path" :class="[
+                        'flex items-center p-2 text-base font-normal rounded-lg transition',
+                        isActive(item.path)
+                            ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white font-semibold'
+                            : 'text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
+                    ]">
+                        <svg class="w-5 h-5 flex-shrink-0 text-gray-500" fill="currentColor" :viewBox="item.icon">
                             <path :d="item.iconPath" />
                         </svg>
                         <span class="ml-3">{{ item.label }}</span>
-                    </router-link>
+                    </RouterLink>
                 </li>
             </ul>
         </div>

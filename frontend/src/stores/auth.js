@@ -3,8 +3,10 @@ import { ref, computed } from 'vue'
 import api from '@/api/axios'
 
 export const useAuthStore = defineStore('auth', () => {
-    const user = ref(null)
+    // Initialize token and user from localStorage
     const token = ref(localStorage.getItem('token') || null)
+    const storedUser = localStorage.getItem('user')
+    const user = ref(storedUser ? JSON.parse(storedUser) : null)
 
     const isAuthenticated = computed(() => !!token.value)
 

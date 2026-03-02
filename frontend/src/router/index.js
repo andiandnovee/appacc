@@ -50,9 +50,8 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
     const auth = useAuthStore()
 
-    // Initialize user from localStorage if not already loaded
-    if (!auth.token && localStorage.getItem('token')) {
-        auth.setToken(localStorage.getItem('token'))
+    // Initialize user from backend if token exists but user data is missing
+    if (auth.token && !auth.user) {
         try {
             await auth.fetchMe()
         } catch (error) {
