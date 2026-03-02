@@ -113,6 +113,7 @@ const handleLogin = async () => {
 const loginWithGoogle = async () => {
     try {
         await authStore.loginWithGoogle()
+
     } catch (err) {
         error.value = 'Google login failed'
     }
@@ -121,6 +122,7 @@ const loginWithGoogle = async () => {
 const loginWithFacebook = async () => {
     try {
         await authStore.loginWithFacebook()
+
     } catch (err) {
         error.value = 'Facebook login failed'
     }

@@ -757,3 +757,84 @@
 #34 /var/www/html/appacc/backend/artisan(14): Illuminate\\Foundation\\Console\\Kernel->handle()
 #35 {main}
 "} 
+[2026-03-02 06:59:45] local.ERROR: Command "tinker" is not defined. {"exception":"[object] (Symfony\\Component\\Console\\Exception\\CommandNotFoundException(code: 0): Command \"tinker\" is not defined. at /var/www/html/appacc/backend/vendor/symfony/console/Application.php:759)
+[stacktrace]
+#0 /var/www/html/appacc/backend/vendor/symfony/console/Application.php(298): Symfony\\Component\\Console\\Application->find()
+#1 /var/www/html/appacc/backend/vendor/symfony/console/Application.php(195): Symfony\\Component\\Console\\Application->doRun()
+#2 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run()
+#3 /var/www/html/appacc/backend/artisan(14): Illuminate\\Foundation\\Console\\Kernel->handle()
+#4 {main}
+"} 
+[2026-03-02 07:00:40] local.ERROR: Command "tinker" is not defined. {"exception":"[object] (Symfony\\Component\\Console\\Exception\\CommandNotFoundException(code: 0): Command \"tinker\" is not defined. at /var/www/html/appacc/backend/vendor/symfony/console/Application.php:759)
+[stacktrace]
+#0 /var/www/html/appacc/backend/vendor/symfony/console/Application.php(298): Symfony\\Component\\Console\\Application->find()
+#1 /var/www/html/appacc/backend/vendor/symfony/console/Application.php(195): Symfony\\Component\\Console\\Application->doRun()
+#2 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run()
+#3 /var/www/html/appacc/backend/artisan(14): Illuminate\\Foundation\\Console\\Kernel->handle()
+#4 {main}
+"} 
+[2026-03-02 07:03:59] local.ERROR: Google OAuth callback error: Client error: `POST https://www.googleapis.com/oauth2/v4/token` resulted in a `400 Bad Request` response:
+{
+  "error": "invalid_request",
+  "error_description": "Missing required parameter: code"
+}
+ {"exception":"[object] (GuzzleHttp\\Exception\\ClientException(code: 400): Client error: `POST https://www.googleapis.com/oauth2/v4/token` resulted in a `400 Bad Request` response:
+{
+  \"error\": \"invalid_request\",
+  \"error_description\": \"Missing required parameter: code\"
+}
+ at /var/www/html/appacc/backend/vendor/guzzlehttp/guzzle/src/Exception/RequestException.php:111)
+[stacktrace]
+#0 /var/www/html/appacc/backend/vendor/guzzlehttp/guzzle/src/Middleware.php(72): GuzzleHttp\\Exception\\RequestException::create()
+#1 /var/www/html/appacc/backend/vendor/guzzlehttp/promises/src/Promise.php(209): GuzzleHttp\\Middleware::GuzzleHttp\\{closure}()
+#2 /var/www/html/appacc/backend/vendor/guzzlehttp/promises/src/Promise.php(158): GuzzleHttp\\Promise\\Promise::callHandler()
+#3 /var/www/html/appacc/backend/vendor/guzzlehttp/promises/src/TaskQueue.php(52): GuzzleHttp\\Promise\\Promise::GuzzleHttp\\Promise\\{closure}()
+#4 /var/www/html/appacc/backend/vendor/guzzlehttp/promises/src/Promise.php(251): GuzzleHttp\\Promise\\TaskQueue->run()
+#5 /var/www/html/appacc/backend/vendor/guzzlehttp/promises/src/Promise.php(227): GuzzleHttp\\Promise\\Promise->invokeWaitFn()
+#6 /var/www/html/appacc/backend/vendor/guzzlehttp/promises/src/Promise.php(272): GuzzleHttp\\Promise\\Promise->waitIfPending()
+#7 /var/www/html/appacc/backend/vendor/guzzlehttp/promises/src/Promise.php(229): GuzzleHttp\\Promise\\Promise->invokeWaitList()
+#8 /var/www/html/appacc/backend/vendor/guzzlehttp/promises/src/Promise.php(69): GuzzleHttp\\Promise\\Promise->waitIfPending()
+#9 /var/www/html/appacc/backend/vendor/guzzlehttp/guzzle/src/Client.php(189): GuzzleHttp\\Promise\\Promise->wait()
+#10 /var/www/html/appacc/backend/vendor/guzzlehttp/guzzle/src/ClientTrait.php(95): GuzzleHttp\\Client->request()
+#11 /var/www/html/appacc/backend/vendor/laravel/socialite/src/Two/AbstractProvider.php(301): GuzzleHttp\\Client->post()
+#12 /var/www/html/appacc/backend/vendor/laravel/socialite/src/Two/AbstractProvider.php(240): Laravel\\Socialite\\Two\\AbstractProvider->getAccessTokenResponse()
+#13 /var/www/html/appacc/backend/app/Services/SocialiteService.php(22): Laravel\\Socialite\\Two\\AbstractProvider->user()
+#14 /var/www/html/appacc/backend/app/Http/Controllers/Auth/SocialiteController.php(40): App\\Services\\SocialiteService->getGoogleUser()
+#15 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Routing/Controller.php(54): App\\Http\\Controllers\\Auth\\SocialiteController->googleCallback()
+#16 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(44): Illuminate\\Routing\\Controller->callAction()
+#17 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(266): Illuminate\\Routing\\ControllerDispatcher->dispatch()
+#18 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(212): Illuminate\\Routing\\Route->runController()
+#19 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(808): Illuminate\\Routing\\Route->run()
+#20 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(170): Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}()
+#21 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/SubstituteBindings.php(51): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()
+#22 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Routing\\Middleware\\SubstituteBindings->handle()
+#23 /var/www/html/appacc/backend/vendor/laravel/sanctum/src/Http/Middleware/EnsureFrontendRequestsAreStateful.php(26): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()
+#24 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(170): Laravel\\Sanctum\\Http\\Middleware\\EnsureFrontendRequestsAreStateful->Laravel\\Sanctum\\Http\\Middleware\\{closure}()
+#25 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(127): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()
+#26 /var/www/html/appacc/backend/vendor/laravel/sanctum/src/Http/Middleware/EnsureFrontendRequestsAreStateful.php(25): Illuminate\\Pipeline\\Pipeline->then()
+#27 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Laravel\\Sanctum\\Http\\Middleware\\EnsureFrontendRequestsAreStateful->handle()
+#28 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(127): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()
+#29 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(807): Illuminate\\Pipeline\\Pipeline->then()
+#30 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(786): Illuminate\\Routing\\Router->runRouteWithinStack()
+#31 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(750): Illuminate\\Routing\\Router->runRoute()
+#32 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(739): Illuminate\\Routing\\Router->dispatchToRoute()
+#33 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(201): Illuminate\\Routing\\Router->dispatch()
+#34 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(170): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}()
+#35 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()
+#36 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php(31): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle()
+#37 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\ConvertEmptyStringsToNull->handle()
+#38 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/ValidatePostSize.php(27): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()
+#39 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Http\\Middleware\\ValidatePostSize->handle()
+#40 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php(110): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()
+#41 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\PreventRequestsDuringMaintenance->handle()
+#42 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php(62): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()
+#43 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Http\\Middleware\\HandleCors->handle()
+#44 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php(58): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()
+#45 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Http\\Middleware\\TrustProxies->handle()
+#46 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(127): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()
+#47 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(176): Illuminate\\Pipeline\\Pipeline->then()
+#48 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(145): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter()
+#49 /var/www/html/appacc/backend/public/index.php(16): Illuminate\\Foundation\\Http\\Kernel->handle()
+#50 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(23): require_once('...')
+#51 {main}
+"} 

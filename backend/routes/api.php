@@ -22,11 +22,7 @@ use Illuminate\Support\Facades\Route;
 
 // Public Auth Routes
 Route::post('/auth/login', [AuthController::class, 'login']);
-// Generic social auth endpoints (only allow google and facebook)
-Route::get('/auth/{provider}/redirect', [\App\Http\Controllers\Auth\SocialAuthController::class, 'redirect'])
-    ->where('provider', 'google|facebook');
-Route::get('/auth/{provider}/callback', [\App\Http\Controllers\Auth\SocialAuthController::class, 'callback'])
-    ->where('provider', 'google|facebook');
+// Social auth endpoints using SocialiteController (Google & Facebook)
 Route::get('/auth/google/redirect', [SocialiteController::class, 'googleRedirect']);
 Route::get('/auth/google/callback', [SocialiteController::class, 'googleCallback']);
 Route::get('/auth/facebook/redirect', [SocialiteController::class, 'facebookRedirect']);

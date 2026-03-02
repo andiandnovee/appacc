@@ -22,8 +22,16 @@ const authStore = useAuthStore()
 
 onMounted(async () => {
     try {
+        // Check for error in query params
+        const errorParam = new URLSearchParams(window.location.search).get('error')
+        if (errorParam) {
+            router.push(`/login?error=${encodeURIComponent(errorParam)}`)
+            return
+        }
+
         // Get token from query params
-        const token = new URLSearchParams(window.location.search).get('token')
+        let token = new URLSearchParams(window.location.search).get('token')
+        let user = null
 
         if (!token) {
             router.push('/login?error=Missing token')
@@ -34,9 +42,14 @@ onMounted(async () => {
         authStore.setToken(token)
 
         // Fetch user data
-        await authStore.fetchMe()
+        const response = await authStore.fetchMe()
+        user = response.data
+
+        // Save user to localStorage for access in other components
+        localStorage.setItem('user', JSON.stringify(user))
 
         // Redirect to dashboard
+        // Note: The dashboard component will display different content based on user roles
         router.push('/dashboard')
     } catch (error) {
         console.error('OAuth callback error:', error)

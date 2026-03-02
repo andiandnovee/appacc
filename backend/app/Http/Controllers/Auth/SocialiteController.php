@@ -26,7 +26,7 @@ class SocialiteController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'GOOGLE_REDIRECT_URI' => $redirectUrl,
+                'redirect_url' => $redirectUrl,
             ],
         ]);
     }
@@ -46,7 +46,8 @@ class SocialiteController extends Controller
 
             return redirect($redirectUrl);
         } catch (\Exception $e) {
-            return redirect(config('app.frontend_url').'/login?error=OAuth failed');
+            \Log::error('Google OAuth callback error: ' . $e->getMessage(), ['exception' => $e]);
+            return redirect(config('app.frontend_url').'/login?error='.urlencode($e->getMessage()));
         }
     }
 
@@ -80,7 +81,8 @@ class SocialiteController extends Controller
 
             return redirect($redirectUrl);
         } catch (\Exception $e) {
-            return redirect(config('app.frontend_url').'/login?error=OAuth failed');
+            \Log::error('Facebook OAuth callback error: ' . $e->getMessage(), ['exception' => $e]);
+            return redirect(config('app.frontend_url').'/login?error='.urlencode($e->getMessage()));
         }
     }
 
