@@ -1,42 +1,47 @@
 <template>
     <div id="app">
-        <component v-if="layout" :is="layout">
+        <component :is="layout" :key="$route.fullPath">
             <RouterView />
         </component>
-        <RouterView v-else />
     </div>
 </template>
 
 <script setup>
 import { computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
 import AuthLayout from '@/layouts/AuthLayout.vue'
 
+const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
 const layout = computed(() => {
-    const currentRoute = router.currentRoute.value
+    const layoutMeta = route.meta.layout
 
-    if (currentRoute.meta.layout === 'auth') {
+    if (layoutMeta === 'auth') {
         return AuthLayout
-    } else if (currentRoute.meta.layout === 'dashboard' || authStore.isAuthenticated) {
+    }
+
+    if (layoutMeta === 'dashboard') {
         return DashboardLayout
     }
 
-    return null
+    // Fallback default supaya tidak pernah null
+    return DashboardLayout
 })
 
-// Initialize auth on app load
+// Proteksi route yang butuh login
 watch(
     () => authStore.isAuthenticated,
     (isAuthenticated) => {
-        if (!isAuthenticated && router.currentRoute.value.meta.requiresAuth) {
+        if (!isAuthenticated && route.meta.requiresAuth) {
             router.push('/login')
         }
-    }
+    },
+    { immediate: true }
 )
 </script>
 

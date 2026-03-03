@@ -52,6 +52,12 @@ const router = createRouter({
     routes,
 })
 
+router.onError((error) => {
+    if (error.message.includes('Failed to fetch dynamically imported module')) {
+        router.push('/not-found')
+    }
+})
+
 router.beforeEach(async (to, from, next) => {
     const auth = useAuthStore()
 

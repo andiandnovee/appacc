@@ -1,15 +1,15 @@
 <template>
-    <fwb-sidebar aria-label="Sidebar with navigation" class="h-full">
-        <div class="overflow-y-auto py-4 px-3 bg-gray-50 rounded dark:bg-gray-800">
+    <div class="h-full w-64 bg-gray-800 text-white flex flex-col">
+        <div class="overflow-y-auto py-4 px-3">
             <ul class="space-y-2">
                 <li v-for="item in menuItems" :key="item.path">
                     <RouterLink :to="item.path" :class="[
                         'flex items-center p-2 text-base font-normal rounded-lg transition',
-                        isActive(item.path)
-                            ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white font-semibold'
-                            : 'text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
+                        route.path === item.path
+                            ? 'bg-gray-700 font-semibold'
+                            : 'hover:bg-gray-700'
                     ]">
-                        <svg class="w-5 h-5 flex-shrink-0 text-gray-500" fill="currentColor" :viewBox="item.icon">
+                        <svg class="w-5 h-5 text-gray-400" fill="currentColor" :viewBox="item.icon">
                             <path :d="item.iconPath" />
                         </svg>
                         <span class="ml-3">{{ item.label }}</span>
@@ -18,18 +18,21 @@
             </ul>
         </div>
 
-        <!-- User Info Section -->
-        <div class="mt-auto p-4 border-t border-gray-200 dark:border-gray-700">
+        <div class="mt-auto p-4 border-t border-gray-700">
             <div class="flex items-center gap-3">
                 <img :src="authStore.user?.avatar || 'https://ui-avatars.com/api/?name=' + authStore.user?.name"
                     class="w-10 h-10 rounded-full" />
-                <div class="flex-1">
-                    <p class="text-sm font-medium">{{ authStore.user?.name }}</p>
-                    <span class="text-xs text-gray-500">{{ authStore.user?.roles?.[0] || 'User' }}</span>
+                <div>
+                    <p class="text-sm font-medium">
+                        {{ authStore.user?.name }}
+                    </p>
+                    <span class="text-xs text-gray-400">
+                        {{ authStore.user?.roles?.[0] || 'User' }}
+                    </span>
                 </div>
             </div>
         </div>
-    </fwb-sidebar>
+    </div>
 </template>
 
 <script setup>
