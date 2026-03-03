@@ -33,6 +33,11 @@ const routes = [
         meta: { requiresAuth: true, requiresPermission: 'view settings', layout: 'dashboard' },
     },
     {
+        path: '/debug',
+        component: () => import('@/views/DebugPage.vue'),
+        meta: { requiresAuth: true, layout: 'dashboard' },
+    },
+    {
         path: '/',
         redirect: '/dashboard',
     },

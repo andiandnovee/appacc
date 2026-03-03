@@ -15,6 +15,7 @@
     "fakerphp/faker": "^1.23",
     "laravel/pint": "^1.14",
     "laravel/sail": "^1.26",
+    "laravel/tinker": "^2.11",
     "mockery/mockery": "^1.6",
     "phpunit/phpunit": "^11.0"
   },

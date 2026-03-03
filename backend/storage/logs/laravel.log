@@ -838,3 +838,15 @@
 #50 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(23): require_once('...')
 #51 {main}
 "} 
+[2026-03-03 04:23:06] local.ERROR: Command "tinker" is not defined. {"exception":"[object] (Symfony\\Component\\Console\\Exception\\CommandNotFoundException(code: 0): Command \"tinker\" is not defined. at /var/www/html/appacc/backend/vendor/symfony/console/Application.php:759)
+[stacktrace]
+#0 /var/www/html/appacc/backend/vendor/symfony/console/Application.php(298): Symfony\\Component\\Console\\Application->find()
+#1 /var/www/html/appacc/backend/vendor/symfony/console/Application.php(195): Symfony\\Component\\Console\\Application->doRun()
+#2 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run()
+#3 /var/www/html/appacc/backend/artisan(14): Illuminate\\Foundation\\Console\\Kernel->handle()
+#4 {main}
+"} 
+[2026-03-03 04:23:59] local.ERROR: Call to a member function getAllPermissions() on string {"exception":"[object] (Error(code: 0): Call to a member function getAllPermissions() on string at /var/www/html/appacc/backend/check_permissions.php:35)
+[stacktrace]
+#0 {main}
+"} 
