@@ -1,6 +1,6 @@
 export default function Card({ title, value }) {
   return (
-    <div className="bg-white rounded-xl shadow p-6 hover:shadow-lg transition">
+    <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow">
 
       <p className="text-gray-500 text-sm">
         {title}

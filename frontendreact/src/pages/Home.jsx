@@ -1,5 +1,5 @@
 import Card from "../components/ui/Card"
-
+import RevenueChart from "../components/charts/RevenueChart"
 export default function Home() {
   return (
 
@@ -20,6 +20,10 @@ export default function Home() {
         <Card title="Growth" value="+12%" />
 
       </div>
+
+    <div className="mt-8">
+    <RevenueChart />
+  </div>
 
     </div>
 
