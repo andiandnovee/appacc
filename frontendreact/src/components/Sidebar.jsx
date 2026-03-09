@@ -1,28 +1,57 @@
-import { Link } from "react-router-dom"
+import { LayoutDashboard, Users, Settings } from "lucide-react"
+import { NavLink } from "react-router-dom"
 
 export default function Sidebar() {
   return (
-    <div className="w-64 bg-gray-800 text-white h-screen p-4">
+    <div className="w-64 min-h-screen bg-gray-900 text-gray-200">
 
-      <h2 className="text-xl font-bold mb-6">
-        Admin Panel
-      </h2>
+     <div className="h-16 flex items-center px-6 text-xl font-bold border-b border-gray-700">
+        MyDashboard
+      </div>
 
-      <nav className="space-y-2">
+      <nav className="flex flex-col gap-2 p-4">
 
-        <Link
+        <NavLink
           to="/"
-          className="block p-2 rounded hover:bg-gray-700"
+          className={({ isActive }) =>
+            `flex items-center gap-3 p-3 rounded-lg transition ${
+              isActive
+                ? "bg-gray-700 text-white"
+                : "hover:bg-gray-800"
+            }`
+          }
         >
-          Home
-        </Link>
+          <LayoutDashboard size={18} />
+          Dashboard
+        </NavLink>
 
-        <Link
-          to="/about"
-          className="block p-2 rounded hover:bg-gray-700"
+        <NavLink
+          to="/users"
+          className={({ isActive }) =>
+            `flex items-center gap-3 p-3 rounded-lg transition ${
+              isActive
+                ? "bg-gray-700 text-white"
+                : "hover:bg-gray-800"
+            }`
+          }
         >
-          About
-        </Link>
+          <Users size={18} />
+          Users
+        </NavLink>
+
+        <NavLink
+          to="/settings"
+          className={({ isActive }) =>
+            `flex items-center gap-3 p-3 rounded-lg transition ${
+              isActive
+                ? "bg-gray-700 text-white"
+                : "hover:bg-gray-800"
+            }`
+          }
+        >
+          <Settings size={18} />
+          Settings
+        </NavLink>
 
       </nav>
 

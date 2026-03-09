@@ -1,17 +1,27 @@
-import { Link } from "react-router-dom"
+import Card from "../components/ui/Card"
+
 export default function Home() {
   return (
-    <div className="p-10">
-      <h1 className="text-3xl font-bold">
-        Home Page
+
+    <div>
+
+      <h1 className="text-3xl font-bold mb-6">
+        Dashboard
       </h1>
-	  <Link
-        to="/about"
-        className="text-blue-600 underline"
-      >
-        Go to About
-      </Link>
+
+      <div className="grid grid-cols-4 gap-6">
+
+        <Card title="Users" value="1,245" />
+
+        <Card title="Orders" value="320" />
+
+        <Card title="Revenue" value="$12,400" />
+
+        <Card title="Growth" value="+12%" />
+
+      </div>
+
     </div>
+
   )
 }
-
