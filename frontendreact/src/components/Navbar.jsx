@@ -4,14 +4,9 @@ import { useState } from "react";
 
 import ThemeToggle from "./ThemeToggle";
 export default function Navbar() {
-  const [darkMode, setDarkMode] = useState(false);
+  
   const [open, setOpen] = useState(false);
-  const toggleDark = () => {
-    setDarkMode(!darkMode);
-
-    document.documentElement.classList.toggle("dark");
-  };
-
+  
   return (
     <div className="h-16 bg-white dark:bg-gray-900 border-b flex items-center justify-between px-6">
       {/* Search */}

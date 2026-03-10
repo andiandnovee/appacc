@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { Search, Bell, ChevronDown, Moon, Sun } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
+
 export default function ThemeToggle() {
+
   const [darkMode, setDarkMode] = useState(
-    localStorage.getItem("theme") === "dark",
+    localStorage.getItem("theme") === "dark"
   );
 
   useEffect(() => {
@@ -10,14 +12,17 @@ export default function ThemeToggle() {
 
     if (darkMode) {
       root.classList.add("dark");
+      localStorage.setItem("theme", "dark");
     } else {
       root.classList.remove("dark");
+      localStorage.setItem("theme", "light");
     }
+
   }, [darkMode]);
 
   return (
     <button
-      onClick={() => setDarkMode((prev) => !prev)}
+      onClick={() => setDarkMode(prev => !prev)}
       className="px-4 py-2 rounded bg-gray-200 dark:bg-gray-700"
     >
       {darkMode ? <Sun size={20} /> : <Moon size={20} />}
