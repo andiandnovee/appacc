@@ -10,54 +10,48 @@ import {
 
 export default function Sidebar() {
 
-  const [expanded, setExpanded] = useState(true)
+  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
 
-  // detect screen size
   useEffect(() => {
-
-    const handleResize = () => {
-      if (window.innerWidth < 768) {
-        setExpanded(false)
-      } else {
-        setExpanded(true)
-      }
-    }
-
+    const handleResize = () => setIsCollapsed(window.innerWidth < 768)
     handleResize()
-
     window.addEventListener("resize", handleResize)
-
     return () => window.removeEventListener("resize", handleResize)
-
   }, [])
+
+  const isExpanded = !isCollapsed || isHovered       // ✅ logika tetap benar
+  const sidebarWidth = isExpanded ? "w-64" : "w-16"
 
   return (
     <div
-      className={`bg-gray-900 text-gray-200 min-h-screen transition-all duration-300
-      ${expanded ? "w-64" : "w-20"}`}
+      className={`bg-gray-900 text-gray-200 min-h-screen transition-all duration-300 ${sidebarWidth}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
 
       {/* Header */}
-
       <div className="h-16 flex items-center justify-between px-4 border-b border-gray-800">
 
-        {expanded && (
+        {isExpanded && (                              // ✅ ganti expanded → isExpanded
           <h1 className="font-bold text-lg">
             MyDashboard
           </h1>
         )}
 
         <button
-          onClick={() => setExpanded(!expanded)}
+          onClick={() => setIsCollapsed(!isCollapsed)} // ✅ ganti setExpanded → setIsCollapsed
           className="text-gray-400 hover:text-white"
         >
-          {expanded ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+          {isExpanded                                  // ✅ ganti expanded → isExpanded
+            ? <ChevronLeft size={20} />
+            : <ChevronRight size={20} />
+          }
         </button>
 
       </div>
 
       {/* Menu */}
-
       <nav className="p-3 space-y-2">
 
         <NavLink
@@ -68,7 +62,7 @@ export default function Sidebar() {
           }
         >
           <LayoutDashboard size={18} />
-          {expanded && "Dashboard"}
+          {isExpanded && "Dashboard"}                  {/* ✅ */}
         </NavLink>
 
         <NavLink
@@ -79,7 +73,7 @@ export default function Sidebar() {
           }
         >
           <Users size={18} />
-          {expanded && "Users"}
+          {isExpanded && "Users"}                      {/* ✅ */}
         </NavLink>
 
         <NavLink
@@ -90,7 +84,7 @@ export default function Sidebar() {
           }
         >
           <Settings size={18} />
-          {expanded && "Settings"}
+          {isExpanded && "Settings"}                   {/* ✅ */}
         </NavLink>
 
       </nav>

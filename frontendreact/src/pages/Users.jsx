@@ -6,7 +6,7 @@ export default function Users() {
         Users
       </h1>
 
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-white dark:bg-gray-600 p-6 rounded-lg shadow">
         Users list will appear here
       </div>
 
