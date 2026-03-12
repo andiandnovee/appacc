@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
-import { Authprovider } from "./hooks/useAuth"
+import { AuthProvider } from "./hooks/useAuth"
 import ProtectedRoute from "./components/ProtectedRoute"
 
 
@@ -7,7 +7,7 @@ import ProtectedRoute from "./components/ProtectedRoute"
 import DashboardLayout from "./layouts/DashboardLayout"
 
 import Home from "./pages/Home"
-import Users from "./pages/Users"
+import Users from "./pages/user/Users"
 import Settings from "./pages/Settings"
 
 export default function App() {
