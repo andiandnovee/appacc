@@ -7,7 +7,6 @@
   "require": {
     "php": "^8.2",
     "laravel/framework": "^11.0",
-    "laravel/sanctum": "^4.0",
     "laravel/socialite": "^5.11",
     "php-open-source-saver/jwt-auth": "^2.8",
     "spatie/laravel-permission": "^6.4"

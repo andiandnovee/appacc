@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PermissionController;
@@ -8,55 +8,76 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\AuthController;
 
 /*
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| is assigned the "api" middleware group. Enjoy building your API!
-|
 */
 
-// Public Auth Routes
-Route::post('/auth/login', [AuthController::class, 'login']);
-// Social auth endpoints using SocialiteController (Google & Facebook)
-Route::get('/auth/google/redirect', [SocialiteController::class, 'googleRedirect']);
-Route::get('/auth/google/callback', [SocialiteController::class, 'googleCallback']);
-Route::get('/auth/facebook/redirect', [SocialiteController::class, 'facebookRedirect']);
-Route::get('/auth/facebook/callback', [SocialiteController::class, 'facebookCallback']);
+// ── Public: Auth ──────────────────────────────────────────────────────────
+Route::prefix('auth')->group(function () {
 
-// Protected Routes
-Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/login',   [AuthController::class, 'login']);
+    Route::post('/refresh', [AuthController::class, 'refresh']); // ← pindah ke public!
+
+    // Social Auth (Socialite — OAuth flow tetap GET)
+    Route::get('/google/redirect',   [SocialiteController::class, 'googleRedirect']);
+    Route::get('/google/callback',   [SocialiteController::class, 'googleCallback']);
+    Route::get('/facebook/redirect', [SocialiteController::class, 'facebookRedirect']);
+    Route::get('/facebook/callback', [SocialiteController::class, 'facebookCallback']);
+
+});
+
+// ── Protected: JWT ────────────────────────────────────────────────────────
+Route::middleware('auth:api')->group(function () {
+
     // Auth
-    Route::post('/auth/logout', [AuthController::class, 'logout']);
-    Route::get('/auth/me', [AuthController::class, 'me']);
+    Route::prefix('auth')->group(function () {
+        Route::get('/me',      [AuthController::class, 'me']);
+        Route::post('/logout', [AuthController::class, 'logout']);
+    });
 
     // Dashboard
-    Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
-    Route::get('/dashboard/activity', [DashboardController::class, 'activity']);
+    Route::prefix('dashboard')->group(function () {
+        Route::get('/stats',    [DashboardController::class, 'stats']);
+        Route::get('/activity', [DashboardController::class, 'activity']);
+    });
 
     // Users
-    Route::get('/users', [UserController::class, 'index']);
-    Route::get('/users/{id}', [UserController::class, 'show']);
-    Route::post('/users', [UserController::class, 'store'])->middleware('check-permission:create users');
-    Route::put('/users/{id}', [UserController::class, 'update'])->middleware('check-permission:edit users');
-    Route::delete('/users/{id}', [UserController::class, 'destroy'])->middleware('check-permission:delete users');
-    Route::post('/users/{id}/assign-role', [UserController::class, 'assignRole'])->middleware('check-permission:edit users');
+    Route::prefix('users')->group(function () {
+        Route::get('/',              [UserController::class, 'index']);
+        Route::get('/{id}',          [UserController::class, 'show']);
+        Route::post('/',             [UserController::class, 'store'])
+            ->middleware('check-permission:create users');
+        Route::put('/{id}',          [UserController::class, 'update'])
+            ->middleware('check-permission:edit users');
+        Route::delete('/{id}',       [UserController::class, 'destroy'])
+            ->middleware('check-permission:delete users');
+        Route::post('/{id}/assign-role', [UserController::class, 'assignRole'])
+            ->middleware('check-permission:edit users');
+    });
 
     // Roles
-    Route::get('/roles', [RoleController::class, 'index'])->middleware('check-permission:view roles');
-    Route::post('/roles', [RoleController::class, 'store'])->middleware('check-permission:create roles');
-    Route::put('/roles/{id}', [RoleController::class, 'update'])->middleware('check-permission:edit roles');
-    Route::delete('/roles/{id}', [RoleController::class, 'destroy'])->middleware('check-permission:delete roles');
+    Route::prefix('roles')->group(function () {
+        Route::get('/',      [RoleController::class, 'index'])
+            ->middleware('check-permission:view roles');
+        Route::post('/',     [RoleController::class, 'store'])
+            ->middleware('check-permission:create roles');
+        Route::put('/{id}',  [RoleController::class, 'update'])
+            ->middleware('check-permission:edit roles');
+        Route::delete('/{id}', [RoleController::class, 'destroy'])
+            ->middleware('check-permission:delete roles');
+    });
 
     // Permissions
     Route::get('/permissions', [PermissionController::class, 'index']);
 
     // Settings
-    Route::get('/settings', [SettingController::class, 'index']);
-    Route::put('/settings', [SettingController::class, 'update'])->middleware('check-permission:edit settings');
+    Route::prefix('settings')->group(function () {
+        Route::get('/',  [SettingController::class, 'index']);
+        Route::put('/',  [SettingController::class, 'update'])
+            ->middleware('check-permission:edit settings');
+    });
+
 });

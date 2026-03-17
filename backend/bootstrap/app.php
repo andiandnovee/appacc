@@ -3,6 +3,8 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withProviders([
@@ -28,14 +30,14 @@ return Application::configure(basePath: dirname(__DIR__))
         \Illuminate\Translation\TranslationServiceProvider::class,
         \Illuminate\Validation\ValidationServiceProvider::class,
         \Illuminate\View\ViewServiceProvider::class,
-        \Laravel\Sanctum\SanctumServiceProvider::class,
         \Laravel\Socialite\SocialiteServiceProvider::class,
         \Spatie\Permission\PermissionServiceProvider::class,
         \App\Providers\RouteServiceProvider::class,
     ])
     ->withMiddleware(function (Middleware $middleware) {
+
         $middleware->api(prepend: [
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            // kosongkan dulu
         ]);
 
         $middleware->use([
@@ -53,10 +55,22 @@ return Application::configure(basePath: dirname(__DIR__))
             'check-permission' => \App\Http\Middleware\CheckPermission::class,
         ]);
     })
+
     ->withExceptions(function (Exceptions $exceptions) {
-        //
-    })->withRouting(
+
+        // 🔥 Override total AuthenticationException
+        $exceptions->render(function (AuthenticationException $e, Request $request) {
+            return response()->json([
+                'message' => 'Unauthenticated'
+            ], 401);
+        });
+
+    })
+
+    ->withRouting(
         web: __DIR__.'/../routes/web.php',
         api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
-    )->create();
+    )
+
+    ->create();
