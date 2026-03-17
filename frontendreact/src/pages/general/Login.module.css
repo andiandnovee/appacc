@@ -1,0 +1,173 @@
+/* ============================================================
+   Login.module.css
+   ============================================================ */
+
+/* ── Page wrapper ──────────────────────────────────────────── */
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-base);
+  padding: var(--space-4);
+}
+
+/* ── Card container ────────────────────────────────────────── */
+.card {
+  width: 100%;
+  max-width: 420px;
+}
+
+/* ── Header ────────────────────────────────────────────────── */
+.header {
+  text-align: center;
+  padding: var(--space-8) var(--space-8) var(--space-6);
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background-color: var(--color-primary-500);
+  border-radius: var(--radius-xl);
+  margin-bottom: var(--space-4);
+}
+
+.title {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+  letter-spacing: var(--tracking-tight);
+  margin: 0 0 var(--space-1) 0;
+}
+
+.subtitle {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* ── Form body ─────────────────────────────────────────────── */
+.body {
+  padding: 0 var(--space-8) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* ── Remember me + Forgot password row ────────────────────── */
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rememberMe {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+.rememberCheckbox {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--color-primary-500);
+  cursor: pointer;
+}
+
+.rememberLabel {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.forgotLink {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--text-link);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-default);
+}
+
+.forgotLink:hover {
+  color: var(--text-link-hover);
+  text-decoration: underline;
+}
+
+/* ── Divider ───────────────────────────────────────────────── */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.dividerLine {
+  flex: 1;
+  height: 1px;
+  background-color: var(--border-subtle);
+}
+
+.dividerText {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+/* ── Social login ──────────────────────────────────────────── */
+.socialBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2) var(--space-4);
+  background-color: var(--bg-surface);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) var(--ease-default),
+    background-color var(--duration-fast) var(--ease-default),
+    box-shadow var(--duration-fast) var(--ease-default);
+}
+
+.socialBtn:hover {
+  border-color: var(--border-strong);
+  background-color: var(--bg-surface-2);
+  box-shadow: var(--shadow-xs);
+}
+
+/* ── Footer ────────────────────────────────────────────────── */
+.footer {
+  text-align: center;
+  padding: var(--space-4) var(--space-8) var(--space-8);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.footerText {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.footerLink {
+  color: var(--text-link);
+  text-decoration: none;
+  font-weight: var(--font-medium);
+  transition: color var(--duration-fast) var(--ease-default);
+}
+
+.footerLink:hover {
+  color: var(--text-link-hover);
+  text-decoration: underline;
+}

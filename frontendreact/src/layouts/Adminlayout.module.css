@@ -1,0 +1,79 @@
+/* ============================================================
+   AdminLayout.module.css
+   ============================================================ */
+
+/* ── Root layout ───────────────────────────────────────────── */
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+}
+
+/* ── Sidebar ───────────────────────────────────────────────── */
+.sidebar {
+  width: var(--sidebar-width);       /* 240px dari tokens */
+  background-color: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
+  padding: var(--space-6) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  flex-shrink: 0;
+}
+
+/* ── Sidebar: brand/title ──────────────────────────────────── */
+.brand {
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+  letter-spacing: var(--tracking-tight);
+  margin: 0;
+}
+
+/* ── Sidebar: nav ──────────────────────────────────────────── */
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.navLink {
+  display: block;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition:
+    background-color var(--duration-fast) var(--ease-default),
+    color var(--duration-fast) var(--ease-default);
+}
+
+.navLink:hover {
+  background-color: var(--bg-surface-2);
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+/* Active state — tambahkan class ini via NavLink isActive */
+.navLinkActive {
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-700);
+}
+
+/* Dark mode active */
+:global(.dark) .navLinkActive {
+  background-color: rgba(84, 112, 239, 0.15);
+  color: var(--color-primary-300);
+}
+
+/* ── Main content ──────────────────────────────────────────── */
+.main {
+  flex: 1;
+  padding: var(--space-8);
+  overflow-y: auto;
+  background-color: var(--bg-base);
+}

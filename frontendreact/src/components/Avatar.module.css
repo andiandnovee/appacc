@@ -1,0 +1,74 @@
+/* Avatar.module.css */
+
+/* ── Avatar ────────────────────────────────────────────────── */
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-700);
+  font-family: var(--font-sans);
+  font-weight: var(--font-semibold);
+  flex-shrink: 0;
+  border: 2px solid var(--bg-surface);
+  user-select: none;
+}
+
+/* Sizes */
+.xs { width: 24px; height: 24px; font-size: 0.625rem; }
+.sm { width: 32px; height: 32px; font-size: var(--text-xs); }
+.md { width: 40px; height: 40px; font-size: var(--text-sm); }
+.lg { width: 48px; height: 48px; font-size: var(--text-base); }
+.xl { width: 64px; height: 64px; font-size: var(--text-xl); }
+
+.img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Status dot */
+.wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.status {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--bg-surface);
+}
+
+.online  { background-color: var(--color-success); }
+.away    { background-color: var(--color-warning); }
+.busy    { background-color: var(--color-danger);  }
+.offline { background-color: var(--color-neutral-400); }
+
+/* ── AvatarGroup ───────────────────────────────────────────── */
+.group {
+  display: inline-flex;
+  flex-direction: row-reverse;
+}
+
+.group .wrapper + .wrapper { margin-right: -8px; }
+
+.overflow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background-color: var(--bg-surface-2);
+  border: 2px solid var(--bg-surface);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-weight: var(--font-semibold);
+  font-size: var(--text-xs);
+  flex-shrink: 0;
+  margin-right: -8px;
+}

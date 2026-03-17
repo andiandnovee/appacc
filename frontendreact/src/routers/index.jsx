@@ -2,8 +2,8 @@ import { createBrowserRouter } from "react-router-dom"
 
 import DashboardLayout from "../layouts/DashboardLayout"
 
-import Home from "../pages/Home"
-import About from "../pages/About"
+import Home from "../pages/general/Home"
+import About from "../pages/general/About"
 
 const router = createBrowserRouter([
   {

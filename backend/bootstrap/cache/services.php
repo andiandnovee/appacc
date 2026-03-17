@@ -47,11 +47,12 @@
     43 => 'Laravel\\Tinker\\TinkerServiceProvider',
     44 => 'Carbon\\Laravel\\ServiceProvider',
     45 => 'Termwind\\Laravel\\TermwindServiceProvider',
-    46 => 'Spatie\\Permission\\PermissionServiceProvider',
-    47 => 'Laravel\\Sanctum\\SanctumServiceProvider',
-    48 => 'Laravel\\Socialite\\SocialiteServiceProvider',
-    49 => 'Spatie\\Permission\\PermissionServiceProvider',
-    50 => 'App\\Providers\\RouteServiceProvider',
+    46 => 'PHPOpenSourceSaver\\JWTAuth\\Providers\\LaravelServiceProvider',
+    47 => 'Spatie\\Permission\\PermissionServiceProvider',
+    48 => 'Laravel\\Sanctum\\SanctumServiceProvider',
+    49 => 'Laravel\\Socialite\\SocialiteServiceProvider',
+    50 => 'Spatie\\Permission\\PermissionServiceProvider',
+    51 => 'App\\Providers\\RouteServiceProvider',
   ),
   'eager' => 
   array (
@@ -77,10 +78,11 @@
     19 => 'Laravel\\Sanctum\\SanctumServiceProvider',
     20 => 'Carbon\\Laravel\\ServiceProvider',
     21 => 'Termwind\\Laravel\\TermwindServiceProvider',
-    22 => 'Spatie\\Permission\\PermissionServiceProvider',
-    23 => 'Laravel\\Sanctum\\SanctumServiceProvider',
-    24 => 'Spatie\\Permission\\PermissionServiceProvider',
-    25 => 'App\\Providers\\RouteServiceProvider',
+    22 => 'PHPOpenSourceSaver\\JWTAuth\\Providers\\LaravelServiceProvider',
+    23 => 'Spatie\\Permission\\PermissionServiceProvider',
+    24 => 'Laravel\\Sanctum\\SanctumServiceProvider',
+    25 => 'Spatie\\Permission\\PermissionServiceProvider',
+    26 => 'App\\Providers\\RouteServiceProvider',
   ),
   'deferred' => 
   array (

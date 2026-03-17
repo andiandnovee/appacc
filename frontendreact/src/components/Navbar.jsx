@@ -1,72 +1,107 @@
-import { Search, Bell, ChevronDown, Moon, Sun } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Search, Bell, ChevronDown } from "lucide-react";
+import ThemeToggle from "./Themetoggle";
+import styles from "./Navbar.module.css";
 
-import { useState } from "react";
-
-import ThemeToggle from "./ThemeToggle";
 export default function Navbar() {
-  
   const [open, setOpen] = useState(false);
-  
+  const [search, setSearch] = useState("");
+  const dropdownRef = useRef(null);
+
+  // ── Tutup dropdown kalau klik di luar ──────────────────
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    }
+    if (open) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
   return (
-    <div className="h-16 bg-white dark:bg-gray-900 border-b flex items-center justify-between px-6">
+    <header className={styles.navbar}>
       {/* Search */}
-
-      <div className="flex items-center bg-gray-100 px-3 py-2 rounded-lg w-64">
-        <Search size={18} className="text-gray-500" />
-
+      <div className={styles.search}>
+        <span className={styles.searchIcon}>
+          <Search size={16} />
+        </span>
         <input
           type="text"
           placeholder="Search..."
-          className="bg-transparent outline-none ml-2 text-sm w-full"
+          className={styles.searchInput}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
         />
       </div>
 
-      {/* Right menu */}
-
-      <div className="flex items-center gap-6">
+      {/* Right section */}
+      <div className={styles.right}>
         {/* Dark mode toggle */}
         <ThemeToggle />
 
         {/* Notification */}
-
-        <button className="relative text-gray-600 hover:text-black">
+        <button className={styles.iconBtn} aria-label="Notifikasi">
           <Bell size={20} />
-
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1 rounded">
+          <span className={styles.badge} aria-label="3 notifikasi baru">
             3
           </span>
         </button>
 
-        {/* Profile */}
-
-        <div className="relative">
+        {/* Profile dropdown */}
+        <div className={styles.dropdownWrapper} ref={dropdownRef}>
           <button
-            onClick={() => setOpen(!open)}
-            className="flex items-center gap-2"
+            className={styles.profileBtn}
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            aria-haspopup="true"
           >
             <img
               src="https://i.pravatar.cc/40"
-              className="w-8 h-8 rounded-full"
+              alt="Avatar Admin"
+              className={styles.avatar}
             />
-
-            <span className="text-sm font-medium">Admin</span>
-
-            <ChevronDown size={16} />
+            <span className={styles.profileName}>Admin</span>
+            <ChevronDown
+              size={16}
+              className={`${styles.chevron} ${open ? styles.chevronOpen : ""}`}
+            />
           </button>
 
-          {/* Dropdown */}
-
+          {/* Dropdown menu */}
           {open && (
-            <div className="absolute right-0 mt-2 w-40 bg-white border rounded-lg shadow">
-              <a className="block px-4 py-2 hover:bg-gray-100">Profile</a>
-
-              <a className="block px-4 py-2 hover:bg-gray-100">Settings</a>
-
-              <a className="block px-4 py-2 hover:bg-gray-100">Logout</a>
+            <div className={styles.dropdown} role="menu">
+              <a
+                href="/profile"
+                className={styles.dropdownItem}
+                role="menuitem"
+                onClick={() => setOpen(false)}
+              >
+                Profile
+              </a>
+              <a
+                href="/settings"
+                className={styles.dropdownItem}
+                role="menuitem"
+                onClick={() => setOpen(false)}
+              >
+                Settings
+              </a>
+              <div className={styles.dropdownDivider} />
+              <button
+                className={styles.dropdownItem}
+                role="menuitem"
+                onClick={() => {
+                  setOpen(false);
+                  // tambahkan logout logic di sini
+                }}
+              >
+                Logout
+              </button>
             </div>
           )}
         </div>
       </div>
-    </div>
+    </header>
   );
 }

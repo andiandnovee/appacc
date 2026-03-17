@@ -1,0 +1,31 @@
+/* Divider.module.css */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.line {
+  flex: 1;
+  background-color: var(--border-subtle);
+}
+
+/* Horizontal */
+.horizontal .line { height: 1px; }
+
+/* Vertical */
+.vertical {
+  flex-direction: column;
+  width: auto;
+  height: 100%;
+  align-self: stretch;
+}
+.vertical .line { width: 1px; flex: 1; }
+
+.label {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}

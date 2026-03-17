@@ -1,0 +1,280 @@
+/* ============================================================
+   DESIGN TOKENS — BSKM Design System
+   Semua komponen Vue merujuk ke variabel ini.
+   Jangan hardcode warna/font/spacing di dalam komponen.
+   ============================================================ */
+
+/* ── Google Fonts Import ─────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap');
+
+/* ══════════════════════════════════════════════════════════
+   LIGHT MODE (default)
+   ══════════════════════════════════════════════════════════ */
+:root {
+
+  /* ── Color: Brand Primary (Biru Slate — tegas, modern) ── */
+  --color-primary-50:  #f0f5ff;
+  --color-primary-100: #e0eaff;
+  --color-primary-200: #c7d7fd;
+  --color-primary-300: #a4bcfb;
+  --color-primary-400: #7b97f6;
+  --color-primary-500: #5470ef;   /* ← main brand color */
+  --color-primary-600: #3d52e0;
+  --color-primary-700: #3040c6;
+  --color-primary-800: #2c38a0;
+  --color-primary-900: #293580;
+  --color-primary-950: #1b2150;
+
+  /* ── Color: Secondary (Teal — aksen segar) ────────────── */
+  --color-secondary-50:  #effefb;
+  --color-secondary-100: #c8fff5;
+  --color-secondary-200: #91ffec;
+  --color-secondary-300: #53f5e0;
+  --color-secondary-400: #20e0cc;
+  --color-secondary-500: #07c3b3;   /* ← main secondary */
+  --color-secondary-600: #049d92;
+  --color-secondary-700: #087d75;
+  --color-secondary-800: #0b635e;
+  --color-secondary-900: #0e524e;
+  --color-secondary-950: #012f2e;
+
+  /* ── Color: Neutral / Gray ────────────────────────────── */
+  --color-neutral-0:   #ffffff;
+  --color-neutral-50:  #f8fafc;
+  --color-neutral-100: #f1f5f9;
+  --color-neutral-200: #e2e8f0;
+  --color-neutral-300: #cbd5e1;
+  --color-neutral-400: #94a3b8;
+  --color-neutral-500: #64748b;
+  --color-neutral-600: #475569;
+  --color-neutral-700: #334155;
+  --color-neutral-800: #1e293b;
+  --color-neutral-900: #0f172a;
+  --color-neutral-950: #020617;
+
+  /* ── Color: Semantic ──────────────────────────────────── */
+  --color-success-light: #dcfce7;
+  --color-success:       #16a34a;
+  --color-success-dark:  #14532d;
+
+  --color-warning-light: #fef9c3;
+  --color-warning:       #ca8a04;
+  --color-warning-dark:  #713f12;
+
+  --color-danger-light:  #fee2e2;
+  --color-danger:        #dc2626;
+  --color-danger-dark:   #7f1d1d;
+
+  --color-info-light:    #dbeafe;
+  --color-info:          #2563eb;
+  --color-info-dark:     #1e3a8a;
+
+  /* ── Color: Surface & Background ─────────────────────── */
+  --bg-base:        var(--color-neutral-50);     /* halaman utama */
+  --bg-surface:     var(--color-neutral-0);      /* card, panel */
+  --bg-surface-2:   var(--color-neutral-100);    /* nested panel */
+  --bg-overlay:     rgba(15, 23, 42, 0.45);      /* modal backdrop */
+
+  /* ── Color: Border ────────────────────────────────────── */
+  --border-subtle:  var(--color-neutral-200);
+  --border-default: var(--color-neutral-300);
+  --border-strong:  var(--color-neutral-400);
+  --border-focus:   var(--color-primary-500);
+
+  /* ── Color: Text ──────────────────────────────────────── */
+  --text-primary:   var(--color-neutral-900);
+  --text-secondary: var(--color-neutral-600);
+  --text-tertiary:  var(--color-neutral-400);
+  --text-disabled:  var(--color-neutral-300);
+  --text-inverse:   var(--color-neutral-0);
+  --text-link:      var(--color-primary-600);
+  --text-link-hover:var(--color-primary-700);
+
+  /* ── Typography: Font Family ──────────────────────────── */
+  --font-sans:  'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono:  'DM Mono', ui-monospace, monospace;
+
+  /* ── Typography: Font Size (rem scale) ───────────────── */
+  --text-xs:   0.75rem;    /* 12px */
+  --text-sm:   0.875rem;   /* 14px */
+  --text-base: 1rem;       /* 16px */
+  --text-lg:   1.125rem;   /* 18px */
+  --text-xl:   1.25rem;    /* 20px */
+  --text-2xl:  1.5rem;     /* 24px */
+  --text-3xl:  1.875rem;   /* 30px */
+  --text-4xl:  2.25rem;    /* 36px */
+
+  /* ── Typography: Font Weight ──────────────────────────── */
+  --font-light:    300;
+  --font-normal:   400;
+  --font-medium:   500;
+  --font-semibold: 600;
+  --font-bold:     700;
+
+  /* ── Typography: Line Height ──────────────────────────── */
+  --leading-tight:  1.25;
+  --leading-snug:   1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed:1.625;
+
+  /* ── Typography: Letter Spacing ──────────────────────── */
+  --tracking-tight:  -0.025em;
+  --tracking-normal:  0em;
+  --tracking-wide:    0.025em;
+  --tracking-wider:   0.05em;
+  --tracking-widest:  0.1em;
+
+  /* ── Spacing (8px base grid) ──────────────────────────── */
+  --space-0:   0;
+  --space-1:   0.25rem;   /* 4px  */
+  --space-2:   0.5rem;    /* 8px  */
+  --space-3:   0.75rem;   /* 12px */
+  --space-4:   1rem;      /* 16px */
+  --space-5:   1.25rem;   /* 20px */
+  --space-6:   1.5rem;    /* 24px */
+  --space-8:   2rem;      /* 32px */
+  --space-10:  2.5rem;    /* 40px */
+  --space-12:  3rem;      /* 48px */
+  --space-16:  4rem;      /* 64px */
+  --space-20:  5rem;      /* 80px */
+
+  /* ── Border Radius ────────────────────────────────────── */
+  --radius-none: 0;
+  --radius-sm:   0.25rem;   /* 4px  */
+  --radius-md:   0.5rem;    /* 8px  */
+  --radius-lg:   0.75rem;   /* 12px */
+  --radius-xl:   1rem;      /* 16px */
+  --radius-2xl:  1.5rem;    /* 24px */
+  --radius-full: 9999px;
+
+  /* ── Shadow ───────────────────────────────────────────── */
+  --shadow-xs:  0 1px 2px 0 rgba(0,0,0,.05);
+  --shadow-sm:  0 1px 3px 0 rgba(0,0,0,.10), 0 1px 2px -1px rgba(0,0,0,.10);
+  --shadow-md:  0 4px 6px -1px rgba(0,0,0,.10), 0 2px 4px -2px rgba(0,0,0,.10);
+  --shadow-lg:  0 10px 15px -3px rgba(0,0,0,.10), 0 4px 6px -4px rgba(0,0,0,.10);
+  --shadow-xl:  0 20px 25px -5px rgba(0,0,0,.10), 0 8px 10px -6px rgba(0,0,0,.10);
+  --shadow-inner: inset 0 2px 4px 0 rgba(0,0,0,.06);
+
+  /* ── Transition ───────────────────────────────────────── */
+  --duration-fast:   100ms;
+  --duration-normal: 200ms;
+  --duration-slow:   300ms;
+  --ease-default:    cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in:         cubic-bezier(0.4, 0, 1, 1);
+  --ease-out:        cubic-bezier(0, 0, 0.2, 1);
+
+  /* ── Z-Index ──────────────────────────────────────────── */
+  --z-base:    0;
+  --z-dropdown: 100;
+  --z-sticky:  200;
+  --z-overlay: 300;
+  --z-modal:   400;
+  --z-toast:   500;
+  --z-tooltip: 600;
+
+  /* ── Layout ───────────────────────────────────────────── */
+  --sidebar-width:         240px;
+  --sidebar-collapsed-width: 64px;
+  --topbar-height:         60px;
+  --content-max-width:     1280px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   DARK MODE
+   Cukup override variabel surface, border, dan text.
+   Color palette tetap sama.
+   ══════════════════════════════════════════════════════════ */
+.dark, [data-theme="dark"] {
+
+  --bg-base:        #0d1117;
+  --bg-surface:     #161b22;
+  --bg-surface-2:   #21262d;
+  --bg-overlay:     rgba(0, 0, 0, 0.65);
+
+  --border-subtle:  rgba(255,255,255,.07);
+  --border-default: rgba(255,255,255,.12);
+  --border-strong:  rgba(255,255,255,.22);
+
+  --text-primary:   #e6edf3;
+  --text-secondary: #8d96a0;
+  --text-tertiary:  #57606a;
+  --text-disabled:  #3d444d;
+  --text-inverse:   var(--color-neutral-900);
+  --text-link:      var(--color-primary-400);
+  --text-link-hover:var(--color-primary-300);
+
+  --shadow-xs:  0 1px 2px 0 rgba(0,0,0,.3);
+  --shadow-sm:  0 1px 3px 0 rgba(0,0,0,.4), 0 1px 2px -1px rgba(0,0,0,.3);
+  --shadow-md:  0 4px 6px -1px rgba(0,0,0,.4), 0 2px 4px -2px rgba(0,0,0,.3);
+  --shadow-lg:  0 10px 15px -3px rgba(0,0,0,.5), 0 4px 6px -4px rgba(0,0,0,.3);
+}
+
+/* ══════════════════════════════════════════════════════════
+   BASE STYLES
+   Global reset & default typography
+   ══════════════════════════════════════════════════════════ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  font-weight: var(--font-normal);
+  line-height: var(--leading-normal);
+  color: var(--text-primary);
+  background-color: var(--bg-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Headings ─────────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-primary);
+}
+h1 { font-size: var(--text-4xl); }
+h2 { font-size: var(--text-3xl); }
+h3 { font-size: var(--text-2xl); }
+h4 { font-size: var(--text-xl);  }
+h5 { font-size: var(--text-lg);  }
+h6 { font-size: var(--text-base);}
+
+/* ── Text utilities ───────────────────────────────────────── */
+p   { color: var(--text-secondary); line-height: var(--leading-relaxed); }
+small { font-size: var(--text-sm); color: var(--text-tertiary); }
+
+a {
+  color: var(--text-link);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-default);
+}
+a:hover { color: var(--text-link-hover); text-decoration: underline; }
+
+code, pre {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+/* ── Focus visible (aksesibilitas) ───────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Scrollbar (opsional, webkit) ────────────────────────── */
+::-webkit-scrollbar        { width: 6px; height: 6px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: var(--border-default); border-radius: var(--radius-full); }
+::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }

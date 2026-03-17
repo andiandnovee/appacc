@@ -850,3 +850,11 @@
 [stacktrace]
 #0 {main}
 "} 
+[2026-03-13 06:48:24] local.ERROR: Command "@discover" is not defined. {"exception":"[object] (Symfony\\Component\\Console\\Exception\\CommandNotFoundException(code: 0): Command \"@discover\" is not defined. at /var/www/html/appacc/backend/vendor/symfony/console/Application.php:759)
+[stacktrace]
+#0 /var/www/html/appacc/backend/vendor/symfony/console/Application.php(298): Symfony\\Component\\Console\\Application->find()
+#1 /var/www/html/appacc/backend/vendor/symfony/console/Application.php(195): Symfony\\Component\\Console\\Application->doRun()
+#2 /var/www/html/appacc/backend/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run()
+#3 /var/www/html/appacc/backend/artisan(14): Illuminate\\Foundation\\Console\\Kernel->handle()
+#4 {main}
+"} 

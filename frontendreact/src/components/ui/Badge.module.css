@@ -1,0 +1,111 @@
+/* ============================================================
+   Badge.module.css
+   Semua nilai merujuk ke CSS variables dari tokens.css
+   ============================================================ */
+
+/* ── Base ──────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: var(--font-sans);
+  font-weight: var(--font-medium);
+  line-height: 1;
+  white-space: nowrap;
+  border-radius: var(--radius-md);
+  transition: opacity var(--duration-fast) var(--ease-default);
+}
+
+/* ── Pill modifier ─────────────────────────────────────────── */
+.pill {
+  border-radius: var(--radius-full);
+}
+
+/* ── Sizes ─────────────────────────────────────────────────── */
+.sm { padding: 2px var(--space-2);  font-size: 0.6875rem; } /* 11px */
+.md { padding: 3px var(--space-2);  font-size: var(--text-xs); }
+.lg { padding: var(--space-1) var(--space-3); font-size: var(--text-sm); }
+
+/* ── Variants: Light mode ──────────────────────────────────── */
+.default {
+  background-color: var(--bg-surface-2);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+
+.primary {
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-700);
+}
+
+.secondary {
+  background-color: var(--color-secondary-100);
+  color: var(--color-secondary-700);
+}
+
+.success {
+  background-color: var(--color-success-light);
+  color: var(--color-success-dark);
+}
+
+.warning {
+  background-color: var(--color-warning-light);
+  color: var(--color-warning-dark);
+}
+
+.danger {
+  background-color: var(--color-danger-light);
+  color: var(--color-danger-dark);
+}
+
+.info {
+  background-color: var(--color-info-light);
+  color: var(--color-info-dark);
+}
+
+/* ── Variants: Dark mode ───────────────────────────────────── */
+:global(.dark) .primary   { background-color: rgba(84, 112, 239, 0.15); color: var(--color-primary-300); }
+:global(.dark) .secondary { background-color: rgba(7, 195, 179, 0.15);  color: var(--color-secondary-300); }
+:global(.dark) .success   { background-color: rgba(22, 163, 74, 0.15);  color: #4ade80; }
+:global(.dark) .warning   { background-color: rgba(202, 138, 4, 0.15);  color: #fbbf24; }
+:global(.dark) .danger    { background-color: rgba(220, 38, 38, 0.15);  color: #f87171; }
+:global(.dark) .info      { background-color: rgba(37, 99, 235, 0.15);  color: #93c5fd; }
+
+/* ── Dot indicator ─────────────────────────────────────────── */
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background-color: currentColor;
+  flex-shrink: 0;
+}
+
+/* ── Icon slot ─────────────────────────────────────────────── */
+.icon {
+  display: flex;
+  align-items: center;
+  font-size: 0.75em;
+}
+
+/* ── Dismiss button ────────────────────────────────────────── */
+.dismiss {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-left: 2px;
+  cursor: pointer;
+  color: currentColor;
+  opacity: 0.55;
+  border-radius: var(--radius-sm);
+  line-height: 1;
+  transition: opacity var(--duration-fast) var(--ease-default);
+}
+
+.dismiss:hover  { opacity: 1; }
+.dismiss:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 1px;
+}

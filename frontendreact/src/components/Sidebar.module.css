@@ -1,0 +1,138 @@
+/* ============================================================
+   Sidebar.module.css
+   ============================================================ */
+
+/* ── Root ──────────────────────────────────────────────────── */
+.sidebar {
+  background-color: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  transition: width var(--duration-slow) var(--ease-default);
+  overflow: hidden;
+}
+
+.expanded  { width: var(--sidebar-width); }           /* 240px */
+.collapsed { width: var(--sidebar-collapsed-width); } /* 64px  */
+
+/* ── Header ────────────────────────────────────────────────── */
+.header {
+  height: var(--topbar-height);   /* sejajar dengan Navbar */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+/* Kalau collapsed, konten header di-center */
+.headerCollapsed {
+  justify-content: center;
+}
+
+.brand {
+  font-family: var(--font-sans);
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+  letter-spacing: var(--tracking-tight);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* ── Toggle button ─────────────────────────────────────────── */
+.toggleBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+  transition:
+    color var(--duration-fast) var(--ease-default),
+    background-color var(--duration-fast) var(--ease-default);
+}
+
+.toggleBtn:hover {
+  color: var(--text-primary);
+  background-color: var(--bg-surface-2);
+}
+
+/* ── Nav ───────────────────────────────────────────────────── */
+.nav {
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1;
+}
+
+/* ── Nav link ──────────────────────────────────────────────── */
+.navLink {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-secondary);
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background-color var(--duration-fast) var(--ease-default),
+    color var(--duration-fast) var(--ease-default);
+}
+
+.navLink:hover {
+  background-color: var(--bg-surface-2);
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+/* Active */
+.navLinkActive {
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-700);
+}
+
+:global(.dark) .navLinkActive {
+  background-color: rgba(84, 112, 239, 0.15);
+  color: var(--color-primary-300);
+}
+
+/* Collapsed: center icon */
+.navLinkCollapsed {
+  justify-content: center;
+  padding: var(--space-2);
+}
+
+/* ── Nav label (teks menu) ─────────────────────────────────── */
+.navLabel {
+  overflow: hidden;
+  white-space: nowrap;
+  /* Fade out saat collapse */
+  transition: opacity var(--duration-fast) var(--ease-default),
+              width var(--duration-fast) var(--ease-default);
+}
+
+.navLabelVisible { opacity: 1; }
+.navLabelHidden  { opacity: 0; width: 0; }
+
+/* ── Icon ──────────────────────────────────────────────────── */
+.icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}

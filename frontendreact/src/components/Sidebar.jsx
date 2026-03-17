@@ -1,94 +1,91 @@
-import { useState, useEffect } from "react"
-import { NavLink } from "react-router-dom"
+import { useState, useEffect } from 'react'
+import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard,
   Users,
   Settings,
   ChevronLeft,
-  ChevronRight
-} from "lucide-react"
+  ChevronRight,
+} from 'lucide-react'
+import styles from './Sidebar.module.css'
+
+/* ── Menu items — tambah item baru di sini saja ────────────── */
+const NAV_ITEMS = [
+  { to: '/',         icon: LayoutDashboard, label: 'Dashboard', end: true },
+  { to: '/users',    icon: Users,           label: 'Users' },
+  { to: '/settings', icon: Settings,        label: 'Settings' },
+]
 
 export default function Sidebar() {
-
   const [isCollapsed, setIsCollapsed] = useState(false)
-  const [isHovered, setIsHovered] = useState(false)
+  const [isHovered,   setIsHovered]   = useState(false)
 
+  // Auto-collapse di layar kecil
   useEffect(() => {
     const handleResize = () => setIsCollapsed(window.innerWidth < 768)
     handleResize()
-    window.addEventListener("resize", handleResize)
-    return () => window.removeEventListener("resize", handleResize)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  const isExpanded = !isCollapsed || isHovered       // ✅ logika tetap benar
-  const sidebarWidth = isExpanded ? "w-64" : "w-16"
+  // Expanded = tidak collapsed, ATAU sedang di-hover saat collapsed
+  const isExpanded = !isCollapsed || isHovered
+
+  const sidebarClass = [
+    styles.sidebar,
+    isExpanded ? styles.expanded : styles.collapsed,
+  ].join(' ')
 
   return (
-    <div
-      className={`bg-gray-900 text-gray-200 min-h-screen transition-all duration-300 ${sidebarWidth}`}
+    <aside
+      className={sidebarClass}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
 
       {/* Header */}
-      <div className="h-16 flex items-center justify-between px-4 border-b border-gray-800">
+      <div className={`${styles.header} ${!isExpanded ? styles.headerCollapsed : ''}`}>
 
-        {isExpanded && (                              // ✅ ganti expanded → isExpanded
-          <h1 className="font-bold text-lg">
-            MyDashboard
-          </h1>
+        {isExpanded && (
+          <h1 className={styles.brand}>MyDashboard</h1>
         )}
 
         <button
-          onClick={() => setIsCollapsed(!isCollapsed)} // ✅ ganti setExpanded → setIsCollapsed
-          className="text-gray-400 hover:text-white"
+          className={styles.toggleBtn}
+          onClick={() => setIsCollapsed(v => !v)}
+          aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          {isExpanded                                  // ✅ ganti expanded → isExpanded
-            ? <ChevronLeft size={20} />
-            : <ChevronRight size={20} />
+          {isExpanded
+            ? <ChevronLeft size={18} />
+            : <ChevronRight size={18} />
           }
         </button>
 
       </div>
 
-      {/* Menu */}
-      <nav className="p-3 space-y-2">
-
-        <NavLink
-          to="/"
-          className={({ isActive }) =>
-            `flex items-center gap-3 p-3 rounded-lg transition
-            ${isActive ? "bg-gray-700 text-white" : "hover:bg-gray-800"}`
-          }
-        >
-          <LayoutDashboard size={18} />
-          {isExpanded && "Dashboard"}                  {/* ✅ */}
-        </NavLink>
-
-        <NavLink
-          to="/users"
-          className={({ isActive }) =>
-            `flex items-center gap-3 p-3 rounded-lg transition
-            ${isActive ? "bg-gray-700 text-white" : "hover:bg-gray-800"}`
-          }
-        >
-          <Users size={18} />
-          {isExpanded && "Users"}                      {/* ✅ */}
-        </NavLink>
-
-        <NavLink
-          to="/settings"
-          className={({ isActive }) =>
-            `flex items-center gap-3 p-3 rounded-lg transition
-            ${isActive ? "bg-gray-700 text-white" : "hover:bg-gray-800"}`
-          }
-        >
-          <Settings size={18} />
-          {isExpanded && "Settings"}                   {/* ✅ */}
-        </NavLink>
-
+      {/* Nav */}
+      <nav className={styles.nav}>
+        {NAV_ITEMS.map(({ to, icon: Icon, label, end }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={end}
+            className={({ isActive }) => [
+              styles.navLink,
+              !isExpanded ? styles.navLinkCollapsed : '',
+              isActive     ? styles.navLinkActive    : '',
+            ].filter(Boolean).join(' ')}
+          >
+            <span className={styles.icon}>
+              <Icon size={18} />
+            </span>
+            <span className={`${styles.navLabel} ${isExpanded ? styles.navLabelVisible : styles.navLabelHidden}`}>
+              {label}
+            </span>
+          </NavLink>
+        ))}
       </nav>
 
-    </div>
+    </aside>
   )
 }

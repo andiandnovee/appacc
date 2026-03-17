@@ -1,0 +1,96 @@
+/* ============================================================
+   Alert.module.css
+   ============================================================ */
+
+/* ── Base ──────────────────────────────────────────────────── */
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  font-family: var(--font-sans);
+  position: relative;
+}
+
+/* ── Variants ──────────────────────────────────────────────── */
+.success {
+  background-color: var(--color-success-light);
+  border-color: var(--color-success);
+  color: var(--color-success-dark);
+}
+
+.warning {
+  background-color: var(--color-warning-light);
+  border-color: var(--color-warning);
+  color: var(--color-warning-dark);
+}
+
+.danger {
+  background-color: var(--color-danger-light);
+  border-color: var(--color-danger);
+  color: var(--color-danger-dark);
+}
+
+.info {
+  background-color: var(--color-info-light);
+  border-color: var(--color-info);
+  color: var(--color-info-dark);
+}
+
+/* Dark mode */
+:global(.dark) .success { background-color: rgba(22, 163, 74, 0.12);  border-color: rgba(22, 163, 74, 0.3);  color: #4ade80; }
+:global(.dark) .warning { background-color: rgba(202, 138, 4, 0.12);  border-color: rgba(202, 138, 4, 0.3);  color: #fbbf24; }
+:global(.dark) .danger  { background-color: rgba(220, 38, 38, 0.12);  border-color: rgba(220, 38, 38, 0.3);  color: #f87171; }
+:global(.dark) .info    { background-color: rgba(37, 99, 235, 0.12);  border-color: rgba(37, 99, 235, 0.3);  color: #93c5fd; }
+
+/* ── Icon ──────────────────────────────────────────────────── */
+.icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ── Content ───────────────────────────────────────────────── */
+.content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.title {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-tight);
+  margin: 0;
+}
+
+.description {
+  font-size: var(--text-sm);
+  font-weight: var(--font-normal);
+  line-height: var(--leading-normal);
+  opacity: 0.85;
+  margin: 0;
+}
+
+/* ── Dismiss button ────────────────────────────────────────── */
+.dismiss {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: currentColor;
+  opacity: 0.5;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  transition: opacity var(--duration-fast) var(--ease-default);
+}
+
+.dismiss:hover { opacity: 1; }

@@ -1,0 +1,209 @@
+/* ============================================================
+   Navbar.module.css
+   ============================================================ */
+
+/* ── Root ──────────────────────────────────────────────────── */
+.navbar {
+  height: var(--topbar-height);        /* 60px dari tokens */
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-6);
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+}
+
+/* ── Search ────────────────────────────────────────────────── */
+.search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background-color: var(--bg-surface-2);
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-lg);
+  padding: var(--space-2) var(--space-3);
+  width: 260px;
+  transition:
+    border-color var(--duration-normal) var(--ease-default),
+    box-shadow var(--duration-normal) var(--ease-default);
+}
+
+.search:focus-within {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(84, 112, 239, 0.12);
+}
+
+.searchIcon {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.searchInput {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  width: 100%;
+}
+
+.searchInput::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* ── Right section ─────────────────────────────────────────── */
+.right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+}
+
+/* ── Icon button (notif, dll) ──────────────────────────────── */
+.iconBtn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: var(--space-1);
+  border-radius: var(--radius-md);
+  transition: color var(--duration-fast) var(--ease-default),
+              background-color var(--duration-fast) var(--ease-default);
+}
+
+.iconBtn:hover {
+  color: var(--text-primary);
+  background-color: var(--bg-surface-2);
+}
+
+/* ── Notification badge ────────────────────────────────────── */
+.badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background-color: var(--color-danger);
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: 0.625rem;   /* 10px */
+  font-weight: var(--font-semibold);
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: var(--radius-full);
+  min-width: 16px;
+  text-align: center;
+}
+
+/* ── Profile button ────────────────────────────────────────── */
+.profileBtn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-lg);
+  transition: background-color var(--duration-fast) var(--ease-default);
+}
+
+.profileBtn:hover {
+  background-color: var(--bg-surface-2);
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  border: 1.5px solid var(--border-subtle);
+}
+
+.profileName {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
+}
+
+.chevron {
+  color: var(--text-tertiary);
+  transition: transform var(--duration-fast) var(--ease-default);
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+/* ── Dropdown ──────────────────────────────────────────────── */
+.dropdownWrapper {
+  position: relative;
+}
+
+.dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--space-2));
+  width: 168px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  z-index: var(--z-dropdown);
+
+  /* Animasi masuk */
+  animation: dropdownIn var(--duration-fast) var(--ease-out);
+}
+
+@keyframes dropdownIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.dropdownItem {
+  display: block;
+  width: 100%;
+  padding: var(--space-2) var(--space-4);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--font-normal);
+  color: var(--text-secondary);
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color var(--duration-fast) var(--ease-default),
+              color var(--duration-fast) var(--ease-default);
+}
+
+.dropdownItem:hover {
+  background-color: var(--bg-surface-2);
+  color: var(--text-primary);
+}
+
+.dropdownItem:last-child {
+  color: var(--color-danger);
+}
+
+.dropdownItem:last-child:hover {
+  background-color: var(--color-danger-light);
+  color: var(--color-danger-dark);
+}
+
+/* ── Divider di dropdown ───────────────────────────────────── */
+.dropdownDivider {
+  height: 1px;
+  background-color: var(--border-subtle);
+  margin: var(--space-1) 0;
+}
