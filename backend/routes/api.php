@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\Admin\RoleManagementController;    
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\DashboardController;
@@ -56,6 +58,21 @@ Route::middleware('auth:api')->group(function () {
             ->middleware('check-permission:edit users');
     });
 
+    Route::middleware(['auth:api', 'role:superadmin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        // Users
+        Route::get('/users',              [UserManagementController::class, 'index']);
+        Route::put('/users/{user}/roles', [UserManagementController::class, 'assignRoles']);
+        Route::delete('/users/{user}',    [UserManagementController::class, 'destroy']);
+
+        // Roles
+        Route::get('/roles',              [RoleManagementController::class, 'index']);
+        Route::post('/roles',             [RoleManagementController::class, 'store']);
+        Route::put('/roles/{role}',       [RoleManagementController::class, 'update']);
+        Route::delete('/roles/{role}',    [RoleManagementController::class, 'destroy']);
+    });
     // Roles
     Route::prefix('roles')->group(function () {
         Route::get('/', [RoleController::class, 'index'])

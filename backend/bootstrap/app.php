@@ -1,9 +1,9 @@
 <?php
 
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -53,6 +53,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
             'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
             'check-permission' => \App\Http\Middleware\CheckPermission::class,
+            'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
         ]);
     })
 
@@ -61,7 +63,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // 🔥 Override total AuthenticationException
         $exceptions->render(function (AuthenticationException $e, Request $request) {
             return response()->json([
-                'message' => 'Unauthenticated'
+                'message' => 'Unauthenticated',
             ], 401);
         });
 

@@ -1,0 +1,82 @@
+/* RangeSlider.module.css */
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.label {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
+}
+
+.valueDisplay {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--color-primary-600);
+  font-weight: var(--font-medium);
+}
+
+.sliderTrack {
+  position: relative;
+  height: 6px;
+  background-color: var(--bg-surface-2);
+  border-radius: var(--radius-full);
+  margin: var(--space-2) 0;
+}
+
+.sliderFill {
+  position: absolute;
+  height: 100%;
+  background-color: var(--color-primary-500);
+  border-radius: var(--radius-full);
+  pointer-events: none;
+}
+
+.input {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+}
+
+/* Custom thumb via overlay */
+.thumb {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 18px;
+  height: 18px;
+  background-color: #fff;
+  border: 2px solid var(--color-primary-500);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-sm);
+  pointer-events: none;
+  transition: box-shadow var(--duration-fast) var(--ease-default);
+}
+
+.wrapper:focus-within .thumb {
+  box-shadow: 0 0 0 3px rgba(84, 112, 239, 0.2);
+}
+
+/* Min-max labels */
+.minMax {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}

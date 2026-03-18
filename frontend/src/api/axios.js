@@ -11,7 +11,7 @@ const api = axios.create({
 // ── Request interceptor: inject token ─────────────────────────
 api.interceptors.request.use((config) => {
   const token =
-    localStorage.getItem("token") ?? sessionStorage.getItem("token");
+    localStorage.getItem("appacc_token") ?? sessionStorage.getItem("appacc_token");
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -37,9 +37,8 @@ api.interceptors.response.use(
           {},
           {
             headers: {
-              Authorization: `Bearer ${
-                localStorage.getItem("token") ?? sessionStorage.getItem("token")
-              }`,
+              Authorization: `Bearer ${localStorage.getItem("appacc_token") ?? sessionStorage.getItem("appacc_token")
+                }`,
             },
           }
         );
@@ -47,10 +46,10 @@ api.interceptors.response.use(
         const newToken = res.data.token;
 
         // Simpan ke storage yang sama
-        if (localStorage.getItem("token")) {
-          localStorage.setItem("token", newToken);
+        if (localStorage.getItem("appacc_token")) {
+          localStorage.setItem("appacc_token", newToken);
         } else {
-          sessionStorage.setItem("token", newToken);
+          sessionStorage.setItem("appacc_token", newToken);
         }
 
         original.headers.Authorization = `Bearer ${newToken}`;
@@ -58,8 +57,8 @@ api.interceptors.response.use(
 
       } catch {
         // Refresh gagal → paksa logout
-        localStorage.removeItem("token");
-        sessionStorage.removeItem("token");
+        localStorage.removeItem("appacc_token");
+        sessionStorage.removeItem("appacc_token");
         window.location.href = "/login";
       }
     }

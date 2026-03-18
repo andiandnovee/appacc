@@ -1,0 +1,85 @@
+/* StatCard.module.css */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.label {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.iconBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-lg);
+  flex-shrink: 0;
+}
+
+/* Icon colors */
+.primary   { background-color: var(--color-primary-100);  color: var(--color-primary-600); }
+.success   { background-color: var(--color-success-light); color: var(--color-success); }
+.warning   { background-color: var(--color-warning-light); color: var(--color-warning); }
+.danger    { background-color: var(--color-danger-light);  color: var(--color-danger); }
+.secondary { background-color: var(--color-secondary-100); color: var(--color-secondary-600); }
+
+:global(.dark) .primary   { background-color: rgba(84,112,239,.15); color: var(--color-primary-400); }
+:global(.dark) .success   { background-color: rgba(22,163,74,.15);  color: #4ade80; }
+:global(.dark) .warning   { background-color: rgba(202,138,4,.15);  color: #fbbf24; }
+:global(.dark) .danger    { background-color: rgba(220,38,38,.15);  color: #f87171; }
+
+.value {
+  font-family: var(--font-sans);
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+  letter-spacing: var(--tracking-tight);
+  line-height: 1;
+  margin: 0;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+}
+
+.trendUp   { background-color: var(--color-success-light); color: var(--color-success-dark); }
+.trendDown { background-color: var(--color-danger-light);  color: var(--color-danger-dark);  }
+.trendFlat { background-color: var(--bg-surface-2);        color: var(--text-tertiary); }
+
+:global(.dark) .trendUp   { background-color: rgba(22,163,74,.15); color: #4ade80; }
+:global(.dark) .trendDown { background-color: rgba(220,38,38,.15); color: #f87171; }
+
+.trendDesc {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}

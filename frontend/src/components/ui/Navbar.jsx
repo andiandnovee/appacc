@@ -1,16 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, Bell, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../../hooks/useAuth";
 import ThemeToggle from "./Themetoggle";
 import styles from "./Navbar.module.css";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
-  const navigate         = useNavigate();
-  const [open, setOpen]  = useState(false);
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const dropdownRef      = useRef(null);
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -30,7 +30,12 @@ export default function Navbar() {
 
   // Avatar fallback: inisial nama
   const initials = user?.name
-    ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+    ? user.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
     : "?";
 
   return (
@@ -90,12 +95,20 @@ export default function Navbar() {
                 <p className={styles.dropdownEmail}>{user?.email}</p>
               </div>
               <div className={styles.dropdownDivider} />
-              <a href="/profile" className={styles.dropdownItem} role="menuitem"
-                onClick={() => setOpen(false)}>
+              <a
+                href="/profile"
+                className={styles.dropdownItem}
+                role="menuitem"
+                onClick={() => setOpen(false)}
+              >
                 Profile
               </a>
-              <a href="/settings" className={styles.dropdownItem} role="menuitem"
-                onClick={() => setOpen(false)}>
+              <a
+                href="/settings"
+                className={styles.dropdownItem}
+                role="menuitem"
+                onClick={() => setOpen(false)}
+              >
                 Settings
               </a>
               <div className={styles.dropdownDivider} />

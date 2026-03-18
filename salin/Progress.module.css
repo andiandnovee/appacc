@@ -1,0 +1,101 @@
+/* Progress.module.css */
+
+/* ── Progress Bar ──────────────────────────────────────────── */
+.barWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.barHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.barLabel {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
+}
+
+.barValue {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.track {
+  width: 100%;
+  background-color: var(--bg-surface-2);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.trackSm { height: 4px; }
+.trackMd { height: 8px; }
+.trackLg { height: 12px; }
+
+.fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width var(--duration-slow) var(--ease-default);
+}
+
+/* Variants */
+.primary   .fill { background-color: var(--color-primary-500); }
+.success   .fill { background-color: var(--color-success); }
+.warning   .fill { background-color: var(--color-warning); }
+.danger    .fill { background-color: var(--color-danger); }
+
+/* Striped */
+.striped .fill {
+  background-image: linear-gradient(
+    45deg,
+    rgba(255,255,255,.15) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255,255,255,.15) 50%,
+    rgba(255,255,255,.15) 75%,
+    transparent 75%
+  );
+  background-size: 1rem 1rem;
+  animation: stripes 1s linear infinite;
+}
+
+@keyframes stripes {
+  from { background-position: 1rem 0; }
+  to   { background-position: 0 0; }
+}
+
+/* ── Progress Ring ─────────────────────────────────────────── */
+.ring {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ringLabel {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.ringValue {
+  font-family: var(--font-sans);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.ringCaption {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}

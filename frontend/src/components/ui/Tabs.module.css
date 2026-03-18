@@ -1,0 +1,72 @@
+/* Tabs.module.css */
+
+.wrapper { display: flex; flex-direction: column; }
+
+/* ── Tab list ──────────────────────────────────────────────── */
+.list {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--border-subtle);
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.list::-webkit-scrollbar { display: none; }
+
+/* ── Tab trigger ───────────────────────────────────────────── */
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  margin-bottom: -1px;
+  transition:
+    color var(--duration-fast) var(--ease-default),
+    border-color var(--duration-fast) var(--ease-default);
+}
+
+.tab:hover { color: var(--text-primary); }
+
+.tabActive {
+  color: var(--color-primary-600);
+  border-bottom-color: var(--color-primary-500);
+}
+
+.tab:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Badge count di tab ────────────────────────────────────── */
+.tabCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  background-color: var(--bg-surface-2);
+  border-radius: var(--radius-full);
+  font-size: 0.625rem;
+  font-weight: var(--font-semibold);
+  color: var(--text-secondary);
+}
+
+.tabActive .tabCount {
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-700);
+}
+
+/* ── Panel ─────────────────────────────────────────────────── */
+.panel {
+  padding-top: var(--space-4);
+}

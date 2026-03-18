@@ -10,7 +10,7 @@ export function AuthProvider({ children }) {
   // ── Boot: cek token di storage ─────────────────────────────
   useEffect(() => {
     const token =
-      localStorage.getItem("token") ?? sessionStorage.getItem("token");
+      localStorage.getItem("appacc_token") ?? sessionStorage.getItem("appacc_token");
 
     if (!token) {
       setLoading(false);
@@ -20,8 +20,8 @@ export function AuthProvider({ children }) {
     api.get("/auth/me")
       .then((res) => setUser(res.data.data))
       .catch(() => {
-        localStorage.removeItem("token");
-        sessionStorage.removeItem("token");
+        localStorage.removeItem("appacc_token");
+        sessionStorage.removeItem("appacc_token");
       })
       .finally(() => setLoading(false));
   }, []);
@@ -29,7 +29,7 @@ export function AuthProvider({ children }) {
   // ── Login: simpan token + set user ─────────────────────────
   const login = (token, userData, remember = false) => {
     const storage = remember ? localStorage : sessionStorage;
-    storage.setItem("token", token);
+    storage.setItem("appacc_token", token);
     setUser(userData);
   };
 
@@ -40,8 +40,8 @@ export function AuthProvider({ children }) {
     } catch {
       // tetap logout meski request gagal
     } finally {
-      localStorage.removeItem("token");
-      sessionStorage.removeItem("token");
+      localStorage.removeItem("appacc_token");
+      sessionStorage.removeItem("appacc_token");
       setUser(null);
     }
   };
