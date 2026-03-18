@@ -207,3 +207,37 @@
   background-color: var(--border-subtle);
   margin: var(--space-1) 0;
 }
+
+
+.avatarFallback {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  display: grid;
+  place-items: center;
+}
+
+.dropdownHeader {
+  padding: 8px 16px;
+}
+
+.dropdownName {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.dropdownEmail {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.dropdownLogout {
+  color: var(--color-danger);
+  width: 100%;
+  text-align: left;
+}

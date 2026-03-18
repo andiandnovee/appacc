@@ -4,84 +4,125 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
+use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
 
 class SocialAuthController extends Controller
 {
-    protected $allowed = ['google', 'facebook'];
+    protected array $allowed = ['google', 'facebook'];
 
-    public function redirect($provider)
+    /**
+     * Return OAuth redirect URL ke client
+     * GET /api/auth/{provider}/redirect
+     */
+    public function redirect(string $provider)
     {
-        if (! in_array($provider, $this->allowed)) {
-            return response()->json(['success' => false, 'message' => 'Unsupported provider'], 400);
+        if (!in_array($provider, $this->allowed)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Provider tidak didukung.',
+            ], 400);
         }
 
         $redirectUrl = Socialite::driver($provider)->stateless()->redirect()->getTargetUrl();
 
         return response()->json([
             'success' => true,
-            'data' => ['redirect_url' => $redirectUrl],
+            'data'    => ['redirect_url' => $redirectUrl],
         ]);
     }
 
-    public function callback(Request $request, $provider)
+    /**
+     * Handle OAuth callback dari provider → redirect ke frontend dengan JWT
+     * GET /api/auth/{provider}/callback
+     */
+    public function callback(string $provider)
     {
-        if (! in_array($provider, $this->allowed)) {
-            return response()->json(['success' => false, 'message' => 'Unsupported provider'], 400);
+        if (!in_array($provider, $this->allowed)) {
+            return $this->redirectWithError('Provider tidak didukung.');
         }
 
         try {
             $socialUser = Socialite::driver($provider)->stateless()->user();
-
-            // Find by provider_id
-            $user = User::where('provider', $provider)
-                ->where('provider_id', $socialUser->getId())
-                ->first();
-
-            if (! $user && $socialUser->getEmail()) {
-                $user = User::where('email', $socialUser->getEmail())->first();
-            }
-
-            if ($user) {
-                $user->update([
-                    'provider' => $provider,
-                    'provider_id' => $socialUser->getId(),
-                    'avatar' => $socialUser->getAvatar(),
-                ]);
-            } else {
-                $user = User::create([
-                    'name' => $socialUser->getName() ?? $socialUser->getNickname(),
-                    'email' => $socialUser->getEmail(),
-                    'avatar' => $socialUser->getAvatar(),
-                    'provider' => $provider,
-                    'provider_id' => $socialUser->getId(),
-                    'password' => Str::random(16),
-                    'is_active' => true,
-                ]);
-
-                // Assign default role if roles package is used
-                if (method_exists($user, 'assignRole')) {
-                    try {
-                        $user->assignRole('viewer');
-                    } catch (\Exception $e) {
-                        // ignore if role doesn't exist
-                    }
-                }
-            }
-
-            $token = $user->createToken('api-token')->plainTextToken;
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'token' => $token,
-                    'user' => $user,
-                ],
-            ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'OAuth failed'], 500);
+            \Log::error("OAuth [{$provider}] gagal ambil user: " . $e->getMessage());
+            return $this->redirectWithError('Gagal autentikasi dengan ' . $provider . '.');
         }
+
+        try {
+            $user = $this->findOrCreateUser($socialUser, $provider);
+        } catch (\Exception $e) {
+            \Log::error("OAuth [{$provider}] gagal find/create user: " . $e->getMessage());
+            return $this->redirectWithError('Gagal memproses akun.');
+        }
+
+        if (!$user->is_active) {
+            return $this->redirectWithError('Akun Anda tidak aktif. Hubungi administrator.');
+        }
+
+        try {
+            $token = auth('api')->login($user);
+        } catch (JWTException $e) {
+            \Log::error("OAuth [{$provider}] gagal issue JWT: " . $e->getMessage());
+            return $this->redirectWithError('Gagal membuat token. Silakan coba lagi.');
+        }
+
+        // Redirect ke frontend dengan JWT di query string
+        $frontendUrl = config('app.frontend_url') . '/auth/callback?token=' . $token;
+
+        return redirect($frontendUrl);
+    }
+
+    // ─── Helpers ────────────────────────────────────────────────────────────
+
+    protected function findOrCreateUser($socialUser, string $provider): User
+    {
+        // Cari by provider_id
+        $user = User::where('provider', $provider)
+            ->where('provider_id', $socialUser->getId())
+            ->first();
+
+        // Fallback: cari by email
+        if (!$user && $socialUser->getEmail()) {
+            $user = User::where('email', $socialUser->getEmail())->first();
+        }
+
+        if ($user) {
+            $user->update([
+                'provider'    => $provider,
+                'provider_id' => $socialUser->getId(),
+                'avatar'      => $socialUser->getAvatar(),
+            ]);
+
+            return $user;
+        }
+
+        // Buat user baru
+        $user = User::create([
+            'name'        => $socialUser->getName() ?? $socialUser->getNickname() ?? 'User',
+            'email'       => $socialUser->getEmail(),
+            'avatar'      => $socialUser->getAvatar(),
+            'provider'    => $provider,
+            'provider_id' => $socialUser->getId(),
+            'password'    => bcrypt(Str::random(32)),
+            'is_active'   => true,
+        ]);
+
+        if (method_exists($user, 'assignRole')) {
+            try {
+                $user->assignRole('viewer');
+            } catch (\Exception $e) {
+                // Role 'viewer' belum exist — skip
+            }
+        }
+
+        return $user;
+    }
+
+    protected function redirectWithError(string $message): \Illuminate\Http\RedirectResponse
+    {
+        $url = config('app.frontend_url') . '/login?error=' . urlencode($message);
+        return redirect($url);
     }
 }

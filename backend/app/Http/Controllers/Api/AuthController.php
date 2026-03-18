@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
 
 class AuthController extends Controller
@@ -23,6 +23,7 @@ class AuthController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
+                'success' => false,
                 'message' => 'Validasi gagal',
                 'errors'  => $validator->errors(),
             ], 422);
@@ -30,17 +31,18 @@ class AuthController extends Controller
 
         $credentials = $request->only('email', 'password');
 
-        // Cek apakah user aktif
-        $user = \App\Models\User::where('email', $request->email)->first();
+        $user = User::where('email', $request->email)->first();
 
         if ($user && !$user->is_active) {
             return response()->json([
+                'success' => false,
                 'message' => 'Akun Anda tidak aktif. Hubungi administrator.',
             ], 403);
         }
 
         if (!$token = auth('api')->attempt($credentials)) {
             return response()->json([
+                'success' => false,
                 'message' => 'Email atau password salah.',
             ], 401);
         }
@@ -55,7 +57,8 @@ class AuthController extends Controller
     public function me()
     {
         return response()->json([
-            'data' => auth('api')->user(),
+            'success' => true,
+            'data'    => $this->formatUser(auth('api')->user()),
         ]);
     }
 
@@ -68,10 +71,12 @@ class AuthController extends Controller
         try {
             auth('api')->logout();
             return response()->json([
+                'success' => true,
                 'message' => 'Logout berhasil.',
             ]);
         } catch (JWTException $e) {
             return response()->json([
+                'success' => false,
                 'message' => 'Gagal logout.',
             ], 500);
         }
@@ -88,30 +93,37 @@ class AuthController extends Controller
             return $this->respondWithToken($token, auth('api')->user());
         } catch (JWTException $e) {
             return response()->json([
+                'success' => false,
                 'message' => 'Token tidak valid atau sudah expired.',
             ], 401);
         }
     }
 
-    /**
-     * Format token response
-     */
+    // ─── Helpers ────────────────────────────────────────────────────────────
+
     private function respondWithToken(string $token, $user): \Illuminate\Http\JsonResponse
     {
         return response()->json([
+            'success'    => true,
             'message'    => 'Login berhasil.',
             'token'      => $token,
             'token_type' => 'bearer',
             'expires_in' => auth('api')->factory()->getTTL() * 60,
-            'user'       => [
-                'id'          => $user->id,
-                'name'        => $user->name,
-                'email'       => $user->email,
-                'avatar'      => $user->avatar,
-                'is_active'   => $user->is_active,
-                'roles'       => $user->role_names,
-                'permissions' => $user->permission_names,
-            ],
+            'data'       => $this->formatUser($user),
         ]);
+    }
+
+    private function formatUser($user): array
+    {
+        return [
+            'id'          => $user->id,
+            'name'        => $user->name,
+            'email'       => $user->email,
+            'avatar'      => $user->avatar,
+            'provider'    => $user->provider ?? null,
+            'is_active'   => $user->is_active,
+            'roles'       => $user->role_names,
+            'permissions' => $user->permission_names,
+        ];
     }
 }

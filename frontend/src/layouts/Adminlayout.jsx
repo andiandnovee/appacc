@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import styles from './AdminLayout.module.css'
+import styles from './Adminlayout.module.css'
 
 export default function AdminLayout() {
   return (

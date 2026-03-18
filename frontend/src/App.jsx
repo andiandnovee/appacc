@@ -1,25 +1,43 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./hooks/useAuth";
+import { ToastProvider } from "./components/ui/Toast";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import DashboardLayout from "./layouts/Dashboardlayout";
+import AdminLayout    from "./layouts/Adminlayout";
 
-import Home from "./pages/general/Home";
-import Users from "./pages/general/Users";
-import Settings from "./pages/general/Settings";
+import Login        from "./pages/general/Login";
+import AuthCallback from "./pages/auth/AuthCallback";
+import Home         from "./pages/general/Home";
+import Users        from "./pages/general/Users";
+import Settings     from "./pages/general/Settings";
 
 export default function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route element={<DashboardLayout />}>
-          <Route path="/" element={<Home />} />
+      <AuthProvider>
+        <ToastProvider>
+          <Routes>
 
-          <Route path="/users" element={<Users />} />
+            {/* ── Public ──────────────────────────────── */}
+            <Route path="/login"         element={<Login />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
 
-          <Route path="/settings" element={<Settings />} />
-        </Route>
-      </Routes>
+            {/* ── Protected ───────────────────────────── */}
+            <Route element={<ProtectedRoute />}>
+              <Route element={<DashboardLayout />}>
+                <Route path="/"          element={<Home />} />
+                <Route path="/users"     element={<Users />} />
+                <Route path="/settings"  element={<Settings />} />
+              </Route>
+            </Route>
+
+            {/* ── Fallback ────────────────────────────── */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+
+          </Routes>
+        </ToastProvider>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

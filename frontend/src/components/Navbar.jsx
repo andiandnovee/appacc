@@ -1,14 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, Bell, ChevronDown } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 import ThemeToggle from "./Themetoggle";
 import styles from "./Navbar.module.css";
 
 export default function Navbar() {
-  const [open, setOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate         = useNavigate();
+  const [open, setOpen]  = useState(false);
   const [search, setSearch] = useState("");
-  const dropdownRef = useRef(null);
+  const dropdownRef      = useRef(null);
 
-  // ── Tutup dropdown kalau klik di luar ──────────────────
   useEffect(() => {
     function handleClickOutside(e) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -18,6 +21,17 @@ export default function Navbar() {
     if (open) document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
+
+  const handleLogout = async () => {
+    setOpen(false);
+    await logout();
+    navigate("/login");
+  };
+
+  // Avatar fallback: inisial nama
+  const initials = user?.name
+    ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+    : "?";
 
   return (
     <header className={styles.navbar}>
@@ -37,15 +51,11 @@ export default function Navbar() {
 
       {/* Right section */}
       <div className={styles.right}>
-        {/* Dark mode toggle */}
         <ThemeToggle />
 
-        {/* Notification */}
         <button className={styles.iconBtn} aria-label="Notifikasi">
           <Bell size={20} />
-          <span className={styles.badge} aria-label="3 notifikasi baru">
-            3
-          </span>
+          <span className={styles.badge}>3</span>
         </button>
 
         {/* Profile dropdown */}
@@ -56,45 +66,43 @@ export default function Navbar() {
             aria-expanded={open}
             aria-haspopup="true"
           >
-            <img
-              src="https://i.pravatar.cc/40"
-              alt="Avatar Admin"
-              className={styles.avatar}
-            />
-            <span className={styles.profileName}>Admin</span>
+            {user?.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user.name}
+                className={styles.avatar}
+              />
+            ) : (
+              <div className={styles.avatarFallback}>{initials}</div>
+            )}
+            <span className={styles.profileName}>{user?.name ?? "..."}</span>
             <ChevronDown
               size={16}
               className={`${styles.chevron} ${open ? styles.chevronOpen : ""}`}
             />
           </button>
 
-          {/* Dropdown menu */}
           {open && (
             <div className={styles.dropdown} role="menu">
-              <a
-                href="/profile"
-                className={styles.dropdownItem}
-                role="menuitem"
-                onClick={() => setOpen(false)}
-              >
+              {/* Info user */}
+              <div className={styles.dropdownHeader}>
+                <p className={styles.dropdownName}>{user?.name}</p>
+                <p className={styles.dropdownEmail}>{user?.email}</p>
+              </div>
+              <div className={styles.dropdownDivider} />
+              <a href="/profile" className={styles.dropdownItem} role="menuitem"
+                onClick={() => setOpen(false)}>
                 Profile
               </a>
-              <a
-                href="/settings"
-                className={styles.dropdownItem}
-                role="menuitem"
-                onClick={() => setOpen(false)}
-              >
+              <a href="/settings" className={styles.dropdownItem} role="menuitem"
+                onClick={() => setOpen(false)}>
                 Settings
               </a>
               <div className={styles.dropdownDivider} />
               <button
-                className={styles.dropdownItem}
+                className={`${styles.dropdownItem} ${styles.dropdownLogout}`}
                 role="menuitem"
-                onClick={() => {
-                  setOpen(false);
-                  // tambahkan logout logic di sini
-                }}
+                onClick={handleLogout}
               >
                 Logout
               </button>

@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useAuth } from "../../hooks/useAuth";
+
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, LayoutDashboard } from "lucide-react";
 import Button from "../../components/ui/Button";
@@ -36,7 +38,7 @@ const GoogleIcon = () => (
 export default function Login() {
   const navigate = useNavigate();
   const { addToast } = useToast();
-
+  const { login } = useAuth();
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -106,15 +108,16 @@ export default function Login() {
 
       // Simpan JWT token
       // Kalau remember: localStorage, kalau tidak: sessionStorage
-      const storage = form.remember ? localStorage : sessionStorage;
-      storage.setItem("token", data.token);
+      // Simpan token + set user via context
+      login(data.token, data.data, form.remember);
 
       addToast({
         variant: "success",
         title: "Login berhasil",
-        description: `Selamat datang kembali!`,
+        description: `Selamat datang kembali, ${data.data?.name}!`,
       });
-      navigate("/dashboard");
+      navigate("/");
+     // navigate("/dashboard");
     } catch {
       setApiError("Tidak dapat terhubung ke server. Periksa koneksi Anda.");
     } finally {
@@ -123,10 +126,24 @@ export default function Login() {
   };
 
   // ── Google login ────────────────────────────────────────
-  const handleGoogle = () => {
-    // Redirect ke Laravel Socialite endpoint
-    window.location.href = `${import.meta.env.VITE_API_URL}/auth/google/redirect`;
-  };
+  // ── Google login ────────────────────────────────────────
+const handleGoogle = async () => {
+  try {
+    const res = await fetch(
+      `${import.meta.env.VITE_API_URL}/auth/google/redirect`,
+      { headers: { Accept: "application/json" } }
+    );
+    const data = await res.json();
+
+    if (data?.data?.redirect_url) {
+      window.location.href = data.data.redirect_url;
+    } else {
+      setApiError("Gagal mendapatkan URL Google. Coba lagi.");
+    }
+  } catch {
+    setApiError("Tidak dapat terhubung ke server.");
+  }
+};
 
   return (
     <div className={styles.page}>
