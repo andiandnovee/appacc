@@ -3,7 +3,7 @@
 use App\Http\Controllers\Admin\RoleManagementController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\VendorController;
+use App\Http\Controllers\Api\Vendor\VendorController;
 use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PermissionController;
