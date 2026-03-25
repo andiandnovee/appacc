@@ -3,9 +3,9 @@
 /node_modules/
 
 # Laravel specific
-.env
-.env.backup
-.env.production
+#.env
+#.env.backup
+#.env.production
 /storage/*.key
 /storage/app/public/*
 /storage/framework/cache/*

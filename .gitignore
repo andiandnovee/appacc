@@ -11,8 +11,8 @@ Thumbs.db
 *.log
 
 # Env (catch-all safety net)
-.env
-.env.local
+#.env
+#.env.local
 
 # Archives
 *.zip
