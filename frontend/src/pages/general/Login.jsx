@@ -117,7 +117,7 @@ export default function Login() {
         description: `Selamat datang kembali, ${data.data?.name}!`,
       });
       navigate("/");
-     // navigate("/dashboard");
+      // navigate("/dashboard");
     } catch {
       setApiError("Tidak dapat terhubung ke server. Periksa koneksi Anda.");
     } finally {
@@ -127,23 +127,23 @@ export default function Login() {
 
   // ── Google login ────────────────────────────────────────
   // ── Google login ────────────────────────────────────────
-const handleGoogle = async () => {
-  try {
-    const res = await fetch(
-      `${import.meta.env.VITE_API_URL}/auth/google/redirect`,
-      { headers: { Accept: "application/json" } }
-    );
-    const data = await res.json();
+  const handleGoogle = async () => {
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/auth/google/redirect`,
+        { headers: { Accept: "application/json" } },
+      );
+      const data = await res.json();
 
-    if (data?.data?.redirect_url) {
-      window.location.href = data.data.redirect_url;
-    } else {
-      setApiError("Gagal mendapatkan URL Google. Coba lagi.");
+      if (data?.data?.redirect_url) {
+        window.location.href = data.data.redirect_url;
+      } else {
+        setApiError("Gagal mendapatkan URL Google. Coba lagi.");
+      }
+    } catch {
+      setApiError("Tidak dapat terhubung ke server.");
     }
-  } catch {
-    setApiError("Tidak dapat terhubung ke server.");
-  }
-};
+  };
 
   return (
     <div className={styles.page}>
