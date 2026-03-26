@@ -1,42 +1,38 @@
-# Node & PHP dependencies
-/vendor/
-/node_modules/
+# Ignore semua
+*
 
-# Laravel specific
-#.env
-#.env.backup
-#.env.production
-/storage/*.key
-/storage/app/public/*
-/storage/framework/cache/*
-/storage/framework/sessions/*
-/storage/framework/testing/*
-/storage/framework/views/*
-/storage/logs/*
-/bootstrap/cache/*
-!/storage/app/public/.gitkeep
-!/storage/framework/cache/.gitkeep
-!/storage/framework/sessions/.gitkeep
-!/storage/framework/testing/.gitkeep
-!/storage/framework/views/.gitkeep
-!/storage/logs/.gitkeep
-!/bootstrap/cache/.gitkeep
+# Core Laravel
+!app/
+!app/**
+!bootstrap/
+!bootstrap/**
+!config/
+!config/**
+!database/
+!database/**
+!lang/
+!lang/**
+!resources/
+!resources/**
+!routes/
+!routes/**
+!storage/
+!storage/.gitkeep
+
+# Public
+!public/
+!public/**
 
 # Composer
-composer.phar
+!composer.json
+!composer.lock
 
-# Database
-*.sqlite
-*.sqlite-journal
-database/*.sqlite
+# Artisan & config files
+!artisan
+!.gitignore
+!.env.example
 
-# Logs & temp
-*.log
-Thumbs.db
-.DS_Store
-.idea/
-.vscode/
-
-# Testing
-.phpunit.result.cache
-coverage/
+# Yang TIDAK masuk git:
+# vendor/  → di-generate composer install di server
+# .env     → sensitive, berbeda tiap environment
+# storage/app/, storage/logs/ → file upload & log server
