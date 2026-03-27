@@ -66,7 +66,7 @@ const NAV_GROUPS = [
   {
     label: "Referensi",
     items: [
-      { to: "/ref/vendor", icon: Users, label: "Vendor" },
+      { to: "/invoice/vendors", icon: Users, label: "Vendor" },
       { to: "/ref/ba", icon: MapPin, label: "Business Area" },
       { to: "/ref/pph", icon: List, label: "Ref PPh" },
       { to: "/ref/po", icon: Database, label: "Ref PO" },

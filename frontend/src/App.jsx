@@ -12,6 +12,7 @@ import Home from "./pages/general/Home";
 import Users from "./pages/general/Users";
 import Settings from "./pages/general/Settings";
 import UserManagement from "./pages/admin/UserManagement";
+import VendorManagement from "./pages/invoice/VendorManagement";
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
                 <Route path="/users" element={<Users />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/admin/users" element={<UserManagement />} />
+                <Route path="/invoice/vendors" element={<VendorManagement />} />
               </Route>
             </Route>
 
