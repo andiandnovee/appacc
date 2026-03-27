@@ -2,26 +2,94 @@ import { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
+  FileText,
+  FilePlus,
+  BarChart2,
+  Percent,
+  Car,
+  Upload,
   Users,
-  Settings,
+  MapPin,
+  List,
+  Database,
+  ShieldCheck,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
 import styles from "./Sidebar.module.css";
 
-/* ── Menu items — tambah item baru di sini saja ────────────── */
-const NAV_ITEMS = [
-  { to: "/", icon: LayoutDashboard, label: "Dashboard", end: true },
-  { to: "/users", icon: Users, label: "Users" },
-  { to: "/settings", icon: Settings, label: "Settings" },
-  { to: "/admin/users", icon: Users, label: "Admin Users" },
+/* ── Struktur menu ─────────────────────────────────────────── */
+/*
+  Tiap grup punya:
+    label  : judul grup (string)
+    items  : array item
+
+  Tiap item punya:
+    to     : route path
+    icon   : lucide component
+    label  : teks menu
+    end    : exact match (opsional)
+    badge  : teks badge kecil (opsional) — e.g. "operator", "admin"
+    roles  : array role yg boleh lihat (opsional, untuk filtering nanti)
+*/
+const NAV_GROUPS = [
+  {
+    label: null, // grup tanpa judul
+    items: [{ to: "/", icon: LayoutDashboard, label: "Dashboard", end: true }],
+  },
+  {
+    label: "Penerimaan Invoice",
+    items: [
+      { to: "/invoice/monitor", icon: FileText, label: "Monitor Invoice" },
+      {
+        to: "/invoice/input",
+        icon: FilePlus,
+        label: "Input Penerimaan",
+        badge: "operator",
+      },
+      { to: "/invoice/rekap", icon: BarChart2, label: "Rekap & Export" },
+      { to: "/invoice/pph", icon: Percent, label: "Rekap PPh" },
+    ],
+  },
+  {
+    label: "Utility",
+    items: [
+      { to: "/utility/kendaraan", icon: Car, label: "Kendaraan & STNK" },
+      {
+        to: "/utility/import-po",
+        icon: Upload,
+        label: "Import PO (SAP)",
+        badge: "operator",
+      },
+    ],
+  },
+  {
+    label: "Referensi",
+    items: [
+      { to: "/ref/vendor", icon: Users, label: "Vendor" },
+      { to: "/ref/ba", icon: MapPin, label: "Business Area" },
+      { to: "/ref/pph", icon: List, label: "Ref PPh" },
+      { to: "/ref/po", icon: Database, label: "Ref PO" },
+    ],
+  },
+  {
+    label: "Admin",
+    items: [
+      {
+        to: "/admin/users",
+        icon: ShieldCheck,
+        label: "Users & Role",
+        badge: "admin",
+      },
+    ],
+  },
 ];
 
+/* ── Komponen ──────────────────────────────────────────────── */
 export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  // Auto-collapse di layar kecil
   useEffect(() => {
     const handleResize = () => setIsCollapsed(window.innerWidth < 768);
     handleResize();
@@ -29,17 +97,14 @@ export default function Sidebar() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Expanded = tidak collapsed, ATAU sedang di-hover saat collapsed
   const isExpanded = !isCollapsed || isHovered;
-
-  const sidebarClass = [
-    styles.sidebar,
-    isExpanded ? styles.expanded : styles.collapsed,
-  ].join(" ");
 
   return (
     <aside
-      className={sidebarClass}
+      className={[
+        styles.sidebar,
+        isExpanded ? styles.expanded : styles.collapsed,
+      ].join(" ")}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -47,8 +112,7 @@ export default function Sidebar() {
       <div
         className={`${styles.header} ${!isExpanded ? styles.headerCollapsed : ""}`}
       >
-        {isExpanded && <h1 className={styles.brand}>MyDashboard</h1>}
-
+        {isExpanded && <h1 className={styles.brand}>APPACC</h1>}
         <button
           className={styles.toggleBtn}
           onClick={() => setIsCollapsed((v) => !v)}
@@ -60,30 +124,53 @@ export default function Sidebar() {
 
       {/* Nav */}
       <nav className={styles.nav}>
-        {NAV_ITEMS.map(({ to, icon: Icon, label, end }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={end}
-            className={({ isActive }) =>
-              [
-                styles.navLink,
-                !isExpanded ? styles.navLinkCollapsed : "",
-                isActive ? styles.navLinkActive : "",
-              ]
-                .filter(Boolean)
-                .join(" ")
-            }
-          >
-            <span className={styles.icon}>
-              <Icon size={18} />
-            </span>
-            <span
-              className={`${styles.navLabel} ${isExpanded ? styles.navLabelVisible : styles.navLabelHidden}`}
-            >
-              {label}
-            </span>
-          </NavLink>
+        {NAV_GROUPS.map((group, gi) => (
+          <div key={gi} className={styles.group}>
+            {/* Divider + label grup */}
+            {group.label && (
+              <div
+                className={`${styles.groupHeader} ${!isExpanded ? styles.groupHeaderCollapsed : ""}`}
+              >
+                <span className={styles.groupLabel}>{group.label}</span>
+              </div>
+            )}
+
+            {/* Items */}
+            {group.items.map(({ to, icon: Icon, label, end, badge }) => (
+              <NavLink
+                key={to}
+                to={to}
+                end={end}
+                className={({ isActive }) =>
+                  [
+                    styles.navLink,
+                    !isExpanded ? styles.navLinkCollapsed : "",
+                    isActive ? styles.navLinkActive : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")
+                }
+              >
+                <span className={styles.icon}>
+                  <Icon size={18} />
+                </span>
+
+                {/* Label + badge — hanya saat expanded */}
+                <span
+                  className={`${styles.navLabel} ${isExpanded ? styles.navLabelVisible : styles.navLabelHidden}`}
+                >
+                  {label}
+                </span>
+                {badge && isExpanded && (
+                  <span
+                    className={`${styles.badge} ${styles[`badge_${badge}`] ?? styles.badge_default}`}
+                  >
+                    {badge}
+                  </span>
+                )}
+              </NavLink>
+            ))}
+          </div>
         ))}
       </nav>
     </aside>

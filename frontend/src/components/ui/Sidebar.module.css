@@ -136,3 +136,93 @@
   display: flex;
   align-items: center;
 }
+
+/* ── Group ─────────────────────────────────────────────────── */
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  /* Jarak antar grup */
+  margin-top: var(--space-3);
+}
+
+.group:first-child {
+  margin-top: 0;
+}
+
+/* Header grup: garis pembatas + label */
+.groupHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-2);
+  margin-bottom: var(--space-1);
+  overflow: hidden;
+}
+
+/* Garis kiri tipis sebagai aksen */
+.groupHeader::before {
+  content: "";
+  display: block;
+  width: 2px;
+  height: 12px;
+  background-color: var(--border-subtle);
+  border-radius: 99px;
+  flex-shrink: 0;
+}
+
+.groupLabel {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* Saat collapsed: sembunyikan header grup */
+.groupHeaderCollapsed {
+  opacity: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Badge role ─────────────────────────────────────────────── */
+.badge {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: var(--font-medium);
+  padding: 1px 6px;
+  border-radius: 99px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.6;
+}
+
+.badge_operator {
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-700);
+}
+
+:global(.dark) .badge_operator {
+  background-color: rgba(84, 112, 239, 0.15);
+  color: var(--color-primary-300);
+}
+
+.badge_admin {
+  background-color: var(--color-danger-100, #fee2e2);
+  color: var(--color-danger-700, #b91c1c);
+}
+
+:global(.dark) .badge_admin {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+}
+
+.badge_default {
+  background-color: var(--bg-surface-2);
+  color: var(--text-tertiary);
+}
