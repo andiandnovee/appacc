@@ -75,7 +75,7 @@ Route::middleware('auth:api')->group(function () {
 
     });
 
-    Route::middleware(['auth:api', 'role:superadmin'])
+    Route::middleware(['auth:api', 'role:super-admin'])
         ->prefix('admin')
         ->name('admin.')
         ->group(function () {
