@@ -10,6 +10,7 @@ use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\Api\InvoiceReceiptController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -77,6 +78,21 @@ Route::middleware('auth:api')->group(function () {
     Route::middleware('role:accounting')->group(function () {
         Route::get('vendors/search', [VendorController::class, 'search']); // sebelum apiResource!
         Route::apiResource('vendors', VendorController::class);
+
+
+        Route::apiResource('invoice-receipts', InvoiceReceiptController::class);
+
+    // Status endpoints
+    Route::get('invoice-receipts/{invoiceReceipt}/statuses',
+        [InvoiceReceiptController::class, 'statuses']);
+    Route::post('invoice-receipts/{invoiceReceipt}/statuses',
+        [InvoiceReceiptController::class, 'addStatus']);
+
+
+
+
+
+
     });
 
     // ── ROLE: super-admin ─────────────────────────────────────────────────
