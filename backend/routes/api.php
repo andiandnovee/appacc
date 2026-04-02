@@ -7,7 +7,7 @@ use App\Http\Controllers\Api\BusinessAreaController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\InvoiceReceiptController;
 use App\Http\Controllers\Api\StageController;
-use App\Http\Controllers\Api\Vendor\VendorController;
+use App\Http\Controllers\Api\VendorController;
 use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PermissionController;
