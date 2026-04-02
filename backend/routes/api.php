@@ -3,6 +3,10 @@
 use App\Http\Controllers\Admin\RoleManagementController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BusinessAreaController;
+use App\Http\Controllers\Api\CompanyController;
+use App\Http\Controllers\Api\InvoiceReceiptController;
+use App\Http\Controllers\Api\StageController;
 use App\Http\Controllers\Api\Vendor\VendorController;
 use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\DashboardController;
@@ -10,7 +14,6 @@ use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\Api\InvoiceReceiptController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -49,8 +52,8 @@ Route::middleware('auth:api')->group(function () {
 
     // Users
     Route::prefix('users')->group(function () {
-        Route::get('/',    [UserController::class, 'index']);
-        Route::post('/',   [UserController::class, 'store'])->middleware('check-permission:create users');
+        Route::get('/',        [UserController::class, 'index']);
+        Route::post('/',       [UserController::class, 'store'])->middleware('check-permission:create users');
         Route::get('/{id}',    [UserController::class, 'show']);
         Route::put('/{id}',    [UserController::class, 'update'])->middleware('check-permission:edit users');
         Route::delete('/{id}', [UserController::class, 'destroy'])->middleware('check-permission:delete users');
@@ -59,8 +62,8 @@ Route::middleware('auth:api')->group(function () {
 
     // Roles
     Route::prefix('roles')->group(function () {
-        Route::get('/',    [RoleController::class, 'index'])->middleware('check-permission:view roles');
-        Route::post('/',   [RoleController::class, 'store'])->middleware('check-permission:create roles');
+        Route::get('/',        [RoleController::class, 'index'])->middleware('check-permission:view roles');
+        Route::post('/',       [RoleController::class, 'store'])->middleware('check-permission:create roles');
         Route::put('/{id}',    [RoleController::class, 'update'])->middleware('check-permission:edit roles');
         Route::delete('/{id}', [RoleController::class, 'destroy'])->middleware('check-permission:delete roles');
     });
@@ -76,37 +79,35 @@ Route::middleware('auth:api')->group(function () {
 
     // ── ROLE: accounting ──────────────────────────────────────────────────
     Route::middleware('role:accounting')->group(function () {
-        Route::get('vendors/search', [VendorController::class, 'search']); // sebelum apiResource!
+
+        // Vendors — search harus sebelum apiResource
+        Route::get('vendors/search', [VendorController::class, 'search']);
         Route::apiResource('vendors', VendorController::class);
 
+        // Master data — read only
+        Route::get('companies',                  [CompanyController::class,      'index']);
+        Route::get('companies/{company}',        [CompanyController::class,      'show']);
+        Route::get('stages',                     [StageController::class,        'index']);
+        Route::get('stages/{stage}',             [StageController::class,        'show']);
+        Route::get('business-areas',             [BusinessAreaController::class, 'index']);
+        Route::get('business-areas/{businessArea}', [BusinessAreaController::class, 'show']);
 
+        // Invoice receipts
         Route::apiResource('invoice-receipts', InvoiceReceiptController::class);
-
-    // Status endpoints
-    Route::get('invoice-receipts/{invoiceReceipt}/statuses',
-        [InvoiceReceiptController::class, 'statuses']);
-    Route::post('invoice-receipts/{invoiceReceipt}/statuses',
-        [InvoiceReceiptController::class, 'addStatus']);
-
-
-
-
-
-
+        Route::get('invoice-receipts/{invoiceReceipt}/statuses',  [InvoiceReceiptController::class, 'statuses']);
+        Route::post('invoice-receipts/{invoiceReceipt}/statuses', [InvoiceReceiptController::class, 'addStatus']);
     });
 
     // ── ROLE: super-admin ─────────────────────────────────────────────────
     Route::middleware('role:super-admin')->prefix('admin')->name('admin.')->group(function () {
 
-        // Admin - Users
-        Route::get('/users',                   [UserManagementController::class, 'index']);
-        Route::put('/users/{user}/roles',      [UserManagementController::class, 'assignRoles']);
-        Route::delete('/users/{user}',         [UserManagementController::class, 'destroy']);
+        Route::get('/users',                  [UserManagementController::class, 'index']);
+        Route::put('/users/{user}/roles',     [UserManagementController::class, 'assignRoles']);
+        Route::delete('/users/{user}',        [UserManagementController::class, 'destroy']);
 
-        // Admin - Roles
-        Route::get('/roles',          [RoleManagementController::class, 'index']);
-        Route::post('/roles',         [RoleManagementController::class, 'store']);
-        Route::put('/roles/{role}',   [RoleManagementController::class, 'update']);
-        Route::delete('/roles/{role}',[RoleManagementController::class, 'destroy']);
+        Route::get('/roles',           [RoleManagementController::class, 'index']);
+        Route::post('/roles',          [RoleManagementController::class, 'store']);
+        Route::put('/roles/{role}',    [RoleManagementController::class, 'update']);
+        Route::delete('/roles/{role}', [RoleManagementController::class, 'destroy']);
     });
 });
