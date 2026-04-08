@@ -1,0 +1,277 @@
+
+	PGr	Description
+
+	HA1	STO PPIC JKT
+	HA2	STO WH JKT
+	HAA	Eka Yulita
+	HAB	Theresia Winona
+	HAC	Theresia Winona
+	HAD	Eko Sutrisno
+	HAE	GA Release
+	HAF	Gregoria Casey
+	HAG	Tasya Monica
+	HAH	Hendrick
+	HAI	Ivan Sutarmin
+	HAJ	Andri
+	HAK	Nabilla Syaqinna
+	HAL	General GA 1
+	HAM	Ajie
+	HAN	Dessy
+	HAO	Cindy Setyawati
+	HAP	General
+	HAQ	General IT
+	HAR	General GA
+	HAS	SRC Jakarta
+	HAT	Corp CERA/RERA IT
+	HAU	Corp CERA/RERA GA
+	HAV	General(NS)
+	HAW	Priok-Aceh(3585)
+	HAX	PR IT Refinery
+	HAY	PR CERA ITRefinery
+	HAZ	Priok-Aceh(Solar)
+	HB1	STO PPIC SBY
+	HB2	STO WH SBY
+	HBA	Marcelino Junimus
+	HBB	Jova Sadrach
+	HBC	Rara Wienda
+	HBD	Metta G. Lieka
+	HBE	Ari Subic
+	HBF	Calvin Siswanto
+	HBG	Oei Michelle
+	HBH	Moch. S. Handoko
+	HBI	Sudarmadi
+	HBJ	Ony
+	HBK	Lazarus
+	HBL	Rara Wienda
+	HBM	Galuh
+	HBN	Metta G. Lieka-Spr
+	HBO	General 1
+	HBP	General 2
+	HBQ	Ony (GA)
+	HBR	Calvin Siswanto
+	HBS	Andre Djunaedi
+	HC1	STO PPIC MDN
+	HC2	STO WH MDN
+	HCA	Kesuma Dewi
+	HCB	Angel Colliski
+	HCC	Kesuma Dewi
+	HCD	Ilyas
+	HCE	Kesuma Dewi-Solar
+	HCF	Ilyas
+	HCG	Angel Colliski
+	HCH	Kesuma Dewi-SRC
+	HD1	STO Commercial
+	HDA	Commercial Intern
+	HDB	Commercial Extern
+	HDC	Commercial Tolling
+	HDD	Commercial Rental
+	HDE	Commercial Int-Sub
+	HE1	ST-PR-Local
+	HE2	ST-PR Inv/MRP/SRV
+	HE3	ST-PR NC Tertentu
+	HE4	ST-PR NC N-Inv
+	HE5	ST CERA/RERA
+	HE6	Hanif Mukti
+	HE7	Rifqi Zulfahmi
+	HE8	Dola Apriani
+	HE9	Ratna Noviani
+	HEA	Vinny Palit1
+	HEB	Erwin Mekel1
+	HEC	Vinny Palit2
+	HED	Kurniawan Walujan1
+	HEE	Vinny Palit3
+	HEF	Kurniawan Walujan2
+	HEG	Vinny Palit-Solar
+	HEH	Kurniawan Walujan3
+	HEI	Friska M Manan
+	HEJ	Maria A. Maalangga
+	HEK	Vinny Palit-SRC
+	HEY	STO PPIC BITUNG
+	HEZ	STO WH BITUNG
+	HF1	Agata Mahanani
+	HF2	Putri Wulandari
+	HF3	NABILLA SYAQINNA
+	HF4	FRANS CHANDRA
+	HF5	Marojahan Sinaga
+	HF6	Diana
+	HF7	Sholahudin Fadli
+	HF8	Farida Hayani
+	HF9	Riando Marpaung
+	HFA	M. Nur Hasan-MRP
+	HFB	M. Nur Hasan-Stk
+	HFC	M. Nur Hasan-GA
+	HFD	M. Nur Hasan-IT
+	HFE	M. Nur Hasan
+	HFY	STO PPIC ITSM
+	HFZ	STO WH ITSM
+	HG1	Rosdiana
+	HG2	Robby Okta Putra
+	HG3	Guntur Saputra
+	HG4	Iskandar
+	HG5	Saparuddin
+	HG6	T Rally Situmora
+	HG7	Dani heryana
+	HG8	Bayu Kautsar
+	HG9	Ramlen Simamora
+	HGA	Chocolate-MRP
+	HGB	Chocolate-Stock
+	HGC	Chocolate-GA
+	HH0	Demetrius Simbolon
+	HH1	Lifhami
+	HH2	M. indra kusuma
+	HH3	SUKAMTO
+	HH4	Muhammad Farhan
+	HH5	A.Ardiansyah
+	HH6	M. Syahriful Lub
+	HH7	Arif Apriyanto
+	HH8	Sarno
+	HH9	Ahmad Fauzan
+	HI1	Janpri Hasibuan
+	HI2	Donacius J.P.T
+	HI3	AMINNUDIN
+	HI4	Tonny Indramawan
+	HI5	Riva Pradipta
+	HI6	SABAR ARBI
+	HI7	Benni P.Rambe
+	HI8	Hamza Marpaung
+	HI9	Heriyanto
+	HJ1	Leonard Tampubolon
+	HJ2	Su'ef
+	HJ3	Hendri Yani
+	HJ4	C. Aris Munandar
+	HJ5	Andri Purnama
+	HJ6	Wisra Efendi
+	HJ7	M. Ihdin Nasutio
+	HJ8	Agustian Y Saput
+	HJ9	Heriyanto
+	HK1	Asran Sitompul
+	HK2	Rhemon Tinambunan
+	HK3	Ahmad Gimpa
+	HK4	Ahmad Rohani
+	HK5	Dedy S. Samosir
+	HK6	Andika Ferdiansy
+	HK7	Syamsudin
+	HK8	Syaiful Zainuddin
+	HK9	Jerri Roy Marten H
+	HL0	KTU/Kasie SIMP-Sub
+	HL1	JJF Ompusunggu
+	HL2	Yudi Putro
+	HL3	Abdul Munif
+	HL4	Junaidi
+	HL5	M. Emil Ziqri P
+	HL6	Taufan Pakpakan
+	HL7	FFB Purchase
+	HL8	Sparts STO - SIMP
+	HL9	ST-PR Return
+	HM1	RO-PR NC/SRV N-IT
+	HM2	RO CERA/RERA N-IT
+	HM3	RO-PR Return N-IT
+	HM4	HO-PR NCIT TO SITE
+	HM5	RO CERA/RERA IT
+	HM6	RO-PR Return IT
+	HM7	HO-PR NC/SRV N-IT
+	HM8	HO CERA/RERA N-IT
+	HM9	HO-PR Return N-IT
+	HN1	HO-PR NC/SRV IT
+	HN2	HO CERA/RERA IT
+	HN3	HO-PR Return IT
+	HN4	Pelimpahan Ke Site
+	HN5	Pelimpahan Ke RO
+	HN6	Pelimpahan Ke HO
+	HN7	Site ke Bulking
+	HN8	Bulking ke Site
+	HN9	Pinjam Meminjam
+	HO1	Muhammad Farhan
+	HO2	Riza Aulia
+	HO3	Chandra
+	HO4	Open PO HO
+	HO5	Open PO RO
+	HO6	Nur R. Bakdo Riadi
+	HO7	Yunafril
+	HO8	Darsono
+	HO9	Riarso Dhanu
+	HP1	ST-PR Sepeda Motor
+	HP2	Nikita Yaphet
+	HP3	Sidik Pahlevi
+	HP4	Hari Handoko
+	HP5	A. Ritonga
+	HP6	GUSNALDI
+	HP7	C. Aris Munandar
+	HP8	Hendra J. Suardi
+	HP9	Sabrun Jamil R.
+	HQ1	Wisnu Pragwiwika
+	HQ2	Eko Kuswanto
+	HQ3	Oddie Mirza
+	HQ4	Legiman
+	HQ5	Edy Piyanda S
+	HQ6	Firman
+	HQ7	Sarno
+	HQ8	Novel Aslen R
+	HQ9	Eliefroni Tambunan
+	HR1	Syafrizal Ismanto
+	HR2	Kharisma
+	HR3	Indria Alloyna
+	HR4	Ahmad Rohani
+	HR5	Laurensius A.
+	HR6	Martinus Dias
+	HR7	Nyoman Fajaria
+	HR8	Joko Suprianto
+	HR9	Sabudin B. A.
+	HS1	Suminto
+	HS2	Lani Plt
+	HS3	Juliansyah Ibrahim
+	HS4	Doni Simbolon
+	HS5	Ardiansyah
+	HS6	Deikha Pramudia D.
+	HS7	Bisman Sandra
+	HS8	Jadid Safianto
+	HS9	Supriadi Yokgi
+	HT1	M. Alfi Syahri
+	HT2	KTU/Kasie KDE
+	HT3	Janpri Hasibuan
+	HT4	Bagus Putra W.
+	HT5	Irwan BRD
+	HT6	Irwan RST
+	HT7	Rukman Fuji
+	HT8	Panjie Ariady
+	HT9	Fahruli Susanto
+	HU1	Apri Hellymawan
+	HU2	Lutfi Ferdanuari
+	HU3	Handika Putra
+	HU4	Rendika Putra
+	HU5	William Alimansyah
+	HU6	Wildan Yurisman S
+	HU7	AHMAD SOPIAN
+	HU8	Lando Lumbantobing
+	HU9	Anggun Citra D.
+	HV1	Christobal B.
+	HV7	PR IMF
+	HV8	ST-PR IT
+	HV9	ST-CERA/RERA IT
+	HX1	FOOD-PR-Local
+	HX2	FOOD-PR NC-Inv/MRP
+	HX3	FOOD-PR NCTertentu
+	HX4	FOOD-PR NCNInv/SRV
+	HX5	FOOD-PR CERA/RERA
+	HX6	FOOD-PR Sepeda Mtr
+	HX7	FOOD-PR Return
+	HX8	FOOD-PR IT
+	HX9	FOOD-PR CERA IT
+	HY1	KSS/IIP-Local
+	HY2	KSS/IIP Inv/MRP/SR
+	HY3	KSS-PR NC Tertentu
+	HY4	KSS/IIP NC N-Inv
+	HY5	KSS/IIP CERA/RERA
+	HY6	KSS/IIP Sepeda Mtr
+	HY7	KSS/IIP Return
+	HY8	KSS/IIP PR IT
+	HY9	KSS/IIP PR CER IT
+	HZ1	SAIN-PR-Local
+	HZ2	SAIN-PR NC-Inv/MRP
+	HZ3	SAIN-PR NC Tertent
+	HZ4	SAIN-PR Service
+	HZ5	SAIN-PR CERA/RERA
+	HZ6	SAIN-PR Sepeda Mtr
+	HZ7	SAIN-PR Return
+	HZ8	SAIN-PR IT
+	HZ9	SAIN-PR CERA IT
