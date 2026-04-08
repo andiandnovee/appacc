@@ -55,8 +55,10 @@ function VendorFormModal({ vendor, onClose, onSaved }) {
 
   const validate = () => {
     const err = {};
-    if (!form.vendor_code.trim()) err.vendor_code = "Kode vendor wajib diisi.";
-    if (!form.name.trim()) err.name = "Nama vendor wajib diisi.";
+    console.log(form.vendor_code.toString().length);
+    if (!form.vendor_code.toString().length == 6)
+      err.vendor_code = "Kode vendor wajib diisi.";
+    if (!form.name?.trim?.()) err.name = "Nama vendor wajib diisi.";
     if (!form.service_type) err.service_type = "Pilih jenis layanan.";
     return err;
   };
