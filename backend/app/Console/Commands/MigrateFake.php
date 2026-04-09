@@ -105,7 +105,6 @@ class MigrateFake extends Command
                     $this->line("   <fg=gray>○</> {$migration}");
                 }
             }
-
         } else {
             // Mode ran (default): hanya proses migrasi yang BELUM tercatat
             $processable = $selectedFiles->reject(fn($m) => in_array($m, $recordedMigrations));
@@ -126,7 +125,7 @@ class MigrateFake extends Command
             $inserts = $processable->map(fn($m) => [
                 'migration' => $m,
                 'batch'     => $batch,
-                'created_at'=> $now,
+                //'created_at'=> $now,
             ])->toArray();
 
             DB::table('migrations')->insert($inserts);
@@ -165,4 +164,3 @@ class MigrateFake extends Command
 
 // # Hanya migrasi di subfolder 'local', batch baru, kecuali file tertentu
 // php artisan migrate:fake --path=local --step --except=2024_01_01_000000_create_users_table
-
