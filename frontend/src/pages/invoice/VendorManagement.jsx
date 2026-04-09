@@ -15,7 +15,10 @@ const api = (path, options = {}) => {
   const token =
     localStorage.getItem("appacc_token") ??
     sessionStorage.getItem("appacc_token");
-  return fetch(`/api${path}`, {
+
+  const apiBase = import.meta.env.VITE_API_URL || "http://api-appacc.local";
+
+  return fetch(`${apiBase}${path}`, {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
