@@ -13,6 +13,7 @@ import Users from "./pages/general/Users";
 import Settings from "./pages/general/Settings";
 import UserManagement from "./pages/admin/UserManagement";
 import VendorManagement from "./pages/invoice/VendorManagement";
+import SapPoImportPage from "./pages/sap/SapPoImportPage";
 
 export default function App() {
   return (
@@ -32,6 +33,10 @@ export default function App() {
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/admin/users" element={<UserManagement />} />
                 <Route path="/invoice/vendors" element={<VendorManagement />} />
+                <Route
+                  path="/utility/import-po"
+                  element={<SapPoImportPage />}
+                />
               </Route>
             </Route>
 

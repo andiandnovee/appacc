@@ -14,6 +14,7 @@ use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\Api\SapImportController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -96,6 +97,13 @@ Route::middleware('auth:api')->group(function () {
         Route::apiResource('invoice-receipts', InvoiceReceiptController::class);
         Route::get('invoice-receipts/{invoiceReceipt}/statuses',  [InvoiceReceiptController::class, 'statuses']);
         Route::post('invoice-receipts/{invoiceReceipt}/statuses', [InvoiceReceiptController::class, 'addStatus']);
+
+
+        // SAP PO Import
+        Route::post('sap/import-po', [SapImportController::class, 'importPo']);
+
+
+
     });
 
     // ── ROLE: super-admin ─────────────────────────────────────────────────
