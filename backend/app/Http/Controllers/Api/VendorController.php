@@ -20,6 +20,22 @@ class VendorController extends Controller
 
         $query = Vendor::query();
 
+        // Filter soft deleted
+        if ($request->filled('trash_filter')) {
+            switch ($request->trash_filter) {
+                case 'only_trash':
+                    $query->onlyTrashed();
+                    break;
+                case 'with_trash':
+                    $query->withTrashed();
+                    break;
+                case 'without_trash':
+                default:
+                    // Default query (tanpa soft deleted)
+                    break;
+            }
+        }
+
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', "%{$request->search}%")
@@ -82,19 +98,60 @@ class VendorController extends Controller
      * Soft delete the specified vendor (with cascade to invoiceReceipts).
      */
     public function destroy(Vendor $vendor)
-{
-    $this->authorize('delete', $vendor);
+    {
+        $this->authorize('delete', $vendor);
 
-    // Soft delete semua invoice receipts yang terkait
-    $vendor->invoiceReceipts()->delete();
+        // Soft delete semua invoice receipts yang terkait
+        $vendor->invoiceReceipts()->delete();
 
-    // Soft delete vendor (set deleted_at = NOW())
-    $vendor->delete();
+        // Soft delete vendor (set deleted_at = NOW())
+        $vendor->delete();
 
-    return response()->json([
-        'success' => true,
-        'message' => 'Vendor berhasil dinonaktifkan.',
-        'data'    => new VendorResource($vendor),
-    ], 200);
-}
+        return response()->json([
+            'success' => true,
+            'message' => 'Vendor berhasil dinonaktifkan.',
+            'data'    => new VendorResource($vendor),
+        ], 200);
+    }
+
+    /**
+     * Restore a soft deleted vendor.
+     */
+    public function restore($id)
+    {
+        $vendor = Vendor::withTrashed()->findOrFail($id);
+        $this->authorize('restore', $vendor);
+
+        // Restore vendor
+        $vendor->restore();
+
+        // Restore semua invoice receipts yang terkait
+        $vendor->invoiceReceipts()->withTrashed()->restore();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Vendor berhasil diaktifkan kembali.',
+            'data'    => new VendorResource($vendor),
+        ], 200);
+    }
+
+    /**
+     * Permanently delete a vendor (force delete).
+     */
+    public function forceDelete($id)
+    {
+        $vendor = Vendor::withTrashed()->findOrFail($id);
+        $this->authorize('forceDelete', $vendor);
+
+        // Force delete semua invoice receipts yang terkait
+        $vendor->invoiceReceipts()->withTrashed()->forceDelete();
+
+        // Force delete vendor
+        $vendor->forceDelete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Vendor berhasil dihapus permanen.',
+        ], 200);
+    }
 }

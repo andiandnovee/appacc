@@ -1,12 +1,11 @@
 /* VendorManagement.module.css
-   Mengikuti pola UserManagement.module.css
-   Semua warna & spacing via CSS variables dari tokens.css
+   Mengikuti theme dengan CSS variables
 */
 
-/* ── Page ─────────────────────────────────────────────────── */
+/* ── Page Layout ────────────────────────────────────────────── */
 .page {
   padding: var(--space-6);
-  max-width: 1100px;
+  max-width: 1400px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -24,118 +23,25 @@
 .pageTitle {
   font-size: var(--text-2xl);
   font-weight: 700;
-  color: var(--color-text-primary);
+  color: var(--text-primary);
   margin: 0;
 }
 
 .pageSubtitle {
   font-size: var(--text-sm);
-  color: var(--color-text-muted);
+  color: var(--text-tertiary);
   margin: var(--space-1) 0 0;
 }
 
-/* ── Toolbar ─────────────────────────────────────────────── */
-.toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-}
-
-.filterGroup {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  background: var(--color-surface-secondary);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-1);
-}
-
-.filterBtn {
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-sm);
-  border: none;
-  background: transparent;
-  color: var(--color-text-secondary);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.filterBtn:hover {
-  background: var(--color-surface-hover);
-  color: var(--color-text-primary);
-}
-
-.filterBtnActive {
-  background: var(--color-surface);
-  color: var(--color-primary);
-  font-weight: 600;
-  box-shadow: 0 1px 3px var(--color-shadow);
-}
-
-.searchRow {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.info {
-  font-size: var(--text-sm);
-  color: var(--color-text-muted);
-  margin: 0;
-}
-
-/* ── Table ───────────────────────────────────────────────── */
-.tableWrap {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--text-sm);
-}
-
-.table thead tr {
-  background: var(--color-surface-secondary);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.table th {
-  padding: var(--space-3) var(--space-4);
-  text-align: left;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.table td {
-  padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--color-border-subtle);
-  vertical-align: middle;
-}
-
-.row:last-child td { border-bottom: none; }
-.row:hover td { background: var(--color-surface-hover); }
-
-/* ── Vendor cell ─────────────────────────────────────────── */
+/* ── Vendor Info Cells ─────────────────────────────────────── */
 .vendorCode {
-  font-family: monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-xs);
-  background: var(--color-surface-secondary);
-  border: 1px solid var(--color-border);
+  color: var(--text-secondary);
+  background-color: var(--bg-surface-2);
+  padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
-  padding: 2px var(--space-2);
-  color: var(--color-text-secondary);
+  display: inline-block;
   white-space: nowrap;
 }
 
@@ -144,53 +50,41 @@
   align-items: center;
   gap: var(--space-2);
   font-weight: 500;
-  color: var(--color-text-primary);
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
 }
 
 .vendorIcon {
-  color: var(--color-text-muted);
+  color: var(--text-tertiary);
   flex-shrink: 0;
 }
 
 .vendorAddress {
   font-size: var(--text-xs);
-  color: var(--color-text-muted);
-  margin: var(--space-1) 0 0 calc(14px + var(--space-2));
+  color: var(--text-tertiary);
+  margin: 0;
   line-height: 1.4;
 }
 
 .muted {
-  font-size: var(--text-sm);
-  color: var(--color-text-muted);
+  color: var(--text-tertiary);
 }
 
-/* ── Actions ─────────────────────────────────────────────── */
-.actions {
+/* ── Status Cell with Toggle ───────────────────────────────── */
+.statusCell {
   display: flex;
   align-items: center;
+  min-width: 130px;
+}
+
+/* ── Actions ───────────────────────────────────────────────── */
+.actions {
+  display: flex;
   gap: var(--space-2);
+  flex-wrap: wrap;
 }
 
-/* ── Skeleton ────────────────────────────────────────────── */
-.skeleton {
-  height: 16px;
-  border-radius: var(--radius-sm);
-  background: linear-gradient(
-    90deg,
-    var(--color-surface-secondary) 25%,
-    var(--color-surface-hover) 50%,
-    var(--color-surface-secondary) 75%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.4s infinite;
-}
-
-@keyframes shimmer {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-/* ── Form ────────────────────────────────────────────────── */
+/* ── Form Grid untuk Modal ─────────────────────────────────── */
 .formGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -210,52 +104,29 @@
 .label {
   font-size: var(--text-sm);
   font-weight: 500;
-  color: var(--color-text-secondary);
-}
-
-.select {
-  width: 100%;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  color: var(--color-text-primary);
-  font-size: var(--text-sm);
-  cursor: pointer;
-  transition: border-color 0.15s;
-}
-
-.select:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-subtle);
-}
-
-.selectError {
-  border-color: var(--color-danger);
+  color: var(--text-secondary);
 }
 
 .textarea {
   width: 100%;
   padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
-  background: var(--color-surface);
-  color: var(--color-text-primary);
+  background: var(--bg-surface);
+  color: var(--text-primary);
   font-size: var(--text-sm);
   resize: vertical;
   font-family: inherit;
-  transition: border-color 0.15s;
+  transition: border-color var(--duration-fast) var(--ease-default);
   box-sizing: border-box;
 }
 
 .textarea:focus {
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-subtle);
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(84, 112, 239, 0.12);
 }
 
-/* ── Error text ──────────────────────────────────────────── */
 .errorText {
   font-size: var(--text-xs);
   color: var(--color-danger);
@@ -267,10 +138,31 @@
   font-size: var(--text-sm);
 }
 
-/* ── Confirm modal text ──────────────────────────────────── */
-.confirmText {
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
-  line-height: 1.6;
-  margin: 0;
+/* ── Responsive ────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .page {
+    padding: var(--space-4);
+  }
+
+  .pageHeader {
+    flex-direction: column;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .statusCell {
+    min-width: auto;
+  }
+
+  .vendorCode {
+    white-space: normal;
+    word-break: break-word;
+  }
 }

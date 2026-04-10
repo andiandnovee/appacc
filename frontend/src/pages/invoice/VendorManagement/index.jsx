@@ -1,42 +1,22 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
 import VendorFormModal from "./VendorFormModal";
 import Button from "../../../components/ui/Button";
-import Badge from "../../../components/ui/Badge";
-import Input from "../../../components/ui/Input";
-import Pagination from "../../../components/ui/Pagination";
-import EmptyState from "../../../components/ui/EmptyState";
+import Select from "../../../components/ui/Select";
+import Toggle from "../../../components/ui/Toggle";
+import Table from "../../../components/ui/Table";
 import { useToast } from "../../../components/ui/Toast";
-import { Building2, Plus, Pencil } from "lucide-react";
+import { Building2, Plus, Pencil, Archive } from "lucide-react";
 import styles from "./VendorManagement.module.css";
 
-// ─── API helper ───────────────────────────────────────────────
 const api = (path, options = {}) => {
-  const token =
-    localStorage.getItem("appacc_token") ??
-    sessionStorage.getItem("appacc_token");
-
+  const token = localStorage.getItem("appacc_token") ?? sessionStorage.getItem("appacc_token");
   const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-
   return fetch(`${apiBase}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     ...options,
-  }).then((r) => {
-    return r.json().then((json) => {
-      if (!r.ok) {
-        const error = new Error(json.message || r.statusText);
-        error.status = r.status;
-        error.errors = json.errors || {};
-        throw error;
-      }
-      return json;
-    });
-  });
+  }).then((r) => r.json().then((json) => { if (!r.ok) throw new Error(json.message); return json; }));
 };
 
-// ─── Konstanta service_type (sesuai backend enum) ─────────────
 const SERVICE_TYPES = [
   { value: "", label: "— Pilih Jenis Layanan —" },
   { value: "HF9", label: "HF9 - Barang/Jasa Umum" },
@@ -44,210 +24,85 @@ const SERVICE_TYPES = [
   { value: "OTHER", label: "Lainnya" },
 ];
 
-// ─── Main Page ─────────────────────────────────────────────────
+const TRASH_FILTERS = [
+  { value: "without_trash", label: "📋 Data Aktif" },
+  { value: "with_trash", label: "📁 Semua Data" },
+  { value: "only_trash", label: "🗑️ Data Nonaktif" },
+];
+
+const serviceLabel = (val) => SERVICE_TYPES.find(t => t.value === val)?.label ?? val ?? "—";
+
 export default function VendorManagement() {
-  const [vendors, setVendors] = useState([]);
-  const [meta, setMeta] = useState({});
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const [query, setQuery] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [formTarget, setFormTarget] = useState(undefined);
+  const [formTarget, setFormTarget] = useState(null);
+  const [updatingStatus, setUpdatingStatus] = useState(null);
+  const [trashFilter, setTrashFilter] = useState("without_trash");
+  const tableRef = useRef(null);
   const { addToast } = useToast();
 
-  const fetchVendors = useCallback(() => {
-    setLoading(true);
-    const params = new URLSearchParams({ page, per_page: 15 });
-    if (query) params.set("search", query);
+  const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+  const fullUrl = useMemo(() => `${apiBase}/vendors`, [apiBase]);
 
-    api(`/vendors?${params}`)
-      .then((res) => {
-        setVendors(res.data);
-        setMeta(res.meta);
-      })
-      .catch((e) => {
-        console.error("Fetch error:", e);
-        addToast({ variant: "danger", title: "Gagal memuat data vendor." });
-      })
-      .finally(() => setLoading(false));
-  }, [page, query, addToast]);
-
-  useEffect(() => {
-    fetchVendors();
-  }, [fetchVendors]);
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    setPage(1);
-    setQuery(search);
-  };
-
-  const handleSaved = (data, isEdit) => {
-    if (isEdit) {
-      setVendors((prev) => prev.map((v) => (v.id === data.id ? data : v)));
-      addToast({
-        variant: "success",
-        title: `Vendor "${data.name}" diperbarui.`,
-      });
-    } else {
-      setPage(1);
-      fetchVendors();
-      addToast({
-        variant: "success",
-        title: `Vendor "${data.name}" ditambahkan.`,
-      });
+  const handleStatusToggle = useCallback(async (vendor, isActive, refetch) => {
+    setUpdatingStatus(vendor.id);
+    try {
+      if (!isActive) await api(`/vendors/${vendor.id}`, { method: "DELETE" });
+      else await api(`/vendors/${vendor.id}/restore`, { method: "POST" });
+      addToast({ variant: "success", title: `Vendor "${vendor.name}" ${isActive ? 'diaktifkan' : 'dinonaktifkan'}.` });
+      refetch();
+    } catch (err) {
+      addToast({ variant: "danger", title: "Gagal mengubah status vendor." });
+    } finally {
+      setUpdatingStatus(null);
     }
-    setFormTarget(undefined);
-  };
+  }, [addToast]);
 
-  const serviceLabel = (val) =>
-    SERVICE_TYPES.find((t) => t.value === val)?.label ?? val ?? "—";
+  const handleForceDelete = useCallback(async (vendor, refetch) => {
+    if (!confirm(`Hapus permanen "${vendor.name}"?`)) return;
+    try {
+      await api(`/vendors/${vendor.id}/force-delete`, { method: "DELETE" });
+      addToast({ variant: "success", title: `Vendor "${vendor.name}" dihapus permanen.` });
+      refetch();
+    } catch (err) {
+      addToast({ variant: "danger", title: "Gagal menghapus vendor permanen." });
+    }
+  }, [addToast]);
+
+  const handleSaved = useCallback(() => {
+    setFormTarget(null);
+    addToast({ variant: "success", title: "Data vendor berhasil disimpan." });
+    tableRef.current?.refetch();
+  }, [addToast]);
+
+  const columns = useMemo(() => [
+    { key: "sap_id", label: "SAP ID", sortable: true, render: (row) => <span className={styles.vendorCode}>{row.sap_id || "—"}</span> },
+    { key: "name", label: "Nama Vendor", sortable: true, render: (row) => (
+      <div><div className={styles.vendorName}><Building2 size={14} />{row.name}</div>{row.address && <p className={styles.vendorAddress}>{row.address}</p>}</div>
+    ) },
+    { key: "npwp", label: "NPWP", sortable: true, render: (row) => <span className={styles.muted}>{row.npwp || "—"}</span> },
+    { key: "service_type", label: "Jenis Layanan", sortable: true, render: (row) => <span className={styles.muted}>{serviceLabel(row.service_type)}</span> },
+    { key: "pph_type", label: "PPh", sortable: false, render: (row) => <span className={styles.muted}>{row.pph_type ? `${row.pph_type}% (${row.pph_rate}%)` : "—"}</span> },
+    { key: "status", label: "Status", sortable: false, render: (row) => (
+      <div className={styles.statusCell}>
+        <Toggle value={row.deleted_at === null} onChange={(e) => handleStatusToggle(row, e.target.checked, tableRef.current?.refetch)} disabled={updatingStatus === row.id} size="sm" variant={row.deleted_at === null ? "success" : "danger"} label={row.deleted_at === null ? "Aktif" : "Tidak Aktif"} />
+      </div>
+    ) },
+    { key: "actions", label: "Aksi", sortable: false, render: (row) => (
+      <div className={styles.actions}>
+        <Button variant="outline" size="sm" iconLeft={<Pencil size={13} />} onClick={() => setFormTarget(row)} disabled={row.deleted_at !== null}>Edit</Button>
+        {row.deleted_at !== null && <Button variant="outline" size="sm" iconLeft={<Archive size={13} />} onClick={() => handleForceDelete(row, tableRef.current?.refetch)}>Hapus Permanen</Button>}
+      </div>
+    ) },
+  ], [handleStatusToggle, handleForceDelete, updatingStatus]);
 
   return (
     <div className={styles.page}>
-      {/* Header */}
       <div className={styles.pageHeader}>
-        <div>
-          <h1 className={styles.pageTitle}>Manajemen Vendor</h1>
-          <p className={styles.pageSubtitle}>
-            Kelola data vendor dan rekanan perusahaan
-          </p>
-        </div>
-        <Button
-          iconLeft={<Plus size={14} />}
-          onClick={() => setFormTarget(null)}
-        >
-          Tambah Vendor
-        </Button>
+        <div><h1 className={styles.pageTitle}>Manajemen Vendor</h1><p className={styles.pageSubtitle}>Kelola data vendor dan rekanan perusahaan</p></div>
+        <div className={styles.filterWrapper}><Select value={trashFilter} onChange={(e) => setTrashFilter(e.target.value)} options={TRASH_FILTERS} size="sm" /></div>
+        <Button iconLeft={<Plus size={14} />} onClick={() => setFormTarget({})}>Tambah Vendor</Button>
       </div>
-
-      {/* Toolbar */}
-      <div className={styles.toolbar}>
-        <form className={styles.searchRow} onSubmit={handleSearch}>
-          <Input
-            type="search"
-            placeholder="Cari nama, SAP ID, NPWP…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            size="sm"
-          />
-          <Button type="submit" size="sm">
-            Cari
-          </Button>
-        </form>
-      </div>
-
-      {/* Info */}
-      <p className={styles.info}>{meta.total ?? "—"} vendor ditemukan</p>
-
-      {/* Table */}
-      <div className={styles.tableWrap}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>SAP ID</th>
-              <th>Nama Vendor</th>
-              <th>NPWP</th>
-              <th>Jenis Layanan</th>
-              <th>PPh</th>
-              <th>Status</th>
-              <th>Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i}>
-                  {Array.from({ length: 7 }).map((_, j) => (
-                    <td key={j}>
-                      <div className={styles.skeleton} />
-                    </td>
-                  ))}
-                </tr>
-              ))
-            ) : vendors.length === 0 ? (
-              <tr>
-                <td colSpan={7}>
-                  <EmptyState
-                    title="Tidak ada vendor ditemukan"
-                    description={
-                      query
-                        ? `Tidak ada hasil untuk "${query}"`
-                        : "Belum ada vendor terdaftar. Tambah vendor baru."
-                    }
-                  />
-                </td>
-              </tr>
-            ) : (
-              vendors.map((v) => (
-                <tr key={v.id} className={styles.row}>
-                  <td>
-                    <span className={styles.vendorCode}>{v.sap_id}</span>
-                  </td>
-                  <td>
-                    <div className={styles.vendorName}>
-                      <Building2 size={14} className={styles.vendorIcon} />
-                      {v.name}
-                    </div>
-                    {v.address && (
-                      <p className={styles.vendorAddress}>{v.address}</p>
-                    )}
-                  </td>
-                  <td className={styles.muted}>{v.npwp || "—"}</td>
-                  <td className={styles.muted}>
-                    {serviceLabel(v.service_type)}
-                  </td>
-                  <td className={styles.muted}>
-                    {v.pph_type && `${v.pph_type}% (${v.pph_rate}%)`}
-                  </td>
-                  <td>
-                    <Badge
-                      variant={v.deleted_at === null ? "success" : "default"}
-                      pill
-                      size="sm"
-                    >
-                      {v.deleted_at === null ? "Aktif" : "Tidak Aktif"}
-                    </Badge>
-                  </td>
-                  <td>
-                    <div className={styles.actions}>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        iconLeft={<Pencil size={13} />}
-                        onClick={() => setFormTarget(v)}
-                      >
-                        Edit
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Pagination */}
-      {meta.last_page > 1 && (
-        <Pagination
-          page={meta.current_page}
-          totalPages={meta.last_page}
-          totalRows={meta.total}
-          pageSize={meta.per_page}
-          onChange={(p) => setPage(p)}
-        />
-      )}
-
-      {/* Modal */}
-      {formTarget !== undefined && (
-        <VendorFormModal
-          vendor={formTarget}
-          onClose={() => setFormTarget(undefined)}
-          onSaved={handleSaved}
-          api={api}
-        />
-      )}
+      <Table ref={tableRef} url={fullUrl} columns={columns} dataKey="data" pageSize={15} exportName="vendors_export" title="Daftar Vendor" searchable={true} selectable={false} defaultParams={{ trash_filter: trashFilter }} serverSide={true} />
+      {formTarget !== null && <VendorFormModal vendor={formTarget.id ? formTarget : null} onClose={() => setFormTarget(null)} onSaved={handleSaved} api={api} />}
     </div>
   );
 }
