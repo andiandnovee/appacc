@@ -18,5 +18,6 @@
 !index.html
 !.gitignore
 !.env
+!.env.production
 
 # .env.local tetap di-ignore (tidak masuk git)
