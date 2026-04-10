@@ -82,19 +82,19 @@ class VendorController extends Controller
      * Soft delete the specified vendor (with cascade to invoiceReceipts).
      */
     public function destroy(Vendor $vendor)
-    {
-        $this->authorize('delete', $vendor);
+{
+    $this->authorize('delete', $vendor);
 
-        // Soft delete semua invoice receipts yang terkait (cascade)
-        $vendor->invoiceReceipts()->delete();
+    // Soft delete semua invoice receipts yang terkait
+    $vendor->invoiceReceipts()->delete();
 
-        // Soft delete vendor itu sendiri
-        $vendor->delete();
+    // Soft delete vendor (set deleted_at = NOW())
+    $vendor->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Vendor berhasil dihapus.',
-            'data'    => new VendorResource($vendor),
-        ], 200);
-    }
+    return response()->json([
+        'success' => true,
+        'message' => 'Vendor berhasil dinonaktifkan.',
+        'data'    => new VendorResource($vendor),
+    ], 200);
+}
 }

@@ -1,0 +1,213 @@
+/* ════════════════════════════════════════════════════════════
+   Toggle Switch Component Styles
+   ════════════════════════════════════════════════════════════ */
+
+.wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  user-select: none;
+}
+
+.wrapper.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Control (input + label) ───────────────────────────────── */
+.control {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.input {
+  appearance: none;
+  width: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+  position: absolute;
+}
+
+.input:disabled {
+  cursor: not-allowed;
+}
+
+/* ── Toggle label (visual switch) ──────────────────────────── */
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1);
+  border-radius: 9999px;
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
+
+  /* Default state: off */
+  background-color: var(--color-neutral-200);
+  border: 1px solid var(--color-neutral-300);
+}
+
+.input:disabled ~ .toggle {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.input:focus-visible ~ .toggle {
+  outline: 2px solid var(--color-primary-400);
+  outline-offset: 2px;
+}
+
+/* ── Thumb (sliding circle) ───────────────────────────────── */
+.thumb {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background-color: white;
+  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* ── Size variants ─────────────────────────────────────────── */
+.sm .toggle {
+  padding: 2px;
+  height: 24px;
+  width: 44px;
+}
+
+.sm .thumb {
+  width: 20px;
+  height: 20px;
+}
+
+.md .toggle {
+  padding: 3px;
+  height: 28px;
+  width: 52px;
+}
+
+.md .thumb {
+  width: 22px;
+  height: 22px;
+}
+
+.lg .toggle {
+  padding: 4px;
+  height: 32px;
+  width: 60px;
+}
+
+.lg .thumb {
+  width: 24px;
+  height: 24px;
+}
+
+/* ── Toggle ON state ───────────────────────────────────────── */
+
+/* Primary variant (on) */
+.toggle.primary.toggled {
+  background-color: var(--color-primary-500);
+  border-color: var(--color-primary-600);
+}
+
+.toggle.primary.toggled .thumb {
+  transform: translateX(1.5rem);
+}
+
+.sm.toggle.primary.toggled .thumb {
+  transform: translateX(20px);
+}
+
+.md.toggle.primary.toggled .thumb {
+  transform: translateX(24px);
+}
+
+.lg.toggle.primary.toggled .thumb {
+  transform: translateX(28px);
+}
+
+/* Success variant (on) */
+.toggle.success.toggled {
+  background-color: var(--color-success-500);
+  border-color: var(--color-success-600);
+}
+
+.toggle.success.toggled .thumb {
+  transform: translateX(1.5rem);
+}
+
+.sm.toggle.success.toggled .thumb {
+  transform: translateX(20px);
+}
+
+.md.toggle.success.toggled .thumb {
+  transform: translateX(24px);
+}
+
+.lg.toggle.success.toggled .thumb {
+  transform: translateX(28px);
+}
+
+/* Danger variant (on) */
+.toggle.danger.toggled {
+  background-color: var(--color-danger-500);
+  border-color: var(--color-danger-600);
+}
+
+.toggle.danger.toggled .thumb {
+  transform: translateX(1.5rem);
+}
+
+.sm.toggle.danger.toggled .thumb {
+  transform: translateX(20px);
+}
+
+.md.toggle.danger.toggled .thumb {
+  transform: translateX(24px);
+}
+
+.lg.toggle.danger.toggled .thumb {
+  transform: translateX(28px);
+}
+
+/* ── Content (label + description) ─────────────────────────── */
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  flex: 1;
+}
+
+.label {
+  font-weight: 500;
+  font-size: 0.9375rem;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+}
+
+.label:hover {
+  color: var(--color-text-primary);
+}
+
+.wrapper.disabled .label {
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.description {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  margin: 0;
+  padding: 0;
+  line-height: 1.4;
+}
+
+.wrapper.disabled .description {
+  color: var(--color-text-disabled);
+}

@@ -130,32 +130,34 @@ if (!token) {
               <h4>Format File Excel/CSV:</h4>
               <ul>
                 <li>
-                  <strong>po_number</strong> — Nomor PO (wajib)
+                  <strong>Purch.Doc.</strong> — Nomor PO (wajib)
                 </li>
                 <li>
-                  <strong>item_line</strong> — Line item PO (wajib)
+                  <strong>Item Line PO</strong> — Line item PO (wajib)
                 </li>
                 <li>
-                  <strong>business_area_code</strong> — Kode Business Area
+                  <strong>Plant</strong> — Kode Business Area
+                </li>
+                					
+
+                <li>
+                  <strong>Vendor</strong> — Kode vendor SAP
                 </li>
                 <li>
-                  <strong>sap_vendor_id</strong> — Kode vendor SAP
+                  <strong>Vendor Name</strong> — Nama vendor
                 </li>
                 <li>
-                  <strong>vendor_name</strong> — Nama vendor
+                  <strong>Amount PO</strong> — Nominal
                 </li>
                 <li>
-                  <strong>amount</strong> — Nominal
+                  <strong>GR Mat Doc No</strong> — Goods Receipt (opsional)
                 </li>
                 <li>
-                  <strong>gr_number</strong> — Goods Receipt (opsional)
-                </li>
-                <li>
-                  <strong>purchasing_group</strong> — Purchasing Group
+                  <strong>Purchasing Group PO</strong> — Purchasing Group
                   (opsional)
                 </li>
                 <li>
-                  <strong>pr_number</strong> — PR Number (opsional)
+                  <strong>Purchase Requisition</strong> — PR Number (opsional)
                 </li>
               </ul>
 

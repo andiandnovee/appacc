@@ -255,34 +255,6 @@
   box-shadow: 0 0 0 3px var(--color-primary-subtle);
 }
 
-/* ── Status toggle ───────────────────────────────────────── */
-.toggleRow {
-  display: flex;
-  align-items: center;
-}
-
-.toggleBtn {
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-full);
-  border: 1.5px solid var(--color-border);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.toggleActive {
-  border-color: var(--color-success);
-  background: var(--color-success-subtle, #f0fdf4);
-  color: var(--color-success);
-}
-
-.toggleInactive {
-  border-color: var(--color-border);
-  background: var(--color-surface-secondary);
-  color: var(--color-text-muted);
-}
-
 /* ── Error text ──────────────────────────────────────────── */
 .errorText {
   font-size: var(--text-xs);

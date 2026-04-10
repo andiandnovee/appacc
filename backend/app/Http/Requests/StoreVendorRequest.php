@@ -16,11 +16,11 @@ class StoreVendorRequest extends FormRequest
         return [
             'sap_id'       => 'required|integer|unique:vendors,sap_id',
             'name'         => 'required|string|max:255',
-            'npwp'         => 'required|string|max:20|unique:vendors,npwp',
+            'npwp'         => 'nullable|string|max:20|unique:vendors,npwp',
             'address'      => 'nullable|string|max:500',
-            'service_type' => 'required|in:HF9,HT4,OTHER', // Sesuaikan dengan enum yang ada
-            'pph_type'     => 'required|in:21,23,26', // PPh jenis (21=salary, 23=service, 26=div)
-            'pph_rate'     => 'required|numeric|min:0|max:100',
+            'service_type' => 'nullable|in:HF9,HT4,OTHER', // Sesuaikan dengan enum yang ada
+            'pph_type'     => 'nullable|in:21,23,26', // PPh jenis (21=salary, 23=service, 26=div)
+            'pph_rate'     => 'nullable|numeric|min:0|max:100',
         ];
     }
 

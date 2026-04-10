@@ -24,15 +24,15 @@ class UpdateVendorRequest extends FormRequest
             ],
             'name'         => 'required|string|max:255',
             'npwp'         => [
-                'required',
+                'nullable',
                 'string',
                 'max:20',
                 Rule::unique('vendors', 'npwp')->ignore($vendor->id),
             ],
             'address'      => 'nullable|string|max:500',
-            'service_type' => 'required|in:HF9,HT4,OTHER',
-            'pph_type'     => 'required|in:21,23,26',
-            'pph_rate'     => 'required|numeric|min:0|max:100',
+            'service_type' => 'nullable|in:HF9,HT4,OTHER',
+            'pph_type'     => 'nullable|in:21,23,26',
+            'pph_rate'     => 'nullable|numeric|min:0|max:100',
         ];
     }
 
