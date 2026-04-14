@@ -55,6 +55,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'check-permission' => \App\Http\Middleware\CheckPermission::class,
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'refresh.token' => \App\Http\Middleware\RefreshToken::class,
         ]);
     })
 

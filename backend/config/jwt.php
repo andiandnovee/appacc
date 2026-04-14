@@ -316,6 +316,6 @@ return [
         |
         */
 
-        'storage' => PHPOpenSourceSaver\JWTAuth\Providers\Storage\Illuminate::class,
+         'storage' => \App\Repositories\JwtDatabaseStorage::class,
     ],
 ];
