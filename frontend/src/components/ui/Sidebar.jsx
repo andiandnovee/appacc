@@ -40,7 +40,7 @@ const NAV_GROUPS = [
   {
     label: "Penerimaan Invoice",
     items: [
-      { to: "/invoice/monitor", icon: FileText, label: "Monitor Invoice" },
+      { to: "/invoice/receipts", icon: FileText, label: "Monitor Invoice" },
       {
         to: "/invoice/input",
         icon: FilePlus,

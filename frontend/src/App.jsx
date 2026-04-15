@@ -14,6 +14,7 @@ import Settings from "./pages/general/Settings";
 import UserManagement from "./pages/admin/UserManagement";
 import VendorManagement from "./pages/invoice/VendorManagement";
 import SapPoImportPage from "./pages/sap/SapPoImportPage";
+import Receipt from "./pages/invoice/Receipt";
 
 export default function App() {
   return (
@@ -37,6 +38,7 @@ export default function App() {
                   path="/utility/import-po"
                   element={<SapPoImportPage />}
                 />
+                <Route path="/invoice/receipts" element={<Receipt />} />
               </Route>
             </Route>
 
