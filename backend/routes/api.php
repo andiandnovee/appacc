@@ -94,7 +94,12 @@ Route::middleware('auth:api')->group(function () {
         Route::get('business-areas/{businessArea}', [BusinessAreaController::class, 'show']);
 
         // Invoice receipts
-        Route::apiResource('invoice-receipts', InvoiceReceiptController::class);
+        Route::get('receipts/search', [InvoiceReceiptController::class, 'search']);
+        Route::apiResource('receipts', InvoiceReceiptController::class);
+
+
+
+        
         Route::get('invoice-receipts/{invoiceReceipt}/statuses',  [InvoiceReceiptController::class, 'statuses']);
         Route::post('invoice-receipts/{invoiceReceipt}/statuses', [InvoiceReceiptController::class, 'addStatus']);
 

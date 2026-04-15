@@ -23,6 +23,17 @@ class InvoiceReceiptController extends Controller
         $query = InvoiceReceipt::query()
             ->with(['vendor', 'company', 'stage', 'latestStatus']);
 
+
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('po_number', 'like', "%{$request->search}%")
+                    ->orWhere('invoice_number', 'like', "%{$request->search}%")
+                    ->orWhere('service_type', 'like', "%{$request->search}%");
+            });
+        }
+
+
+
         // Filter by company
         if ($request->filled('company_id')) {
             $query->where('company_id', $request->company_id);
