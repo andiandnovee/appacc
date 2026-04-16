@@ -37,7 +37,7 @@ export const Button = <T extends ElementType = 'button'>({
   as: Tag = 'button' as T,
   children,
   className = '',
-  ...rest
+  rest
 }: ButtonProps<T> & Omit<ComponentPropsWithoutRef<T>, keyof ButtonProps<T>>) => {
   const isDisabled = disabled || loading;
 
@@ -56,8 +56,8 @@ export const Button = <T extends ElementType = 'button'>({
 
   // Kalau Tag = 'button', tambahkan type="button" supaya tidak submit form
   const tagProps = Tag === 'button'
-    ? ({ type: 'button', disabled: isDisabled, ...rest } as any)
-    : ({ 'aria-disabled': isDisabled, ...rest } as any);
+    ? ({ type: 'button', disabled: isDisabled, rest } as any)
+    : ({ 'aria-disabled': isDisabled,rest } as any);
 
   return (
     <Tag className={btnClass} {...tagProps}>
