@@ -83,6 +83,7 @@ Route::middleware('auth:api')->group(function () {
 
         // Vendors — search harus sebelum apiResource
         Route::get('vendors/search', [VendorController::class, 'search']);
+        Route::post('vendors/{vendor}/restore', [VendorController::class, 'restore']);
         Route::apiResource('vendors', VendorController::class);
 
         // Master data — read only
