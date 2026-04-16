@@ -133,3 +133,201 @@
 
 .messageHint  { color: var(--text-tertiary); }
 .messageError { color: var(--color-danger);  }
+
+/* ──────────────────────────────────────────────────────────────
+   ASYNC SELECT - Searchable Combobox with Dropdown
+   ────────────────────────────────────────────────────────────── */
+
+.asyncContainer {
+  position: relative;
+  width: 100%;
+}
+
+/* ── Async input field ─────────────────────────────────────── */
+.asyncInput {
+  width: 100%;
+  font-family: var(--font-sans);
+  font-weight: var(--font-normal);
+  color: var(--text-primary);
+  background-color: var(--bg-surface);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-md);
+  outline: none;
+  cursor: text;
+
+  padding-right: var(--space-3);
+  padding-left: var(--space-3);
+
+  transition:
+    border-color var(--duration-normal) var(--ease-default),
+    box-shadow var(--duration-normal) var(--ease-default),
+    background-color var(--duration-fast) var(--ease-default);
+}
+
+/* Input focus */
+.asyncInput:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(84, 112, 239, 0.15);
+}
+
+/* Input open state */
+.asyncInput.open {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-color: var(--border-subtle);
+}
+
+/* ── Async sizes ───────────────────────────────────────────── */
+.asyncInput.sm {
+  padding-top: var(--space-2);
+  padding-bottom: var(--space-2);
+  font-size: var(--text-xs);
+}
+
+.asyncInput.md {
+  padding-top: var(--space-2);
+  padding-bottom: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.asyncInput.lg {
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-3);
+  font-size: var(--text-base);
+}
+
+/* Input error state */
+.asyncInput.error {
+  border-color: var(--color-danger);
+}
+
+.asyncInput.error:focus {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+}
+
+/* Input disabled */
+.asyncInput:disabled {
+  background-color: var(--bg-surface-2);
+  color: var(--text-disabled);
+  border-color: var(--border-subtle);
+  cursor: not-allowed;
+}
+
+/* ── Dropdown container ────────────────────────────────────── */
+.asyncDropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background-color: var(--bg-surface);
+  border: 1.5px solid var(--border-default);
+  border-top: none;
+  border-bottom-left-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  max-height: 300px;
+  overflow-y: auto;
+  visibility: hidden;
+  opacity: 0;
+  transition:
+    visibility var(--duration-fast) var(--ease-default),
+    opacity var(--duration-fast) var(--ease-default);
+}
+
+.asyncDropdown.visible {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* ── Dropdown options ──────────────────────────────────────── */
+.asyncOption {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-default),
+    color var(--duration-fast) var(--ease-default);
+
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.asyncOption:last-child {
+  border-bottom: none;
+}
+
+.asyncOption:hover {
+  background-color: var(--bg-surface-2);
+}
+
+.asyncOption.selected {
+  background-color: rgba(84, 112, 239, 0.1);
+  color: var(--color-primary);
+  font-weight: var(--font-medium);
+}
+
+/* ── Loading skeleton ──────────────────────────────────────── */
+.skeletonContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: var(--space-2) 0;
+}
+
+.skeletonItem {
+  height: 36px;
+  background: linear-gradient(
+    90deg,
+    var(--bg-surface-2) 0%,
+    var(--bg-surface-3) 50%,
+    var(--bg-surface-2) 100%
+  );
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── No results message ────────────────────────────────────── */
+.noResults {
+  padding: var(--space-3);
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: var(--text-sm);
+}
+
+/* ── Loading more indicator ────────────────────────────────── */
+.loadingMore {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--space-3);
+  gap: var(--space-2);
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border-default);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.highlighted {
+background-color: var(--color-primary-500); 
+border-color: var(--border-focus);
+cursor: pointer;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+

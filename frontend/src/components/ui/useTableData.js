@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 
 /**
  * useTableData
@@ -12,110 +12,116 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
  * @param {object}  options.defaultParams - parameter default seperti trash_filter
  * @param {boolean} options.serverSide   - true jika search/sort/pagination di backend (default: true)
  */
-export function useTableData(url, { 
-  pageSize = 10, 
-  dataKey = '', 
+export function useTableData(url, {
+  pageSize = 10,
+  dataKey = '',
   defaultParams = {},
-  serverSide = true 
+  serverSide = true
 } = {}) {
 
-  const [rawData,   setRawData]   = useState([])
-  const [loading,   setLoading]   = useState(true)
-  const [error,     setError]     = useState(null)
+  const [rawData, setRawData] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [totalRows, setTotalRows] = useState(0)
 
-  const [search,    setSearch]    = useState('')
-  const [sortKey,   setSortKey]   = useState('')
-  const [sortDir,   setSortDir]   = useState('asc')
-  const [page,      setPage]      = useState(1)
-  const [selected,  setSelected]  = useState([])
+  const [search, setSearch] = useState('')
+  const [sortKey, setSortKey] = useState('')
+  const [sortDir, setSortDir] = useState('asc')
+  const [page, setPage] = useState(1)
+  const [selected, setSelected] = useState([])
 
-  // ── Build query string ──────────────────────────────────────────
-  const buildQueryString = useCallback(() => {
+  // Untuk manual refetch
+  const [refetchCount, setRefetchCount] = useState(0)
+
+  // ── Build query string (memoized) ──────────────────────────────
+  const queryString = useMemo(() => {
+    if (!serverSide) return ''
+
     const params = new URLSearchParams()
-    
+
     // Default params (misal: trash_filter)
     Object.entries(defaultParams).forEach(([key, value]) => {
       if (value) params.append(key, value)
     })
-    
+
     // Pagination
     params.append('per_page', pageSize)
     params.append('page', page)
-    
+
     // Search
     if (search) params.append('search', search)
-    
+
     // Sort
     if (sortKey) {
       params.append('sort_by', sortKey)
       params.append('sort_dir', sortDir)
     }
-    
+
     return params.toString()
-  }, [defaultParams, pageSize, page, search, sortKey, sortDir])
+  }, [defaultParams, pageSize, page, search, sortKey, sortDir, serverSide])
 
-  // ── Fetch data (server-side) ────────────────────────────────────
-  const fetchData = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    
-    try {
-      let finalUrl = url
-      
-      if (serverSide) {
-        const queryString = buildQueryString()
-        finalUrl = queryString ? `${url}?${queryString}` : url
-      }
-      
-      const res = await fetch(finalUrl, {
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          // Ambil token dari localStorage/sessionStorage
-          'Authorization': `Bearer ${localStorage.getItem('appacc_token') || sessionStorage.getItem('appacc_token')}`,
-        },
-        credentials: 'include',
-      })
-
-      if (!res.ok) throw new Error(`HTTP error ${res.status}`)
-
-      const json = await res.json()
-      
-      if (serverSide) {
-        // Server-side: response berbentuk { data: [...], meta: { total, ... } }
-        const data = dataKey ? json[dataKey] : json.data
-        setRawData(Array.isArray(data) ? data : [])
-        setTotalRows(json.meta?.total || json.total || data?.length || 0)
-      } else {
-        // Client-side: response langsung array
-        const data = dataKey ? json[dataKey] : json
-        if (!Array.isArray(data)) throw new Error('Response bukan array')
-        setRawData(data)
-        setTotalRows(data.length)
-      }
-      
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
-  }, [url, serverSide, buildQueryString, dataKey])
+  // ── Refetch callback ─────────────────────────────────────────────
+  const refetch = useCallback(() => {
+    setRefetchCount(c => c + 1)
+  }, [])
 
   // ── Initial fetch & refetch ─────────────────────────────────────
-  useEffect(() => { 
-    fetchData() 
-  }, [fetchData])
+  // IMPORTANT: Separate effect untuk fetch, trigger hanya saat URL/queryString berubah
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true)
+      setError(null)
+
+      try {
+        let finalUrl = url
+
+        if (serverSide && queryString) {
+          finalUrl = `${url}?${queryString}`
+        }
+
+        const res = await fetch(finalUrl, {
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('appacc_token') || sessionStorage.getItem('appacc_token')}`,
+          },
+          credentials: 'include',
+        })
+
+        if (!res.ok) throw new Error(`HTTP error ${res.status}`)
+
+        const json = await res.json()
+
+        if (serverSide) {
+          const data = dataKey ? json[dataKey] : json.data
+          setRawData(Array.isArray(data) ? data : [])
+          setTotalRows(json.meta?.total || json.total || data?.length || 0)
+        } else {
+          const data = dataKey ? json[dataKey] : json
+          if (!Array.isArray(data)) throw new Error('Response bukan array')
+          setRawData(data)
+          setTotalRows(data.length)
+        }
+
+      } catch (err) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [url, queryString, serverSide, dataKey, refetchCount])
 
   // ── Reset page saat search/sort berubah ─────────────────────────
-  useEffect(() => { 
-    if (serverSide) setPage(1) 
+  useEffect(() => {
+    if (serverSide) setPage(1)
   }, [search, sortKey, sortDir, serverSide])
 
   // ── Client-side filtering (jika serverSide = false) ─────────────
   const filtered = useMemo(() => {
     if (serverSide) return rawData
-    
+
     if (!search.trim()) return rawData
     const q = search.toLowerCase()
     return rawData.filter(row =>
@@ -128,7 +134,7 @@ export function useTableData(url, {
   // ── Client-side sorting (jika serverSide = false) ───────────────
   const sorted = useMemo(() => {
     if (serverSide) return filtered
-    
+
     if (!sortKey) return filtered
     return [...filtered].sort((a, b) => {
       const aVal = a[sortKey] ?? ''
@@ -137,7 +143,7 @@ export function useTableData(url, {
       if (typeof aVal === 'number' && typeof bVal === 'number') {
         return sortDir === 'asc' ? aVal - bVal : bVal - aVal
       }
-      
+
       const cmp = String(aVal).localeCompare(String(bVal))
       return sortDir === 'asc' ? cmp : -cmp
     })
@@ -146,14 +152,14 @@ export function useTableData(url, {
   // ── Client-side pagination (jika serverSide = false) ────────────
   const clientTotalRows = sorted.length
   const clientTotalPages = Math.max(1, Math.ceil(clientTotalRows / pageSize))
-  
-  useEffect(() => { 
-    if (!serverSide) setPage(1) 
+
+  useEffect(() => {
+    if (!serverSide) setPage(1)
   }, [search, serverSide])
 
   const paginated = useMemo(() => {
     if (serverSide) return sorted
-    
+
     const start = (page - 1) * pageSize
     return sorted.slice(start, start + pageSize)
   }, [sorted, page, pageSize, serverSide])
@@ -185,19 +191,19 @@ export function useTableData(url, {
     }
   }, [paginated, selected])
 
-  const isSelected    = useCallback((id) => selected.includes(id), [selected])
+  const isSelected = useCallback((id) => selected.includes(id), [selected])
   const isAllSelected = paginated.length > 0 &&
-                        paginated.every(r => selected.includes(r.id))
+    paginated.every(r => selected.includes(r.id))
   const isIndeterminate = !isAllSelected &&
-                          paginated.some(r => selected.includes(r.id))
+    paginated.some(r => selected.includes(r.id))
 
   return {
     // data
-    data:     paginated,
-    allData:  serverSide ? rawData : sorted,
+    data: paginated,
+    allData: serverSide ? rawData : sorted,
     loading,
     error,
-    refetch:  fetchData,
+    refetch,
     totalRows: serverSide ? totalRows : clientTotalRows,
     totalPages: serverSide ? Math.ceil(totalRows / pageSize) : clientTotalPages,
 

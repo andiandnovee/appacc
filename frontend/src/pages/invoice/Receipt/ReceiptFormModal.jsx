@@ -1,41 +1,60 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Modal from "../../../components/ui/Modal";
 import Button from "../../../components/ui/Button";
 import Input from "../../../components/ui/Input";
 import Select from "../../../components/ui/Select";
-import Toggle from "../../../components/ui/Toggle";
 import styles from "./ReceiptManagement.module.css";
 
-// ─── Konstanta service_type (sesuai backend enum) ─────────────
-const SERVICE_TYPES = [
-  { value: "", label: "— Pilih Jenis Layanan —" },
-  { value: "HF9", label: "HF9 - Barang/Jasa Umum" },
-  { value: "HT4", label: "HT4 - Layanan Khusus" },
-  { value: "OTHER", label: "Lainnya" },
-];
+// Enhanced API wrapper for better error handling
+const enhancedApi = (path, options = {}) => {
+  const token =
+    localStorage.getItem("appacc_token") ??
+    sessionStorage.getItem("appacc_token");
+  const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+  const method = options.method || "GET";
 
-const PPH_TYPES = [
-  { value: "21", label: "PPh 21 - Gaji/Upah" },
-  { value: "23", label: "PPh 23 - Jasa" },
-  { value: "26", label: "PPh 26 - Dividen" },
-];
+  // Only add Content-Type for requests with body
+  const headers = {
+    Authorization: `Bearer ${token}`,
+  };
 
-// ─── Receipt Form Modal (Add / Edit) ───────────────────────────
+  if (["POST", "PUT", "PATCH", "DELETE"].includes(method.toUpperCase())) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  return fetch(`${apiBase}${path}`, {
+    ...options,
+    headers,
+  }).then((r) =>
+    r.json().then((json) => {
+      if (!r.ok) {
+        const error = new Error(json.message || "Request failed");
+        error.status = r.status;
+        error.data = json;
+        throw error;
+      }
+      return json;
+    }),
+  );
+};
+
 export default function ReceiptFormModal({ receipt, onClose, onSaved, api }) {
   const isEdit = Boolean(receipt);
+  const currentYear = new Date().getFullYear();
 
   const [form, setForm] = useState({
-    sap_id: receipt?.sap_id ?? "",
-    name: receipt?.name ?? "",
-    npwp: receipt?.npwp ?? "",
-    address: receipt?.address ?? "",
-    service_type: receipt?.service_type ?? "",
-    pph_type: receipt?.pph_type ?? "23",
-    pph_rate: receipt?.pph_rate ?? "2",
+    receipt_date: receipt?.receipt_date ?? "",
+    vendor_id: receipt?.vendor_id ?? "",
+    company_id: receipt?.company_id ?? "",
+    stage_id: receipt?.stage_id ?? "",
+    year: receipt?.year ?? currentYear,
+    po_number: receipt?.po_number ?? "",
+    invoice_number: receipt?.invoice_number ?? "",
+    amount: receipt?.amount ?? "",
+    business_area_id: receipt?.business_area_id ?? "",
+    category: receipt?.category ?? "",
+    payment_location: receipt?.payment_location ?? "",
   });
-
-  // ─── Toggle state untuk active/inactive ─────────────────
-  const [isActive, setIsActive] = useState(receipt?.deleted_at === null ?? true);
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -43,10 +62,58 @@ export default function ReceiptFormModal({ receipt, onClose, onSaved, api }) {
   const set = (field) => (e) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
+  // Memoize fetchOptions to prevent infinite dependency loops
+  const vendorFetchOptions = useMemo(
+    () => ({
+      endpoint: "/vendors",
+      searchParam: "search",
+      limit: 5,
+    }),
+    [],
+  );
+
+  const companyFetchOptions = useMemo(
+    () => ({
+      endpoint: "/companies",
+      searchParam: "search",
+      limit: 5,
+    }),
+    [],
+  );
+
+  const stageFetchOptions = useMemo(
+    () => ({
+      endpoint: "/stages",
+      searchParam: "search",
+      filters: { year: form.year },
+      limit: 5,
+    }),
+    [form.year],
+  );
+
+  const businessAreaFetchOptions = useMemo(
+    () => ({
+      endpoint: "/business-areas",
+      searchParam: "search",
+      filters: { company_id: form.company_id },
+      limit: 5,
+    }),
+    [form.company_id],
+  );
+
   const validate = () => {
     const err = {};
-    if (!form.sap_id?.toString().trim()) err.sap_id = "SAP ID wajib diisi.";
-    if (!form.name?.trim?.()) err.name = "Nama receipt wajib diisi.";
+    if (!form.receipt_date?.trim())
+      err.receipt_date = "Tanggal receipt wajib diisi.";
+    if (!form.vendor_id) err.vendor_id = "Vendor wajib dipilih.";
+    if (!form.company_id) err.company_id = "Perusahaan wajib dipilih.";
+    if (!form.stage_id) err.stage_id = "Stage wajib dipilih.";
+    if (
+      !form.amount?.toString().trim() ||
+      isNaN(form.amount) ||
+      parseFloat(form.amount) < 0
+    )
+      err.amount = "Jumlah harus berupa angka positif.";
     return err;
   };
 
@@ -60,35 +127,34 @@ export default function ReceiptFormModal({ receipt, onClose, onSaved, api }) {
     setLoading(true);
     setErrors({});
     try {
-      // ─── Save form data ─────────────────────────────────
-      const res = isEdit
-        ? await api(`/receipts/${receipt.id}`, {
-            method: "PUT",
-            body: JSON.stringify(form),
-          })
-        : await api("/receipts", {
-            method: "POST",
-            body: JSON.stringify(form),
-          });
+      const payload = {
+        receipt_date: form.receipt_date,
+        vendor_id: parseInt(form.vendor_id),
+        company_id: parseInt(form.company_id),
+        stage_id: parseInt(form.stage_id),
+        po_number: form.po_number || null,
+        invoice_number: form.invoice_number || null,
+        amount: parseFloat(form.amount),
+        business_area_id: form.business_area_id
+          ? parseInt(form.business_area_id)
+          : null,
+        category: form.category ? parseInt(form.category) : null,
+        payment_location: form.payment_location
+          ? parseInt(form.payment_location)
+          : null,
+      };
 
-      // ─── Handle active/inactive toggle ─────────────────
-      if (isEdit && receipt.deleted_at === null && !isActive) {
-        // User toggle dari aktif ke tidak aktif
-        // Call DELETE endpoint untuk soft delete
-        await api(`/receipts/${receipt.id}`, { method: "DELETE" });
-        res.data.deleted_at = new Date().toISOString();
-      } else if (isEdit && receipt.deleted_at !== null && isActive) {
-        // User toggle dari tidak aktif ke aktif
-        // TODO: Implement restore endpoint (future feature)
-        console.warn("Restore belum diimplementasikan");
-      }
+      await enhancedApi(isEdit ? `/receipts/${receipt.id}` : "/receipts", {
+        method: isEdit ? "PUT" : "POST",
+        body: JSON.stringify(payload),
+      });
 
-      onSaved(res.data, isEdit);
+      onSaved();
     } catch (e) {
       // Handle Laravel validation errors
-      if (e.errors && Object.keys(e.errors).length > 0) {
+      if (e.data?.errors && typeof e.data.errors === "object") {
         const formattedErrors = {};
-        Object.entries(e.errors).forEach(([field, messages]) => {
+        Object.entries(e.data.errors).forEach(([field, messages]) => {
           formattedErrors[field] = Array.isArray(messages)
             ? messages[0]
             : messages;
@@ -98,7 +164,9 @@ export default function ReceiptFormModal({ receipt, onClose, onSaved, api }) {
         setErrors({
           general:
             e.message ||
-            (isEdit ? "Gagal menyimpan perubahan." : "Gagal menambah receipt."),
+            (isEdit
+              ? "Gagal menyimpan perubahan."
+              : "Gagal menambah invoice receipt."),
         });
       }
     } finally {
@@ -107,92 +175,112 @@ export default function ReceiptFormModal({ receipt, onClose, onSaved, api }) {
   };
 
   return (
-    <Modal isOpen onClose={onClose} size="md">
+    <Modal isOpen onClose={onClose} size="lg">
       <Modal.Header
         onClose={onClose}
-        title={isEdit ? `Edit receipt: ${receipt.name}` : "Tambah receipt Baru"}
+        title={isEdit ? `Edit Invoice Receipt` : "Tambah Invoice Receipt Baru"}
         subtitle={
-          isEdit ? `SAP ID: ${receipt.sap_id}` : "Isi data receipt dengan lengkap"
+          isEdit
+            ? `Invoice #${receipt.invoice_number}`
+            : "Isi data invoice receipt dengan lengkap"
         }
       />
       <Modal.Body>
         <div className={styles.formGrid}>
           <Input
-            label="SAP ID"
-            placeholder="contoh: 10001"
-            value={form.sap_id}
-            onChange={set("sap_id")}
-            error={errors.sap_id}
-            disabled={isEdit}
-            hint={isEdit ? "SAP ID tidak dapat diubah." : ""}
-          />
-          <Input
-            label="Nama receipt"
-            placeholder="Nama perusahaan atau perorangan"
-            value={form.name}
-            onChange={set("name")}
-            error={errors.name}
-          />
-          <Input
-            label="NPWP"
-            placeholder="12.345.678.9-012.345"
-            value={form.npwp}
-            onChange={set("npwp")}
-            error={errors.npwp}
+            label="Tanggal Receipt"
+            type="date"
+            value={form.receipt_date}
+            onChange={set("receipt_date")}
+            error={errors.receipt_date}
+            required
           />
           <Select
-            label="Jenis Layanan"
-            value={form.service_type}
-            onChange={set("service_type")}
-            options={SERVICE_TYPES}
-            error={errors.service_type}
+            label="Vendor"
+            value={form.vendor_id}
+            onChange={set("vendor_id")}
+            placeholder="— Pilih Vendor —"
+            fetchOptions={vendorFetchOptions}
+            error={errors.vendor_id}
+            required
           />
           <Select
-            label="Tipe PPh"
-            value={form.pph_type}
-            onChange={set("pph_type")}
-            options={PPH_TYPES}
-            error={errors.pph_type}
+            label="Perusahaan"
+            value={form.company_id}
+            onChange={set("company_id")}
+            placeholder="— Pilih Perusahaan —"
+            fetchOptions={companyFetchOptions}
+            error={errors.company_id}
+            required
           />
           <Input
-            label="Tarif PPh (%)"
+            label="Tahun"
             type="number"
-            placeholder="2.0"
-            value={form.pph_rate}
-            onChange={set("pph_rate")}
-            error={errors.pph_rate}
+            value={form.year}
+            onChange={set("year")}
+            error={errors.year}
+            hint="Filter untuk Stage"
+            min="2000"
+            max="2099"
+          />
+          <Select
+            label="Stage"
+            value={form.stage_id}
+            onChange={set("stage_id")}
+            placeholder="— Pilih Stage —"
+            fetchOptions={stageFetchOptions}
+            error={errors.stage_id}
+            required
+          />
+          <Select
+            label="Area Bisnis"
+            value={form.business_area_id}
+            onChange={set("business_area_id")}
+            placeholder="— Pilih Area Bisnis —"
+            fetchOptions={businessAreaFetchOptions}
+            error={errors.business_area_id}
+          />
+          <Input
+            label="PO Number"
+            placeholder="contoh: PO-2026-001"
+            value={form.po_number}
+            onChange={set("po_number")}
+            error={errors.po_number}
+          />
+          <Input
+            label="Invoice Number"
+            placeholder="contoh: INV-2026-001"
+            value={form.invoice_number}
+            onChange={set("invoice_number")}
+            error={errors.invoice_number}
+          />
+          <Input
+            label="Jumlah"
+            type="number"
+            placeholder="0"
+            value={form.amount}
+            onChange={set("amount")}
+            error={errors.amount}
+            required
             step="0.01"
             min="0"
-            max="100"
           />
-          <div className={`${styles.formField} ${styles.fullWidth}`}>
-            <label className={styles.label}>Alamat</label>
-            <textarea
-              className={styles.textarea}
-              placeholder="Alamat lengkap receipt"
-              value={form.address}
-              onChange={set("address")}
-              rows={3}
-            />
-          </div>
-
-          {/* ─── Toggle Status (hanya di edit mode) ──────────────────────── */}
-          {isEdit && (
-            <div className={`${styles.formField} ${styles.fullWidth}`}>
-              <Toggle
-                value={isActive}
-                onChange={(e) => setIsActive(e.target.checked)}
-                label={isActive ? "receipt Aktif" : "receipt Tidak Aktif"}
-                description={
-                  isActive
-                    ? "receipt dapat dipilih di transaksi baru"
-                    : "receipt tidak dapat dipilih di transaksi baru"
-                }
-                variant={isActive ? "success" : "danger"}
-                size="md"
-              />
-            </div>
-          )}
+          <Input
+            label="Kategori"
+            type="number"
+            placeholder="0"
+            value={form.category}
+            onChange={set("category")}
+            error={errors.category}
+          />
+          <Input
+            label="Lokasi Pembayaran"
+            type="number"
+            placeholder="0"
+            value={form.payment_location}
+            onChange={set("payment_location")}
+            error={errors.payment_location}
+          />
         </div>
         {errors.general && (
           <p className={`${styles.errorText} ${styles.errorGeneral}`}>
@@ -205,7 +293,7 @@ export default function ReceiptFormModal({ receipt, onClose, onSaved, api }) {
           Batal
         </Button>
         <Button variant="primary" onClick={handleSave} loading={loading}>
-          {isEdit ? "Simpan Perubahan" : "Tambah receipt"}
+          {isEdit ? "Simpan Perubahan" : "Tambah Receipt"}
         </Button>
       </Modal.Footer>
     </Modal>

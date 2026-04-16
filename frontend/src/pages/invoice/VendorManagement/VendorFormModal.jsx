@@ -9,8 +9,11 @@ import styles from "./VendorManagement.module.css";
 // ─── Konstanta service_type (sesuai backend enum) ─────────────
 const SERVICE_TYPES = [
   { value: "", label: "— Pilih Jenis Layanan —" },
+  { value: "Jasa Service", label: "Jasa Service" },
+  { value: "Jasa Kalibrasi", label: "Jasa Kalibrasi" },
   { value: "HF9", label: "HF9 - Barang/Jasa Umum" },
   { value: "HT4", label: "HT4 - Layanan Khusus" },
+  { value: "Barang/Jasa Umum", label: "Barang/Jasa Umum" },
   { value: "OTHER", label: "Lainnya" },
 ];
 
@@ -35,9 +38,7 @@ export default function VendorFormModal({ vendor, onClose, onSaved, api }) {
   });
 
   // ─── Toggle state untuk active/inactive ─────────────────
-  const [isActive, setIsActive] = useState(
-    vendor?.deleted_at === null ?? true
-  );
+  const [isActive, setIsActive] = useState(vendor?.deleted_at === null ?? true);
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -47,10 +48,8 @@ export default function VendorFormModal({ vendor, onClose, onSaved, api }) {
 
   const validate = () => {
     const err = {};
-    if (!form.sap_id?.toString().trim())
-      err.sap_id = "SAP ID wajib diisi.";
-    if (!form.name?.trim?.())
-      err.name = "Nama vendor wajib diisi.";
+    if (!form.sap_id?.toString().trim()) err.sap_id = "SAP ID wajib diisi.";
+    if (!form.name?.trim?.()) err.name = "Nama vendor wajib diisi.";
     return err;
   };
 

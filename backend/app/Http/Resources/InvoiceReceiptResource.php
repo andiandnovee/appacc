@@ -15,15 +15,20 @@ class InvoiceReceiptResource extends JsonResource
             'id'                 => $this->id,
             'sap_id'             => $this->sap_id,
             'receipt_date'       => $this->receipt_date?->format('Y-m-d'),
+            'vendor_id'          => $this->vendor_id,
+            'company_id'         => $this->company_id,
+            'stage_id'           => $this->stage_id,
             'payment_location'   => $this->payment_location,
             'po_number'          => $this->po_number,
             'amount'             => $this->amount,
             'category'           => $this->category,
             'business_area_code' => $this->business_area_code,
+            'business_area_id'   => $this->business_area_code, // Alias untuk form compat
             'invoice_number'     => $this->invoice_number,
             'attachment1'        => $this->attachment1,
             'attachment2'        => $this->attachment2,
             'attachment3'        => $this->attachment3,
+            'year'               => $this->stage->year ?? null, // Extract year dari stage
 
             // Relasi
             'vendor'   => $this->whenLoaded('vendor', fn() => [
