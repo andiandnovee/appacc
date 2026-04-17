@@ -5,14 +5,9 @@ import {
   ReactNode,
   ElementType,
   ComponentPropsWithoutRef,
-  ButtonHTMLAttributes,
 } from 'react';
 import { ChevronDown, ArrowLeft, ArrowRight } from 'lucide-react';
 import styles from './Button.module.css';
-
-/* ════════════════════════════════════════════════════════════
-   Button
-   ════════════════════════════════════════════════════════════ */
 
 export interface ButtonProps<T extends ElementType = 'button'> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'text';
@@ -22,7 +17,7 @@ export interface ButtonProps<T extends ElementType = 'button'> {
   disabled?: boolean;
   iconLeft?: ReactNode;
   iconRight?: ReactNode;
-  onClick?: () => void;                 // ← ditambahkan, opsional
+  onClick?: () => void;
   as?: T;
   children?: ReactNode;
   className?: string;
@@ -40,7 +35,7 @@ export const Button = <T extends ElementType = 'button'>({
   as: Tag = 'button' as T,
   children,
   className = '',
-  ...rest                                    // ← semua props tambahan (termasuk onClick jika tidak di-destructure di atas)
+  ...rest
 }: ButtonProps<T> & Omit<ComponentPropsWithoutRef<T>, keyof ButtonProps<T>>) => {
   const isDisabled = disabled || loading;
 
@@ -57,13 +52,20 @@ export const Button = <T extends ElementType = 'button'>({
     .filter(Boolean)
     .join(' ');
 
-  // Untuk elemen 'button', tambahkan type="button" dan disabled
-  const tagProps = Tag === 'button'
-    ? { type: 'button', disabled: isDisabled, onClick, ...rest }
-    : { 'aria-disabled': isDisabled, onClick, ...rest };
+  // Build props object with conditional attributes
+  const { children: _childrenFromRest, ...restProps } = rest;
+
+const elementProps = {
+  className: btnClass,
+  onClick,
+  ...restProps,
+  ...(Tag === 'button'
+    ? { type: 'button' as const, disabled: isDisabled }
+    : { 'aria-disabled': isDisabled }),
+};
 
   return (
-    <Tag className={btnClass} {...tagProps}>
+   <Tag {...(elementProps as any)}>
       {loading && (
         <span className={styles.spinnerWrapper} aria-hidden="true">
           <span className={styles.spinner} />

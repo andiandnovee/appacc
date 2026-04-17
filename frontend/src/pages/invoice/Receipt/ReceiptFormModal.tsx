@@ -1,28 +1,72 @@
-import { FC, ReactNode, ReactElement, useState, useMemo } from "react";
+import { FC, useState, useMemo, ChangeEvent } from "react";
 import Modal from "../../../components/ui/Modal";
 import Button from "../../../components/ui/Button";
 import Input from "../../../components/ui/Input";
 import Select from "../../../components/ui/Select";
 import styles from "./ReceiptManagement.module.css";
 
+// ======================== TYPES ========================
+
+interface Receipt {
+  id: number;
+  receipt_date: string;
+  vendor_id: number;
+  company_id: number;
+  stage_id: number;
+  year: number;
+  po_number: string | null;
+  invoice_number: string | null;
+  amount: number;
+  business_area_id: number | null;
+  category: number | null;
+  payment_location: number | null;
+}
+
 interface ReceiptFormModalProps {
-  receipt?: any;
-  onClose?: any;
-  onSaved?: any;
+  receipt?: Receipt;
+  onClose: () => void;
+  onSaved: () => void;
   api?: any;
 }
 
+interface FormData {
+  receipt_date: string;
+  vendor_id: string;
+  company_id: string;
+  stage_id: string;
+  year: number;
+  po_number: string;
+  invoice_number: string;
+  amount: string;
+  business_area_id: string;
+  category: string;
+  payment_location: string;
+}
 
-// Enhanced API wrapper for better error handling
-const enhancedApi = (path, options = {}) => {
+type FormErrors = Partial<Record<keyof FormData | "general", string>>;
+
+interface FetchOptions {
+  endpoint: string;
+  searchParam?: string;
+  filters?: Record<string, any>;
+  limit?: number;
+}
+
+// ======================== API HELPER ========================
+
+interface ApiError extends Error {
+  status?: number;
+  data?: any;
+}
+
+const enhancedApi = async (path: string, options: RequestInit = {}) => {
   const token =
     localStorage.getItem("appacc_token") ??
     sessionStorage.getItem("appacc_token");
   const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
   const method = options.method || "GET";
 
-  // Only add Content-Type for requests with body
-  const headers = {
+  const headers: HeadersInit = {
     Authorization: `Bearer ${token}`,
   };
 
@@ -30,103 +74,112 @@ const enhancedApi = (path, options = {}) => {
     headers["Content-Type"] = "application/json";
   }
 
-  return fetch(`${apiBase}${path}`, {
+  const response = await fetch(`${apiBase}${path}`, {
     ...options,
     headers,
-  }).then((r) =>
-    r.json().then((json) => {
-      if (!r.ok) {
-        const error = new Error(json.message || "Request failed");
-        error.status = r.status;
-        error.data = json;
-        throw error;
-      }
-      return json;
-    }),
-  );
+  });
+
+  const json = await response.json();
+
+  if (!response.ok) {
+    const error = new Error(json.message || "Request failed") as ApiError;
+    error.status = response.status;
+    error.data = json;
+    throw error;
+  }
+
+  return json;
 };
+
+// ======================== COMPONENT ========================
 
 const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
   receipt,
   onClose,
   onSaved,
-  api,
 }) => {
   const isEdit = Boolean(receipt);
   const currentYear = new Date().getFullYear();
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<FormData>({
     receipt_date: receipt?.receipt_date ?? "",
-    vendor_id: receipt?.vendor_id ?? "",
-    company_id: receipt?.company_id ?? "",
-    stage_id: receipt?.stage_id ?? "",
+    vendor_id: receipt?.vendor_id?.toString() ?? "",
+    company_id: receipt?.company_id?.toString() ?? "",
+    stage_id: receipt?.stage_id?.toString() ?? "",
     year: receipt?.year ?? currentYear,
     po_number: receipt?.po_number ?? "",
     invoice_number: receipt?.invoice_number ?? "",
-    amount: receipt?.amount ?? "",
-    business_area_id: receipt?.business_area_id ?? "",
-    category: receipt?.category ?? "",
-    payment_location: receipt?.payment_location ?? "",
+    amount: receipt?.amount?.toString() ?? "",
+    business_area_id: receipt?.business_area_id?.toString() ?? "",
+    category: receipt?.category?.toString() ?? "",
+    payment_location: receipt?.payment_location?.toString() ?? "",
   });
 
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<FormErrors>({});
 
-  const set = (field) => (e) =>
+  const handleInputChange = (field: keyof FormData) => (
+    e: ChangeEvent<HTMLInputElement>
+  ) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
+  };
 
-  // Memoize fetchOptions to prevent infinite dependency loops
-  const vendorFetchOptions = useMemo(
+  // Select onChange menerima { target: { value } }
+  const handleSelectChange = (field: keyof FormData) => (event: { target: { value: any } }) => {
+    setForm((prev) => ({ ...prev, [field]: event.target.value }));
+  };
+
+  const vendorFetchOptions = useMemo<FetchOptions>(
     () => ({
       endpoint: "/vendors",
       searchParam: "search",
       limit: 5,
     }),
-    [],
+    []
   );
 
-  const companyFetchOptions = useMemo(
+  const companyFetchOptions = useMemo<FetchOptions>(
     () => ({
       endpoint: "/companies",
       searchParam: "search",
       limit: 5,
     }),
-    [],
+    []
   );
 
-  const stageFetchOptions = useMemo(
+  const stageFetchOptions = useMemo<FetchOptions>(
     () => ({
       endpoint: "/stages",
       searchParam: "search",
       filters: { year: form.year },
       limit: 5,
     }),
-    [form.year],
+    [form.year]
   );
 
-  const businessAreaFetchOptions = useMemo(
+  const businessAreaFetchOptions = useMemo<FetchOptions>(
     () => ({
       endpoint: "/business-areas",
       searchParam: "search",
       filters: { company_id: form.company_id },
       limit: 5,
     }),
-    [form.company_id],
+    [form.company_id]
   );
 
-  const validate = () => {
-    const err = {};
-    if (!form.receipt_date?.trim())
-      err.receipt_date = "Tanggal receipt wajib diisi.";
+  const validate = (): FormErrors => {
+    const err: FormErrors = {};
+    if (!form.receipt_date?.trim()) err.receipt_date = "Tanggal receipt wajib diisi.";
     if (!form.vendor_id) err.vendor_id = "Vendor wajib dipilih.";
     if (!form.company_id) err.company_id = "Perusahaan wajib dipilih.";
     if (!form.stage_id) err.stage_id = "Stage wajib dipilih.";
     if (
       !form.amount?.toString().trim() ||
-      isNaN(form.amount) ||
+      isNaN(Number(form.amount)) ||
       parseFloat(form.amount) < 0
-    )
+    ) {
       err.amount = "Jumlah harus berupa angka positif.";
+    }
     return err;
   };
 
@@ -142,41 +195,44 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
     try {
       const payload = {
         receipt_date: form.receipt_date,
-        vendor_id: parseInt(form.vendor_id),
-        company_id: parseInt(form.company_id),
-        stage_id: parseInt(form.stage_id),
+        vendor_id: parseInt(form.vendor_id, 10),
+        company_id: parseInt(form.company_id, 10),
+        stage_id: parseInt(form.stage_id, 10),
         po_number: form.po_number || null,
         invoice_number: form.invoice_number || null,
         amount: parseFloat(form.amount),
-        business_area_id: form.business_area_id
-          ? parseInt(form.business_area_id)
-          : null,
-        category: form.category ? parseInt(form.category) : null,
-        payment_location: form.payment_location
-          ? parseInt(form.payment_location)
-          : null,
+        business_area_id: form.business_area_id ? parseInt(form.business_area_id, 10) : null,
+        category: form.category ? parseInt(form.category, 10) : null,
+        payment_location: form.payment_location ? parseInt(form.payment_location, 10) : null,
       };
 
-      await enhancedApi(isEdit ? `/receipts/${receipt.id}` : "/receipts", {
-        method: isEdit ? "PUT" : "POST",
-        body: JSON.stringify(payload),
-      });
+      if (isEdit && receipt) {
+        await enhancedApi(`/receipts/${receipt.id}`, {
+          method: "PUT",
+          body: JSON.stringify(payload),
+        });
+      } else {
+        await enhancedApi("/receipts", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+      }
 
       onSaved();
     } catch (e) {
-      // Handle Laravel validation errors
-      if (e.data?.errors && typeof e.data.errors === "object") {
-        const formattedErrors = {};
-        Object.entries(e.data.errors).forEach(([field, messages]) => {
-          formattedErrors[field] = Array.isArray(messages)
+      const error = e as ApiError;
+      if (error.data?.errors && typeof error.data.errors === "object") {
+        const formattedErrors: FormErrors = {};
+        Object.entries(error.data.errors).forEach(([field, messages]) => {
+          formattedErrors[field as keyof FormData] = Array.isArray(messages)
             ? messages[0]
-            : messages;
+            : (messages as string);
         });
         setErrors(formattedErrors);
       } else {
         setErrors({
           general:
-            e.message ||
+            error.message ||
             (isEdit
               ? "Gagal menyimpan perubahan."
               : "Gagal menambah invoice receipt."),
@@ -191,12 +247,14 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
     <Modal isOpen onClose={onClose} size="lg">
       <Modal.Header
         onClose={onClose}
-        title={isEdit ? `Edit Invoice Receipt` : "Tambah Invoice Receipt Baru"}
+        title={isEdit ? "Edit Invoice Receipt" : "Tambah Invoice Receipt Baru"}
         subtitle={
-          isEdit
+          isEdit && receipt
             ? `Invoice #${receipt.invoice_number}`
             : "Isi data invoice receipt dengan lengkap"
         }
+        actions={null}
+        children={null}
       />
       <Modal.Body>
         <div className={styles.formGrid}>
@@ -204,14 +262,14 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
             label="Tanggal Receipt"
             type="date"
             value={form.receipt_date}
-            onChange={set("receipt_date")}
+            onChange={handleInputChange("receipt_date")}
             error={errors.receipt_date}
             required
           />
           <Select
             label="Vendor"
             value={form.vendor_id}
-            onChange={set("vendor_id")}
+            onChange={handleSelectChange("vendor_id")}
             placeholder="— Pilih Vendor —"
             fetchOptions={vendorFetchOptions}
             error={errors.vendor_id}
@@ -220,7 +278,7 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
           <Select
             label="Perusahaan"
             value={form.company_id}
-            onChange={set("company_id")}
+            onChange={handleSelectChange("company_id")}
             placeholder="— Pilih Perusahaan —"
             fetchOptions={companyFetchOptions}
             error={errors.company_id}
@@ -230,7 +288,7 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
             label="Tahun"
             type="number"
             value={form.year}
-            onChange={set("year")}
+            onChange={handleInputChange("year")}
             error={errors.year}
             hint="Filter untuk Stage"
             min="2000"
@@ -239,7 +297,7 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
           <Select
             label="Stage"
             value={form.stage_id}
-            onChange={set("stage_id")}
+            onChange={handleSelectChange("stage_id")}
             placeholder="— Pilih Stage —"
             fetchOptions={stageFetchOptions}
             error={errors.stage_id}
@@ -248,7 +306,7 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
           <Select
             label="Area Bisnis"
             value={form.business_area_id}
-            onChange={set("business_area_id")}
+            onChange={handleSelectChange("business_area_id")}
             placeholder="— Pilih Area Bisnis —"
             fetchOptions={businessAreaFetchOptions}
             error={errors.business_area_id}
@@ -257,14 +315,14 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
             label="PO Number"
             placeholder="contoh: PO-2026-001"
             value={form.po_number}
-            onChange={set("po_number")}
+            onChange={handleInputChange("po_number")}
             error={errors.po_number}
           />
           <Input
             label="Invoice Number"
             placeholder="contoh: INV-2026-001"
             value={form.invoice_number}
-            onChange={set("invoice_number")}
+            onChange={handleInputChange("invoice_number")}
             error={errors.invoice_number}
           />
           <Input
@@ -272,7 +330,7 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
             type="number"
             placeholder="0"
             value={form.amount}
-            onChange={set("amount")}
+            onChange={handleInputChange("amount")}
             error={errors.amount}
             required
             step="0.01"
@@ -283,7 +341,7 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
             type="number"
             placeholder="0"
             value={form.category}
-            onChange={set("category")}
+            onChange={handleInputChange("category")}
             error={errors.category}
           />
           <Input
@@ -291,7 +349,7 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
             type="number"
             placeholder="0"
             value={form.payment_location}
-            onChange={set("payment_location")}
+            onChange={handleInputChange("payment_location")}
             error={errors.payment_location}
           />
         </div>
@@ -313,4 +371,4 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
   );
 };
 
-    export default ReceiptFormModal;
+export default ReceiptFormModal;

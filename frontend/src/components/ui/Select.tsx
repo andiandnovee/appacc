@@ -10,47 +10,43 @@ import {
 } from "react";
 import styles from "./Select.module.css";
 
-interface SelectProps {
-  id?: any;
-  value?: any;
-  onChange?: any;
-  normalizedOptions?: any;
-  placeholder?: any;
-  error?: any;
-  disabled?: any;
-  size?: any;
-  rest?: any;
+// ======================== TYPES ========================
+
+interface Option {
+  value: string | number;
+  label: string;
+  disabled?: boolean;
 }
 
+interface FetchOptions {
+  endpoint: string;
+  searchParam?: string;
+  filters?: Record<string, any>;
+  limit?: number;
+}
 
+interface SelectProps {
+  id?: string;
+  value?: any;
+  onChange?: (event: { target: { value: any } }) => void;
+  options?: (string | Option)[];
+  label?: string;
+  placeholder?: string;
+  hint?: string;
+  error?: string;
+  size?: "sm" | "md" | "lg";
+  disabled?: boolean;
+  required?: boolean;
+  fetchOptions?: FetchOptions | null;
+  [key: string]: any;
+}
 
-/**
- * Select Component - Async Searchable with Scroll Pagination
- *
- * Props:
- * - value, onChange          → controlled select (required)
- * - options                  → array of strings or objects { value, label, disabled }
- * - label                    → text label above select
- * - placeholder              → text for first disabled option (default: 'Pilih...')
- * - hint                     → helper text below
- * - error                    → error message
- * - size                     → 'sm' | 'md' | 'lg' (default: 'md')
- * - disabled                 → boolean
- * - required                 → boolean
- * - fetchOptions             → object for async search
- *     {
- *       endpoint: '/api/vendors',       // required
- *       searchParam: 'search',          // query param name (default: 'search')
- *       filters: { company_id: 1 },    // additional filters (optional, skipped if value is falsy)
- *       limit: 5                        // initial limit (default: 5)
- *     }
- * - ...rest                  → other props passed to input/select
- *
- * Examples:
- * - Static: options={['Active', 'Inactive']}
- * - Static: options={[{ value: 'a', label: 'Admin' }, { value: 'u', label: 'User' }]}
- * - Async: fetchOptions={{ endpoint: '/vendors', searchParam: 'search', filters: { company_id: form.company_id } }}
- */
+// ======================== API HELPER ========================
+
+interface ApiError extends Error {
+  status?: number;
+  data?: any;
+}
 
 const getToken = () =>
   localStorage.getItem("appacc_token") ??
@@ -59,13 +55,12 @@ const getToken = () =>
 const getApiBase = () =>
   import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
-const enhancedApi = (path, options = {}) => {
+const enhancedApi = async (path: string, options: RequestInit = {}) => {
   const token = getToken();
   const apiBase = getApiBase();
   const method = options.method || "GET";
 
-  // Only add Content-Type for requests with body
-  const headers = {
+  const headers: HeadersInit = {
     Authorization: `Bearer ${token}`,
   };
 
@@ -73,25 +68,37 @@ const enhancedApi = (path, options = {}) => {
     headers["Content-Type"] = "application/json";
   }
 
-  return fetch(`${apiBase}${path}`, {
+  const response = await fetch(`${apiBase}${path}`, {
     ...options,
     headers,
-  }).then((r) =>
-    r.json().then((json) => {
-      if (!r.ok) {
-        const error = new Error(json.message || "Request failed");
-        error.status = r.status;
-        error.data = json;
-        throw error;
-      }
-      return json;
-    }),
-  );
+  });
+
+  const json = await response.json();
+
+  if (!response.ok) {
+    const error = new Error(json.message || "Request failed") as ApiError;
+    error.status = response.status;
+    error.data = json;
+    throw error;
+  }
+
+  return json;
 };
 
-/**
- * Static Select (backward compatible)
- */
+// ======================== STATIC SELECT ========================
+
+interface StaticSelectProps {
+  id: string;
+  value: any;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  normalizedOptions: Option[];
+  placeholder: string;
+  error?: string;
+  disabled?: boolean;
+  size: string;
+  [key: string]: any;
+}
+
 function StaticSelect({
   id,
   value,
@@ -101,8 +108,8 @@ function StaticSelect({
   error,
   disabled,
   size,
-  rest,
-}) {
+  ...rest
+}: StaticSelectProps) {
   const selectClass = [styles.select, styles[size], error ? styles.error : ""]
     .filter(Boolean)
     .join(" ");
@@ -144,9 +151,19 @@ function StaticSelect({
   );
 }
 
-/**
- * Async Searchable Select (new feature)
- */
+// ======================== ASYNC SELECT ========================
+
+interface AsyncSelectProps {
+  id: string;
+  value: any;
+  onChange: (event: { target: { value: any } }) => void;
+  placeholder: string;
+  error?: string;
+  disabled?: boolean;
+  fetchOptions: FetchOptions;
+  size: string;
+}
+
 function AsyncSelect({
   id,
   value,
@@ -156,24 +173,20 @@ function AsyncSelect({
   disabled,
   fetchOptions,
   size,
-}) {
-  // ✅ 1. ALL useState hooks FIRST (so dropdownOptions exists for later functions)
+}: AsyncSelectProps) {
   const [inputValue, setInputValue] = useState("");
-  const [dropdownOptions, setDropdownOptions] = useState([]); // <-- declared FIRST
+  const [dropdownOptions, setDropdownOptions] = useState<Option[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [offset, setOffset] = useState(0);
   const [selectedItemLabel, setSelectedItemLabel] = useState("");
-  const [highlightedIndex, setHighlightedIndex] = useState(null);
+  const [highlightedIndex, setHighlightedIndex] = useState<number | null>(null);
 
-  // ✅ 2. useRef hooks
-  const inputRef = useRef(null);
-  const dropdownRef = useRef(null);
-  const dropdownContentRef = useRef(null);
-  const debounceTimer = useRef(null);
-  const prevValueRef = useRef(null);
-  const prevDropdownRef = useRef([]);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownContentRef = useRef<HTMLDivElement>(null);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasFetchedForValueRef = useRef(false);
 
   const {
@@ -183,7 +196,6 @@ function AsyncSelect({
     limit = 5,
   } = fetchOptions;
 
-  // ✅ 3. fetchData and fetchItemById (using useCallback)
   const fetchData = useCallback(
     async (search = "", off = 0) => {
       if (!endpoint) return;
@@ -192,18 +204,18 @@ function AsyncSelect({
         const params = new URLSearchParams();
         if (search) params.append(searchParam, search);
         Object.entries(filters).forEach(([key, val]) => {
-          if (val) params.append(key, val);
+          if (val != null && val !== "") params.append(key, String(val));
         });
-        params.append("limit", limit);
-        params.append("offset", off);
+        params.append("limit", String(limit));
+        params.append("offset", String(off));
         const res = await enhancedApi(`${endpoint}?${params.toString()}`);
         const data = res.data || [];
-        const mapped = data.map((item) => ({
+        const mapped: Option[] = data.map((item: any) => ({
           value: item.id,
           label: item.name || item.label,
         }));
         setDropdownOptions((prev) =>
-          off === 0 ? mapped : [...prev, ...mapped],
+          off === 0 ? mapped : [...prev, ...mapped]
         );
         setHasMore(data.length === limit);
         setOffset(off + limit);
@@ -215,29 +227,13 @@ function AsyncSelect({
         setIsLoading(false);
       }
     },
-    [endpoint, searchParam, filters, limit],
+    [endpoint, searchParam, filters, limit]
   );
 
-  const fetchItemById = useCallback(
-    async (id) => {
-      if (!endpoint || !id) return null;
-      try {
-        const res = await enhancedApi(`${endpoint}/${id}`);
-        const item = res.data || res;
-        return { value: item.id, label: item.name || item.label };
-      } catch (e) {
-        console.error("Fetch item by ID failed:", e);
-        return null;
-      }
-    },
-    [endpoint],
-  );
-
-  // ✅ 4. handleSelectOption (uses dropdownOptions, defined after it)
   const handleSelectOption = useCallback(
-    (val) => {
+    (val: any) => {
       const selected = dropdownOptions.find(
-        (opt) => String(opt.value) === String(val),
+        (opt) => String(opt.value) === String(val)
       );
       setSelectedItemLabel(selected?.label || "");
       onChange({ target: { value: val } });
@@ -245,12 +241,11 @@ function AsyncSelect({
       setInputValue("");
       setHighlightedIndex(null);
     },
-    [dropdownOptions, onChange],
+    [dropdownOptions, onChange]
   );
 
-  // ✅ 5. handleKeyDown (uses dropdownOptions, defined AFTER its declaration)
   const handleKeyDown = useCallback(
-    (e) => {
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (!isOpen) {
         if (e.key === "ArrowDown" && dropdownOptions.length > 0) {
           e.preventDefault();
@@ -265,14 +260,14 @@ function AsyncSelect({
           e.preventDefault();
           if (dropdownOptions.length === 0) break;
           setHighlightedIndex((prev) =>
-            prev === null ? 0 : Math.min(prev + 1, dropdownOptions.length - 1),
+            prev === null ? 0 : Math.min(prev + 1, dropdownOptions.length - 1)
           );
           break;
         case "ArrowUp":
           e.preventDefault();
           if (dropdownOptions.length === 0) break;
           setHighlightedIndex((prev) =>
-            prev === null ? dropdownOptions.length - 1 : Math.max(prev - 1, 0),
+            prev === null ? dropdownOptions.length - 1 : Math.max(prev - 1, 0)
           );
           break;
         case "Enter":
@@ -290,25 +285,23 @@ function AsyncSelect({
           break;
       }
     },
-    [isOpen, dropdownOptions, highlightedIndex, handleSelectOption],
+    [isOpen, dropdownOptions, highlightedIndex, handleSelectOption]
   );
 
-  // ✅ 6. handleSearch (no dependency on dropdownOptions)
   const handleSearch = useCallback(
-    (e) => {
+    (e: React.ChangeEvent<HTMLInputElement>) => {
       const val = e.target.value;
       setInputValue(val);
       setOffset(0);
-      clearTimeout(debounceTimer.current);
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
       debounceTimer.current = setTimeout(() => fetchData(val, 0), 300);
     },
-    [fetchData],
+    [fetchData]
   );
 
-  // ✅ 7. handleScroll
   const handleScroll = useCallback(
-    (e) => {
-      const el = e.target;
+    (e: React.UIEvent<HTMLDivElement>) => {
+      const el = e.currentTarget;
       if (
         el.scrollHeight - el.scrollTop <= el.clientHeight + 50 &&
         hasMore &&
@@ -317,10 +310,10 @@ function AsyncSelect({
         fetchData(inputValue, offset);
       }
     },
-    [hasMore, isLoading, fetchData, inputValue, offset],
+    [hasMore, isLoading, fetchData, inputValue, offset]
   );
 
-  // ✅ 8. Effects (useEffect) – all after functions
+  // Effects
   useEffect(() => {
     setHighlightedIndex(null);
   }, [dropdownOptions]);
@@ -331,12 +324,12 @@ function AsyncSelect({
 
   useEffect(() => {
     if (highlightedIndex !== null && dropdownContentRef.current) {
-      const el = dropdownContentRef.current.children[highlightedIndex];
+      const children = dropdownContentRef.current.children;
+      const el = children[highlightedIndex] as HTMLElement;
       el?.scrollIntoView({ block: "nearest" });
     }
   }, [highlightedIndex]);
 
-  // Sync selected label with value
   useEffect(() => {
     if (!value) {
       setSelectedItemLabel("");
@@ -344,23 +337,20 @@ function AsyncSelect({
       return;
     }
     const found = dropdownOptions.find(
-      (opt) => String(opt.value) === String(value),
+      (opt) => String(opt.value) === String(value)
     );
     if (found) {
       setSelectedItemLabel(found.label);
       hasFetchedForValueRef.current = true;
     } else {
       setSelectedItemLabel(String(value));
-      hasFetchedForValueRef.current = false;
     }
-    prevValueRef.current = value;
   }, [value, dropdownOptions]);
 
-  // Fetch by ID when needed
   useEffect(() => {
     if (!value || !endpoint) return;
     const hasLabel = dropdownOptions.some(
-      (opt) => String(opt.value) === String(value),
+      (opt) => String(opt.value) === String(value)
     );
     if (hasLabel || hasFetchedForValueRef.current) return;
     hasFetchedForValueRef.current = true;
@@ -372,7 +362,7 @@ function AsyncSelect({
         setSelectedItemLabel(label);
         setDropdownOptions((prev) => {
           const exists = prev.some(
-            (opt) => String(opt.value) === String(item.id),
+            (opt) => String(opt.value) === String(item.id)
           );
           return exists ? prev : [{ value: item.id, label }, ...prev];
         });
@@ -383,14 +373,13 @@ function AsyncSelect({
     fetchById();
   }, [value, endpoint, dropdownOptions]);
 
-  // Outside click
   useEffect(() => {
-    const handleClickOutside = (e) => {
+    const handleClickOutside = (e: MouseEvent) => {
       if (
         dropdownRef.current &&
-        !dropdownRef.current.contains(e.target) &&
+        !dropdownRef.current.contains(e.target as Node) &&
         inputRef.current &&
-        !inputRef.current.contains(e.target)
+        !inputRef.current.contains(e.target as Node)
       ) {
         setIsOpen(false);
         setInputValue("");
@@ -398,20 +387,16 @@ function AsyncSelect({
     };
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
-      return () =>
-        document.removeEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [isOpen]);
 
-  // Reset on filters/endpoint change
   useEffect(() => {
     setOffset(0);
     setInputValue("");
     setDropdownOptions([]);
-    prevDropdownRef.current = [];
   }, [JSON.stringify(filters), endpoint]);
 
-  // ✅ 9. Render
   const displayLabel = isOpen ? inputValue : selectedItemLabel || inputValue;
   const inputClass = [
     styles.asyncInput,
@@ -461,7 +446,9 @@ function AsyncSelect({
           {dropdownOptions.map((opt, index) => (
             <div
               key={opt.value}
-              className={`${styles.asyncOption} ${value === opt.value ? styles.selected : ""} ${highlightedIndex === index ? styles.highlighted : ""}`}
+              className={`${styles.asyncOption} ${
+                value === opt.value ? styles.selected : ""
+              } ${highlightedIndex === index ? styles.highlighted : ""}`}
               onClick={() => handleSelectOption(opt.value)}
               onMouseEnter={() => setHighlightedIndex(index)}
             >
@@ -479,6 +466,8 @@ function AsyncSelect({
   );
 }
 
+// ======================== MAIN SELECT COMPONENT ========================
+
 const Select: FC<SelectProps> = ({
   value,
   onChange,
@@ -491,20 +480,18 @@ const Select: FC<SelectProps> = ({
   disabled = false,
   required = false,
   fetchOptions = null,
-  rest,
+  ...rest
 }) => {
   const id = useId();
 
-  // Normalize static options
-  const normalizedOptions = options.map((opt) =>
+  const normalizedOptions: Option[] = options.map((opt) =>
     typeof opt === "string"
       ? { value: opt, label: opt, disabled: false }
-      : { value: opt.value, label: opt.label, disabled: opt.disabled ?? false },
+      : { value: opt.value, label: opt.label, disabled: opt.disabled ?? false }
   );
 
   return (
     <div className={styles.wrapper}>
-      {/* Label */}
       {label && (
         <label
           htmlFor={id}
@@ -514,7 +501,6 @@ const Select: FC<SelectProps> = ({
         </label>
       )}
 
-      {/* Select Type - Static or Async */}
       {fetchOptions ? (
         <AsyncSelect
           id={id}
@@ -530,7 +516,7 @@ const Select: FC<SelectProps> = ({
         <StaticSelect
           id={id}
           value={value}
-          onChange={onChange}
+          onChange={onChange as (e: React.ChangeEvent<HTMLSelectElement>) => void}
           normalizedOptions={normalizedOptions}
           placeholder={placeholder}
           error={error}
@@ -543,7 +529,6 @@ const Select: FC<SelectProps> = ({
         />
       )}
 
-      {/* Error message */}
       {error && (
         <p
           id={`${id}-error`}
@@ -554,12 +539,8 @@ const Select: FC<SelectProps> = ({
         </p>
       )}
 
-      {/* Hint message */}
       {!error && hint && (
-        <p
-          id={`${id}-hint`}
-          className={`${styles.message} ${styles.messageHint}`}
-        >
+        <p id={`${id}-hint`} className={`${styles.message} ${styles.messageHint}`}>
           {hint}
         </p>
       )}
