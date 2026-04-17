@@ -5,6 +5,7 @@ import {
   ReactNode,
   ElementType,
   ComponentPropsWithoutRef,
+  ButtonHTMLAttributes,
 } from 'react';
 import { ChevronDown, ArrowLeft, ArrowRight } from 'lucide-react';
 import styles from './Button.module.css';
@@ -14,13 +15,14 @@ import styles from './Button.module.css';
    ════════════════════════════════════════════════════════════ */
 
 export interface ButtonProps<T extends ElementType = 'button'> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'text';
   size?: 'sm' | 'md' | 'lg';
   fullWidth?: boolean;
   loading?: boolean;
   disabled?: boolean;
   iconLeft?: ReactNode;
   iconRight?: ReactNode;
+  onClick?: () => void;                 // ← ditambahkan, opsional
   as?: T;
   children?: ReactNode;
   className?: string;
@@ -34,10 +36,11 @@ export const Button = <T extends ElementType = 'button'>({
   disabled = false,
   iconLeft,
   iconRight,
+  onClick,
   as: Tag = 'button' as T,
   children,
   className = '',
-  rest
+  ...rest                                    // ← semua props tambahan (termasuk onClick jika tidak di-destructure di atas)
 }: ButtonProps<T> & Omit<ComponentPropsWithoutRef<T>, keyof ButtonProps<T>>) => {
   const isDisabled = disabled || loading;
 
@@ -54,22 +57,19 @@ export const Button = <T extends ElementType = 'button'>({
     .filter(Boolean)
     .join(' ');
 
-  // Kalau Tag = 'button', tambahkan type="button" supaya tidak submit form
+  // Untuk elemen 'button', tambahkan type="button" dan disabled
   const tagProps = Tag === 'button'
-    ? ({ type: 'button', disabled: isDisabled, rest } as any)
-    : ({ 'aria-disabled': isDisabled,rest } as any);
+    ? { type: 'button', disabled: isDisabled, onClick, ...rest }
+    : { 'aria-disabled': isDisabled, onClick, ...rest };
 
   return (
     <Tag className={btnClass} {...tagProps}>
-      {/* Loading state */}
       {loading && (
         <span className={styles.spinnerWrapper} aria-hidden="true">
           <span className={styles.spinner} />
           {children && <span>Memuat...</span>}
         </span>
       )}
-
-      {/* Konten (disembunyikan saat loading agar lebar tetap terjaga) */}
       <span className={loading ? styles.loadingContent : undefined}>
         {iconLeft && <span aria-hidden="true">{iconLeft}</span>}
         {children}
@@ -80,9 +80,8 @@ export const Button = <T extends ElementType = 'button'>({
 };
 
 /* ════════════════════════════════════════════════════════════
-   SplitButton
+   SplitButton (tidak berubah, hanya untuk kelengkapan)
    ════════════════════════════════════════════════════════════ */
-
 export interface SplitButtonOption {
   label: string;
   icon?: ReactNode;
@@ -116,7 +115,6 @@ export const SplitButton = ({
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  // Tutup dropdown kalau klik di luar
   useEffect(() => {
     function handleOutside(e: MouseEvent) {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
@@ -127,7 +125,6 @@ export const SplitButton = ({
     return () => document.removeEventListener('mousedown', handleOutside);
   }, [open]);
 
-  // Variant ghost/outline pakai divider gelap
   const needDarkDivider = variant === 'ghost' || variant === 'outline';
 
   return (
@@ -135,7 +132,6 @@ export const SplitButton = ({
       ref={wrapperRef}
       className={`${styles.splitWrapper} ${fullWidth ? styles.fullWidth : ''}`}
     >
-      {/* Tombol utama */}
       <Button
         variant={variant}
         size={size}
@@ -147,8 +143,6 @@ export const SplitButton = ({
       >
         {label}
       </Button>
-
-      {/* Chevron toggle */}
       <Button
         variant={variant}
         size={size}
@@ -167,8 +161,6 @@ export const SplitButton = ({
           }}
         />
       </Button>
-
-      {/* Dropdown */}
       {open && options.length > 0 && (
         <div className={styles.splitDropdown} role="menu">
           {options.map((opt, i) => {
@@ -183,7 +175,6 @@ export const SplitButton = ({
                     },
                   }
                 : { href: opt.href, to: opt.to, onClick: () => setOpen(false) };
-
             return (
               <Tag
                 key={i}
@@ -202,5 +193,4 @@ export const SplitButton = ({
   );
 };
 
-// Default export = Button
 export default Button;

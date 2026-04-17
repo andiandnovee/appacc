@@ -3,13 +3,14 @@ import { X } from 'lucide-react'
 import styles from './Popover.module.css'
 
 interface PopoverProps {
-  trigger?: any
-  title?: any
-  children?: any
-  position?: any
-  showClose?: any
-  open: controlledOpen?: any
-  onOpenChange?: any
+  trigger?: ReactNode;
+  title?: ReactNode;
+  children?: ReactNode;
+  position?: 'top' | 'bottom' | 'left' | 'right';
+  showClose?: boolean;
+  open?: boolean;              // properti terpisah
+  controlledOpen?: boolean;    // properti terpisah
+  onOpenChange?: (open: boolean) => void;
 }
 
 

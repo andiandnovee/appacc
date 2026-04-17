@@ -35,8 +35,8 @@ export default function InvoiceReceiptManagement() {
   const [deletingId, setDeletingId] = useState(null);
   const tableRef = useRef(null);
   const { addToast } = useToast();
-
-  const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+ const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+ 
   const fullUrl = useMemo(() => `${apiBase}/receipts`, [apiBase]);
 
   const handleDelete = useCallback(
@@ -152,7 +152,10 @@ export default function InvoiceReceiptManagement() {
               variant="outline"
               size="sm"
               iconLeft={<Pencil size={13} />}
-              onClick={() => setFormTarget(row)}
+              onClick={() => {
+                console.log("Edit clicked", row);
+                setFormTarget(row);
+              }}
             >
               Edit
             </Button>
@@ -160,7 +163,10 @@ export default function InvoiceReceiptManagement() {
               variant="outline"
               size="sm"
               iconLeft={<Trash2 size={13} />}
-              onClick={() => handleDelete(row, tableRef.current?.refetch)}
+              onClick={() => {
+  console.log("Delete clicked", row);
+  handleDelete(row, tableRef.current?.refetch);
+}}
               disabled={deletingId === row.id}
               className={styles.deleteBtn}
             >

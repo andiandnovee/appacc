@@ -268,3 +268,21 @@
   border-color: var(--color-primary-600);
   color: #fff;
 }
+
+.tableHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+}
+.title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+}
+.toolbarRight {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}

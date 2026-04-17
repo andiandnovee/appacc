@@ -1,4 +1,5 @@
-import { forwardRef, useImperativeHandle } from "react";
+// Table.tsx
+import { forwardRef, useImperativeHandle, ReactNode, useMemo } from "react";
 import { utils, writeFile } from "xlsx";
 import {
   Search,
@@ -13,341 +14,378 @@ import Card from "./Card";
 import Button from "./Button";
 import styles from "./Table.module.css";
 
-const Table = forwardRef(
-  (
-    {
-      url,
-      columns = [],
-      dataKey = "",
-      pageSize = 10,
-      exportName = "export",
-      title,
-      searchable = true,
-      selectable = false,
-      defaultParams = {}, // tambahan: parameter default seperti trash_filter
-      serverSide = true, // default true untuk backend filtering
-    },
-    ref,
-  ) => {
-    const {
-      data,
-      allData,
-      loading,
-      error,
-      refetch,
-      search,
-      setSearch,
-      sortKey,
-      sortDir,
-      handleSort,
-      page,
-      setPage,
-      totalPages,
-      totalRows,
-      selected,
-      toggleRow,
-      toggleAll,
-      isSelected,
-      isAllSelected,
-      isIndeterminate,
-    } = useTableData(url, { pageSize, dataKey, defaultParams, serverSide });
+interface TableProps {
+  url?: string;
+  columns?: Array<{
+    key: string;
+    label: string;
+    sortable?: boolean;
+    render?: (row: any, refetch?: () => void) => ReactNode;
+  }>;
+  dataKey?: string;
+  pageSize?: number;
+  exportName?: string;
+  title?: string;
+  searchable?: boolean;
+  selectable?: boolean;
+  defaultParams?: Record<string, any>;
+  serverSide?: boolean;
+  rowIdKey?: string; // tambahan: key untuk ID unik (default "id")
+}
 
-    // Expose refetch ke parent component
-    useImperativeHandle(ref, () => ({
-      refetch,
-      data,
-      loading,
-    }));
+const Table = forwardRef<any, TableProps>((props, ref) => {
+  const {
+    url,
+    columns = [],
+    dataKey = "",
+    pageSize = 10,
+    exportName = "export",
+    title,
+    searchable = true,
+    selectable = false,
+    defaultParams = {},
+    serverSide = true,
+    rowIdKey = "id",
+  } = props;
 
-    // ── Export Excel ────────────────────────────────────────
-    const handleExport = () => {
-      const exportCols = columns.filter((c) => !c.render);
-      const rows = allData.map((row) =>
-        Object.fromEntries(exportCols.map((c) => [c.label, row[c.key] ?? ""])),
+  const {
+    data,
+    allData,
+    loading,
+    error,
+    refetch,
+    search,
+    setSearch,
+    sortKey,
+    sortDir,
+    handleSort,
+    page,
+    setPage,
+    totalPages,
+    totalRows,
+    selected,
+    toggleRow,
+    toggleAll,
+    isSelected,
+    isAllSelected,
+    isIndeterminate,
+  } = useTableData(url, { pageSize, dataKey, defaultParams, serverSide });
+
+  useImperativeHandle(ref, () => ({
+    refetch,
+    data,
+    loading,
+  }));
+
+  // ========== EXPORT ==========
+  // Peringatan: export hanya bisa mengekspor seluruh data jika serverSide = false
+  // Jika serverSide = true, export akan menggunakan data yang sudah di-cache (mungkin tidak lengkap)
+  const handleExport = () => {
+    if (serverSide && allData.length < totalRows) {
+      console.warn(
+        "Exporting only loaded data. For full export, set serverSide=false or implement server-side export."
       );
-      const ws = utils.json_to_sheet(rows);
-      const wb = utils.book_new();
-      utils.book_append_sheet(wb, ws, "Data");
-      writeFile(wb, `${exportName}.xlsx`);
-    };
+    }
 
-    // ── Sort icon ────────────────────────────────────────────
-    const SortIcon = ({ colKey }) => {
-      if (sortKey !== colKey)
-        return <ChevronsUpDown size={12} className={styles.sortIcon} />;
-      return sortDir === "asc" ? (
-        <ChevronUp
-          size={12}
-          className={`${styles.sortIcon} ${styles.sortIconActive}`}
-        />
-      ) : (
-        <ChevronDown
-          size={12}
-          className={`${styles.sortIcon} ${styles.sortIconActive}`}
-        />
-      );
-    };
+    const exportCols = columns.filter((c) => !c.render);
+    const rows = allData.map((row) =>
+      Object.fromEntries(exportCols.map((c) => [c.label, row[c.key] ?? ""]))
+    );
+    if (rows.length === 0) return;
+    const ws = utils.json_to_sheet(rows);
+    const wb = utils.book_new();
+    utils.book_append_sheet(wb, ws, "Data");
+    writeFile(wb, `${exportName}.xlsx`);
+  };
 
-    // ── Pagination pages ─────────────────────────────────────
-    const pageNumbers = () => {
-      const pages = [];
-      const delta = 1;
-      const range = [];
+  // ========== SORT ICON ==========
+  const SortIcon = ({ colKey }: { colKey: string }) => {
+    if (sortKey !== colKey)
+      return <ChevronsUpDown size={12} className={styles.sortIcon} />;
+    return sortDir === "asc" ? (
+      <ChevronUp
+        size={12}
+        className={`${styles.sortIcon} ${styles.sortIconActive}`}
+      />
+    ) : (
+      <ChevronDown
+        size={12}
+        className={`${styles.sortIcon} ${styles.sortIconActive}`}
+      />
+    );
+  };
 
-      for (
-        let i = Math.max(1, page - delta);
-        i <= Math.min(totalPages, page + delta);
-        i++
-      ) {
-        range.push(i);
-      }
+  // ========== PAGINATION ==========
+  const pageNumbers = useMemo(() => {
+    const pages: (number | string)[] = [];
+    if (!totalPages || totalPages <= 1) return pages;
 
-      if (range[0] > 1) {
-        pages.push(1);
-        if (range[0] > 2) pages.push("...");
-      }
+    const delta = 1;
+    const range: number[] = [];
 
-      pages.push(...range);
+    for (
+      let i = Math.max(1, page - delta);
+      i <= Math.min(totalPages, page + delta);
+      i++
+    ) {
+      range.push(i);
+    }
 
-      if (range[range.length - 1] < totalPages) {
-        if (range[range.length - 1] < totalPages - 1) pages.push("...");
-        pages.push(totalPages);
-      }
+    if (range[0] > 1) {
+      pages.push(1);
+      if (range[0] > 2) pages.push("...");
+    }
 
-      return pages;
-    };
+    pages.push(...range);
 
-    return (
-      <Card variant="outlined">
-        <div className={styles.wrapper}>
-          {/* Toolbar */}
-          <Card.Header
-            title={title}
-            action={
-              <div className={styles.toolbarRight}>
-                {searchable && (
-                  <div className={styles.search}>
-                    <span className={styles.searchIcon}>
-                      <Search size={14} />
-                    </span>
-                    <input
-                      type="text"
-                      className={styles.searchInput}
-                      placeholder="Cari..."
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                    />
-                  </div>
-                )}
-                <Button
-                  className={styles.exportBtn}
-                  onClick={handleExport}
-                  title="Export ke Excel"
-                >
-                  <Download size={14} />
-                  Export
-                </Button>
+    if (range[range.length - 1] < totalPages) {
+      if (range[range.length - 1] < totalPages - 1) pages.push("...");
+      pages.push(totalPages);
+    }
+
+    return pages;
+  }, [page, totalPages]);
+
+  const goToPrevPage = () => setPage((p) => Math.max(1, p - 1));
+  const goToNextPage = () =>
+    setPage((p) => (totalPages ? Math.min(totalPages, p + 1) : p));
+
+  // ========== RENDER ==========
+  return (
+    <Card variant="outlined">
+      <Card.Header
+        title={title}
+        action={
+          <div className={styles.toolbarRight}>
+            {searchable && (
+              <div className={styles.search}>
+                <span className={styles.searchIcon}>
+                  <Search size={14} />
+                </span>
+                <input
+                  type="text"
+                  className={styles.searchInput}
+                  placeholder="Cari..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
               </div>
-            }
-          />
-
-          {/* Error state */}
-          {error && (
-            <div
-              style={{
-                padding: "var(--space-4)",
-                color: "var(--color-danger)",
-                fontSize: "var(--text-sm)",
-              }}
+            )}
+            <Button
+              className={styles.exportBtn}
+              onClick={handleExport}
+              title="Export ke Excel"
+              disabled={allData.length === 0}
             >
-              Gagal memuat data: {error}.{" "}
+              <Download size={14} />
+              Export
+            </Button>
+          </div>
+        }
+      />
+
+      {/* ERROR STATE */}
+      {error && (
+        <div
+          style={{
+            padding: "var(--space-4)",
+            color: "var(--color-danger)",
+            fontSize: "var(--text-sm)",
+          }}
+        >
+          Gagal memuat data: {error}.{" "}
+          <Button
+            onClick={refetch}
+            variant="outline"
+            style={{
+              color: "var(--text-link)",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              fontSize: "inherit",
+              padding: 0,
+              marginLeft: "var(--space-1)",
+            }}
+          >
+            Coba lagi
+          </Button>
+        </div>
+      )}
+
+      {/* TABLE */}
+      <div className={styles.tableScroll}>
+        <table className={styles.table}>
+          <thead className={styles.thead}>
+            <tr>
+              {selectable && (
+                <th className={styles.checkboxCell}>
+                  <input
+                    type="checkbox"
+                    className={styles.checkbox}
+                    checked={isAllSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = isIndeterminate;
+                    }}
+                    onChange={toggleAll}
+                    aria-label="Pilih semua"
+                  />
+                </th>
+              )}
+              {columns.map((col) => (
+                <th
+                  key={col.key}
+                  className={`${styles.th} ${col.sortable ? styles.thSortable : ""}`}
+                  onClick={() => col.sortable && handleSort(col.key)}
+                  aria-sort={
+                    sortKey === col.key
+                      ? sortDir === "asc"
+                        ? "ascending"
+                        : "descending"
+                      : undefined
+                  }
+                >
+                  <span className={styles.thInner}>
+                    {col.label}
+                    {col.sortable && <SortIcon colKey={col.key} />}
+                  </span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {/* SKELETON LOADING */}
+            {loading &&
+              Array.from({ length: pageSize }).map((_, i) => (
+                <tr key={`skeleton-${i}`} className={styles.tr}>
+                  {selectable && (
+                    <td className={styles.checkboxCell}>
+                      <div
+                        className={styles.skeleton}
+                        style={{ width: 16, height: 16 }}
+                      />
+                    </td>
+                  )}
+                  {columns.map((col) => (
+                    <td key={col.key} className={styles.td}>
+                      <div
+                        className={styles.skeleton}
+                        style={{ width: `${60 + Math.random() * 30}%` }}
+                      />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+
+            {/* EMPTY STATE */}
+            {!loading && !error && data.length === 0 && (
+              <tr>
+                <td colSpan={columns.length + (selectable ? 1 : 0)}>
+                  <div className={styles.empty}>
+                    <div className={styles.emptyIcon}>
+                      <Inbox size={40} />
+                    </div>
+                    <p className={styles.emptyText}>
+                      {search
+                        ? `Tidak ada hasil untuk "${search}"`
+                        : "Belum ada data"}
+                    </p>
+                  </div>
+                </td>
+              </tr>
+            )}
+
+            {/* DATA ROWS */}
+            {!loading &&
+              data.map((row) => {
+                const rowId = row[rowIdKey];
+                if (rowId === undefined && selectable) {
+                  console.warn(`Row missing key "${rowIdKey}" for selection`);
+                }
+                return (
+                  <tr
+                    key={rowId ?? Math.random()}
+                    className={`${styles.tr} ${selectable && isSelected(rowId) ? styles.trSelected : ""}`}
+                    onClick={() => selectable && toggleRow(rowId)}
+                  >
+                    {selectable && (
+                      <td className={styles.checkboxCell}>
+                        <input
+                          type="checkbox"
+                          className={styles.checkbox}
+                          checked={isSelected(rowId)}
+                          onChange={() => toggleRow(rowId)}
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label={`Pilih baris ${rowId}`}
+                          disabled={rowId === undefined}
+                        />
+                      </td>
+                    )}
+                    {columns.map((col) => (
+                      <td key={col.key} className={styles.td}>
+                        {col.render
+                          ? col.render(row, refetch)
+                          : (row[col.key] ?? "—")}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* FOOTER & PAGINATION */}
+      {!loading && !error && totalRows !== undefined && (
+        <div className={styles.footer}>
+          <span className={styles.footerInfo}>
+            {selectable && selected.length > 0 && `${selected.length} dipilih · `}
+            {totalRows} data
+          </span>
+          {totalPages > 1 && (
+            <div className={styles.pagination}>
               <Button
-                onClick={refetch}
-                variant="text"
-                style={{
-                  color: "var(--text-link)",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: "inherit",
-                }}
+                className={styles.pageBtn}
+                onClick={goToPrevPage}
+                disabled={page === 1}
+                aria-label="Halaman sebelumnya"
               >
-                Coba lagi
+                ‹
+              </Button>
+              {pageNumbers.map((p, i) =>
+                p === "..." ? (
+                  <span
+                    key={`dots-${i}`}
+                    className={styles.footerInfo}
+                    style={{ padding: "0 4px" }}
+                  >
+                    …
+                  </span>
+                ) : (
+                  <button
+                    key={p}
+                    className={`${styles.pageBtn} ${page === p ? styles.pageBtnActive : ""}`}
+                    onClick={() => setPage(p as number)}
+                    aria-current={page === p ? "page" : undefined}
+                  >
+                    {p}
+                  </button>
+                )
+              )}
+              <Button
+                className={styles.pageBtn}
+                onClick={goToNextPage}
+                disabled={page === totalPages}
+                aria-label="Halaman berikutnya"
+              >
+                ›
               </Button>
             </div>
           )}
-
-          {/* Table */}
-          <div className={styles.tableScroll}>
-            <table className={styles.table}>
-              <thead className={styles.thead}>
-                <tr>
-                  {selectable && (
-                    <th className={styles.checkboxCell}>
-                      <input
-                        type="checkbox"
-                        className={styles.checkbox}
-                        checked={isAllSelected}
-                        ref={(el) => {
-                          if (el) el.indeterminate = isIndeterminate;
-                        }}
-                        onChange={toggleAll}
-                        aria-label="Pilih semua"
-                      />
-                    </th>
-                  )}
-                  {columns.map((col) => (
-                    <th
-                      key={col.key}
-                      className={`${styles.th} ${col.sortable ? styles.thSortable : ""}`}
-                      onClick={() => col.sortable && handleSort(col.key)}
-                      aria-sort={
-                        sortKey === col.key
-                          ? sortDir === "asc"
-                            ? "ascending"
-                            : "descending"
-                          : undefined
-                      }
-                    >
-                      <span className={styles.thInner}>
-                        {col.label}
-                        {col.sortable && <SortIcon colKey={col.key} />}
-                      </span>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-
-              <tbody>
-                {/* Loading skeleton */}
-                {loading &&
-                  Array.from({ length: pageSize }).map((_, i) => (
-                    <tr key={i} className={styles.tr}>
-                      {selectable && (
-                        <td className={styles.checkboxCell}>
-                          <div
-                            className={styles.skeleton}
-                            style={{ width: 16, height: 16 }}
-                          />
-                        </td>
-                      )}
-                      {columns.map((col) => (
-                        <td key={col.key} className={styles.td}>
-                          <div
-                            className={styles.skeleton}
-                            style={{ width: `${60 + Math.random() * 30}%` }}
-                          />
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-
-                {/* Empty state */}
-                {!loading && !error && data.length === 0 && (
-                  <tr>
-                    <td colSpan={columns.length + (selectable ? 1 : 0)}>
-                      <div className={styles.empty}>
-                        <div className={styles.emptyIcon}>
-                          <Inbox size={40} />
-                        </div>
-                        <p className={styles.emptyText}>
-                          {search
-                            ? `Tidak ada hasil untuk "${search}"`
-                            : "Belum ada data"}
-                        </p>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-
-                {/* Data rows */}
-                {!loading &&
-                  data.map((row) => (
-                    <tr
-                      key={row.id}
-                      className={`${styles.tr} ${isSelected(row.id) ? styles.trSelected : ""}`}
-                      onClick={() => selectable && toggleRow(row.id)}
-                    >
-                      {selectable && (
-                        <td className={styles.checkboxCell}>
-                          <input
-                            type="checkbox"
-                            className={styles.checkbox}
-                            checked={isSelected(row.id)}
-                            onChange={() => toggleRow(row.id)}
-                            onClick={(e) => e.stopPropagation()}
-                            aria-label={`Pilih baris ${row.id}`}
-                          />
-                        </td>
-                      )}
-                      {columns.map((col) => (
-                        <td key={col.key} className={styles.td}>
-                          {col.render
-                            ? col.render(row, refetch)
-                            : (row[col.key] ?? "—")}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Footer */}
-          {!loading && !error && (
-            <div className={styles.footer}>
-              <span className={styles.footerInfo}>
-                {selected.length > 0 ? `${selected.length} dipilih · ` : ""}
-                {totalRows} data
-              </span>
-
-              <div className={styles.pagination}>
-                <Button
-                  className={styles.pageBtn}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  aria-label="Halaman sebelumnya"
-                >
-                  ‹
-                </Button>
-
-                {pageNumbers().map((p, i) =>
-                  p === "..." ? (
-                    <span
-                      key={`dots-${i}`}
-                      className={styles.footerInfo}
-                      style={{ padding: "0 4px" }}
-                    >
-                      …
-                    </span>
-                  ) : (
-                    <button
-                      key={p}
-                      className={`${styles.pageBtn} ${page === p ? styles.pageBtnActive : ""}`}
-                      onClick={() => setPage(p)}
-                      aria-current={page === p ? "page" : undefined}
-                    >
-                      {p}
-                    </button>
-                  ),
-                )}
-
-                <Button
-                  className={styles.pageBtn}
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                  aria-label="Halaman berikutnya"
-                >
-                  ›
-                </Button>
-              </div>
-            </div>
-          )}
         </div>
-      </Card>
-    );
-  },
-);
+      )}
+    </Card>
+  );
+});
 
 Table.displayName = "Table";
 
