@@ -82,6 +82,8 @@ export default function InvoiceReceiptManagement() {
         key: "po_number",
         label: "PO Number",
         sortable: true,
+        //filterable: true,
+        //filtertype: "text",
         render: (row) => (
           <span className={styles.code}>{row.po_number || "—"}</span>
         ),
@@ -90,6 +92,8 @@ export default function InvoiceReceiptManagement() {
         key: "invoice_number",
         label: "Invoice Number",
         sortable: true,
+        //filterable: true,
+        //filtertype: "text",
         render: (row) => (
           <span className={styles.code}>{row.invoice_number || "—"}</span>
         ),
@@ -110,14 +114,18 @@ export default function InvoiceReceiptManagement() {
         key: "vendor",
         label: "Vendor",
         sortable: false,
+//filterable: true,
+  //      filtertype: "text",
         render: (row) => (
           <span className={styles.muted}>{row.vendor?.name || "—"}</span>
         ),
       },
-      {
+      {   
         key: "company",
         label: "Perusahaan",
         sortable: false,
+    //    filterable: true,
+      //  filtertype: "select",
         render: (row) => (
           <span className={styles.muted}>{row.company?.name || "—"}</span>
         ),

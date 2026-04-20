@@ -286,3 +286,48 @@
   gap: 0.5rem;
   align-items: center;
 }
+
+/* Filter row */
+.filterRow {
+  background-color: var(--color-background-subtle, color-primary-50);
+}
+
+.filterCell {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border, --text-primary );
+}
+
+.filterInputWrapper {
+  width: 100%;
+}
+
+.filterInput,
+.filterSelect {
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-sm);
+  border: 1px solid var(--color-border, #d1d5db);
+  border-radius: var(--radius-md);
+  background: transparent;
+  transition: all 0.2s;
+}
+
+.filterInput:focus,
+.filterSelect:focus {
+  outline: none;
+  border-color: var(--color-primary, #3b82f6);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.clearFilterBtn,
+.clearFilterFooter {
+  margin-left: var(--space-2);
+  padding: 0 var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.clearFilterBtn:hover,
+.clearFilterFooter:hover {
+  color: var(--color-danger);
+}
