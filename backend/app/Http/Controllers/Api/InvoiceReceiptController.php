@@ -28,11 +28,21 @@ class InvoiceReceiptController extends Controller
             $query->where(function ($q) use ($request) {
                 $q->where('po_number', 'like', "%{$request->search}%")
                     ->orWhere('invoice_number', 'like', "%{$request->search}%")
-                    ->orWhere('vendor', 'like', "%{$request->search}%")
-                    ->orWhere('stage', 'like', "%{$request->search}%")
-                    ->orWhere('company', 'like', "%{$request->search}%");
+                    ->orWhereHas('vendor', function ($vendorQuery) use ($request) {
+                    $vendorQuery->where('name', 'like',"%{$request->search}%");  });
+                    // ->orWhere('stage', 'like', "%{$request->search}%")
+                    // ->orWhere('company', 'like', "%{$request->search}%");
+
+    
+
             });
+
+
+
+
+
         }
+
 
 
 

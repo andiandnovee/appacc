@@ -1,4 +1,11 @@
 <?php return array (
+  'jasonmccreary/laravel-test-assertions' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'JMac\\Testing\\AdditionalAssertionsServiceProvider',
+    ),
+  ),
   'laravel-shift/blueprint' => 
   array (
     'providers' => 
