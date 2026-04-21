@@ -41,16 +41,17 @@
     37 => 'Illuminate\\Translation\\TranslationServiceProvider',
     38 => 'Illuminate\\Validation\\ValidationServiceProvider',
     39 => 'Illuminate\\View\\ViewServiceProvider',
-    40 => 'Laravel\\Sail\\SailServiceProvider',
-    41 => 'Laravel\\Socialite\\SocialiteServiceProvider',
-    42 => 'Laravel\\Tinker\\TinkerServiceProvider',
-    43 => 'Carbon\\Laravel\\ServiceProvider',
-    44 => 'Termwind\\Laravel\\TermwindServiceProvider',
-    45 => 'PHPOpenSourceSaver\\JWTAuth\\Providers\\LaravelServiceProvider',
-    46 => 'Spatie\\Permission\\PermissionServiceProvider',
-    47 => 'Laravel\\Socialite\\SocialiteServiceProvider',
-    48 => 'Spatie\\Permission\\PermissionServiceProvider',
-    49 => 'App\\Providers\\RouteServiceProvider',
+    40 => 'Blueprint\\BlueprintServiceProvider',
+    41 => 'Laravel\\Sail\\SailServiceProvider',
+    42 => 'Laravel\\Socialite\\SocialiteServiceProvider',
+    43 => 'Laravel\\Tinker\\TinkerServiceProvider',
+    44 => 'Carbon\\Laravel\\ServiceProvider',
+    45 => 'Termwind\\Laravel\\TermwindServiceProvider',
+    46 => 'PHPOpenSourceSaver\\JWTAuth\\Providers\\LaravelServiceProvider',
+    47 => 'Spatie\\Permission\\PermissionServiceProvider',
+    48 => 'Laravel\\Socialite\\SocialiteServiceProvider',
+    49 => 'Spatie\\Permission\\PermissionServiceProvider',
+    50 => 'App\\Providers\\RouteServiceProvider',
   ),
   'eager' => 
   array (
@@ -230,6 +231,12 @@
     'Illuminate\\Database\\Console\\Migrations\\StatusCommand' => 'Illuminate\\Foundation\\Providers\\ConsoleSupportServiceProvider',
     'Illuminate\\Database\\Console\\Migrations\\MigrateMakeCommand' => 'Illuminate\\Foundation\\Providers\\ConsoleSupportServiceProvider',
     'composer' => 'Illuminate\\Foundation\\Providers\\ConsoleSupportServiceProvider',
+    'command.blueprint.build' => 'Blueprint\\BlueprintServiceProvider',
+    'command.blueprint.erase' => 'Blueprint\\BlueprintServiceProvider',
+    'command.blueprint.trace' => 'Blueprint\\BlueprintServiceProvider',
+    'command.blueprint.new' => 'Blueprint\\BlueprintServiceProvider',
+    'command.blueprint.init' => 'Blueprint\\BlueprintServiceProvider',
+    'Blueprint\\Blueprint' => 'Blueprint\\BlueprintServiceProvider',
     'Laravel\\Sail\\Console\\InstallCommand' => 'Laravel\\Sail\\SailServiceProvider',
     'Laravel\\Sail\\Console\\PublishCommand' => 'Laravel\\Sail\\SailServiceProvider',
     'Laravel\\Socialite\\Contracts\\Factory' => 'Laravel\\Socialite\\SocialiteServiceProvider',
@@ -271,6 +278,9 @@
     array (
     ),
     'Illuminate\\Foundation\\Providers\\ConsoleSupportServiceProvider' => 
+    array (
+    ),
+    'Blueprint\\BlueprintServiceProvider' => 
     array (
     ),
     'Laravel\\Sail\\SailServiceProvider' => 
