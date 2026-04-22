@@ -12,7 +12,7 @@ return new class extends Migration
     {
         Schema::create('stages', function (Blueprint $table) {
             $table->id();
-            $table->integer('sap_id')->unique()->nullable()->comment('Tahap_Kode dari SAP');
+            
             $table->string('name', 50)->nullable();
             $table->date('start_date')->nullable();
             $table->integer('year')->nullable();

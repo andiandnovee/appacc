@@ -1,15 +1,11 @@
-import { FC, ReactNode, ReactElement, useState, useCallback, useRef, useMemo } from 'react';
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import ReceiptFormModal from "./ReceiptFormModal";
 import Button from "../../../components/ui/Button";
 import Table from "../../../components/ui/Table";
+import Select from "../../../components/ui/Select";
 import { useToast } from "../../../components/ui/Toast";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import styles from "./ReceiptManagement.module.css";
-
-interface InvoiceReceiptManagementProps {
-  // Props here
-}
-
 
 const api = (path, options = {}) => {
   const token =
@@ -36,8 +32,59 @@ export default function InvoiceReceiptManagement() {
   const tableRef = useRef(null);
   const { addToast } = useToast();
   const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
- 
   const fullUrl = useMemo(() => `${apiBase}/receipts`, [apiBase]);
+
+  // State untuk filter
+  const [selectedCompany, setSelectedCompany] = useState("");
+  const [selectedVendor, setSelectedVendor] = useState("");
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+  const [selectedStage, setSelectedStage] = useState("");
+  //const [stageOptions, setStageOptions] = useState([]);
+  const [loadingStages, setLoadingStages] = useState(false);
+  const [stageOptions, setStageOptions] = useState<Array<{value: string, label: string}>>([]);
+
+  // Fetch stages berdasarkan tahun
+  useEffect(() => {
+    if (!selectedYear) {
+      setStageOptions([]);
+      return;
+    }
+    const fetchStages = async () => {
+      setLoadingStages(true);
+      try {
+        const res = await api(`/stages?year=${selectedYear}`);
+        const stages = res.data || [];
+        setStageOptions(stages.map(s => ({ value: s.id.toString(), label: s.name })));
+      } catch (err) {
+        console.error("Gagal fetch stages:", err);
+        setStageOptions([]);
+      } finally {
+        setLoadingStages(false);
+      }
+    };
+    fetchStages();
+  }, [selectedYear]);
+
+  // Reset stage ketika tahun berubah
+  useEffect(() => {
+    setSelectedStage("");
+  }, [selectedYear]);
+
+  // Filter params yang akan dikirim ke server via defaultParams
+  const filterParams = useMemo<Record<string, any>>(() => {
+  const params: Record<string, any> = {};
+  if (selectedCompany) params.company_id = selectedCompany;
+  if (selectedVendor) params.vendor_id = selectedVendor;
+  if (selectedStage) params.stage_id = selectedStage;
+  return params;
+}, [selectedCompany, selectedVendor, selectedStage]);
+
+  const handleResetFilters = () => {
+    setSelectedCompany("");
+    setSelectedVendor("");
+    setSelectedYear(new Date().getFullYear().toString());
+    setSelectedStage("");
+  };
 
   const handleDelete = useCallback(
     async (receipt, refetch) => {
@@ -52,7 +99,7 @@ export default function InvoiceReceiptManagement() {
         await api(`/receipts/${receipt.id}`, { method: "DELETE" });
         addToast({
           variant: "success",
-          title: "Invoce receipt berhasil dihapus.",
+          title: "Invoice receipt berhasil dihapus.",
         });
         refetch();
       } catch (err) {
@@ -82,21 +129,13 @@ export default function InvoiceReceiptManagement() {
         key: "po_number",
         label: "PO Number",
         sortable: true,
-        //filterable: true,
-        //filtertype: "text",
-        render: (row) => (
-          <span className={styles.code}>{row.po_number || "—"}</span>
-        ),
+        render: (row) => <span className={styles.code}>{row.po_number || "—"}</span>,
       },
       {
         key: "invoice_number",
         label: "Invoice Number",
         sortable: true,
-        //filterable: true,
-        //filtertype: "text",
-        render: (row) => (
-          <span className={styles.code}>{row.invoice_number || "—"}</span>
-        ),
+        render: (row) => <span className={styles.code}>{row.invoice_number || "—"}</span>,
       },
       {
         key: "receipt_date",
@@ -104,9 +143,7 @@ export default function InvoiceReceiptManagement() {
         sortable: true,
         render: (row) => (
           <span className={styles.muted}>
-            {row.receipt_date
-              ? new Date(row.receipt_date).toLocaleDateString("id-ID")
-              : "—"}
+            {row.receipt_date ? new Date(row.receipt_date).toLocaleDateString("id-ID") : "—"}
           </span>
         ),
       },
@@ -114,29 +151,19 @@ export default function InvoiceReceiptManagement() {
         key: "vendor",
         label: "Vendor",
         sortable: false,
-//filterable: true,
-  //      filtertype: "text",
-        render: (row) => (
-          <span className={styles.muted}>{row.vendor?.name || "—"}</span>
-        ),
+        render: (row) => <span className={styles.muted}>{row.vendor?.name || "—"}</span>,
       },
-      {   
+      {
         key: "company",
         label: "Perusahaan",
         sortable: false,
-    //    filterable: true,
-      //  filtertype: "select",
-        render: (row) => (
-          <span className={styles.muted}>{row.company?.name || "—"}</span>
-        ),
+        render: (row) => <span className={styles.muted}>{row.company?.name || "—"}</span>,
       },
       {
         key: "stage",
         label: "Stage",
         sortable: false,
-        render: (row) => (
-          <span className={styles.muted}>{row.stage?.name || "—"}</span>
-        ),
+        render: (row) => <span className={styles.muted}>{row.stage?.name || "—"}</span>,
       },
       {
         key: "amount",
@@ -144,9 +171,7 @@ export default function InvoiceReceiptManagement() {
         sortable: true,
         render: (row) => (
           <span className={styles.muted}>
-            {row.amount
-              ? `Rp ${parseFloat(row.amount).toLocaleString("id-ID")}`
-              : "—"}
+            {row.amount ? `Rp ${parseFloat(row.amount).toLocaleString("id-ID")}` : "—"}
           </span>
         ),
       },
@@ -160,10 +185,7 @@ export default function InvoiceReceiptManagement() {
               variant="ghost"
               size="sm"
               iconLeft={<Pencil size={13} />}
-              onClick={() => {
-               // console.log("Edit clicked", row);
-                setFormTarget(row);
-              }}
+              onClick={() => setFormTarget(row)}
             >
               Edit
             </Button>
@@ -171,10 +193,7 @@ export default function InvoiceReceiptManagement() {
               variant="ghost"
               size="sm"
               iconLeft={<Trash2 size={13} />}
-              onClick={() => {
- // console.log("Delete clicked", row);
-  handleDelete(row, tableRef.current?.refetch);
-}}
+              onClick={() => handleDelete(row, tableRef.current?.refetch)}
               disabled={deletingId === row.id}
               className={styles.deleteBtn}
             >
@@ -192,14 +211,64 @@ export default function InvoiceReceiptManagement() {
       <div className={styles.pageHeader}>
         <div>
           <h1 className={styles.pageTitle}>Manajemen Invoice Receipt</h1>
-          <p className={styles.pageSubtitle}>
-            Kelola data invoice receipt perusahaan
-          </p>
+          <p className={styles.pageSubtitle}>Kelola data invoice receipt perusahaan</p>
         </div>
         <Button iconLeft={<Plus size={14} />} onClick={() => setFormTarget({})}>
           Tambah Receipt
         </Button>
       </div>
+
+      {/* Filter Bar */}
+      <div className={styles.filterBar}>
+        <div className={styles.filterGroup}>
+          <label>Perusahaan</label>
+          <Select
+            value={selectedCompany}
+            onChange={(e) => setSelectedCompany(e.target.value)}
+            placeholder="Semua Perusahaan"
+            fetchOptions={{ endpoint: "/companies", searchParam: "search", limit: 10 }}
+            clearable
+          />
+        </div>
+        <div className={styles.filterGroup}>
+          <label>Vendor</label>
+          <Select
+            value={selectedVendor}
+            onChange={(e) => setSelectedVendor(e.target.value)}
+            placeholder="Semua Vendor"
+            fetchOptions={{ endpoint: "/vendors", searchParam: "search", limit: 10 }}
+            clearable
+          />
+        </div>
+        <div className={styles.filterGroup}>
+          <label>Tahun Stage</label>
+          <input
+            type="number"
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(e.target.value)}
+            className={styles.yearInput}
+            min="2000"
+            max="2099"
+          />
+        </div>
+        <div className={styles.filterGroup}>
+  <label>Stage</label>
+  <Select
+    value={selectedStage}
+    onChange={(e) => setSelectedStage(e.target.value)}
+    placeholder="Semua Stage"
+    options={stageOptions}
+    disabled={loadingStages}
+    clearable  // jika komponen mendukung, atau kita handle manual
+  />
+</div>
+        <div className={styles.filterActions}>
+          <Button variant="ghost" onClick={handleResetFilters} size="sm">
+            Reset Filter
+          </Button>
+        </div>
+      </div>
+
       <Table
         ref={tableRef}
         url={fullUrl}
@@ -212,7 +281,9 @@ export default function InvoiceReceiptManagement() {
         selectable={false}
         serverSide={true}
         serverSideFiltering={true}
+        defaultParams={filterParams}
       />
+
       {formTarget !== null && (
         <ReceiptFormModal
           receipt={formTarget.id ? formTarget : null}

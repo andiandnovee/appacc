@@ -14,14 +14,14 @@ class Stage extends Model
     protected $table = 'stages';
 
     protected $fillable = [
-        'sap_id',
+       // 'sap_id',
         'name',
         'start_date',
         'year',
     ];
 
     protected $casts = [
-        'sap_id'     => 'integer',
+       // 'sap_id'     => 'integer',
         'start_date' => 'date',
         'year'       => 'integer',
     ];
