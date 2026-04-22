@@ -1,5 +1,5 @@
 // Table.tsx
-import { forwardRef, useImperativeHandle, ReactNode, useMemo, useId, useState, useEffect, useCallback, useRef } from "react";
+import { forwardRef, useImperativeHandle, ReactNode, useMemo, useId, useState, useEffect, useCallback } from "react";
 import { utils, writeFile } from "xlsx";
 import {
   Search,
@@ -31,7 +31,6 @@ interface Column {
   label: string;
   sortable?: boolean;
   render?: (row: any, refetch?: () => void) => ReactNode;
-  // Properti untuk filter
   filterable?: boolean;
   filterType?: "text" | "select";
   filterOptions?: Array<{ value: string; label: string }>;
@@ -50,9 +49,7 @@ interface TableProps {
   defaultParams?: Record<string, any>;
   serverSide?: boolean;
   rowIdKey?: string;
-  /** Jika true, filter per kolom akan dikirim ke server (hanya efektif jika serverSide=true) */
   serverSideFiltering?: boolean;
-  /** Jeda debounce untuk filter text (ms) */
   filterDebounceMs?: number;
 }
 
@@ -73,6 +70,17 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
     filterDebounceMs = 300,
   } = props;
 
+  // ========== STATE FILTER PER KOLOM (harus sebelum useTableData) ==========
+  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
+  const [immediateFilters, setImmediateFilters] = useState<Record<string, string>>({});
+  const debouncedFilters = useDebounce(immediateFilters, filterDebounceMs);
+
+  // Sinkronkan debouncedFilters ke columnFilters
+  useEffect(() => {
+    setColumnFilters(debouncedFilters);
+  }, [debouncedFilters]);
+
+  // ========== USE TABLE DATA ==========
   const {
     data: hookData,
     allData,
@@ -86,54 +94,37 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
     handleSort,
     page,
     setPage,
-    totalPages: hookTotalPages,
-    totalRows: hookTotalRows,
+    totalRows: serverTotalRows,
+    totalPages: serverTotalPages,
     selected,
     toggleRow,
     toggleAll,
     isSelected,
     isAllSelected,
     isIndeterminate,
-  } = useTableData(url, { pageSize, dataKey, defaultParams, serverSide });
+  } = useTableData(url, {
+    pageSize,
+    dataKey,
+    defaultParams,
+    serverSide,
+    filters: serverSideFiltering ? columnFilters : {},
+  });
 
   const fallbackId = useId();
-  useImperativeHandle(ref, () => ({
-    refetch,
-    data: paginatedData,
-    loading,
-    clearAllFilters,
-  }));
 
-  // ========== STATE FILTER PER KOLOM ==========
-  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
-  // Gunakan debounce untuk nilai filter text (agar tidak terlalu sering re-render)
-  const [immediateFilters, setImmediateFilters] = useState<Record<string, string>>({});
-  const debouncedFilters = useDebounce(immediateFilters, filterDebounceMs);
-
-  // Sinkronkan debouncedFilters ke columnFilters sebenarnya
+  // Reset halaman ketika columnFilters berubah (setelah debounce)
   useEffect(() => {
-    setColumnFilters(debouncedFilters);
-  }, [debouncedFilters]);
-
-  const handleFilterChange = (colKey: string, value: string) => {
-    // Update immediate state (tanpa debounce) agar UI responsif
-    setImmediateFilters((prev) => ({ ...prev, [colKey]: value }));
-    // Reset halaman ke 1 saat filter berubah (akan di-trigger setelah debounce)
-  };
-
-  // Reset halaman ketika columnFilters benar-benar berubah (setelah debounce)
-  useEffect(() => {
-    if (Object.keys(columnFilters).length > 0 || columnFilters !== immediateFilters) {
+    if (serverSide) {
       setPage(1);
     }
-  }, [columnFilters, setPage]);
+  }, [columnFilters, serverSide, setPage]);
 
   // Fungsi untuk menghapus semua filter kolom
   const clearColumnFilters = useCallback(() => {
     setImmediateFilters({});
     setColumnFilters({});
-    setPage(1);
-  }, [setPage]);
+    if (serverSide) setPage(1);
+  }, [serverSide, setPage]);
 
   // Fungsi untuk menghapus semua filter (termasuk search global)
   const clearAllFilters = useCallback(() => {
@@ -148,15 +139,6 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
     return count;
   }, [columnFilters, search]);
 
-  // Reset pilihan (selected) saat filter berubah (opsional)
-  useEffect(() => {
-    if (selectable && activeFilterCount > 0) {
-      // Jika ingin reset semua pilihan saat filter berubah, aktifkan baris di bawah
-      // Namun hati-hati karena ini akan membatalkan pilihan pengguna
-      // toggleAll(false);
-    }
-  }, [columnFilters, search, selectable, activeFilterCount]);
-
   // Peringatan jika serverSide=true dan tidak menggunakan serverSideFiltering
   useEffect(() => {
     if (serverSide && !serverSideFiltering && activeFilterCount > 0) {
@@ -166,19 +148,17 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
     }
   }, [serverSide, serverSideFiltering, activeFilterCount]);
 
-  // ========== FILTER DATA (CLIENT-SIDE) ==========
-  // Hanya dilakukan jika serverSide=false ATAU serverSideFiltering=false (filter client-side)
+  // ========== FILTER & SORTING CLIENT-SIDE (hanya jika serverSide=false atau serverSideFiltering=false) ==========
   const shouldFilterClientSide = !serverSide || !serverSideFiltering;
 
   const filteredData = useMemo(() => {
     if (!shouldFilterClientSide) {
-      // Jika server-side filtering aktif, kita tidak filter di client, anggap allData sudah sesuai
+      // Server-side filtering aktif, data dari server sudah sesuai
       return [...allData];
     }
 
     let result = [...allData];
 
-    // Filter berdasarkan search global
     if (search.trim()) {
       const lowerSearch = search.toLowerCase();
       result = result.filter((row) =>
@@ -189,7 +169,6 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
       );
     }
 
-    // Filter per kolom (case-insensitive contains)
     Object.entries(columnFilters).forEach(([colKey, filterValue]) => {
       if (!filterValue || filterValue.trim() === "") return;
       const lowerFilter = filterValue.toLowerCase();
@@ -203,7 +182,6 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
     return result;
   }, [allData, search, columnFilters, columns, shouldFilterClientSide]);
 
-  // ========== SORTING (MANUAL) ==========
   const sortedData = useMemo(() => {
     if (!sortKey) return filteredData;
     const sorted = [...filteredData];
@@ -218,7 +196,6 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
       if (aVal == null) return 1;
       if (bVal == null) return -1;
 
-      // Konversi ke number jika memungkinkan
       if (!isNaN(Number(aVal)) && !isNaN(Number(bVal))) {
         aVal = Number(aVal);
         bVal = Number(bVal);
@@ -231,18 +208,28 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
     return sorted;
   }, [filteredData, sortKey, sortDir, columns]);
 
-  // ========== PAGINATION (MANUAL) ==========
+  // ========== PAGINATION ==========
+  // Untuk client-side, kita hitung sendiri; untuk server-side, gunakan dari hook
+  const clientTotalRows = sortedData.length;
+  const clientTotalPages = Math.ceil(clientTotalRows / pageSize);
+
+  const effectiveTotalRows = serverSide ? serverTotalRows : clientTotalRows;
+  const effectiveTotalPages = serverSide ? serverTotalPages : clientTotalPages;
+
+  // Data yang ditampilkan: jika server-side, gunakan hookData (sudah dipaginasi oleh server)
+  // Jika client-side, lakukan paginasi manual
   const paginatedData = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return sortedData.slice(start, start + pageSize);
-  }, [sortedData, page, pageSize]);
+    if (serverSide) {
+      return hookData; // server sudah mengembalikan data per halaman
+    } else {
+      const start = (page - 1) * pageSize;
+      return sortedData.slice(start, start + pageSize);
+    }
+  }, [serverSide, hookData, sortedData, page, pageSize]);
 
-  const totalFilteredRows = filteredData.length;
-  const totalFilteredPages = Math.ceil(totalFilteredRows / pageSize);
-
-  // ========== EKSPOR (menggunakan filteredData) ==========
+  // ========== EKSPOR ==========
   const handleExport = () => {
-    if (serverSide && allData.length < hookTotalRows && !serverSideFiltering) {
+    if (serverSide && allData.length < serverTotalRows && !serverSideFiltering) {
       console.warn(
         "Export hanya berdasarkan data yang sudah dimuat. Untuk export lengkap, set serverSide=false atau aktifkan serverSideFiltering."
       );
@@ -264,31 +251,20 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
     if (sortKey !== colKey)
       return <ChevronsUpDown size={12} className={styles.sortIcon} />;
     return sortDir === "asc" ? (
-      <ChevronUp
-        size={12}
-        className={`${styles.sortIcon} ${styles.sortIconActive}`}
-      />
+      <ChevronUp size={12} className={`${styles.sortIcon} ${styles.sortIconActive}`} />
     ) : (
-      <ChevronDown
-        size={12}
-        className={`${styles.sortIcon} ${styles.sortIconActive}`}
-      />
+      <ChevronDown size={12} className={`${styles.sortIcon} ${styles.sortIconActive}`} />
     );
   };
 
   // ========== PAGINATION NUMBERS ==========
   const pageNumbers = useMemo(() => {
     const pages: (number | string)[] = [];
-    if (!totalFilteredPages || totalFilteredPages <= 1) return pages;
+    if (!effectiveTotalPages || effectiveTotalPages <= 1) return pages;
 
     const delta = 1;
     const range: number[] = [];
-
-    for (
-      let i = Math.max(1, page - delta);
-      i <= Math.min(totalFilteredPages, page + delta);
-      i++
-    ) {
+    for (let i = Math.max(1, page - delta); i <= Math.min(effectiveTotalPages, page + delta); i++) {
       range.push(i);
     }
 
@@ -296,22 +272,29 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
       pages.push(1);
       if (range[0] > 2) pages.push("...");
     }
-
     pages.push(...range);
-
-    if (range[range.length - 1] < totalFilteredPages) {
-      if (range[range.length - 1] < totalFilteredPages - 1) pages.push("...");
-      pages.push(totalFilteredPages);
+    if (range[range.length - 1] < effectiveTotalPages) {
+      if (range[range.length - 1] < effectiveTotalPages - 1) pages.push("...");
+      pages.push(effectiveTotalPages);
     }
-
     return pages;
-  }, [page, totalFilteredPages]);
+  }, [page, effectiveTotalPages]);
 
   const goToPrevPage = () => setPage((p) => Math.max(1, p - 1));
-  const goToNextPage = () =>
-    setPage((p) => (totalFilteredPages ? Math.min(totalFilteredPages, p + 1) : p));
+  const goToNextPage = () => setPage((p) => (effectiveTotalPages ? Math.min(effectiveTotalPages, p + 1) : p));
 
-  // ========== RENDER ==========
+  // Expose methods via ref
+  useImperativeHandle(ref, () => ({
+    refetch,
+    data: paginatedData,
+    loading,
+    clearAllFilters,
+  }));
+
+  const handleFilterChange = (colKey: string, value: string) => {
+    setImmediateFilters((prev) => ({ ...prev, [colKey]: value }));
+  };
+
   return (
     <Card variant="outlined">
       <Card.Header
@@ -357,39 +340,18 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
         }
       />
 
-      {/* ERROR STATE */}
       {error && (
-        <div
-          style={{
-            padding: "var(--space-4)",
-            color: "var(--color-danger)",
-            fontSize: "var(--text-sm)",
-          }}
-        >
+        <div style={{ padding: "var(--space-4)", color: "var(--color-danger)", fontSize: "var(--text-sm)" }}>
           Gagal memuat data: {error}.{" "}
-          <Button
-            onClick={refetch}
-            variant="outline"
-            style={{
-              color: "var(--text-link)",
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              fontSize: "inherit",
-              padding: 0,
-              marginLeft: "var(--space-1)",
-            }}
-          >
+          <Button onClick={refetch} variant="outline" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, marginLeft: "var(--space-1)" }}>
             Coba lagi
           </Button>
         </div>
       )}
 
-      {/* TABLE */}
       <div className={styles.tableScroll}>
         <table className={styles.table}>
           <thead className={styles.thead}>
-            {/* Baris header kolom */}
             <tr>
               {selectable && (
                 <th className={styles.checkboxCell}>
@@ -397,9 +359,7 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
                     type="checkbox"
                     className={styles.checkbox}
                     checked={isAllSelected}
-                    ref={(el) => {
-                      if (el) el.indeterminate = isIndeterminate;
-                    }}
+                    ref={(el) => { if (el) el.indeterminate = isIndeterminate; }}
                     onChange={toggleAll}
                     aria-label="Pilih semua"
                   />
@@ -410,13 +370,7 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
                   key={col.key}
                   className={`${styles.th} ${col.sortable ? styles.thSortable : ""}`}
                   onClick={() => col.sortable && handleSort(col.key)}
-                  aria-sort={
-                    sortKey === col.key
-                      ? sortDir === "asc"
-                        ? "ascending"
-                        : "descending"
-                      : undefined
-                  }
+                  aria-sort={sortKey === col.key ? (sortDir === "asc" ? "ascending" : "descending") : undefined}
                 >
                   <span className={styles.thInner}>
                     {col.label}
@@ -430,8 +384,6 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
                 </th>
               ))}
             </tr>
-
-            {/* Baris filter per kolom - hanya ditampilkan jika ada kolom yang filterable */}
             {columns.some((col) => col.filterable) && (
               <tr className={styles.filterRow}>
                 {selectable && <td className={styles.filterCell} />}
@@ -447,9 +399,7 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
                           >
                             <option value="">Semua</option>
                             {col.filterOptions?.map((opt) => (
-                              <option key={opt.value} value={opt.value}>
-                                {opt.label}
-                              </option>
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
                             ))}
                           </select>
                         ) : (
@@ -468,53 +418,27 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
               </tr>
             )}
           </thead>
-
           <tbody>
-            {/* SKELETON LOADING */}
-            {loading &&
-              Array.from({ length: pageSize }).map((_, i) => (
-                <tr key={`skeleton-${i}`} className={styles.tr}>
-                  {selectable && (
-                    <td className={styles.checkboxCell}>
-                      <div
-                        className={styles.skeleton}
-                        style={{ width: 16, height: 16 }}
-                      />
-                    </td>
-                  )}
-                  {columns.map((col) => (
-                    <td key={col.key} className={styles.td}>
-                      <div
-                        className={styles.skeleton}
-                        style={{ width: `${60 + Math.random() * 30}%` }}
-                      />
-                    </td>
-                  ))}
-                </tr>
-              ))}
-
-            {/* EMPTY STATE */}
+            {loading && Array.from({ length: pageSize }).map((_, i) => (
+              <tr key={`skeleton-${i}`} className={styles.tr}>
+                {selectable && <td className={styles.checkboxCell}><div className={styles.skeleton} style={{ width: 16, height: 16 }} /></td>}
+                {columns.map((col) => (
+                  <td key={col.key} className={styles.td}>
+                    <div className={styles.skeleton} style={{ width: `${60 + Math.random() * 30}%` }} />
+                  </td>
+                ))}
+              </tr>
+            ))}
             {!loading && !error && paginatedData.length === 0 && (
               <tr>
                 <td colSpan={columns.length + (selectable ? 1 : 0)}>
                   <div className={styles.empty}>
-                    <div className={styles.emptyIcon}>
-                      <Inbox size={40} />
-                    </div>
+                    <div className={styles.emptyIcon}><Inbox size={40} /></div>
                     <p className={styles.emptyText}>
-                      {activeFilterCount > 0
-                        ? "Tidak ada data yang sesuai dengan filter"
-                        : search
-                        ? `Tidak ada hasil untuk "${search}"`
-                        : "Belum ada data"}
+                      {activeFilterCount > 0 ? "Tidak ada data yang sesuai dengan filter" : search ? `Tidak ada hasil untuk "${search}"` : "Belum ada data"}
                     </p>
                     {activeFilterCount > 0 && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={clearAllFilters}
-                        className={styles.clearFilterBtn}
-                      >
+                      <Button variant="outline" size="sm" onClick={clearAllFilters} className={styles.clearFilterBtn}>
                         <XCircle size={14} /> Hapus semua filter
                       </Button>
                     )}
@@ -522,103 +446,61 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
                 </td>
               </tr>
             )}
-
-            {/* DATA ROWS */}
-            {!loading &&
-              paginatedData.map((row, index) => {
-                const rowId = row[rowIdKey];
-                if (rowId === undefined && selectable) {
-                  console.warn(`Row missing key "${rowIdKey}" for selection`);
-                }
-                return (
-                  <tr
-                    key={rowId ?? `${fallbackId}-${index}`}
-                    className={`${styles.tr} ${selectable && isSelected(rowId) ? styles.trSelected : ""}`}
-                    onClick={() => selectable && toggleRow(rowId)}
-                  >
-                    {selectable && (
-                      <td className={styles.checkboxCell}>
-                        <input
-                          type="checkbox"
-                          className={styles.checkbox}
-                          checked={isSelected(rowId)}
-                          onChange={() => toggleRow(rowId)}
-                          onClick={(e) => e.stopPropagation()}
-                          aria-label={`Pilih baris ${rowId}`}
-                          disabled={rowId === undefined}
-                        />
-                      </td>
-                    )}
-                    {columns.map((col) => (
-                      <td key={col.key} className={styles.td}>
-                        {col.render
-                          ? col.render(row, refetch)
-                          : (row[col.key] ?? "—")}
-                      </td>
-                    ))}
-                  </tr>
-                );
-              })}
+            {!loading && paginatedData.map((row, index) => {
+              const rowId = row[rowIdKey];
+              return (
+                <tr
+                  key={rowId ?? `${fallbackId}-${index}`}
+                  className={`${styles.tr} ${selectable && isSelected(rowId) ? styles.trSelected : ""}`}
+                  onClick={() => selectable && toggleRow(rowId)}
+                >
+                  {selectable && (
+                    <td className={styles.checkboxCell}>
+                      <input
+                        type="checkbox"
+                        className={styles.checkbox}
+                        checked={isSelected(rowId)}
+                        onChange={() => toggleRow(rowId)}
+                        onClick={(e) => e.stopPropagation()}
+                        aria-label={`Pilih baris ${rowId}`}
+                        disabled={rowId === undefined}
+                      />
+                    </td>
+                  )}
+                  {columns.map((col) => (
+                    <td key={col.key} className={styles.td}>
+                      {col.render ? col.render(row, refetch) : (row[col.key] ?? "—")}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
 
-      {/* FOOTER & PAGINATION */}
-      {!loading && !error && totalFilteredRows !== undefined && (
+      {!loading && !error && effectiveTotalRows !== undefined && (
         <div className={styles.footer}>
           <span className={styles.footerInfo}>
             {selectable && selected.length > 0 && `${selected.length} dipilih · `}
-            {totalFilteredRows} data
+            {effectiveTotalRows} data
             {activeFilterCount > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearAllFilters}
-                className={styles.clearFilterFooter}
-              >
+              <Button variant="ghost" size="sm" onClick={clearAllFilters} className={styles.clearFilterFooter}>
                 <XCircle size={12} /> Reset semua filter ({activeFilterCount})
               </Button>
             )}
           </span>
-          {totalFilteredPages > 1 && (
+          {effectiveTotalPages > 1 && (
             <div className={styles.pagination}>
-              <Button
-                className={styles.pageBtn}
-                onClick={goToPrevPage}
-                disabled={page === 1}
-                aria-label="Halaman sebelumnya"
-              >
-                ‹
-              </Button>
-              {pageNumbers.map((p, i) =>
-                p === "..." ? (
-                  <span
-                    key={`dots-${i}`}
-                    className={styles.footerInfo}
-                    style={{ padding: "0 4px" }}
-                  >
-                    …
-                  </span>
-                ) : (
-                  <button
-                    key={p}
-                    className={`${styles.pageBtn} ${page === p ? styles.pageBtnActive : ""}`}
-                    onClick={() => setPage(p as number)}
-                    aria-current={page === p ? "page" : undefined}
-                  >
-                    {p}
-                  </button>
-                )
-              )}
-              
-              <Button
-                className={styles.pageBtn}
-                onClick={goToNextPage}
-                disabled={page === totalFilteredPages}
-                aria-label="Halaman berikutnya"
-              >
-                ›
-              </Button>
+              <Button className={styles.pageBtn} onClick={goToPrevPage} disabled={page === 1}>‹</Button>
+              {pageNumbers.map((p, i) => p === "..." ? (
+                <span key={`dots-${i}`} className={styles.footerInfo} style={{ padding: "0 4px" }}>…</span>
+              ) : (
+                <button key={p} className={`${styles.pageBtn} ${page === p ? styles.pageBtnActive : ""}`} onClick={() => setPage(p as number)}>
+                  {p}
+                </button>
+              ))}
+              <Button className={styles.pageBtn} onClick={goToNextPage} disabled={page === effectiveTotalPages}>›</Button>
             </div>
           )}
         </div>

@@ -19,73 +19,79 @@ class InvoiceReceiptController extends Controller
     // GET /invoice-receipts
     // -------------------------------------------------------
     public function index(Request $request)
-    {
-        $query = InvoiceReceipt::query()
-            ->with(['vendor', 'company', 'stage', 'latestStatus']);
+{
+    $query = InvoiceReceipt::query()
+        ->with(['vendor', 'company', 'stage', 'latestStatus']);
 
-
-        if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('po_number', 'like', "%{$request->search}%")
-                    ->orWhere('invoice_number', 'like', "%{$request->search}%")
-                    ->orWhereHas('vendor', function ($vendorQuery) use ($request) {
-                    $vendorQuery->where('name', 'like',"%{$request->search}%");  });
-                    // ->orWhere('stage', 'like', "%{$request->search}%")
-                    // ->orWhere('company', 'like', "%{$request->search}%");
-
-    
-
-            });
-
-
-
-
-
-        }
-
-
-
-
-        // Filter by company
-        if ($request->filled('company_id')) {
-            $query->where('company_id', $request->company_id);
-        }
-
-        // Filter by vendor
-        if ($request->filled('vendor_id')) {
-            $query->where('vendor_id', $request->vendor_id);
-        }
-
-        // Filter by stage
-        if ($request->filled('stage_id')) {
-            $query->where('stage_id', $request->stage_id);
-        }
-
-        // Filter by business_area_code
-        if ($request->filled('business_area_code')) {
-            $query->where('business_area_code', $request->business_area_code);
-        }
-
-        // Filter by status_value (via latestStatus)
-        if ($request->filled('status_value')) {
-            $query->whereHas('latestStatus', function ($q) use ($request) {
-                $q->where('status_value', $request->status_value);
-            });
-        }
-
-        // Filter by date range
-        if ($request->filled('date_from')) {
-            $query->whereDate('receipt_date', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $query->whereDate('receipt_date', '<=', $request->date_to);
-        }
-
-        $perPage = $request->get('per_page', 25);
-        $receipts = $query->orderByDesc('receipt_date')->paginate($perPage);
-
-        return InvoiceReceiptResource::collection($receipts);
+    // ========== SEARCH GLOBAL ==========
+    if ($request->filled('search')) {
+        $search = $request->search;
+        $query->where(function ($q) use ($search) {
+            $q->where('po_number', 'like', "%{$search}%")
+              ->orWhere('invoice_number', 'like', "%{$search}%")
+            //   ->orWhereHas('vendor', function ($vendorQuery) use ($search) {
+            //       $vendorQuery->where('name', 'like', "%{$search}%");
+            //   })
+              ;
+        });
     }
+
+    // ========== FILTER PER KOLOM (dari serverSideFiltering) ==========
+    if ($request->has('filter')) {
+        $filters = $request->input('filter');
+        $allowedColumns = ['po_number', 'invoice_number', 'vendor_id', 'company_id', 'stage_id', 'business_area_code', 'category'];
+        foreach ($filters as $column => $value) {
+            if (in_array($column, $allowedColumns) && !empty($value)) {
+                // Untuk kolom yang merupakan foreign key (vendor_id, company_id, stage_id) gunakan pencarian exact
+                if (in_array($column, ['vendor_id', 'company_id', 'stage_id', 'category'])) {
+                    $query->where($column, $value);
+                } else {
+                    $query->where($column, 'like', "%{$value}%");
+                }
+            }
+        }
+    }
+
+    // ========== FILTER LANGSUNG (non-filter array) ==========
+    if ($request->filled('company_id')) {
+        $query->where('company_id', $request->company_id);
+    }
+    if ($request->filled('vendor_id')) {
+        $query->where('vendor_id', $request->vendor_id);
+    }
+    if ($request->filled('stage_id')) {
+        $query->where('stage_id', $request->stage_id);
+    }
+    if ($request->filled('business_area_code')) {
+        $query->where('business_area_code', $request->business_area_code);
+    }
+    if ($request->filled('status_value')) {
+        $query->whereHas('latestStatus', function ($q) use ($request) {
+            $q->where('status_value', $request->status_value);
+        });
+    }
+    if ($request->filled('date_from')) {
+        $query->whereDate('receipt_date', '>=', $request->date_from);
+    }
+    if ($request->filled('date_to')) {
+        $query->whereDate('receipt_date', '<=', $request->date_to);
+    }
+
+    // ========== SORTING ==========
+    $sortBy = $request->get('sort_by');
+    $sortDir = $request->get('sort_dir', 'asc');
+    if ($sortBy && in_array($sortBy, ['po_number', 'invoice_number', 'receipt_date', 'amount'])) {
+        $query->orderBy($sortBy, $sortDir === 'asc' ? 'asc' : 'desc');
+    } else {
+        $query->orderByDesc('receipt_date');
+    }
+
+    // ========== PAGINATION ==========
+    $perPage = $request->get('per_page', 25);
+    $receipts = $query->paginate($perPage);
+
+    return InvoiceReceiptResource::collection($receipts);
+}
 
     // -------------------------------------------------------
     // GET /invoice-receipts/{id}

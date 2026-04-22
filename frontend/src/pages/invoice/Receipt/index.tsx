@@ -211,6 +211,7 @@ export default function InvoiceReceiptManagement() {
         searchable={true}
         selectable={false}
         serverSide={true}
+        serverSideFiltering={true}
       />
       {formTarget !== null && (
         <ReceiptFormModal

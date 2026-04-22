@@ -1,22 +1,12 @@
+// hooks/useTableData.js (perbaikan)
 import { useState, useEffect, useCallback, useMemo } from 'react'
 
-/**
- * useTableData
- *
- * Hook untuk mengelola state table: fetch, sort, search, pagination.
- *
- * @param {string}  url         - endpoint API (wajib) - bisa full URL atau relative
- * @param {object}  options
- * @param {number}  options.pageSize     - jumlah baris per halaman (default: 10)
- * @param {string}  options.dataKey      - key dari response yang berisi array data
- * @param {object}  options.defaultParams - parameter default seperti trash_filter
- * @param {boolean} options.serverSide   - true jika search/sort/pagination di backend (default: true)
- */
 export function useTableData(url, {
   pageSize = 10,
   dataKey = '',
   defaultParams = {},
-  serverSide = true
+  serverSide = true,
+  filters = {},        // ← tambahan: filter per kolom
 } = {}) {
 
   const [rawData, setRawData] = useState([])
@@ -29,52 +19,55 @@ export function useTableData(url, {
   const [sortDir, setSortDir] = useState('asc')
   const [page, setPage] = useState(1)
   const [selected, setSelected] = useState([])
-
-  // Untuk manual refetch
   const [refetchCount, setRefetchCount] = useState(0)
 
-  // ── Build query string (memoized) ──────────────────────────────
-  const queryString = useMemo(() => {
-    if (!serverSide) return ''
+  // Gabungkan filters dari props dengan state internal (jika perlu)
+  // Di sini kita asumsikan filters di-pass dari komponen induk (Table)
+  // Untuk memudahkan, kita jadikan filters sebagai dependency.
 
-    const params = new URLSearchParams()
+  // Di dalam useTableData, pada bagian queryString
 
-    // Default params (misal: trash_filter)
-    Object.entries(defaultParams).forEach(([key, value]) => {
-      if (value) params.append(key, value)
-    })
+const queryString = useMemo(() => {
+  if (!serverSide) return ''
 
-    // Pagination
-    params.append('per_page', pageSize)
-    params.append('page', page)
+  const params = new URLSearchParams()
 
-    // Search
-    if (search) params.append('search', search)
-
-    // Sort
-    if (sortKey) {
-      params.append('sort_by', sortKey)
-      params.append('sort_dir', sortDir)
+  // Default params (misal: trash_filter)
+  Object.entries(defaultParams).forEach(([key, value]) => {
+    if (value != null && value !== '') {
+      params.append(key, String(value))   // ← konversi ke string
     }
+  })
 
-    return params.toString()
-  }, [defaultParams, pageSize, page, search, sortKey, sortDir, serverSide])
+  // Pagination
+  params.append('per_page', String(pageSize))   // ← konversi
+  params.append('page', String(page))           // ← konversi
 
-  // ── Refetch callback ─────────────────────────────────────────────
-  const refetch = useCallback(() => {
-    setRefetchCount(c => c + 1)
-  }, [])
+  // Search global
+  if (search) params.append('search', search)
 
-  // ── Initial fetch & refetch ─────────────────────────────────────
-  // IMPORTANT: Separate effect untuk fetch, trigger hanya saat URL/queryString berubah
+  // Sorting
+  if (sortKey) {
+    params.append('sort_by', sortKey)
+    params.append('sort_dir', sortDir)
+  }
+
+  // Filter per kolom (server-side)
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value != null && value !== '') {
+      params.append(`filter[${key}]`, String(value))   // ← konversi
+    }
+  })
+
+  return params.toString()
+}, [defaultParams, pageSize, page, search, sortKey, sortDir, serverSide, filters])
+  // Fetch effect (sama seperti sebelumnya, tapi gunakan queryString)
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
       setError(null)
-
       try {
         let finalUrl = url
-
         if (serverSide && queryString) {
           finalUrl = `${url}?${queryString}`
         }
@@ -82,14 +75,11 @@ export function useTableData(url, {
         const res = await fetch(finalUrl, {
           headers: {
             'Accept': 'application/json',
-            'Content-Type': 'application/json',
             'Authorization': `Bearer ${localStorage.getItem('appacc_token') || sessionStorage.getItem('appacc_token')}`,
           },
           credentials: 'include',
         })
-
         if (!res.ok) throw new Error(`HTTP error ${res.status}`)
-
         const json = await res.json()
 
         if (serverSide) {
@@ -102,26 +92,23 @@ export function useTableData(url, {
           setRawData(data)
           setTotalRows(data.length)
         }
-
       } catch (err) {
         setError(err.message)
       } finally {
         setLoading(false)
       }
     }
-
     fetchData()
   }, [url, queryString, serverSide, dataKey, refetchCount])
 
-  // ── Reset page saat search/sort berubah ─────────────────────────
+  // Reset page saat search, sort, atau filters berubah
   useEffect(() => {
     if (serverSide) setPage(1)
-  }, [search, sortKey, sortDir, serverSide])
+  }, [search, sortKey, sortDir, filters, serverSide])
 
-  // ── Client-side filtering (jika serverSide = false) ─────────────
+  // Client-side filtering (hanya jika serverSide=false)
   const filtered = useMemo(() => {
     if (serverSide) return rawData
-
     if (!search.trim()) return rawData
     const q = search.toLowerCase()
     return rawData.filter(row =>
@@ -131,40 +118,29 @@ export function useTableData(url, {
     )
   }, [rawData, search, serverSide])
 
-  // ── Client-side sorting (jika serverSide = false) ───────────────
   const sorted = useMemo(() => {
     if (serverSide) return filtered
-
     if (!sortKey) return filtered
     return [...filtered].sort((a, b) => {
       const aVal = a[sortKey] ?? ''
       const bVal = b[sortKey] ?? ''
-
       if (typeof aVal === 'number' && typeof bVal === 'number') {
         return sortDir === 'asc' ? aVal - bVal : bVal - aVal
       }
-
       const cmp = String(aVal).localeCompare(String(bVal))
       return sortDir === 'asc' ? cmp : -cmp
     })
   }, [filtered, sortKey, sortDir, serverSide])
 
-  // ── Client-side pagination (jika serverSide = false) ────────────
   const clientTotalRows = sorted.length
   const clientTotalPages = Math.max(1, Math.ceil(clientTotalRows / pageSize))
 
-  useEffect(() => {
-    if (!serverSide) setPage(1)
-  }, [search, serverSide])
-
   const paginated = useMemo(() => {
     if (serverSide) return sorted
-
     const start = (page - 1) * pageSize
     return sorted.slice(start, start + pageSize)
   }, [sorted, page, pageSize, serverSide])
 
-  // ── Sort handler ────────────────────────────────────────────────
   const handleSort = useCallback((key) => {
     if (sortKey === key) {
       setSortDir(d => d === 'asc' ? 'desc' : 'asc')
@@ -174,7 +150,6 @@ export function useTableData(url, {
     }
   }, [sortKey])
 
-  // ── Select rows ─────────────────────────────────────────────────
   const toggleRow = useCallback((id) => {
     setSelected(prev =>
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
@@ -192,31 +167,20 @@ export function useTableData(url, {
   }, [paginated, selected])
 
   const isSelected = useCallback((id) => selected.includes(id), [selected])
-  const isAllSelected = paginated.length > 0 &&
-    paginated.every(r => selected.includes(r.id))
-  const isIndeterminate = !isAllSelected &&
-    paginated.some(r => selected.includes(r.id))
+  const isAllSelected = paginated.length > 0 && paginated.every(r => selected.includes(r.id))
+  const isIndeterminate = !isAllSelected && paginated.some(r => selected.includes(r.id))
 
   return {
-    // data
     data: paginated,
     allData: serverSide ? rawData : sorted,
     loading,
     error,
-    refetch,
+    refetch: () => setRefetchCount(c => c + 1),
     totalRows: serverSide ? totalRows : clientTotalRows,
     totalPages: serverSide ? Math.ceil(totalRows / pageSize) : clientTotalPages,
-
-    // search
     search, setSearch,
-
-    // sort
     sortKey, sortDir, handleSort,
-
-    // pagination
     page, setPage, pageSize,
-
-    // selection
     selected, toggleRow, toggleAll,
     isSelected, isAllSelected, isIndeterminate,
     clearSelection: () => setSelected([]),
