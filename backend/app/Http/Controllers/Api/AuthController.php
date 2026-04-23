@@ -67,20 +67,24 @@ class AuthController extends Controller
      * POST /api/auth/logout
      */
     public function logout()
-    {
-        try {
-            auth('api')->logout();
-            return response()->json([
-                'success' => true,
-                'message' => 'Logout berhasil.',
-            ]);
-        } catch (JWTException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal logout.',
-            ], 500);
-        }
+{
+    try {
+        auth('api')->logout();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Logout berhasil.',
+        ])->withCookie(
+            cookie()->forget('appacc_token', '/', '.warga007.web.id')
+        );
+
+    } catch (JWTException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Gagal logout.',
+        ], 500);
     }
+}
 
     /**
      * Refresh token
@@ -102,16 +106,38 @@ class AuthController extends Controller
     // ─── Helpers ────────────────────────────────────────────────────────────
 
     private function respondWithToken(string $token, $user): \Illuminate\Http\JsonResponse
-    {
-        return response()->json([
-            'success'    => true,
-            'message'    => 'Login berhasil.',
-            'token'      => $token,
-            'token_type' => 'bearer',
-            'expires_in' => auth('api')->factory()->getTTL() * 60,
-            'data'       => $this->formatUser($user),
-        ]);
+{
+    $ttl = auth('api')->factory()->getTTL(); // menit
+    $clientType = request()->header('X-Client-Type', 'browser');
+
+    $payload = [
+        'success'    => true,
+        'message'    => 'Login berhasil.',
+        'token_type' => 'bearer',
+        'expires_in' => $ttl * 60,
+        'data'       => $this->formatUser($user),
+    ];
+
+    if ($clientType === 'apk') {
+        // APK: kirim token di body
+        $payload['token'] = $token;
+        return response()->json($payload);
     }
+
+    // Browser: token di HttpOnly cookie, tidak di body
+    return response()->json($payload)->withCookie(
+        cookie(
+            name:     'appacc_token',
+            value:    $token,
+            minutes:  $ttl,
+            path:     '/',
+            domain:   '.warga007.web.id', // dot prefix = semua subdomain
+            secure:   true,
+            httpOnly: true,
+            sameSite: 'None',
+        )
+    );
+}
 
     private function formatUser($user): array
     {
