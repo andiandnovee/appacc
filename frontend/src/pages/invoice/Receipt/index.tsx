@@ -6,24 +6,13 @@ import Select from "../../../components/ui/Select";
 import { useToast } from "../../../components/ui/Toast";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import styles from "./ReceiptManagement.module.css";
+import apiClient from "../../../api/axios";
 
-const api = (path, options = {}) => {
-  const token =
-    localStorage.getItem("appacc_token") ??
-    sessionStorage.getItem("appacc_token");
-  const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-  return fetch(`${apiBase}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    ...options,
-  }).then((r) =>
-    r.json().then((json) => {
-      if (!r.ok) throw new Error(json.message);
-      return json;
-    }),
-  );
+const api = async (path: string, options: { method?: string; body?: string } = {}) => {
+  const method = (options.method || "GET").toLowerCase();
+  const data = options.body ? JSON.parse(options.body) : undefined;
+  const res = await (apiClient as any)[method](path, data);
+  return res.data;
 };
 
 export default function InvoiceReceiptManagement() {
@@ -32,7 +21,7 @@ export default function InvoiceReceiptManagement() {
   const tableRef = useRef(null);
   const { addToast } = useToast();
   const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-  const fullUrl = useMemo(() => `${apiBase}/receipts`, [apiBase]);
+  const fullUrl = useMemo(() => `/receipts`, [apiBase]);
 
   // State untuk filter
   const [selectedCompany, setSelectedCompany] = useState("");
@@ -227,7 +216,7 @@ export default function InvoiceReceiptManagement() {
             onChange={(e) => setSelectedCompany(e.target.value)}
             placeholder="Semua Perusahaan"
             fetchOptions={{ endpoint: "/companies", searchParam: "search", limit: 10 }}
-            clearable
+            //clearable
           />
         </div>
         <div className={styles.filterGroup}>
@@ -237,7 +226,7 @@ export default function InvoiceReceiptManagement() {
             onChange={(e) => setSelectedVendor(e.target.value)}
             placeholder="Semua Vendor"
             fetchOptions={{ endpoint: "/vendors", searchParam: "search", limit: 10 }}
-            clearable
+            //clearable
           />
         </div>
         <div className={styles.filterGroup}>
@@ -259,7 +248,7 @@ export default function InvoiceReceiptManagement() {
     placeholder="Semua Stage"
     options={stageOptions}
     disabled={loadingStages}
-    clearable  // jika komponen mendukung, atau kita handle manual
+    //clearable  // jika komponen mendukung, atau kita handle manual
   />
 </div>
         <div className={styles.filterActions}>

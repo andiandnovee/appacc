@@ -6,8 +6,9 @@ import {
   FC,
   ReactNode,
 } from "react";
-import api from "../api/axios";
+import api, { getToken, setToken, clearToken } from "../api/axios";
 
+// ─── Types ───────────────────────────────────────────────────────
 interface User {
   id: string | number;
   name: string;
@@ -22,8 +23,10 @@ interface AuthContextType {
   logout: () => Promise<void>;
 }
 
+// ─── Context ─────────────────────────────────────────────────────
 const AuthContext = createContext<AuthContextType | null>(null);
 
+// ─── Provider ────────────────────────────────────────────────────
 interface AuthProviderProps {
   children: ReactNode;
 }
@@ -32,12 +35,9 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // ── Boot: cek token di storage ─────────────────────────────
+  // Boot: cek token di storage, validasi ke /auth/me
   useEffect(() => {
-    const token =
-      localStorage.getItem("appacc_token") ??
-      sessionStorage.getItem("appacc_token");
-
+    const token = getToken();
     if (!token) {
       setLoading(false);
       return;
@@ -46,29 +46,30 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
     api
       .get("/auth/me")
       .then((res) => setUser(res.data.data))
-      .catch(() => {
-        localStorage.removeItem("appacc_token");
-        sessionStorage.removeItem("appacc_token");
-      })
+      .catch(() => clearToken())
       .finally(() => setLoading(false));
   }, []);
 
-  // ── Login: simpan token + set user ─────────────────────────
-  const login = (token: string, userData: User, remember = false): void => {
-    const storage = remember ? localStorage : sessionStorage;
-    storage.setItem("appacc_token", token);
+  // Login: simpan token + set user
+  const login = (token: string, userData: User, remember = true): void => {
+    if (remember) {
+      localStorage.setItem("appacc_token", token);
+      sessionStorage.removeItem("appacc_token");
+    } else {
+      sessionStorage.setItem("appacc_token", token);
+      localStorage.removeItem("appacc_token");
+    }
     setUser(userData);
   };
 
-  // ── Logout: hapus token + clear user ───────────────────────
+  // Logout: invalidate di backend + hapus token lokal
   const logout = async (): Promise<void> => {
     try {
       await api.post("/auth/logout");
     } catch {
       // tetap logout meski request gagal
     } finally {
-      localStorage.removeItem("appacc_token");
-      sessionStorage.removeItem("appacc_token");
+      clearToken();
       setUser(null);
     }
   };
@@ -80,4 +81,5 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   );
 };
 
+// ─── Hook ────────────────────────────────────────────────────────
 export const useAuth = (): AuthContextType | null => useContext(AuthContext);

@@ -1,6 +1,27 @@
-import axios from "axios";
+import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse, AxiosError } from "axios";
 
-const api = axios.create({
+// ─── Storage helpers ─────────────────────────────────────────────
+const TOKEN_KEY = "appacc_token";
+
+export const getToken = (): string | null =>
+  localStorage.getItem(TOKEN_KEY) ?? sessionStorage.getItem(TOKEN_KEY);
+
+export const setToken = (token: string): void => {
+  // Simpan ke storage yang sama dengan yang sudah ada
+  if (sessionStorage.getItem(TOKEN_KEY)) {
+    sessionStorage.setItem(TOKEN_KEY, token);
+  } else {
+    localStorage.setItem(TOKEN_KEY, token); // default localStorage
+  }
+};
+
+export const clearToken = (): void => {
+  localStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(TOKEN_KEY);
+};
+
+// ─── Axios instance ──────────────────────────────────────────────
+const api: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   headers: {
     "Content-Type": "application/json",
@@ -8,118 +29,96 @@ const api = axios.create({
   },
 });
 
-// Request interceptor: inject access token
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("appacc_token") ?? sessionStorage.getItem("appacc_token");
+// ─── Request interceptor ─────────────────────────────────────────
+api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  const token = getToken();
+   console.log(`[REQ] ${config.method?.toUpperCase()} ${config.url} | token: ${token ? token.slice(-10) : 'NULL'}`);
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
-// Queue untuk multiple request
+// ─── Refresh queue ───────────────────────────────────────────────
 let isRefreshing = false;
-let failedQueue = [];
+let failedQueue: Array<{
+  resolve: (token: string) => void;
+  reject: (err: unknown) => void;
+}> = [];
 
-const processQueue = (error, token = null) => {
-  failedQueue.forEach(prom => {
+const processQueue = (error: unknown, token: string | null = null): void => {
+  failedQueue.forEach((prom) => {
     if (error) prom.reject(error);
-    else prom.resolve(token);
+    else prom.resolve(token!);
   });
   failedQueue = [];
 };
 
-// Response interceptor
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
+const forceLogout = (): void => {
+  clearToken();
+  window.location.href = "/login";
+};
 
-    // Jika bukan 401 atau sudah retry, reject
+// ─── Response interceptor ────────────────────────────────────────
+api.interceptors.response.use(
+  (response: AxiosResponse) => response,
+  async (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+
+    // 👇 CEK A
+    console.log(`[RES ERROR] ${originalRequest?.url} | status: ${error.response?.status} | _retry: ${originalRequest?._retry}`);
+
     if (error.response?.status !== 401 || originalRequest._retry) {
       return Promise.reject(error);
     }
 
-    // Cegah jika endpoint refresh itu sendiri yang gagal
-    if (originalRequest.url === '/auth/refresh') {
-      // Refresh token expired, logout
-      localStorage.removeItem("appacc_token");
-      localStorage.removeItem("apprefresh_token");
-      sessionStorage.removeItem("appacc_token");
-      window.location.href = "/login";
+    // Refresh endpoint sendiri yang 401 → sudah tidak bisa refresh → logout
+    if (originalRequest.url?.includes("/auth/refresh")) {
+       console.log('[REFRESH FAILED] Token sudah tidak bisa di-refresh → logout');
+      
+      forceLogout();
       return Promise.reject(error);
     }
 
     originalRequest._retry = true;
+    
 
-    // Jika sedang refresh, masukkan request ke antrian
     if (isRefreshing) {
-      return new Promise((resolve, reject) => {
+      return new Promise<string>((resolve, reject) => {
         failedQueue.push({ resolve, reject });
-      })
-        .then(token => {
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return api(originalRequest);
-        })
-        .catch(err => Promise.reject(err));
+      }).then((token) => {
+        originalRequest.headers.Authorization = `Bearer ${token}`;
+        return api(originalRequest);
+      });
     }
 
     isRefreshing = true;
-
-    // Ambil refresh token dari storage (misal pakai localStorage)
-    const refreshToken = localStorage.getItem("apprefresh_token") ?? sessionStorage.getItem("apprefresh_token");
-
-    if (!refreshToken) {
-      // Tidak ada refresh token, logout
-      localStorage.removeItem("appacc_token");
-      sessionStorage.removeItem("appacc_token");
-      window.location.href = "/login";
-      isRefreshing = false;
-      return Promise.reject(error);
-    }
-
+ console.log('[REFRESH] Memulai refresh token...');
     try {
-      // Panggil endpoint refresh dengan mengirim refresh token di body
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/auth/refresh`,
-        { refreshToken }, // kirim refresh token di body
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      // Token lama otomatis dikirim via request interceptor di atas
+      const { data } = await api.post<{ token: string }>("/auth/refresh");
 
-      const newAccessToken = response.data.accessToken; // sesuaikan dengan response backend
-      // Jika backend juga mengirim refresh token baru (rotation), simpan juga
-      const newRefreshToken = response.data.refreshToken || refreshToken;
+      const newToken = data.token; // ✅ sesuai response backend
+// 👇 CEK C
+      console.log('[REFRESH] Response:', data);
+      console.log('[REFRESH] newToken:', newToken ? newToken.slice(-10) : 'NULL/UNDEFINED');
 
-      // Simpan token baru
-      if (localStorage.getItem("appacc_token")) {
-        localStorage.setItem("appacc_token", newAccessToken);
-        if (newRefreshToken !== refreshToken) localStorage.setItem("apprefresh_token", newRefreshToken);
-      } else {
-        sessionStorage.setItem("appacc_token", newAccessToken);
-        if (newRefreshToken !== refreshToken) sessionStorage.setItem("apprefresh_token", newRefreshToken);
-      }
 
-      // Update header default
-      api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
 
-      // Proses semua request yang tertunda
-      processQueue(null, newAccessToken);
+      if (!newToken) throw new Error("Token tidak ada di response refresh");
 
-      // Retry original request
-      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+      setToken(newToken);
+      api.defaults.headers.common.Authorization = `Bearer ${newToken}`;
+      processQueue(null, newToken);
+
+      originalRequest.headers.Authorization = `Bearer ${newToken}`;
+
+       console.log('[REFRESH] Sukses → retry original request');
       return api(originalRequest);
+
     } catch (refreshError) {
-      // Refresh gagal, hapus token dan logout
       processQueue(refreshError, null);
-      localStorage.removeItem("appacc_token");
-      localStorage.removeItem("apprefresh_token");
-      sessionStorage.removeItem("appacc_token");
-      sessionStorage.removeItem("apprefresh_token");
-      window.location.href = "/login";
+      forceLogout();
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;

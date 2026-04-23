@@ -10,6 +10,8 @@ import {
 } from "react";
 import styles from "./Select.module.css";
 
+import api, { getToken } from "../../api/axios";
+
 // ======================== TYPES ========================
 
 interface Option {
@@ -48,42 +50,13 @@ interface ApiError extends Error {
   data?: any;
 }
 
-const getToken = () =>
-  localStorage.getItem("appacc_token") ??
-  sessionStorage.getItem("appacc_token");
-
-const getApiBase = () =>
-  import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-
-const enhancedApi = async (path: string, options: RequestInit = {}) => {
-  const token = getToken();
-  const apiBase = getApiBase();
-  const method = options.method || "GET";
-
-  const headers: HeadersInit = {
-    Authorization: `Bearer ${token}`,
-  };
-
-  if (["POST", "PUT", "PATCH", "DELETE"].includes(method.toUpperCase())) {
-    headers["Content-Type"] = "application/json";
-  }
-
-  const response = await fetch(`${apiBase}${path}`, {
-    ...options,
-    headers,
-  });
-
-  const json = await response.json();
-
-  if (!response.ok) {
-    const error = new Error(json.message || "Request failed") as ApiError;
-    error.status = response.status;
-    error.data = json;
-    throw error;
-  }
-
-  return json;
+const enhancedApi = async (path: string) => {
+  const res = await api.get(path);
+  return res.data;
 };
+
+
+
 
 // ======================== STATIC SELECT ========================
 

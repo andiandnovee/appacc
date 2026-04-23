@@ -1,5 +1,6 @@
 // hooks/useTableData.js (perbaikan)
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import api from "../../api/axios"; // ← gunakan api client yang sudah ada
 
 export function useTableData(url, {
   pageSize = 10,
@@ -63,43 +64,41 @@ const queryString = useMemo(() => {
 }, [defaultParams, pageSize, page, search, sortKey, sortDir, serverSide, filters])
   // Fetch effect (sama seperti sebelumnya, tapi gunakan queryString)
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true)
-      setError(null)
-      try {
-        let finalUrl = url
-        if (serverSide && queryString) {
-          finalUrl = `${url}?${queryString}`
-        }
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // api.get menerima path relatif + params terpisah
+      // jangan gabung manual jadi satu string URL
+      const response = await api.get(url, {
+        params: serverSide
+          ? Object.fromEntries(new URLSearchParams(queryString))
+          : undefined,
+      });
 
-        const res = await fetch(finalUrl, {
-          headers: {
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('appacc_token') || sessionStorage.getItem('appacc_token')}`,
-          },
-          credentials: 'include',
-        })
-        if (!res.ok) throw new Error(`HTTP error ${res.status}`)
-        const json = await res.json()
+      const json = response.data;
 
-        if (serverSide) {
-          const data = dataKey ? json[dataKey] : json.data
-          setRawData(Array.isArray(data) ? data : [])
-          setTotalRows(json.meta?.total || json.total || data?.length || 0)
-        } else {
-          const data = dataKey ? json[dataKey] : json
-          if (!Array.isArray(data)) throw new Error('Response bukan array')
-          setRawData(data)
-          setTotalRows(data.length)
-        }
-      } catch (err) {
-        setError(err.message)
-      } finally {
-        setLoading(false)
+      if (serverSide) {
+        const data = dataKey ? json[dataKey] : json.data;
+        setRawData(Array.isArray(data) ? data : []);
+        setTotalRows(json.meta?.total || json.total || data?.length || 0);
+      } else {
+        const data = dataKey ? json[dataKey] : json;
+        if (!Array.isArray(data)) throw new Error("Response bukan array");
+        setRawData(data);
+        setTotalRows(data.length);
       }
+    } catch (err) {
+      // Axios lempar error dengan struktur berbeda dari fetch
+      const message = err.response?.data?.message || err.message || "Terjadi kesalahan";
+      setError(message);
+    } finally {
+      setLoading(false);
     }
-    fetchData()
-  }, [url, queryString, serverSide, dataKey, refetchCount])
+  };
+
+  fetchData();
+}, [url, queryString, serverSide, dataKey, refetchCount]);
 
   // Reset page saat search, sort, atau filters berubah
   useEffect(() => {

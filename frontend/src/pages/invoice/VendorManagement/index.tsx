@@ -7,20 +7,14 @@ import Table from "../../../components/ui/Table";
 import { useToast } from "../../../components/ui/Toast";
 import { Building2, Plus, Pencil, Archive } from "lucide-react";
 import styles from "./VendorManagement.module.css";
+import api from "../../../api/axios";
 
 interface VendorManagementProps {
   // Props here
 }
 
 
-const api = (path, options = {}) => {
-  const token = localStorage.getItem("appacc_token") ?? sessionStorage.getItem("appacc_token");
-  const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-  return fetch(`${apiBase}${path}`, {
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    ...options,
-  }).then((r) => r.json().then((json) => { if (!r.ok) throw new Error(json.message); return json; }));
-};
+
 
 const SERVICE_TYPES = [
   { value: "", label: "— Pilih Jenis Layanan —" },
