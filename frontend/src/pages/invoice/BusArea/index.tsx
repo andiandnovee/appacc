@@ -1,13 +1,12 @@
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
-import ReceiptFormModal from "./ReceiptFormModal";
+import BusAreasFormModal from "./BusAreasFormModal";
 import Button from "../../../components/ui/Button";
 import Table from "../../../components/ui/Table";
 import Select from "../../../components/ui/Select";
 import { useToast } from "../../../components/ui/Toast";
 import { Plus, Pencil, Trash2 } from "lucide-react";
-import styles from "./ReceiptManagement.module.css";
+import styles from "./BusAreas.module.css";
 import apiClient from "../../../api/axios";
-import { useFilterStore } from '../../../stores/filterReceipt';
 
 const api = async (path: string, options: { method?: string; body?: string } = {}) => {
   const method = (options.method || "GET").toLowerCase();
@@ -16,20 +15,7 @@ const api = async (path: string, options: { method?: string; body?: string } = {
   return res.data;
 };
 
-export default function InvoiceReceiptManagement() {
-  // Zustand store
-  const {
-    selectedCompany,
-    selectedVendor,
-    selectedYear,
-    selectedStage,
-    setSelectedCompany,
-    setSelectedVendor,
-    setSelectedYear,
-    setSelectedStage,
-    resetFilters,
-  } = useFilterStore();
-
+export default function BusAreas() {
   const [formTarget, setFormTarget] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const tableRef = useRef(null);
@@ -37,11 +23,16 @@ export default function InvoiceReceiptManagement() {
   const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
   const fullUrl = useMemo(() => `/receipts`, [apiBase]);
 
-  // State untuk options stage
+  // State untuk filter
+  const [selectedCompany, setSelectedCompany] = useState("");
+  const [selectedVendor, setSelectedVendor] = useState("");
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+  const [selectedStage, setSelectedStage] = useState("");
+  //const [stageOptions, setStageOptions] = useState([]);
   const [loadingStages, setLoadingStages] = useState(false);
   const [stageOptions, setStageOptions] = useState<Array<{value: string, label: string}>>([]);
 
-  // Fetch stages berdasarkan selectedYear
+  // Fetch stages berdasarkan tahun
   useEffect(() => {
     if (!selectedYear) {
       setStageOptions([]);
@@ -52,7 +43,7 @@ export default function InvoiceReceiptManagement() {
       try {
         const res = await api(`/stages?year=${selectedYear}`);
         const stages = res.data || [];
-        setStageOptions(stages.map((s: any) => ({ value: s.id.toString(), label: s.name })));
+        setStageOptions(stages.map(s => ({ value: s.id.toString(), label: s.name })));
       } catch (err) {
         console.error("Gagal fetch stages:", err);
         setStageOptions([]);
@@ -63,27 +54,26 @@ export default function InvoiceReceiptManagement() {
     fetchStages();
   }, [selectedYear]);
 
-  // 🔥 HAPUS useEffect yang mereset stage jika ingin stage tetap tersimpan
-  // Jika Anda tetap ingin reset stage saat tahun berubah namun tidak saat refresh, gunakan kode di bawah ini (dikomentari)
-  /*
-  const isFirstRender = useRef(true);
+  // Reset stage ketika tahun berubah
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
     setSelectedStage("");
-  }, [selectedYear, setSelectedStage]);
-  */
+  }, [selectedYear]);
 
-  // Filter params untuk tabel
+  // Filter params yang akan dikirim ke server via defaultParams
   const filterParams = useMemo<Record<string, any>>(() => {
-    const params: Record<string, any> = {};
-    if (selectedCompany) params.company_id = selectedCompany;
-    if (selectedVendor) params.vendor_id = selectedVendor;
-    if (selectedStage) params.stage_id = selectedStage;
-    return params;
-  }, [selectedCompany, selectedVendor, selectedStage]);
+  const params: Record<string, any> = {};
+  if (selectedCompany) params.company_id = selectedCompany;
+  if (selectedVendor) params.vendor_id = selectedVendor;
+  if (selectedStage) params.stage_id = selectedStage;
+  return params;
+}, [selectedCompany, selectedVendor, selectedStage]);
+
+  const handleResetFilters = () => {
+    setSelectedCompany("");
+    setSelectedVendor("");
+    setSelectedYear(new Date().getFullYear().toString());
+    setSelectedStage("");
+  };
 
   const handleDelete = useCallback(
     async (receipt, refetch) => {
@@ -96,10 +86,16 @@ export default function InvoiceReceiptManagement() {
       setDeletingId(receipt.id);
       try {
         await api(`/receipts/${receipt.id}`, { method: "DELETE" });
-        addToast({ variant: "success", title: "Invoice receipt berhasil dihapus." });
+        addToast({
+          variant: "success",
+          title: "Invoice receipt berhasil dihapus.",
+        });
         refetch();
       } catch (err) {
-        addToast({ variant: "danger", title: "Gagal menghapus invoice receipt." });
+        addToast({
+          variant: "danger",
+          title: "Gagal menghapus invoice receipt.",
+        });
       } finally {
         setDeletingId(null);
       }
@@ -109,7 +105,10 @@ export default function InvoiceReceiptManagement() {
 
   const handleSaved = useCallback(() => {
     setFormTarget(null);
-    addToast({ variant: "success", title: "Data invoice receipt berhasil disimpan." });
+    addToast({
+      variant: "success",
+      title: "Data invoice receipt berhasil disimpan.",
+    });
     tableRef.current?.refetch();
   }, [addToast]);
 
@@ -171,7 +170,12 @@ export default function InvoiceReceiptManagement() {
         sortable: false,
         render: (row) => (
           <div className={styles.actions}>
-            <Button variant="ghost" size="sm" iconLeft={<Pencil size={13} />} onClick={() => setFormTarget(row)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              iconLeft={<Pencil size={13} />}
+              onClick={() => setFormTarget(row)}
+            >
               Edit
             </Button>
             <Button
@@ -203,6 +207,7 @@ export default function InvoiceReceiptManagement() {
         </Button>
       </div>
 
+      {/* Filter Bar */}
       <div className={styles.filterBar}>
         <div className={styles.filterGroup}>
           <label>Perusahaan</label>
@@ -211,6 +216,7 @@ export default function InvoiceReceiptManagement() {
             onChange={(e) => setSelectedCompany(e.target.value)}
             placeholder="Semua Perusahaan"
             fetchOptions={{ endpoint: "/companies", searchParam: "search", limit: 10 }}
+            //clearable
           />
         </div>
         <div className={styles.filterGroup}>
@@ -220,6 +226,7 @@ export default function InvoiceReceiptManagement() {
             onChange={(e) => setSelectedVendor(e.target.value)}
             placeholder="Semua Vendor"
             fetchOptions={{ endpoint: "/vendors", searchParam: "search", limit: 10 }}
+            //clearable
           />
         </div>
         <div className={styles.filterGroup}>
@@ -234,17 +241,18 @@ export default function InvoiceReceiptManagement() {
           />
         </div>
         <div className={styles.filterGroup}>
-          <label>Stage</label>
-          <Select
-            value={selectedStage}
-            onChange={(e) => setSelectedStage(e.target.value)}
-            placeholder="Semua Stage"
-            options={stageOptions}
-            disabled={loadingStages}
-          />
-        </div>
+  <label>Stage</label>
+  <Select
+    value={selectedStage}
+    onChange={(e) => setSelectedStage(e.target.value)}
+    placeholder="Semua Stage"
+    options={stageOptions}
+    disabled={loadingStages}
+    //clearable  // jika komponen mendukung, atau kita handle manual
+  />
+</div>
         <div className={styles.filterActions}>
-          <Button variant="ghost" onClick={resetFilters} size="sm">
+          <Button variant="ghost" onClick={handleResetFilters} size="sm">
             Reset Filter
           </Button>
         </div>
@@ -266,7 +274,7 @@ export default function InvoiceReceiptManagement() {
       />
 
       {formTarget !== null && (
-        <ReceiptFormModal
+        <BusAreasFormModal
           receipt={formTarget.id ? formTarget : null}
           onClose={() => setFormTarget(null)}
           onSaved={handleSaved}

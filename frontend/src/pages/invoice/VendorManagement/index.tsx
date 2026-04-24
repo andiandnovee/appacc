@@ -44,8 +44,8 @@ export default function VendorManagement() {
   const handleStatusToggle = useCallback(async (vendor, isActive, refetch) => {
     setUpdatingStatus(vendor.id);
     try {
-      if (!isActive) await api(`/vendors/${vendor.id}`, { method: "DELETE" });
-      else await api(`/vendors/${vendor.id}/restore`, { method: "POST" });
+      if (!isActive) await api.delete(`/vendors/${vendor.id}`);
+      else await api.post(`/vendors/${vendor.id}/restore`);
       addToast({ variant: "success", title: `Vendor "${vendor.name}" ${isActive ? 'diaktifkan' : 'dinonaktifkan'}.` });
       refetch();
     } catch (err) {
@@ -58,7 +58,7 @@ export default function VendorManagement() {
   const handleForceDelete = useCallback(async (vendor, refetch) => {
     if (!confirm(`Hapus permanen "${vendor.name}"?`)) return;
     try {
-      await api(`/vendors/${vendor.id}/force-delete`, { method: "DELETE" });
+      await api.delete(`/vendors/${vendor.id}/force-delete`);
       addToast({ variant: "success", title: `Vendor "${vendor.name}" dihapus permanen.` });
       refetch();
     } catch (err) {

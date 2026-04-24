@@ -74,7 +74,7 @@ api.interceptors.response.use(
 
     // Refresh endpoint sendiri yang 401 → sudah tidak bisa refresh → logout
     if (originalRequest.url?.includes("/auth/refresh")) {
-    //   console.log('[REFRESH FAILED] Token sudah tidak bisa di-refresh → logout');
+       console.log('[REFRESH FAILED] Token sudah tidak bisa di-refresh → logout');
       
       forceLogout();
       return Promise.reject(error);
@@ -101,7 +101,7 @@ api.interceptors.response.use(
       const newToken = data.token; // ✅ sesuai response backend
 // 👇 CEK C
       console.log('[REFRESH] Response:', data);
-     // console.log('[REFRESH] newToken:', newToken ? newToken.slice(-10) : 'NULL/UNDEFINED');
+      console.log('[REFRESH] newToken:', newToken ? newToken.slice(-10) : 'NULL/UNDEFINED');
 
 
 

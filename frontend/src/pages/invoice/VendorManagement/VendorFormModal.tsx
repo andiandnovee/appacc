@@ -79,21 +79,15 @@ const VendorFormModal: FC<VendorFormModalProps> = ({
     setErrors({});
     try {
       // ─── Save form data ─────────────────────────────────
-      const res = isEdit
-        ? await api(`/vendors/${vendor.id}`, {
-            method: "PUT",
-            body: JSON.stringify(form),
-          })
-        : await api("/vendors", {
-            method: "POST",
-            body: JSON.stringify(form),
-          });
+     const res = isEdit
+  ? await api.put(`/vendors/${vendor.id}`, form)
+  : await api.post("/vendors", form);
 
       // ─── Handle active/inactive toggle ─────────────────
       if (isEdit && vendor.deleted_at === null && !isActive) {
         // User toggle dari aktif ke tidak aktif
         // Call DELETE endpoint untuk soft delete
-        await api(`/vendors/${vendor.id}`, { method: "DELETE" });
+       await api.delete(`/vendors/${vendor.id}`);
         res.data.deleted_at = new Date().toISOString();
       } else if (isEdit && vendor.deleted_at !== null && isActive) {
         // User toggle dari tidak aktif ke aktif

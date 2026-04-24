@@ -98,7 +98,10 @@ Route::middleware('auth:api')->group(function () {
         Route::get('receipts/search', [InvoiceReceiptController::class, 'search']);
         Route::apiResource('receipts', InvoiceReceiptController::class);
 
+        // Business Areas
 
+        Route::get('busa/search', [BusinessAreaController::class, 'search']);
+        Route::apiResource('busa', BusinessAreaController::class);
 
         
         Route::get('invoice-receipts/{invoiceReceipt}/statuses',  [InvoiceReceiptController::class, 'statuses']);

@@ -16,6 +16,7 @@ import UserManagement from "./pages/admin/UserManagement";
 import VendorManagement from "./pages/invoice/VendorManagement";
 import SapPoImportPage from "./pages/sap/SapPoImportPage";
 import Receipt from "./pages/invoice/Receipt";
+import BusinessArea from "./pages/invoice/BusArea";
 
 const App: FC = (): ReactElement => {
   return (
@@ -34,7 +35,8 @@ const App: FC = (): ReactElement => {
                 <Route path="/users" element={<Users />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/admin/users" element={<UserManagement />} />
-                <Route path="/invoice/vendors" element={<VendorManagement />} />
+                <Route path="/ref/vendors" element={<VendorManagement />} />
+                <Route path="/ref/busa" element={<BusinessArea />} />
                 <Route
                   path="/utility/import-po"
                   element={<SapPoImportPage />}

@@ -30,7 +30,7 @@ class UpdateVendorRequest extends FormRequest
                 Rule::unique('vendors', 'npwp')->ignore($vendor->id),
             ],
             'address'      => 'nullable|string|max:500',
-            'service_type' => 'nullable|in:HF9,HT4,OTHER',
+            'service_type' => 'nullable',
             'pph_type'     => 'nullable|in:21,23,26',
             'pph_rate'     => 'nullable|numeric|min:0|max:100',
         ];
