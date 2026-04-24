@@ -2,22 +2,19 @@
 
 return [
     'paths' => [
-        'api/*',              // mengcover semua endpoint di routes/api.php
-        'api/auth/google/redirect',
-        'auth/google/redirect',
+        'api/*',
         'sanctum/csrf-cookie',
     ],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [
-        'https://appacc.warga007.web.id',
-        'http://localhost:3000',      // jika perlu development lokal
-        'http://localhost:8000',
-        'http://localhost:5173',
-        'http://127.0.0.1:3000',
+    'allowed_origins' => array_filter([
+        env('FRONTEND_URL'),                // production: https://appacc.warga007.web.id
+                                            // local: http://localhost:5173
+        'http://localhost:5173',            // vite dev server
+        'http://localhost:3000',            // fallback
         'http://127.0.0.1:5173',
-    ],
+    ]),
 
     'allowed_origins_patterns' => [],
 
@@ -27,5 +24,5 @@ return [
 
     'max_age' => 0,
 
-    'supports_credentials' => true,   // penting jika pakai session/cookie
+    'supports_credentials' => true,
 ];

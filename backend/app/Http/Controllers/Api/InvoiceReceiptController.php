@@ -13,6 +13,7 @@ use App\Models\InvoiceReceipt;
 use App\Models\ReceiptStatus;
 use Illuminate\Http\Request;
 
+
 class InvoiceReceiptController extends Controller
 {
     // -------------------------------------------------------
@@ -96,11 +97,11 @@ class InvoiceReceiptController extends Controller
     // -------------------------------------------------------
     // GET /invoice-receipts/{id}
     // -------------------------------------------------------
-    public function show(InvoiceReceipt $invoiceReceipt)
+    public function show(InvoiceReceipt $receipt)
     {
-        $invoiceReceipt->load(['vendor', 'company', 'stage', 'statuses', 'latestStatus']);
+        $receipt->load(['vendor', 'company', 'stage', 'statuses', 'latestStatus']);
 
-        return new InvoiceReceiptResource($invoiceReceipt);
+        return new InvoiceReceiptResource(  $receipt);
     }
 
     // -------------------------------------------------------
@@ -119,20 +120,22 @@ class InvoiceReceiptController extends Controller
     // -------------------------------------------------------
     // PUT /invoice-receipts/{id}
     // -------------------------------------------------------
-    public function update(InvoiceReceiptRequest $request, InvoiceReceipt $invoiceReceipt)
+    public function update(InvoiceReceiptRequest $request, InvoiceReceipt $receipt)
     {
-        $invoiceReceipt->update($request->validated());
-        $invoiceReceipt->load(['vendor', 'company', 'stage', 'latestStatus']);
+        $receipt->update($request->validated());
+     //
 
-        return new InvoiceReceiptResource($invoiceReceipt);
+        $receipt->load(['vendor', 'company', 'stage', 'latestStatus']);
+
+        return new InvoiceReceiptResource($receipt);
     }
 
     // -------------------------------------------------------
     // DELETE /invoice-receipts/{id}
     // -------------------------------------------------------
-    public function destroy(InvoiceReceipt $invoiceReceipt)
+    public function destroy(InvoiceReceipt $receipt)
     {
-        $invoiceReceipt->delete();
+        $receipt->delete();
 
         return response()->json(['message' => 'Invoice receipt deleted.']);
     }
@@ -140,9 +143,9 @@ class InvoiceReceiptController extends Controller
     // -------------------------------------------------------
     // GET /invoice-receipts/{id}/statuses
     // -------------------------------------------------------
-    public function statuses(InvoiceReceipt $invoiceReceipt)
+    public function statuses(InvoiceReceipt $receipt)
     {
-        $statuses = $invoiceReceipt->statuses()->orderByDesc('status_date')->get();
+        $statuses = $receipt->statuses()->orderByDesc('status_date')->get();
 
         return ReceiptStatusResource::collection($statuses);
     }
@@ -150,9 +153,9 @@ class InvoiceReceiptController extends Controller
     // -------------------------------------------------------
     // POST /invoice-receipts/{id}/statuses
     // -------------------------------------------------------
-    public function addStatus(ReceiptStatusRequest $request, InvoiceReceipt $invoiceReceipt)
+    public function addStatus(ReceiptStatusRequest $request, InvoiceReceipt $receipt)
     {
-        $status = $invoiceReceipt->statuses()->create($request->validated());
+        $status = $receipt->statuses()->create($request->validated());
 
         return (new ReceiptStatusResource($status))
             ->response()

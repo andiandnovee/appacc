@@ -7,13 +7,22 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
+use PHPOpenSourceSaver\JWTAuth\JWTGuard; //
 
 class AuthController extends Controller
 {
     /**
      * Login — return JWT token
      * POST /api/auth/login
+     * 
+     * 
      */
+
+     private function jwtGuard(): JWTGuard
+    {
+        /** @var JWTGuard */
+        return $this->jwtGuard();
+    }
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -40,14 +49,14 @@ class AuthController extends Controller
             ], 403);
         }
 
-        if (!$token = auth('api')->attempt($credentials)) {
+        if (!$token =$this->jwtGuard()->attempt($credentials)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Email atau password salah.',
             ], 401);
         }
 
-        return $this->respondWithToken($token, auth('api')->user());
+        return $this->respondWithToken($token,$this->jwtGuard()->user());
     }
 
     /**
@@ -66,16 +75,17 @@ class AuthController extends Controller
      * Logout — invalidate token
      * POST /api/auth/logout
      */
-    public function logout()
+   public function logout()
 {
     try {
-        auth('api')->logout();
+       $this->jwtGuard()->logout();
+        $isProd = app()->environment('production');
 
         return response()->json([
             'success' => true,
             'message' => 'Logout berhasil.',
         ])->withCookie(
-            cookie()->forget('appacc_token', '/', '.warga007.web.id')
+            cookie()->forget('appacc_token', '/', $isProd ? '.warga007.web.id' : null)
         );
 
     } catch (JWTException $e) {
@@ -93,8 +103,8 @@ class AuthController extends Controller
     public function refresh()
     {
         try {
-            $token = auth('api')->refresh();
-            return $this->respondWithToken($token, auth('api')->user());
+            $token =$this->jwtGuard()->refresh();
+            return $this->respondWithToken($token,$this->jwtGuard()->user());
         } catch (JWTException $e) {
             return response()->json([
                 'success' => false,
@@ -105,10 +115,11 @@ class AuthController extends Controller
 
     // ─── Helpers ────────────────────────────────────────────────────────────
 
-    private function respondWithToken(string $token, $user): \Illuminate\Http\JsonResponse
+   private function respondWithToken(string $token, $user): \Illuminate\Http\JsonResponse
 {
-    $ttl = auth('api')->factory()->getTTL(); // menit
+    $ttl        =$this->jwtGuard()->factory()->getTTL();
     $clientType = request()->header('X-Client-Type', 'browser');
+    $isProd     = app()->environment('production');
 
     $payload = [
         'success'    => true,
@@ -118,23 +129,23 @@ class AuthController extends Controller
         'data'       => $this->formatUser($user),
     ];
 
-    if ($clientType === 'apk') {
-        // APK: kirim token di body
+    if ($clientType !== 'browser') {
+        // APK: token di body
         $payload['token'] = $token;
         return response()->json($payload);
     }
 
-    // Browser: token di HttpOnly cookie, tidak di body
+    // Browser: token di HttpOnly cookie
     return response()->json($payload)->withCookie(
         cookie(
             name:     'appacc_token',
             value:    $token,
             minutes:  $ttl,
             path:     '/',
-            domain:   '.warga007.web.id', // dot prefix = semua subdomain
-            secure:   true,
+            domain:   $isProd ? '.warga007.web.id' : null,
+            secure:   env('COOKIE_SECURE', false),
             httpOnly: true,
-            sameSite: 'None',
+            sameSite: $isProd ? 'None' : 'Lax',
         )
     );
 }

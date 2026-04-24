@@ -32,7 +32,7 @@ const api: AxiosInstance = axios.create({
 // ─── Request interceptor ─────────────────────────────────────────
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = getToken();
-   console.log(`[REQ] ${config.method?.toUpperCase()} ${config.url} | token: ${token ? token.slice(-10) : 'NULL'}`);
+  // console.log(`[REQ] ${config.method?.toUpperCase()} ${config.url} | token: ${token ? token.slice(-10) : 'NULL'}`);
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -74,7 +74,7 @@ api.interceptors.response.use(
 
     // Refresh endpoint sendiri yang 401 → sudah tidak bisa refresh → logout
     if (originalRequest.url?.includes("/auth/refresh")) {
-       console.log('[REFRESH FAILED] Token sudah tidak bisa di-refresh → logout');
+    //   console.log('[REFRESH FAILED] Token sudah tidak bisa di-refresh → logout');
       
       forceLogout();
       return Promise.reject(error);
@@ -93,7 +93,7 @@ api.interceptors.response.use(
     }
 
     isRefreshing = true;
- console.log('[REFRESH] Memulai refresh token...');
+// console.log('[REFRESH] Memulai refresh token...');
     try {
       // Token lama otomatis dikirim via request interceptor di atas
       const { data } = await api.post<{ token: string }>("/auth/refresh");
@@ -101,7 +101,7 @@ api.interceptors.response.use(
       const newToken = data.token; // ✅ sesuai response backend
 // 👇 CEK C
       console.log('[REFRESH] Response:', data);
-      console.log('[REFRESH] newToken:', newToken ? newToken.slice(-10) : 'NULL/UNDEFINED');
+     // console.log('[REFRESH] newToken:', newToken ? newToken.slice(-10) : 'NULL/UNDEFINED');
 
 
 
