@@ -20,19 +20,7 @@ class BusinessArea extends Model
         'name_long',
         'sap_customer_code',
         'sap_vendor_code',
-        'ama_code',
-        'manager_name',
-        'manager_email',
-        'manager_contact',
-        'ktu_kasie1_name',
-        'ktu_kasie1_email',
-        'ktu_kasie1_contact',
-        'ktu_kasie2_name',
-        'ktu_kasie2_email',
-        'ktu_kasie2_contact',
-        'operator_email',
-        'traksi_email',
-        'gudang_email',
+       
     ];
 
     protected $casts = [
