@@ -1,17 +1,27 @@
-import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse, AxiosError } from "axios";
+import axios, {
+  AxiosInstance,
+  InternalAxiosRequestConfig,
+  AxiosResponse,
+  AxiosError,
+} from "axios";
 
-// ─── Storage helpers ─────────────────────────────────────────────
+// ─── Environment Detection ────────────────────────────────────────────────────
+// IS_PROD = true  → production : token di HttpOnly Cookie (browser)
+// IS_PROD = false → local/dev  : token di localStorage   (mobile-style)
+const IS_PROD = import.meta.env.PROD;
+const CLIENT_TYPE = IS_PROD ? "browser" : "mobile";
+
+// ─── Storage Helpers (hanya dipakai di local/dev) ────────────────────────────
 const TOKEN_KEY = "appacc_token";
 
 export const getToken = (): string | null =>
   localStorage.getItem(TOKEN_KEY) ?? sessionStorage.getItem(TOKEN_KEY);
 
 export const setToken = (token: string): void => {
-  // Simpan ke storage yang sama dengan yang sudah ada
   if (sessionStorage.getItem(TOKEN_KEY)) {
     sessionStorage.setItem(TOKEN_KEY, token);
   } else {
-    localStorage.setItem(TOKEN_KEY, token); // default localStorage
+    localStorage.setItem(TOKEN_KEY, token);
   }
 };
 
@@ -20,106 +30,121 @@ export const clearToken = (): void => {
   sessionStorage.removeItem(TOKEN_KEY);
 };
 
-// ─── Axios instance ──────────────────────────────────────────────
+// ─── Axios Instance ───────────────────────────────────────────────────────────
 const api: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
+    "X-Client-Type": CLIENT_TYPE,
+    // production → backend return token di cookie
+    // local      → backend return token di body (mobile mode)
   },
+  withCredentials: IS_PROD,
+  // production : true  → browser kirim HttpOnly cookie otomatis
+  // local      : false → tidak butuh cookie, pakai localStorage
 });
 
-// ─── Request interceptor ─────────────────────────────────────────
+// ─── Request Interceptor ──────────────────────────────────────────────────────
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const token = getToken();
-  // console.log(`[REQ] ${config.method?.toUpperCase()} ${config.url} | token: ${token ? token.slice(-10) : 'NULL'}`);
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  if (!IS_PROD) {
+    // Local: inject token dari localStorage ke Authorization header
+    const token = getToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
+  // Production: browser otomatis kirim HttpOnly cookie, tidak perlu inject
   return config;
 });
 
-// ─── Refresh queue ───────────────────────────────────────────────
+// ─── Refresh Queue ────────────────────────────────────────────────────────────
 let isRefreshing = false;
 let failedQueue: Array<{
-  resolve: (token: string) => void;
+  resolve: (token: string | null) => void;
   reject: (err: unknown) => void;
 }> = [];
 
 const processQueue = (error: unknown, token: string | null = null): void => {
   failedQueue.forEach((prom) => {
     if (error) prom.reject(error);
-    else prom.resolve(token!);
+    else prom.resolve(token);
   });
   failedQueue = [];
 };
 
 const forceLogout = (): void => {
-  clearToken();
+  if (!IS_PROD) {
+    clearToken(); // local: bersihkan localStorage
+  }
+  // production: cookie akan dihapus oleh backend saat /auth/logout
   window.location.href = "/login";
 };
 
-// ─── Response interceptor ────────────────────────────────────────
+// ─── Response Interceptor ─────────────────────────────────────────────────────
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
+
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    const originalRequest = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean;
+    };
 
-    // 👇 CEK A
-    console.log(`[RES ERROR] ${originalRequest?.url} | status: ${error.response?.status} | _retry: ${originalRequest?._retry}`);
-
+    // Bukan 401, atau sudah pernah retry → lempar error langsung
     if (error.response?.status !== 401 || originalRequest._retry) {
       return Promise.reject(error);
     }
 
-    // Refresh endpoint sendiri yang 401 → sudah tidak bisa refresh → logout
+    // Refresh endpoint sendiri yang 401 → token sudah tidak bisa di-refresh → logout
     if (originalRequest.url?.includes("/auth/refresh")) {
-       console.log('[REFRESH FAILED] Token sudah tidak bisa di-refresh → logout');
-      
       forceLogout();
       return Promise.reject(error);
     }
 
     originalRequest._retry = true;
-    
 
+    // Ada request lain yang sedang refresh → masuk antrian
     if (isRefreshing) {
-      return new Promise<string>((resolve, reject) => {
+      return new Promise<string | null>((resolve, reject) => {
         failedQueue.push({ resolve, reject });
       }).then((token) => {
-        originalRequest.headers.Authorization = `Bearer ${token}`;
+        if (!IS_PROD && token) {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+        }
         return api(originalRequest);
       });
     }
 
     isRefreshing = true;
-// console.log('[REFRESH] Memulai refresh token...');
+
     try {
-      // Token lama otomatis dikirim via request interceptor di atas
-      const { data } = await api.post<{ token: string }>("/auth/refresh");
+      const { data } = await api.post<{ token?: string }>("/auth/refresh");
 
-      const newToken = data.token; // ✅ sesuai response backend
-// 👇 CEK C
-      console.log('[REFRESH] Response:', data);
-      console.log('[REFRESH] newToken:', newToken ? newToken.slice(-10) : 'NULL/UNDEFINED');
+      if (!IS_PROD) {
+        // ── Local/Dev ────────────────────────────────────────────────────────
+        // Backend return token di body (X-Client-Type: mobile)
+        const newToken = data.token;
+        if (!newToken) throw new Error("Token tidak ada di response refresh");
 
+        setToken(newToken);
+        api.defaults.headers.common.Authorization = `Bearer ${newToken}`;
+        processQueue(null, newToken);
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
 
+      } else {
+        // ── Production ───────────────────────────────────────────────────────
+        // Backend sudah set HttpOnly cookie baru via Set-Cookie header
+        // Frontend tidak perlu lakukan apa-apa, browser otomatis pakai cookie baru
+        processQueue(null, null);
+      }
 
-      if (!newToken) throw new Error("Token tidak ada di response refresh");
-
-      setToken(newToken);
-      api.defaults.headers.common.Authorization = `Bearer ${newToken}`;
-      processQueue(null, newToken);
-
-      originalRequest.headers.Authorization = `Bearer ${newToken}`;
-
-       console.log('[REFRESH] Sukses → retry original request');
       return api(originalRequest);
 
     } catch (refreshError) {
       processQueue(refreshError, null);
       forceLogout();
       return Promise.reject(refreshError);
+
     } finally {
       isRefreshing = false;
     }

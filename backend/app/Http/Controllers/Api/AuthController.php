@@ -21,7 +21,7 @@ class AuthController extends Controller
      private function jwtGuard(): JWTGuard
     {
         /** @var JWTGuard */
-        return $this->jwtGuard();
+          return auth('api'); // 
     }
     public function login(Request $request)
     {
@@ -118,6 +118,7 @@ class AuthController extends Controller
    private function respondWithToken(string $token, $user): \Illuminate\Http\JsonResponse
 {
     $ttl        =$this->jwtGuard()->factory()->getTTL();
+    $refreshTtl =$this->jwtGuard()->factory()->getRefreshTTL();
     $clientType = request()->header('X-Client-Type', 'browser');
     $isProd     = app()->environment('production');
 
@@ -140,7 +141,7 @@ class AuthController extends Controller
         cookie(
             name:     'appacc_token',
             value:    $token,
-            minutes:  $ttl,
+            minutes:  $refreshTtl,
             path:     '/',
             domain:   $isProd ? '.warga007.web.id' : null,
             secure:   env('COOKIE_SECURE', false),
