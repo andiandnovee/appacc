@@ -37,18 +37,25 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
 
   // Boot: cek token di storage, validasi ke /auth/me
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      setLoading(false);
-      return;
-    }
+  const IS_PROD = import.meta.env.PROD;
+  const token = getToken();
 
-    api
-      .get("/auth/me")
-      .then((res) => setUser(res.data.data))
-      .catch(() => clearToken())
-      .finally(() => setLoading(false));
-  }, []);
+  // Local: harus ada token di localStorage
+  // Production: tidak perlu cek token, langsung hit /auth/me (cookie dikirim otomatis)
+  if (!IS_PROD && !token) {
+    setLoading(false);
+    return;
+  }
+
+  api
+    .get("/auth/me")
+    .then((res) => setUser(res.data.data))
+    .catch(() => {
+      clearToken();
+      setUser(null);
+    })
+    .finally(() => setLoading(false));
+}, []);
 
   // Login: simpan token + set user
   const login = (token: string, userData: User, remember = true): void => {

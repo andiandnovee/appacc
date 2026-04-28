@@ -270,7 +270,7 @@ export default function InvoiceReceiptManagement() {
           receipt={formTarget.id ? formTarget : null}
           onClose={() => setFormTarget(null)}
           onSaved={handleSaved}
-          api={api}
+        //  api={api}
         />
       )}
     </div>

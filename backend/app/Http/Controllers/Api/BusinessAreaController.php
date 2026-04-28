@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\BusinessAreaResource;
+use App\Http\Requests\BusinessAreaRequest;
 use App\Models\BusinessArea;
 use Illuminate\Http\Request;
 
@@ -34,4 +35,29 @@ class BusinessAreaController extends Controller
         $businessArea->load('company');
         return new BusinessAreaResource($businessArea);
     }
+
+
+Public function store(BusinessAreaRequest $request)
+    {
+       
+        $businessArea = BusinessArea::create($request->validated());
+        $businessArea->load(['company']);
+        return new BusinessAreaResource($businessArea);
+    }
+
+    public function update(BusinessAreaRequest $request, BusinessArea $businessArea)
+    {
+       
+
+        $businessArea->update($request->validated());
+        $businessArea->load(['company']);
+        return new BusinessAreaResource($businessArea);
+    }
+
+    public function destroy(BusinessAreaRequest $request, BusinessArea $businessArea)
+    {
+        $businessArea->delete();
+        return response()->noContent();
+    }
+
 }

@@ -24,10 +24,10 @@ class BusinessArea extends Model
     ];
 
     protected $casts = [
-        'sap_id'            => 'integer',
+        'sap_id'            => 'string',
         'company_id'        => 'integer',
-        'sap_customer_code' => 'integer',
-        'sap_vendor_code'   => 'integer',
+        'sap_customer_code' => 'string',
+        'sap_vendor_code'   => 'string',
     ];
 
     // -------------------------------------------------------

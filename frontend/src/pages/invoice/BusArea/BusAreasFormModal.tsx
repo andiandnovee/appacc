@@ -4,43 +4,34 @@ import Button from "../../../components/ui/Button";
 import Input from "../../../components/ui/Input";
 import Select from "../../../components/ui/Select";
 import styles from "./BusAreas.module.css";
+import api from "../../../api/axios"; // ← ganti ke import api
 
 // ======================== TYPES ========================
 
-interface Receipt {
+interface BusA {
   id: number;
-  receipt_date: string;
-  vendor_id: number;
-  company_id: number;
-  stage_id: number;
-  year: number;
-  po_number: string | null;
-  invoice_number: string | null;
-  amount: number;
-  business_area_id: number | null;
-  category: number | null;
-  payment_location: number | null;
+  sap_id: string;
+  company_id: string;
+  name: string;
+  name_long: string;
+  sap_customer_code: string | null;
+  sap_vendor_code: string | null;
 }
 
-interface ReceiptFormModalProps {
-  receipt?: Receipt;
+interface BusAreaFormModalProps {
+  busArea?: BusA;
   onClose: () => void;
   onSaved: () => void;
-  api?: any;
 }
 
 interface FormData {
-  receipt_date: string;
-  vendor_id: string;
+  id: number;
+  sap_id: string;
   company_id: string;
-  stage_id: string;
-  year: number;
-  po_number: string;
-  invoice_number: string;
-  amount: string;
-  business_area_id: string;
-  category: string;
-  payment_location: string;
+  name: string;
+  name_long: string;
+  sap_customer_code: string;
+  sap_vendor_code: string;
 }
 
 type FormErrors = Partial<Record<keyof FormData | "general", string>>;
@@ -52,134 +43,50 @@ interface FetchOptions {
   limit?: number;
 }
 
-// ======================== API HELPER ========================
-
-interface ApiError extends Error {
-  status?: number;
-  data?: any;
-}
-
-const enhancedApi = async (path: string, options: RequestInit = {}) => {
-  const token =
-    localStorage.getItem("appacc_token") ??
-    sessionStorage.getItem("appacc_token");
-  const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-  const method = options.method || "GET";
-
-  const headers: HeadersInit = {
-    Authorization: `Bearer ${token}`,
-  };
-
-  if (["POST", "PUT", "PATCH", "DELETE"].includes(method.toUpperCase())) {
-    headers["Content-Type"] = "application/json";
-  }
-
-  const response = await fetch(`${apiBase}${path}`, {
-    ...options,
-    headers,
-  });
-
-  const json = await response.json();
-
-  if (!response.ok) {
-    const error = new Error(json.message || "Request failed") as ApiError;
-    error.status = response.status;
-    error.data = json;
-    throw error;
-  }
-
-  return json;
-};
-
 // ======================== COMPONENT ========================
 
-const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
-  receipt,
+const BusAreaFormModal: FC<BusAreaFormModalProps> = ({
+  busArea,
   onClose,
   onSaved,
 }) => {
-  const isEdit = Boolean(receipt);
-  const currentYear = new Date().getFullYear();
+  const isEdit = Boolean(busArea);
 
   const [form, setForm] = useState<FormData>({
-    receipt_date: receipt?.receipt_date ?? "",
-    vendor_id: receipt?.vendor_id?.toString() ?? "",
-    company_id: receipt?.company_id?.toString() ?? "",
-    stage_id: receipt?.stage_id?.toString() ?? "",
-    year: receipt?.year ?? currentYear,
-    po_number: receipt?.po_number ?? "",
-    invoice_number: receipt?.invoice_number ?? "",
-    amount: receipt?.amount?.toString() ?? "",
-    business_area_id: receipt?.business_area_id?.toString() ?? "",
-    category: receipt?.category?.toString() ?? "",
-    payment_location: receipt?.payment_location?.toString() ?? "",
-  });
+  id: busArea?.id ?? 0,
+  sap_id: busArea?.sap_id.toString() ?? "",
+  company_id: busArea?.company_id != null ? String(busArea.company_id) : "",
+  name: busArea?.name != null ? String(busArea.name) : "",
+  name_long: busArea?.name_long != null ? String(busArea.name_long) : "",
+  sap_vendor_code: busArea?.sap_vendor_code != null ? String(busArea.sap_vendor_code) : "",
+  sap_customer_code: busArea?.sap_customer_code != null ? String(busArea.sap_customer_code) : "",
+});
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
 
-  const handleInputChange = (field: keyof FormData) => (
-    e: ChangeEvent<HTMLInputElement>
-  ) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
-  };
+  const handleInputChange =
+    (field: keyof FormData) => (e: ChangeEvent<HTMLInputElement>) => {
+      setForm((prev) => ({ ...prev, [field]: e.target.value }));
+    };
 
-  // Select onChange menerima { target: { value } }
-  const handleSelectChange = (field: keyof FormData) => (event: { target: { value: any } }) => {
-    setForm((prev) => ({ ...prev, [field]: event.target.value }));
-  };
-
-  const vendorFetchOptions = useMemo<FetchOptions>(
-    () => ({
-      endpoint: "/vendors",
-      searchParam: "search",
-      limit: 5,
-    }),
-    []
-  );
+  const handleSelectChange =
+    (field: keyof FormData) =>
+    (event: { target: { value: any } }) => {
+      setForm((prev) => ({ ...prev, [field]: event.target.value }));
+    };
 
   const companyFetchOptions = useMemo<FetchOptions>(
-    () => ({
-      endpoint: "/companies",
-      searchParam: "search",
-      limit: 5,
-    }),
+    () => ({ endpoint: "/companies", searchParam: "search", limit: 5 }),
     []
-  );
-
-  const stageFetchOptions = useMemo<FetchOptions>(
-    () => ({
-      endpoint: "/stages",
-      searchParam: "search",
-      filters: { year: form.year },
-      limit: 5,
-    }),
-    [form.year]
-  );
-
-  const businessAreaFetchOptions = useMemo<FetchOptions>(
-    () => ({
-      endpoint: "/business-areas",
-      searchParam: "search",
-      filters: { company_id: form.company_id },
-      limit: 5,
-    }),
-    [form.company_id]
   );
 
   const validate = (): FormErrors => {
     const err: FormErrors = {};
-    if (!form.receipt_date?.trim()) err.receipt_date = "Tanggal receipt wajib diisi.";
-    if (!form.vendor_id) err.vendor_id = "Vendor wajib dipilih.";
+    if (!form.sap_id) err.sap_id = "SAP ID wajib diisi.";
+    if (!form.name?.trim()) err.name = "Nama wajib diisi.";
+    if (!form.name_long?.trim()) err.name_long = "Deskripsi wajib diisi.";
     if (!form.company_id) err.company_id = "Perusahaan wajib dipilih.";
-    if (!form.stage_id) err.stage_id = "Stage wajib dipilih.";
-    if (
-      !form.amount?.toString().trim() ||
-      isNaN(Number(form.amount)) ||
-      parseFloat(form.amount) < 0
-    ) {
-      err.amount = "Jumlah harus berupa angka positif.";
-    }
     return err;
   };
 
@@ -192,38 +99,39 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
 
     setLoading(true);
     setErrors({});
+
     try {
       const payload = {
-        receipt_date: form.receipt_date,
-        vendor_id: parseInt(form.vendor_id, 10),
-        company_id: parseInt(form.company_id, 10),
-        stage_id: parseInt(form.stage_id, 10),
-        po_number: form.po_number || null,
-        invoice_number: form.invoice_number || null,
-        amount: parseFloat(form.amount),
-        business_area_id: form.business_area_id ? parseInt(form.business_area_id, 10) : null,
-        category: form.category ? parseInt(form.category, 10) : null,
-        payment_location: form.payment_location ? parseInt(form.payment_location, 10) : null,
+        sap_id: form.sap_id || null,
+        name: form.name.substring(0, 25) || null,
+        name_long: form.name_long.substring(0, 50) || null,
+        company_id: form.company_id || null,
+        sap_customer_code: form.sap_customer_code || null,
+        sap_vendor_code: form.sap_vendor_code || null,
       };
 
-      if (isEdit && receipt) {
-        await enhancedApi(`/receipts/${receipt.id}`, {
-          method: "PUT",
-          body: JSON.stringify(payload),
-        });
+      // ← TAMBAH INI
+      console.log("=== DEBUG SAVE ===");
+      console.log("isEdit:", isEdit);
+      console.log("busArea prop:", busArea);
+      console.log("payload:", payload);
+      // ← SAMPAI SINI
+
+      if (isEdit && busArea) {
+        const res = await api.put(`/busa/${busArea.id}`, payload);
+        console.log("PUT response:", res.data); // ← dan ini
       } else {
-        await enhancedApi("/receipts", {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
+        const res = await api.post("/busa", payload);
+        console.log("POST response:", res.data); // ← dan ini
       }
 
       onSaved();
-    } catch (e) {
-      const error = e as ApiError;
-      if (error.data?.errors && typeof error.data.errors === "object") {
+    } catch (e: any) {
+      const responseData = e?.response?.data;
+
+      if (responseData?.errors && typeof responseData.errors === "object") {
         const formattedErrors: FormErrors = {};
-        Object.entries(error.data.errors).forEach(([field, messages]) => {
+        Object.entries(responseData.errors).forEach(([field, messages]) => {
           formattedErrors[field as keyof FormData] = Array.isArray(messages)
             ? messages[0]
             : (messages as string);
@@ -232,10 +140,10 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
       } else {
         setErrors({
           general:
-            error.message ||
+            responseData?.message ||
             (isEdit
               ? "Gagal menyimpan perubahan."
-              : "Gagal menambah invoice receipt."),
+              : "Gagal menambah Business Area."),
         });
       }
     } finally {
@@ -247,34 +155,17 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
     <Modal isOpen onClose={onClose} size="lg">
       <Modal.Header
         onClose={onClose}
-        title={isEdit ? "Edit Invoice Receipt" : "Tambah Invoice Receipt Baru"}
+        title={isEdit ? "Edit Business Area" : "Tambah Business Area Baru"}
         subtitle={
-          isEdit && receipt
-            ? `Invoice #${receipt.invoice_number}`
-            : "Isi data invoice receipt dengan lengkap"
+          isEdit && busArea
+            ? `Business Area: ${busArea.name}`
+            : "Isi data business area dengan lengkap"
         }
         actions={null}
         children={null}
       />
       <Modal.Body>
         <div className={styles.formGrid}>
-          <Input
-            label="Tanggal Receipt"
-            type="date"
-            value={form.receipt_date}
-            onChange={handleInputChange("receipt_date")}
-            error={errors.receipt_date}
-            required
-          />
-          <Select
-            label="Vendor"
-            value={form.vendor_id}
-            onChange={handleSelectChange("vendor_id")}
-            placeholder="— Pilih Vendor —"
-            fetchOptions={vendorFetchOptions}
-            error={errors.vendor_id}
-            required
-          />
           <Select
             label="Perusahaan"
             value={form.company_id}
@@ -284,75 +175,55 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
             error={errors.company_id}
             required
           />
+
           <Input
-            label="Tahun"
+            label="SAP ID"
             type="number"
-            value={form.year}
-            onChange={handleInputChange("year")}
-            error={errors.year}
-            hint="Filter untuk Stage"
-            min="2000"
-            max="2099"
-          />
-          <Select
-            label="Stage"
-            value={form.stage_id}
-            onChange={handleSelectChange("stage_id")}
-            placeholder="— Pilih Stage —"
-            fetchOptions={stageFetchOptions}
-            error={errors.stage_id}
+            value={form.sap_id}
+            onChange={handleInputChange("sap_id")}
+            error={errors.sap_id}
             required
           />
-          <Select
-            label="Area Bisnis"
-            value={form.business_area_id}
-            onChange={handleSelectChange("business_area_id")}
-            placeholder="— Pilih Area Bisnis —"
-            fetchOptions={businessAreaFetchOptions}
-            error={errors.business_area_id}
-          />
+
           <Input
-            label="PO Number"
-            placeholder="contoh: PO-2026-001"
-            value={form.po_number}
-            onChange={handleInputChange("po_number")}
-            error={errors.po_number}
-          />
-          <Input
-            label="Invoice Number"
-            placeholder="contoh: INV-2026-001"
-            value={form.invoice_number}
-            onChange={handleInputChange("invoice_number")}
-            error={errors.invoice_number}
-          />
-          <Input
-            label="Jumlah"
-            type="number"
-            placeholder="0"
-            value={form.amount}
-            onChange={handleInputChange("amount")}
-            error={errors.amount}
+            label="Bus Area"
+            value={form.name}
+            type="text"
+            onChange={handleInputChange("name")}
+            placeholder="— Business Area —"
+            error={errors.name}
             required
-            step="0.01"
-            min="0"
           />
+
           <Input
-            label="Kategori"
-            type="number"
-            placeholder="0"
-            value={form.category}
-            onChange={handleInputChange("category")}
-            error={errors.category}
+            label="Deskripsi"
+            value={form.name_long}
+            type="text"
+            onChange={handleInputChange("name_long")}
+            placeholder="— Deskripsi —"
+            error={errors.name_long}
+            required
           />
+
           <Input
-            label="Lokasi Pembayaran"
-            type="number"
-            placeholder="0"
-            value={form.payment_location}
-            onChange={handleInputChange("payment_location")}
-            error={errors.payment_location}
+            label="Customer Code"
+            value={form.sap_customer_code}
+            type="text"
+            onChange={handleInputChange("sap_customer_code")}
+            placeholder="— Customer Code —"
+            error={errors.sap_customer_code}
+          />
+
+          <Input
+            label="Vendor Code"
+            value={form.sap_vendor_code}
+            type="text"
+            onChange={handleInputChange("sap_vendor_code")}
+            placeholder="— Vendor Code —"
+            error={errors.sap_vendor_code}
           />
         </div>
+
         {errors.general && (
           <p className={`${styles.errorText} ${styles.errorGeneral}`}>
             {errors.general}
@@ -364,11 +235,11 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
           Batal
         </Button>
         <Button variant="primary" onClick={handleSave} loading={loading}>
-          {isEdit ? "Simpan Perubahan" : "Tambah Receipt"}
+          {isEdit ? "Simpan Perubahan" : "Tambah Business Area"}
         </Button>
       </Modal.Footer>
     </Modal>
   );
 };
 
-export default ReceiptFormModal;
+export default BusAreaFormModal;

@@ -9,6 +9,7 @@ import Card from "../../components/ui/Card";
 import Alert from "../../components/ui/Alert";
 import { useToast } from "../../components/ui/Toast";
 import styles from "./Login.module.css";
+import api from "../../api/axios";
 
 interface LoginProps {
   // Props here
@@ -77,58 +78,34 @@ export default function Login() {
 
   // ── Submit ──────────────────────────────────────────────
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    const errs = validate();
-    if (Object.keys(errs).length) {
-      setErrors(errs);
-      return;
-    }
+  e.preventDefault();
+  const errs = validate();
+  if (Object.keys(errs).length) { setErrors(errs); return; }
 
-    setLoading(true);
-    setApiError("");
+  setLoading(true);
+  setApiError("");
 
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          email: form.email,
-          password: form.password,
-          remember: form.remember,
-        }),
-      });
+  try {
+    const { data } = await api.post("/auth/login", {
+      email: form.email,
+      password: form.password,
+      remember: form.remember,
+    });
 
-      const data = await res.json();
+    // Local: data.token ada di body (X-Client-Type: mobile)
+    // Production: token di cookie, data.token undefined tapi tidak masalah
+    login(data.token, data.data, form.remember);
 
-      if (!res.ok) {
-        // Laravel validation error (422) atau unauthorized (401)
-        setApiError(
-          data.message ?? "Login gagal, periksa kembali kredensial Anda.",
-        );
-        return;
-      }
+    addToast({ variant: "success", title: "Login berhasil",
+      description: `Selamat datang kembali, ${data.data?.name}!` });
+    navigate("/");
 
-      // Simpan JWT token
-      // Kalau remember: localStorage, kalau tidak: sessionStorage
-      // Simpan token + set user via context
-      login(data.token, data.data, form.remember);
-
-      addToast({
-        variant: "success",
-        title: "Login berhasil",
-        description: `Selamat datang kembali, ${data.data?.name}!`,
-      });
-      navigate("/");
-      // navigate("/dashboard");
-    } catch {
-      setApiError("Tidak dapat terhubung ke server. Periksa koneksi Anda.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  } catch (err: any) {
+    setApiError(err?.response?.data?.message ?? "Login gagal.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   // ── Google login ────────────────────────────────────────
   // ── Google login ────────────────────────────────────────

@@ -4,6 +4,7 @@ import Button from "../../../components/ui/Button";
 import Input from "../../../components/ui/Input";
 import Select from "../../../components/ui/Select";
 import styles from "./ReceiptManagement.module.css";
+import api from "../../../api/axios"; // ← ganti
 
 // ======================== TYPES ========================
 
@@ -26,7 +27,6 @@ interface ReceiptFormModalProps {
   receipt?: Receipt;
   onClose: () => void;
   onSaved: () => void;
-  api?: any;
 }
 
 interface FormData {
@@ -51,45 +51,6 @@ interface FetchOptions {
   filters?: Record<string, any>;
   limit?: number;
 }
-
-// ======================== API HELPER ========================
-
-interface ApiError extends Error {
-  status?: number;
-  data?: any;
-}
-
-const enhancedApi = async (path: string, options: RequestInit = {}) => {
-  const token =
-    localStorage.getItem("appacc_token") ??
-    sessionStorage.getItem("appacc_token");
-  const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-  const method = options.method || "GET";
-
-  const headers: HeadersInit = {
-    Authorization: `Bearer ${token}`,
-  };
-
-  if (["POST", "PUT", "PATCH", "DELETE"].includes(method.toUpperCase())) {
-    headers["Content-Type"] = "application/json";
-  }
-
-  const response = await fetch(`${apiBase}${path}`, {
-    ...options,
-    headers,
-  });
-
-  const json = await response.json();
-
-  if (!response.ok) {
-    const error = new Error(json.message || "Request failed") as ApiError;
-    error.status = response.status;
-    error.data = json;
-    throw error;
-  }
-
-  return json;
-};
 
 // ======================== COMPONENT ========================
 
@@ -118,32 +79,24 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
 
-  const handleInputChange = (field: keyof FormData) => (
-    e: ChangeEvent<HTMLInputElement>
-  ) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
-  };
+  const handleInputChange =
+    (field: keyof FormData) => (e: ChangeEvent<HTMLInputElement>) => {
+      setForm((prev) => ({ ...prev, [field]: e.target.value }));
+    };
 
-  // Select onChange menerima { target: { value } }
-  const handleSelectChange = (field: keyof FormData) => (event: { target: { value: any } }) => {
-    setForm((prev) => ({ ...prev, [field]: event.target.value }));
-  };
+  const handleSelectChange =
+    (field: keyof FormData) =>
+    (event: { target: { value: any } }) => {
+      setForm((prev) => ({ ...prev, [field]: event.target.value }));
+    };
 
   const vendorFetchOptions = useMemo<FetchOptions>(
-    () => ({
-      endpoint: "/vendors",
-      searchParam: "search",
-      limit: 5,
-    }),
+    () => ({ endpoint: "/vendors", searchParam: "search", limit: 5 }),
     []
   );
 
   const companyFetchOptions = useMemo<FetchOptions>(
-    () => ({
-      endpoint: "/companies",
-      searchParam: "search",
-      limit: 5,
-    }),
+    () => ({ endpoint: "/companies", searchParam: "search", limit: 5 }),
     []
   );
 
@@ -192,6 +145,7 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
 
     setLoading(true);
     setErrors({});
+
     try {
       const payload = {
         receipt_date: form.receipt_date,
@@ -201,29 +155,28 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
         po_number: form.po_number || null,
         invoice_number: form.invoice_number || null,
         amount: parseFloat(form.amount),
-        business_area_id: form.business_area_id ? parseInt(form.business_area_id, 10) : null,
+        business_area_id: form.business_area_id
+          ? parseInt(form.business_area_id, 10)
+          : null,
         category: form.category ? parseInt(form.category, 10) : null,
-        payment_location: form.payment_location ? parseInt(form.payment_location, 10) : null,
+        payment_location: form.payment_location
+          ? parseInt(form.payment_location, 10)
+          : null,
       };
 
       if (isEdit && receipt) {
-        await enhancedApi(`/receipts/${receipt.id}`, {
-          method: "PUT",
-          body: JSON.stringify(payload),
-        });
+        await api.put(`/receipts/${receipt.id}`, payload);
       } else {
-        await enhancedApi("/receipts", {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
+        await api.post("/receipts", payload);
       }
 
       onSaved();
-    } catch (e) {
-      const error = e as ApiError;
-      if (error.data?.errors && typeof error.data.errors === "object") {
+    } catch (e: any) {
+      const responseData = e?.response?.data;
+
+      if (responseData?.errors && typeof responseData.errors === "object") {
         const formattedErrors: FormErrors = {};
-        Object.entries(error.data.errors).forEach(([field, messages]) => {
+        Object.entries(responseData.errors).forEach(([field, messages]) => {
           formattedErrors[field as keyof FormData] = Array.isArray(messages)
             ? messages[0]
             : (messages as string);
@@ -232,7 +185,7 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
       } else {
         setErrors({
           general:
-            error.message ||
+            responseData?.message ||
             (isEdit
               ? "Gagal menyimpan perubahan."
               : "Gagal menambah invoice receipt."),
