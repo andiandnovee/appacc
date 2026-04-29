@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Vendor;
+use Illuminate\Support\Facades\DB;
+
 
 class SapPoImport extends Model
 {
@@ -11,47 +14,55 @@ class SapPoImport extends Model
 
     protected $fillable = [
         'po_number',
-        'item_line',
-        'business_area_code',
+        'item_no',
+        'po_uom',
+        'po_qty',
+        'net_value',
+        'sap_business_area_id',
         'sap_vendor_id',
         'vendor_name',
-        'gr_number',
-        'purchasing_group',
-        'pr_number',
-        'amount',
+        'purc_grp',
+        'Buyer_name',
         'import_date',
         'import_batch',
     ];
 
     protected $casts = [
-        'amount' => 'decimal:2',
+        'po_qty'    => 'integer',
+        'net_value' => 'integer',
         'import_date' => 'date',
     ];
 
     /**
-     * Check apakah PO + item line sudah pernah di-import
+     * Check duplikat berdasarkan PO Number + Item No
      */
-    public static function isDuplicate($poNumber, $itemLine)
+    public static function isDuplicate($poNumber, $itemNo): bool
     {
         return static::where('po_number', $poNumber)
-            ->where('item_line', $itemLine)
+            ->where('item_no', $itemNo)
             ->exists();
     }
 
     /**
-     * Lookup PO dari SAP import
+     * Total net_value untuk satu PO (sum semua item_no)
      */
-    public static function findByPoNumber($poNumber)
+    public static function sumNetValueByPo($poNumber): int
     {
-        return static::where('po_number', $poNumber)->get();
+        return (int) static::where('po_number', $poNumber)->sum('net_value');
     }
 
+    /**
+     * Relasi ke Vendor master
+     */
     public function vendor()
     {
         return $this->belongsTo(Vendor::class, 'sap_vendor_id', 'sap_id');
     }
 
-    public static function syncVendorsToMaster()
+    /**
+     * Sync vendor dari sap_po_imports ke tabel vendors master
+     */
+    public static function syncVendorsToMaster(): int
     {
         $sapVendors = static::select('sap_vendor_id', 'vendor_name')
             ->distinct()
@@ -61,19 +72,55 @@ class SapPoImport extends Model
         $syncedCount = 0;
 
         foreach ($sapVendors as $sapVendor) {
-            $exists = Vendor::where('sap_id', $sapVendor->sap_vendor_id)->exists();
+            $vendor = Vendor::withTrashed()
+                ->where('sap_id', $sapVendor->sap_vendor_id)
+                ->first();
+
+            if (!$vendor) {
+                Vendor::create([
+                    'sap_id'       => $sapVendor->sap_vendor_id,
+                    'name'         => $sapVendor->vendor_name,
+                    'npwp'         => null,
+                    'address'      => null,
+                    'service_type' => null,
+                    'pph_type'     => null,
+                    'pph_rate'     => null,
+                ]);
+                $syncedCount++;
+            } elseif ($vendor->trashed()) {
+                $vendor->restore();
+                $syncedCount++;
+            }
+        }
+
+        return $syncedCount;
+    }
+
+    /**
+     * Sync purc_grp + Buyer_name ke pr_group_tabel
+     */
+    public static function syncPurchasingGroups(): int
+    {
+        $groups = static::select('purc_grp', 'Buyer_name')
+            ->distinct()
+            ->whereNotNull('purc_grp')
+            ->whereNotNull('Buyer_name')
+            ->get();
+
+        $syncedCount = 0;
+
+        foreach ($groups as $group) {
+            $exists = DB::table('pr_group_tabel')
+                ->where('PGr', $group->purc_grp)
+                ->exists();
 
             if (!$exists) {
-                Vendor::create([
-                    'sap_id' => $sapVendor->sap_vendor_id,
-                    'name' => $sapVendor->vendor_name,
-                    'npwp' => null,
-                    'address' => null,
-                    'service_type' => null,
-                    'pph_type' => null,
-                    'pph_rate' => null,
+                DB::table('pr_group_tabel')->insert([
+                    'PGr'         => $group->purc_grp,
+                    'Description' => $group->Buyer_name,
+                    'created_at'  => now(),
+                    'updated_at'  => now(),
                 ]);
-
                 $syncedCount++;
             }
         }

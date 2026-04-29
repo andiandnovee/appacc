@@ -13,18 +13,20 @@ return new class extends Migration
             
             // SAP PO Data - WAJIB ada
             $table->string('po_number', 20); // NOT NULL
-            $table->string('item_line', 10); // NOT NULL
-            $table->string('business_area_code', 6);
-            $table->integer('sap_vendor_id');
+            $table->string('item_no', 10); // NOT NULL
+            $table->string('po_uom', 6);
+            $table->integer('po_qty');
+            $table->integer('net_value');
+            $table->string('plant', 5);
+            $table->integer('vendor');
             $table->string('vendor_name', 255);
             
             // SAP Transaction References
-            $table->string('gr_number', 20)->nullable()->comment('Goods Receipt Number');
-            $table->string('purchasing_group', 10)->nullable()->comment('SAP Purchasing Group (e.g., HF9, HT4)');
-            $table->string('pr_number', 20)->nullable()->comment('Purchase Requisition Number');
+            
+            $table->string('purc_grp', 10)->nullable()->comment('SAP Purchasing Group (e.g., HF9, HT4)');
+            $table->string('Buyer Name', 20)->nullable()->comment('Nama Buyer di SAP');
             
             // Financial
-            $table->decimal('amount', 15, 2)->default(0);
             
             // Import metadata
             $table->date('import_date')->nullable()->comment('Tanggal data di-import dari SAP');

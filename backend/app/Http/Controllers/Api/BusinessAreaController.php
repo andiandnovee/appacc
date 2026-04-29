@@ -7,6 +7,8 @@ use App\Http\Resources\BusinessAreaResource;
 use App\Http\Requests\BusinessAreaRequest;
 use App\Models\BusinessArea;
 use Illuminate\Http\Request;
+//use Illuminate\Support\Facades\Log;
+
 
 class BusinessAreaController extends Controller
 {
@@ -21,7 +23,8 @@ class BusinessAreaController extends Controller
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', "%{$request->search}%")
-                  ->orWhere('name_long', 'like', "%{$request->search}%");
+                  ->orWhere('name_long', 'like', "%{$request->search}%")
+                  ->orWhere('sap_id', 'like', "%{$request->search}%");
             });
         }
 
@@ -48,6 +51,12 @@ Public function store(BusinessAreaRequest $request)
     public function update(BusinessAreaRequest $request, BusinessArea $businessArea)
     {
        
+    //      \Log::info('UPDATE HIT', [
+    //     'all'       => $request->all(),
+    //     'validated' => $request->validated(),
+    //     'id'        => $businessArea->id,
+    // ]);
+
 
         $businessArea->update($request->validated());
         $businessArea->load(['company']);

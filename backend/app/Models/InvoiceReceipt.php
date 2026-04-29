@@ -16,7 +16,7 @@ class InvoiceReceipt extends Model
     protected $fillable = [
         'sap_id',
         'receipt_date',
-        'payment_location',
+        
         'vendor_id',
         'po_number',
         'amount',
@@ -24,7 +24,7 @@ class InvoiceReceipt extends Model
         'stage_id',
         'user_id',
         'sap_user_id',
-        'category',
+        'pgr_id',             // ← ganti
         'business_area_code',
         'invoice_number',
         'attachment1',

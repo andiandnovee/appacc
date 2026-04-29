@@ -16,6 +16,7 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\Api\SapImportController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\PgrController;
 
 /*
 |--------------------------------------------------------------------------
@@ -97,11 +98,11 @@ Route::middleware('auth:api')->group(function () {
         // Invoice receipts
         Route::get('receipts/search', [InvoiceReceiptController::class, 'search']);
         Route::apiResource('receipts', InvoiceReceiptController::class);
-
+        Route::get('pgr', [PgrController::class, 'index']);
         // Business Areas
 
         Route::get('busa/search', [BusinessAreaController::class, 'search']);
-        Route::apiResource('busa', BusinessAreaController::class);
+        Route::apiResource('busa', BusinessAreaController::class)->parameters(['busa' => 'businessArea']);;
 
         
         Route::get('invoice-receipts/{invoiceReceipt}/statuses',  [InvoiceReceiptController::class, 'statuses']);
@@ -110,6 +111,8 @@ Route::middleware('auth:api')->group(function () {
 
         // SAP PO Import
         Route::post('sap/import-po', [SapImportController::class, 'importPo']);
+        Route::get('sap/po-lookup', [SapImportController::class, 'poLookup']);
+        Route::post('sap/import-po-chunk', [SapImportController::class, 'importPoChunk']);
 
 
 

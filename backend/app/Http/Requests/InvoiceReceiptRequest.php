@@ -13,24 +13,24 @@ class InvoiceReceiptRequest extends FormRequest
         return true;
     }
 
-    public function rules(): array
-    {
-        $isUpdate = $this->isMethod('PUT') || $this->isMethod('PATCH');
+   public function rules(): array
+{
+    $isUpdate = $this->isMethod('PUT') || $this->isMethod('PATCH');
 
-        return [
-            'receipt_date'       => [$isUpdate ? 'sometimes' : 'required', 'date'],
-            'payment_location'   => ['nullable', 'integer'],
-            'vendor_id'          => [$isUpdate ? 'sometimes' : 'required', 'exists:vendors,id'],
-            'po_number'          => ['nullable', 'string', 'max:50'],
-            'amount'             => [$isUpdate ? 'sometimes' : 'required', 'numeric', 'min:0'],
-            'company_id'         => [$isUpdate ? 'sometimes' : 'required', 'exists:companies,id'],
-            'stage_id'           => [$isUpdate ? 'sometimes' : 'required', 'exists:stages,id'],
-            'category'           => ['nullable', 'integer'],
-            'business_area_code' => ['nullable', 'string', 'max:6'],
-            'invoice_number'     => ['nullable', 'string', 'max:225'],
-            'attachment1'        => ['nullable', 'string', 'max:255'],
-            'attachment2'        => ['nullable', 'string', 'max:255'],
-            'attachment3'        => ['nullable', 'string', 'max:255'],
-        ];
-    }
+    return [
+        'receipt_date'       => [$isUpdate ? 'sometimes' : 'required', 'date'],
+        'vendor_id'          => [$isUpdate ? 'sometimes' : 'required', 'exists:vendors,id'],
+        'po_number'          => ['nullable', 'string', 'max:50'],
+        'amount'             => [$isUpdate ? 'sometimes' : 'required', 'numeric', 'min:0'],
+        'company_id'         => [$isUpdate ? 'sometimes' : 'required', 'exists:companies,id'],
+        'stage_id'           => [$isUpdate ? 'sometimes' : 'required', 'exists:stages,id'],
+        'pgr_id'             => ['nullable', 'string', 'max:10'],  // ← ganti
+        'business_area_code' => ['nullable', 'string', 'max:6'],
+        'invoice_number'     => ['nullable', 'string', 'max:225'],
+        'attachment1'        => ['nullable', 'string', 'max:255'],
+        'attachment2'        => ['nullable', 'string', 'max:255'],
+        'attachment3'        => ['nullable', 'string', 'max:255'],
+        // payment_location → hapus
+    ];
+}
 }

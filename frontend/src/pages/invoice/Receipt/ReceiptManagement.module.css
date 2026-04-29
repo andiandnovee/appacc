@@ -193,3 +193,102 @@
   align-items: center;
   gap: var(--space-2);
 }
+
+.poField {
+  position: relative;
+}
+
+.sapBadge {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-success-subtle);
+  color: var(--color-success);
+  border: 1px solid var(--color-success-muted);
+}
+.ppnWrapper {
+  grid-column: 1 / -1;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-3) var(--spacing-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.ppnToggleLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-primary);
+  width: fit-content;
+}
+
+.ppnCheckbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.ppnDetail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.ppnRateRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.ppnRateInput {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  font-size: var(--font-size-sm);
+}
+
+.ppnRateField {
+  width: 64px;
+  padding: var(--spacing-1) var(--spacing-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  text-align: right;
+}
+
+.ppnBreakdown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--spacing-2);
+}
+
+.ppnBreakdownRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.ppnTotal {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--spacing-1);
+  margin-top: var(--spacing-1);
+}
