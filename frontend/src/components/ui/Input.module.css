@@ -110,17 +110,29 @@
 }
 .input[type='number'] { -moz-appearance: textfield; }
 
+/* ── NUMBER INPUT: formatting display ─────────────────────── */
+/*
+ * type="number" di DOM di-render sebagai type="text" + inputMode="numeric".
+ * Class ini menambahkan:
+ *   - text-align: right  → konvensi umum field angka/keuangan
+ *   - font-variant-numeric: tabular-nums → digit selebar sama,
+ *     separator tidak bikin teks "melompat" saat user mengetik
+ */
+.numberInput {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ── DATE / TIME: styling native picker ───────────────────── */
 .input[type='date'],
 .input[type='time'],
 .input[type='datetime-local'],
 .input[type='month'],
 .input[type='week'] {
-  color-scheme: light;           /* konsisten di semua browser */
+  color-scheme: light;
   cursor: pointer;
 }
 
-/* Dark mode — date picker ikut tema gelap */
 :global(.dark) .input[type='date'],
 :global(.dark) .input[type='time'],
 :global(.dark) .input[type='datetime-local'],
@@ -129,7 +141,6 @@
   color-scheme: dark;
 }
 
-/* Sembunyikan clear button bawaan browser di date */
 .input[type='date']::-webkit-clear-button,
 .input[type='date']::-webkit-inner-spin-button {
   display: none;

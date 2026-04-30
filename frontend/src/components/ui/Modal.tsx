@@ -1,6 +1,6 @@
-import { useEffect, useCallback } from 'react'
-import { createPortal } from 'react-dom'
-import styles from './Modal.module.css'
+import { useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
+import styles from "./Modal.module.css";
 
 /* ── Icon Close ────────────────────────────────────────────── */
 const IconClose = () => (
@@ -12,7 +12,7 @@ const IconClose = () => (
       strokeLinecap="round"
     />
   </svg>
-)
+);
 
 /* ════════════════════════════════════════════════════════════
    Modal — komponen utama
@@ -28,38 +28,43 @@ const IconClose = () => (
 function Modal({
   isOpen,
   onClose,
-  size = 'md',
-  closeOnBackdrop = true,
+  size = "md",
+  closeOnBackdrop = false,
   children,
 }) {
   // ── Lock scroll body saat modal terbuka ────────────────
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden'
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = ''
+      document.body.style.overflow = "";
     }
-    return () => { document.body.style.overflow = '' }
-  }, [isOpen])
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
 
   // ── Tutup dengan tombol Escape ──────────────────────────
-  const handleKeyDown = useCallback((e) => {
-    if (e.key === 'Escape') onClose()
-  }, [onClose])
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (e.key === "Escape") onClose();
+    },
+    [onClose],
+  );
 
   useEffect(() => {
     if (isOpen) {
-      document.addEventListener('keydown', handleKeyDown)
+      document.addEventListener("keydown", handleKeyDown);
     }
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, handleKeyDown])
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, handleKeyDown]);
 
   // ── Klik backdrop ───────────────────────────────────────
   const handleBackdropClick = (e) => {
-    if (closeOnBackdrop && e.target === e.currentTarget) onClose()
-  }
+    if (closeOnBackdrop && e.target === e.currentTarget) onClose();
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return createPortal(
     <div
@@ -68,12 +73,10 @@ function Modal({
       role="dialog"
       aria-modal="true"
     >
-      <div className={`${styles.panel} ${styles[size]}`}>
-        {children}
-      </div>
+      <div className={`${styles.panel} ${styles[size]}`}>{children}</div>
     </div>,
-    document.body
-  )
+    document.body,
+  );
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -92,9 +95,11 @@ function ModalHeader({ title, subtitle, onClose, actions, children }) {
     <div className={styles.header}>
       {/* Kiri: judul & subtitle */}
       <div className={styles.headerLeft}>
-        {children ? children : (
+        {children ? (
+          children
+        ) : (
           <>
-            {title    && <h2 className={styles.title}>{title}</h2>}
+            {title && <h2 className={styles.title}>{title}</h2>}
             {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
           </>
         )}
@@ -118,7 +123,7 @@ function ModalHeader({ title, subtitle, onClose, actions, children }) {
         )}
       </div>
     </div>
-  )
+  );
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -129,11 +134,7 @@ function ModalHeader({ title, subtitle, onClose, actions, children }) {
    - children → konten utama, otomatis scrollable jika panjang
 */
 function ModalBody({ children }) {
-  return (
-    <div className={styles.body}>
-      {children}
-    </div>
-  )
+  return <div className={styles.body}>{children}</div>;
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -144,23 +145,21 @@ function ModalBody({ children }) {
    - align    → 'right' | 'left' | 'between' (default: 'right')
    - children → tombol atau konten footer
 */
-function ModalFooter({ align = 'right', children }) {
+function ModalFooter({ align = "right", children }) {
   const footerClass = [
     styles.footer,
-    align === 'left'    ? styles.footerLeft    : '',
-    align === 'between' ? styles.footerBetween : '',
-  ].filter(Boolean).join(' ')
+    align === "left" ? styles.footerLeft : "",
+    align === "between" ? styles.footerBetween : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
-  return (
-    <div className={footerClass}>
-      {children}
-    </div>
-  )
+  return <div className={footerClass}>{children}</div>;
 }
 
 /* ── Attach sub-komponen ───────────────────────────────────── */
-Modal.Header = ModalHeader
-Modal.Body   = ModalBody
-Modal.Footer = ModalFooter
+Modal.Header = ModalHeader;
+Modal.Body = ModalBody;
+Modal.Footer = ModalFooter;
 
-export default Modal
+export default Modal;

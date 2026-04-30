@@ -1,15 +1,19 @@
-import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
+import { useState, useCallback, useRef, useMemo, useEffect } from "react";
 import ReceiptFormModal from "./ReceiptFormModal";
 import Button from "../../../components/ui/Button";
 import Table from "../../../components/ui/Table";
 import Select from "../../../components/ui/Select";
+import Toggle from "../../../components/ui/Toggle";
 import { useToast } from "../../../components/ui/Toast";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import styles from "./ReceiptManagement.module.css";
 import apiClient from "../../../api/axios";
-import { useFilterStore } from '../../../stores/filterReceipt';
+import { useFilterStore } from "../../../stores/filterReceipt";
 
-const api = async (path: string, options: { method?: string; body?: string } = {}) => {
+const api = async (
+  path: string,
+  options: { method?: string; body?: string } = {},
+) => {
   const method = (options.method || "GET").toLowerCase();
   const data = options.body ? JSON.parse(options.body) : undefined;
   const res = await (apiClient as any)[method](path, data);
@@ -23,10 +27,12 @@ export default function InvoiceReceiptManagement() {
     selectedVendor,
     selectedYear,
     selectedStage,
+    selectedIsPkp,
     setSelectedCompany,
     setSelectedVendor,
     setSelectedYear,
     setSelectedStage,
+    setSelectedIsPkp,
     resetFilters,
   } = useFilterStore();
 
@@ -39,7 +45,9 @@ export default function InvoiceReceiptManagement() {
 
   // State untuk options stage
   const [loadingStages, setLoadingStages] = useState(false);
-  const [stageOptions, setStageOptions] = useState<Array<{value: string, label: string}>>([]);
+  const [stageOptions, setStageOptions] = useState<
+    Array<{ value: string; label: string }>
+  >([]);
 
   // Fetch stages berdasarkan selectedYear
   useEffect(() => {
@@ -52,7 +60,9 @@ export default function InvoiceReceiptManagement() {
       try {
         const res = await api(`/stages?year=${selectedYear}`);
         const stages = res.data || [];
-        setStageOptions(stages.map((s: any) => ({ value: s.id.toString(), label: s.name })));
+        setStageOptions(
+          stages.map((s: any) => ({ value: s.id.toString(), label: s.name })),
+        );
       } catch (err) {
         console.error("Gagal fetch stages:", err);
         setStageOptions([]);
@@ -82,8 +92,9 @@ export default function InvoiceReceiptManagement() {
     if (selectedCompany) params.company_id = selectedCompany;
     if (selectedVendor) params.vendor_id = selectedVendor;
     if (selectedStage) params.stage_id = selectedStage;
+    if (selectedIsPkp !== null) params.is_pkp = selectedIsPkp ? 1 : 0; // ← tambah
     return params;
-  }, [selectedCompany, selectedVendor, selectedStage]);
+  }, [selectedCompany, selectedVendor, selectedStage, selectedIsPkp]);
 
   const handleDelete = useCallback(
     async (receipt, refetch) => {
@@ -96,10 +107,16 @@ export default function InvoiceReceiptManagement() {
       setDeletingId(receipt.id);
       try {
         await api(`/receipts/${receipt.id}`, { method: "DELETE" });
-        addToast({ variant: "success", title: "Invoice receipt berhasil dihapus." });
+        addToast({
+          variant: "success",
+          title: "Invoice receipt berhasil dihapus.",
+        });
         refetch();
       } catch (err) {
-        addToast({ variant: "danger", title: "Gagal menghapus invoice receipt." });
+        addToast({
+          variant: "danger",
+          title: "Gagal menghapus invoice receipt.",
+        });
       } finally {
         setDeletingId(null);
       }
@@ -108,8 +125,19 @@ export default function InvoiceReceiptManagement() {
   );
 
   const handleSaved = useCallback(() => {
+    addToast({
+      variant: "success",
+      title: "Data invoice receipt berhasil disimpan.",
+    });
+    tableRef.current?.refetch();
+  }, [addToast]);
+
+  const handleSavedAndClose = useCallback(() => {
     setFormTarget(null);
-    addToast({ variant: "success", title: "Data invoice receipt berhasil disimpan." });
+    addToast({
+      variant: "success",
+      title: "Data invoice receipt berhasil disimpan.",
+    });
     tableRef.current?.refetch();
   }, [addToast]);
 
@@ -119,13 +147,17 @@ export default function InvoiceReceiptManagement() {
         key: "po_number",
         label: "PO Number",
         sortable: true,
-        render: (row) => <span className={styles.code}>{row.po_number || "—"}</span>,
+        render: (row) => (
+          <span className={styles.code}>{row.po_number || "—"}</span>
+        ),
       },
       {
         key: "invoice_number",
         label: "Invoice Number",
         sortable: true,
-        render: (row) => <span className={styles.code}>{row.invoice_number || "—"}</span>,
+        render: (row) => (
+          <span className={styles.code}>{row.invoice_number || "—"}</span>
+        ),
       },
       {
         key: "receipt_date",
@@ -133,7 +165,9 @@ export default function InvoiceReceiptManagement() {
         sortable: true,
         render: (row) => (
           <span className={styles.muted}>
-            {row.receipt_date ? new Date(row.receipt_date).toLocaleDateString("id-ID") : "—"}
+            {row.receipt_date
+              ? new Date(row.receipt_date).toLocaleDateString("id-ID")
+              : "—"}
           </span>
         ),
       },
@@ -141,19 +175,25 @@ export default function InvoiceReceiptManagement() {
         key: "vendor",
         label: "Vendor",
         sortable: false,
-        render: (row) => <span className={styles.muted}>{row.vendor?.name || "—"}</span>,
+        render: (row) => (
+          <span className={styles.muted}>{row.vendor?.name || "—"}</span>
+        ),
       },
       {
         key: "company",
         label: "Perusahaan",
         sortable: false,
-        render: (row) => <span className={styles.muted}>{row.company?.name || "—"}</span>,
+        render: (row) => (
+          <span className={styles.muted}>{row.company?.name || "—"}</span>
+        ),
       },
       {
         key: "stage",
         label: "Stage",
         sortable: false,
-        render: (row) => <span className={styles.muted}>{row.stage?.name || "—"}</span>,
+        render: (row) => (
+          <span className={styles.muted}>{row.stage?.name || "—"}</span>
+        ),
       },
       {
         key: "amount",
@@ -161,7 +201,9 @@ export default function InvoiceReceiptManagement() {
         sortable: true,
         render: (row) => (
           <span className={styles.muted}>
-            {row.amount ? `Rp ${parseFloat(row.amount).toLocaleString("id-ID")}` : "—"}
+            {row.amount
+              ? `Rp ${parseFloat(row.amount).toLocaleString("id-ID")}`
+              : "—"}
           </span>
         ),
       },
@@ -171,7 +213,12 @@ export default function InvoiceReceiptManagement() {
         sortable: false,
         render: (row) => (
           <div className={styles.actions}>
-            <Button variant="ghost" size="sm" iconLeft={<Pencil size={13} />} onClick={() => setFormTarget(row)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              iconLeft={<Pencil size={13} />}
+              onClick={() => setFormTarget(row)}
+            >
               Edit
             </Button>
             <Button
@@ -196,7 +243,9 @@ export default function InvoiceReceiptManagement() {
       <div className={styles.pageHeader}>
         <div>
           <h1 className={styles.pageTitle}>Manajemen Invoice Receipt</h1>
-          <p className={styles.pageSubtitle}>Kelola data invoice receipt perusahaan</p>
+          <p className={styles.pageSubtitle}>
+            Kelola data invoice receipt perusahaan
+          </p>
         </div>
         <Button iconLeft={<Plus size={14} />} onClick={() => setFormTarget({})}>
           Tambah Receipt
@@ -210,7 +259,11 @@ export default function InvoiceReceiptManagement() {
             value={selectedCompany}
             onChange={(e) => setSelectedCompany(e.target.value)}
             placeholder="Semua Perusahaan"
-            fetchOptions={{ endpoint: "/companies", searchParam: "search", limit: 10 }}
+            fetchOptions={{
+              endpoint: "/companies",
+              searchParam: "search",
+              limit: 10,
+            }}
           />
         </div>
         <div className={styles.filterGroup}>
@@ -219,7 +272,11 @@ export default function InvoiceReceiptManagement() {
             value={selectedVendor}
             onChange={(e) => setSelectedVendor(e.target.value)}
             placeholder="Semua Vendor"
-            fetchOptions={{ endpoint: "/vendors", searchParam: "search", limit: 10 }}
+            fetchOptions={{
+              endpoint: "/vendors",
+              searchParam: "search",
+              limit: 10,
+            }}
           />
         </div>
         <div className={styles.filterGroup}>
@@ -243,6 +300,7 @@ export default function InvoiceReceiptManagement() {
             disabled={loadingStages}
           />
         </div>
+
         <div className={styles.filterActions}>
           <Button variant="ghost" onClick={resetFilters} size="sm">
             Reset Filter
@@ -269,8 +327,8 @@ export default function InvoiceReceiptManagement() {
         <ReceiptFormModal
           receipt={formTarget.id ? formTarget : null}
           onClose={() => setFormTarget(null)}
-          onSaved={handleSaved}
-        //  api={api}
+          onSaved={handleSaved} // ← untuk tambah: refetch saja, tidak close
+          onSavedAndClose={handleSavedAndClose} // ← untuk edit: refetch + close
         />
       )}
     </div>

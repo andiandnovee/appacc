@@ -1,6 +1,7 @@
 <?php
 // app/Http/Resources/StageResource.php
 namespace App\Http\Resources;
+
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -10,11 +11,11 @@ class StageResource extends JsonResource
     {
         return [
             'id'         => $this->id,
-            'sap_id'     => $this->sap_id,
             'name'       => $this->name,
             'start_date' => $this->start_date?->format('Y-m-d'),
             'year'       => $this->year,
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
+            'updated_at' => $this->updated_at?->format('Y-m-d H:i:s'),
         ];
     }
 }

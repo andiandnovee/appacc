@@ -30,6 +30,7 @@ class InvoiceReceiptController extends Controller
         $query->where(function ($q) use ($search) {
             $q->where('po_number', 'like', "%{$search}%")
               ->orWhere('invoice_number', 'like', "%{$search}%")
+              
             //   ->orWhereHas('vendor', function ($vendorQuery) use ($search) {
             //       $vendorQuery->where('name', 'like', "%{$search}%");
             //   })
@@ -40,7 +41,7 @@ class InvoiceReceiptController extends Controller
     // ========== FILTER PER KOLOM (dari serverSideFiltering) ==========
     if ($request->has('filter')) {
         $filters = $request->input('filter');
-        $allowedColumns = ['po_number', 'invoice_number', 'vendor_id', 'company_id', 'stage_id', 'business_area_code', 'category'];
+        $allowedColumns = ['po_number', 'invoice_number', 'vendor_id', 'company_id', 'stage_id', 'business_area_code', 'category', 'is_pkp'];
         foreach ($filters as $column => $value) {
             if (in_array($column, $allowedColumns) && !empty($value)) {
                 // Untuk kolom yang merupakan foreign key (vendor_id, company_id, stage_id) gunakan pencarian exact
@@ -81,7 +82,7 @@ class InvoiceReceiptController extends Controller
     // ========== SORTING ==========
     $sortBy = $request->get('sort_by');
     $sortDir = $request->get('sort_dir', 'asc');
-    if ($sortBy && in_array($sortBy, ['po_number', 'invoice_number', 'receipt_date', 'amount'])) {
+    if ($sortBy && in_array($sortBy, ['po_number', 'invoice_number', 'receipt_date', 'amount','stage_id'])) {
         $query->orderBy($sortBy, $sortDir === 'asc' ? 'asc' : 'desc');
     } else {
         $query->orderByDesc('receipt_date');

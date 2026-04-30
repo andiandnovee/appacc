@@ -24,6 +24,7 @@ class InvoiceReceiptResource extends JsonResource
         'business_area_code' => $this->business_area_code,
         'business_area_id'   => $this->business_area_code,
         'invoice_number'     => $this->invoice_number,
+       
         'attachment1'        => $this->attachment1,
         'attachment2'        => $this->attachment2,
         'attachment3'        => $this->attachment3,

@@ -14,31 +14,29 @@ export default function AuthCallback() {
   const [searchParams]     = useSearchParams();
 
   useEffect(() => {
-    const token = searchParams.get("token");
-    const error = searchParams.get("error");
+  const error = searchParams.get("error");
+  if (error) {
+    navigate(`/login?error=${encodeURIComponent(error)}`, { replace: true });
+    return;
+  }
 
-    if (error) {
-      navigate(`/login?error=${encodeURIComponent(error)}`, { replace: true });
-      return;
-    }
+  const tokenFromUrl = searchParams.get("token");
 
-    if (!token) {
-      navigate("/login", { replace: true });
-      return;
-    }
+  if (tokenFromUrl) {
+    // Simpan ke localStorage supaya persist saat browser ditutup
+    localStorage.setItem("appacc_token", tokenFromUrl);
+    window.history.replaceState({}, '', '/auth/callback');
+  }
 
-    // Ambil data user dengan token yang baru diterima
-    api.get("/auth/me", {
-      headers: { Authorization: `Bearer ${token}` },
+  api.get("/auth/me")
+    .then((res) => {
+      login(tokenFromUrl ?? null, res.data.data, true); // true = localStorage
+      navigate("/", { replace: true });
     })
-      .then((res) => {
-        login(token, res.data.data, false); // default: sessionStorage
-        navigate("/", { replace: true });
-      })
-      .catch(() => {
-        navigate("/login?error=Token+tidak+valid", { replace: true });
-      });
-  }, []);
+    .catch(() => {
+      navigate("/login?error=Token+tidak+valid", { replace: true });
+    });
+}, []);
 
   return (
     <div style={{ display: "grid", placeItems: "center", height: "100vh" }}>

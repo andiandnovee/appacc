@@ -1,0 +1,139 @@
+/* Stages.module.css — ikut pola BusAreas/VendorManagement */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.pageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.pageTitle {
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.pageSubtitle {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin: var(--space-1) 0 0;
+}
+
+/* Table cell styles */
+.code {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+}
+
+.muted {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+/* Action buttons */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.deleteBtn {
+  color: var(--color-text-danger) !important;
+}
+
+.deleteBtn:hover {
+  background-color: var(--color-background-danger) !important;
+}
+
+/* Form grid */
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+/* Full-width field di form (tanggal mulai mengambil seluruh lebar) */
+.formGrid > *:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
+/* Error messages */
+.errorText {
+  font-size: var(--text-sm);
+  color: var(--color-text-danger);
+}
+
+.errorGeneral {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  background-color: var(--color-background-danger);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-danger);
+}
+
+/* ── Filter bar ── */
+.filterBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.filterGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.filterLabel {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+/* Year tab pills */
+.yearTabs {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+.yearTab {
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border-primary);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  line-height: 1.6;
+}
+
+.yearTab:hover {
+  background: var(--color-background-secondary);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-secondary);
+}
+
+.yearTabActive {
+  background: var(--color-primary);
+  color: var(--color-text-on-primary);
+  border-color: var(--color-primary);
+}
+
+.yearTabActive:hover {
+  background: var(--color-primary);
+  color: var(--color-text-on-primary);
+}

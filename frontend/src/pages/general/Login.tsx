@@ -111,6 +111,7 @@ export default function Login() {
   // ── Google login ────────────────────────────────────────
   const handleGoogle = async () => {
     try {
+      localStorage.setItem('oauth_remember', form.remember ? 'true' : 'false');
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/auth/google/redirect`,
         { headers: { Accept: "application/json" } },

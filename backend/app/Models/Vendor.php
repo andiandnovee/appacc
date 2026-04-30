@@ -21,6 +21,7 @@ class Vendor extends Model
         'service_type',
         'pph_type',
         'pph_rate',
+        'is_pkp',
     ];
 
     protected $casts = [

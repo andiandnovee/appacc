@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
@@ -46,14 +47,14 @@ class SocialAuthController extends Controller
         try {
             $socialUser = Socialite::driver($provider)->stateless()->user();
         } catch (\Exception $e) {
-            \Log::error("OAuth [{$provider}] gagal ambil user: " . $e->getMessage());
+            Log::error("OAuth [{$provider}] gagal ambil user: " . $e->getMessage());
             return $this->redirectWithError('Gagal autentikasi dengan ' . $provider . '.');
         }
 
         try {
             $user = $this->findOrCreateUser($socialUser, $provider);
         } catch (\Exception $e) {
-            \Log::error("OAuth [{$provider}] gagal find/create user: " . $e->getMessage());
+            Log::error("OAuth [{$provider}] gagal find/create user: " . $e->getMessage());
             return $this->redirectWithError('Gagal memproses akun.');
         }
 
@@ -64,26 +65,43 @@ class SocialAuthController extends Controller
         try {
             $token = auth('api')->login($user);
         } catch (JWTException $e) {
-            \Log::error("OAuth [{$provider}] gagal issue JWT: " . $e->getMessage());
+            Log::error("OAuth [{$provider}] gagal issue JWT: " . $e->getMessage());
             return $this->redirectWithError('Gagal membuat token. Silakan coba lagi.');
         }
 
-        // Redirect ke frontend dengan JWT di query string
-        $frontendUrl = config('app.frontend_url') . '/auth/callback?token=' . $token;
+        // Semua variabel sudah siap di sini
+        $ttl         = auth('api')->factory()->getTTL();
+        $isProd      = app()->environment('production');
+        $frontendUrl = config('app.frontend_url') . '/auth/callback';
 
-        return redirect($frontendUrl);
+        if ($isProd) {
+            // Production: token di HttpOnly cookie
+            return redirect($frontendUrl)->withCookie(
+                cookie(
+                    name:     'appacc_token',
+                    value:    $token,
+                    minutes:  $ttl,
+                    path:     '/',
+                    domain:   '.warga007.web.id',
+                    secure:   true,
+                    httpOnly: true,
+                    sameSite: 'None',
+                )
+            );
+        }
+
+        // Dev/local: token di URL karena cookie tidak work di HTTP
+        return redirect($frontendUrl . '?token=' . $token);
     }
 
     // ─── Helpers ────────────────────────────────────────────────────────────
 
     protected function findOrCreateUser($socialUser, string $provider): User
     {
-        // Cari by provider_id
         $user = User::where('provider', $provider)
             ->where('provider_id', $socialUser->getId())
             ->first();
 
-        // Fallback: cari by email
         if (!$user && $socialUser->getEmail()) {
             $user = User::where('email', $socialUser->getEmail())->first();
         }
@@ -98,7 +116,6 @@ class SocialAuthController extends Controller
             return $user;
         }
 
-        // Buat user baru
         $user = User::create([
             'name'        => $socialUser->getName() ?? $socialUser->getNickname() ?? 'User',
             'email'       => $socialUser->getEmail(),

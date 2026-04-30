@@ -7,10 +7,12 @@ interface FilterState {
   selectedVendor: string;
   selectedYear: string;
   selectedStage: string;
+  selectedIsPkp: boolean | null;   // ← tambah
   setSelectedCompany: (value: string) => void;
   setSelectedVendor: (value: string) => void;
   setSelectedYear: (value: string) => void;
   setSelectedStage: (value: string) => void;
+  setSelectedIsPkp: (value: boolean | null) => void;  // ← tambah
   resetFilters: () => void;
 }
 
@@ -21,16 +23,19 @@ export const useFilterStore = create<FilterState>()(
       selectedVendor: '',
       selectedYear: new Date().getFullYear().toString(),
       selectedStage: '',
+      selectedIsPkp: null,        
       setSelectedCompany: (value) => set({ selectedCompany: value }),
       setSelectedVendor: (value) => set({ selectedVendor: value }),
       setSelectedYear: (value) => set({ selectedYear: value }),
       setSelectedStage: (value) => set({ selectedStage: value }),
+      setSelectedIsPkp: (value) => set({ selectedIsPkp: value }),
       resetFilters: () =>
         set({
           selectedCompany: '',
           selectedVendor: '',
           selectedYear: new Date().getFullYear().toString(),
           selectedStage: '',
+          selectedIsPkp: null,
         }),
     }),
     {

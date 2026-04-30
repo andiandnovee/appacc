@@ -18,6 +18,7 @@ class VendorResource extends JsonResource
         'service_type' => $this->service_type,
         'pph_type'     => $this->pph_type,
         'pph_rate'     => (float) $this->pph_rate,
+        'is_pkp'       => $this->is_pkp,
         
         // ← Tambah ini untuk clarity
         'is_active'    => $this->deleted_at === null,  // true = aktif, false = tidak aktif

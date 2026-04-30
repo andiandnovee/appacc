@@ -1,4 +1,4 @@
-import { FC, ReactNode, ReactElement, useState, useEffect } from 'react';
+import { FC, ReactNode, ReactElement, useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -15,13 +15,13 @@ import {
   ShieldCheck,
   ChevronLeft,
   ChevronRight,
+  Star,
 } from "lucide-react";
 import styles from "./Sidebar.module.css";
 
 interface SidebarProps {
   // Props here
 }
-
 
 /* ── Struktur menu ─────────────────────────────────────────── */
 /*
@@ -75,6 +75,7 @@ const NAV_GROUPS = [
       { to: "/ref/busa", icon: MapPin, label: "Business Area" },
       { to: "/ref/pph", icon: List, label: "Ref PPh" },
       { to: "/ref/po", icon: Database, label: "Ref PO" },
+      { to: "/ref/stages", icon:Star, label: "Ref Stage" },
     ],
   },
   {

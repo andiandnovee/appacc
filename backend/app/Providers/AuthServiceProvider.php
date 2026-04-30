@@ -11,11 +11,12 @@ use App\Models\InvoiceReceipt;
 use App\Models\ReceiptStatus;
 use App\Policies\CompanyPolicy;
 use App\Policies\VendorPolicy;
-use App\Policies\StagePolicy;
 use App\Policies\BusinessAreaPolicy;
 use App\Policies\CostCenterPolicy;
 use App\Policies\InvoiceReceiptPolicy;
 use App\Policies\ReceiptStatusPolicy;
+use App\Policies\StagePolicy;
+ 
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 

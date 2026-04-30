@@ -292,3 +292,10 @@
   padding-top: var(--spacing-1);
   margin-top: var(--spacing-1);
 }
+
+.pkpToggleRow {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  padding-top: var(--space-1);
+}

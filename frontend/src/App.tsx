@@ -15,6 +15,7 @@ import Settings from "./pages/general/Settings";
 import UserManagement from "./pages/admin/UserManagement";
 import VendorManagement from "./pages/invoice/VendorManagement";
 import SapPoImportPage from "./pages/sap/SapPoImportPage";
+import Stages from "./pages/invoice/Stage";
 import Receipt from "./pages/invoice/Receipt";
 import BusinessArea from "./pages/invoice/BusArea";
 
@@ -42,6 +43,7 @@ const App: FC = (): ReactElement => {
                   element={<SapPoImportPage />}
                 />
                 <Route path="/invoice/receipts" element={<Receipt />} />
+                <Route path="/ref/stages" element={<Stages />} />
               </Route>
             </Route>
 

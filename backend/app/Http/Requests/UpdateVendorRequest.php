@@ -33,6 +33,7 @@ class UpdateVendorRequest extends FormRequest
             'service_type' => 'nullable',
             'pph_type'     => 'nullable|in:21,23,26',
             'pph_rate'     => 'nullable|numeric|min:0|max:100',
+            'is_pkp'       => 'nullable|boolean',
         ];
     }
 
@@ -48,6 +49,7 @@ class UpdateVendorRequest extends FormRequest
             'pph_rate.required'   => 'Tarif PPh wajib diisi.',
             'pph_rate.numeric'    => 'Tarif PPh harus berupa angka.',
             'pph_rate.max'        => 'Tarif PPh tidak boleh lebih dari 100%.',
+            'is_pkp.boolean'      => 'Status PKP harus berupa nilai boolean.',
         ];
     }
 }

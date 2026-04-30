@@ -26,6 +26,7 @@ class InvoiceReceiptRequest extends FormRequest
         'stage_id'           => [$isUpdate ? 'sometimes' : 'required', 'exists:stages,id'],
         'pgr_id'             => ['nullable', 'string', 'max:10'],  // ← ganti
         'business_area_code' => ['nullable', 'string', 'max:6'],
+      
         'invoice_number'     => ['nullable', 'string', 'max:225'],
         'attachment1'        => ['nullable', 'string', 'max:255'],
         'attachment2'        => ['nullable', 'string', 'max:255'],
