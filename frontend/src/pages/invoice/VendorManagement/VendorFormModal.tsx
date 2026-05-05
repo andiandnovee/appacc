@@ -1,4 +1,4 @@
-import { FC, ReactNode, ReactElement, useState } from "react";
+import { FC, useState, ChangeEvent } from "react";
 import Modal from "../../../components/ui/Modal";
 import Button from "../../../components/ui/Button";
 import Input from "../../../components/ui/Input";
@@ -6,14 +6,38 @@ import Select from "../../../components/ui/Select";
 import Toggle from "../../../components/ui/Toggle";
 import styles from "./VendorManagement.module.css";
 
-interface VendorFormModalProps {
-  vendor?: any;
-  onClose?: any;
-  onSaved?: any;
-  api?: any;
+// 1. Definisikan struktur data form
+interface VendorFormData {
+  sap_id: string | number;
+  name: string;
+  npwp: string;
+  address: string;
+  service_type: string;
+  pph_type: string;
+  pph_rate: string | number;
+  is_pkp: boolean;
 }
 
-// ─── Konstanta service_type (sesuai backend enum) ─────────────
+// 2. Definisikan struktur error (opsional: record string agar fleksibel)
+interface FormErrors {
+  sap_id?: string;
+  name?: string;
+  npwp?: string;
+  service_type?: string;
+  pph_type?: string;
+  pph_rate?: string;
+  general?: string;
+
+  [key: string]: string | undefined; // Index signature untuk akses dinamis
+}
+
+interface VendorFormModalProps {
+  vendor?: any;
+  onClose: () => void; // Sebaiknya gunakan tipe fungsi yang jelas
+  onSaved: (data: any, isEdit: boolean) => void;
+  api: any;
+}
+
 const SERVICE_TYPES = [
   { value: "", label: "— Pilih Jenis Layanan —" },
   { value: "Jasa Service", label: "Jasa Service" },
@@ -30,7 +54,6 @@ const PPH_TYPES = [
   { value: "26", label: "PPh 26 - Dividen" },
 ];
 
-// ─── Vendor Form Modal (Add / Edit) ───────────────────────────
 const VendorFormModal: FC<VendorFormModalProps> = ({
   vendor,
   onClose,
@@ -39,7 +62,8 @@ const VendorFormModal: FC<VendorFormModalProps> = ({
 }) => {
   const isEdit = Boolean(vendor);
 
-  const [form, setForm] = useState({
+  // Gunakan Generic <VendorFormData>
+  const [form, setForm] = useState<VendorFormData>({
     sap_id: vendor?.sap_id ?? "",
     name: vendor?.name ?? "",
     npwp: vendor?.npwp ?? "",
@@ -47,22 +71,32 @@ const VendorFormModal: FC<VendorFormModalProps> = ({
     service_type: vendor?.service_type ?? "",
     pph_type: vendor?.pph_type ?? "23",
     pph_rate: vendor?.pph_rate ?? "2",
+    is_pkp: vendor?.is_pkp ?? false,
   });
 
-  // ─── Toggle state untuk active/inactive ─────────────────
-  // Jika `vendor` tidak ada (mode tambah), default aktif = true.
   const [isActive, setIsActive] = useState(
     vendor ? vendor.deleted_at === null : true,
   );
 
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+  //const [isPkp, setIsPkp] = useState(vendor ? vendor.is_pkp : false);
 
-  const set = (field) => (e) =>
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+  const [loading, setLoading] = useState(false);
+
+  // Gunakan Generic <FormErrors>
+  const [errors, setErrors] = useState<FormErrors>({});
+
+  // Tambahkan tipe pada parameter field dan event
+  const set =
+    (field: keyof VendorFormData) =>
+    (
+      e: ChangeEvent<
+        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+      >,
+    ) =>
+      setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
   const validate = () => {
-    const err = {};
+    const err: FormErrors = {};
     if (!form.sap_id?.toString().trim()) err.sap_id = "SAP ID wajib diisi.";
     if (!form.name?.trim?.()) err.name = "Nama vendor wajib diisi.";
     return err;
@@ -78,32 +112,23 @@ const VendorFormModal: FC<VendorFormModalProps> = ({
     setLoading(true);
     setErrors({});
     try {
-      // ─── Save form data ─────────────────────────────────
-     const res = isEdit
-  ? await api.put(`/vendors/${vendor.id}`, form)
-  : await api.post("/vendors", form);
+      const res = isEdit
+        ? await api.put(`/vendors/${vendor.id}`, form)
+        : await api.post("/vendors", form);
 
-      // ─── Handle active/inactive toggle ─────────────────
       if (isEdit && vendor.deleted_at === null && !isActive) {
-        // User toggle dari aktif ke tidak aktif
-        // Call DELETE endpoint untuk soft delete
-       await api.delete(`/vendors/${vendor.id}`);
+        await api.delete(`/vendors/${vendor.id}`);
         res.data.deleted_at = new Date().toISOString();
-      } else if (isEdit && vendor.deleted_at !== null && isActive) {
-        // User toggle dari tidak aktif ke aktif
-        // TODO: Implement restore endpoint (future feature)
-        console.warn("Restore belum diimplementasikan");
       }
 
       onSaved(res.data, isEdit);
-    } catch (e) {
-      // Handle Laravel validation errors
+    } catch (e: any) {
       if (e.errors && Object.keys(e.errors).length > 0) {
-        const formattedErrors = {};
+        const formattedErrors: FormErrors = {};
         Object.entries(e.errors).forEach(([field, messages]) => {
           formattedErrors[field] = Array.isArray(messages)
             ? messages[0]
-            : messages;
+            : (messages as string);
         });
         setErrors(formattedErrors);
       } else {
@@ -126,12 +151,15 @@ const VendorFormModal: FC<VendorFormModalProps> = ({
         subtitle={
           isEdit ? `SAP ID: ${vendor.sap_id}` : "Isi data vendor dengan lengkap"
         }
-      />
+        // Tambahkan properti actions dan children jika dibutuhkan oleh komponen Modal Anda
+        actions={null}
+      >
+        {null}
+      </Modal.Header>
       <Modal.Body>
         <div className={styles.formGrid}>
           <Input
             label="SAP ID"
-            placeholder="contoh: 10001"
             value={form.sap_id}
             onChange={set("sap_id")}
             error={errors.sap_id}
@@ -140,14 +168,12 @@ const VendorFormModal: FC<VendorFormModalProps> = ({
           />
           <Input
             label="Nama Vendor"
-            placeholder="Nama perusahaan atau perorangan"
             value={form.name}
             onChange={set("name")}
             error={errors.name}
           />
           <Input
             label="NPWP"
-            placeholder="12.345.678.9-012.345"
             value={form.npwp}
             onChange={set("npwp")}
             error={errors.npwp}
@@ -169,39 +195,37 @@ const VendorFormModal: FC<VendorFormModalProps> = ({
           <Input
             label="Tarif PPh (%)"
             type="number"
-            placeholder="2.0"
             value={form.pph_rate}
             onChange={set("pph_rate")}
             error={errors.pph_rate}
-            step="0.01"
-            min="0"
-            max="100"
           />
           <div className={`${styles.formField} ${styles.fullWidth}`}>
             <label className={styles.label}>Alamat</label>
             <textarea
               className={styles.textarea}
-              placeholder="Alamat lengkap vendor"
               value={form.address}
               onChange={set("address")}
               rows={3}
             />
           </div>
+          {isEdit && (
+            <div className={`${styles.formField} ${styles.fullWidth}`}>
+              <Toggle
+                value={form.is_pkp}
+                onChange={(e) => setForm({ ...form, is_pkp: e.target.checked })}
+                label={form.is_pkp ? "Vendor PKP/Faktur pajak" : "Vendor Bukan PKP"}
+                variant={form.is_pkp ? "success" : "danger"}
+              />
+            </div>
+          )}
 
-          {/* ─── Toggle Status (hanya di edit mode) ──────────────────────── */}
           {isEdit && (
             <div className={`${styles.formField} ${styles.fullWidth}`}>
               <Toggle
                 value={isActive}
                 onChange={(e) => setIsActive(e.target.checked)}
                 label={isActive ? "Vendor Aktif" : "Vendor Tidak Aktif"}
-                description={
-                  isActive
-                    ? "Vendor dapat dipilih di transaksi baru"
-                    : "Vendor tidak dapat dipilih di transaksi baru"
-                }
                 variant={isActive ? "success" : "danger"}
-                size="md"
               />
             </div>
           )}

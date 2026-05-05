@@ -109,12 +109,14 @@ public function poLookup(Request $request)
 
     // Cari vendor_id di master vendors
     $vendor = \App\Models\Vendor::where('sap_id', $first->sap_vendor_id)->first();
+    $isPkp = $vendor ? $vendor->is_pkp : null;
 
     return response()->json([
         'found'                => true,
         'po_number'            => $first->po_number,
         'sap_vendor_id'        => $first->sap_vendor_id,
         'vendor_id'            => $vendor?->id,
+        'is_pkp'               => $isPkp,
         'vendor_name'          => $first->vendor_name,
         'sap_business_area_id' => $first->sap_business_area_id,
           'buyer_name'           => $first->Buyer_name,

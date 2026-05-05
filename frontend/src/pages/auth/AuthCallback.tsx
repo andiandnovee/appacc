@@ -23,6 +23,7 @@ export default function AuthCallback() {
   const tokenFromUrl = searchParams.get("token");
 
   if (tokenFromUrl) {
+    console.log("AuthCallback: Received token from URL, saving to localStorage"); 
     // Simpan ke localStorage supaya persist saat browser ditutup
     localStorage.setItem("appacc_token", tokenFromUrl);
     window.history.replaceState({}, '', '/auth/callback');
@@ -31,6 +32,7 @@ export default function AuthCallback() {
   api.get("/auth/me")
     .then((res) => {
       login(tokenFromUrl ?? null, res.data.data, true); // true = localStorage
+      console.log("AuthCallback: User data fetched successfully, logging in");
       navigate("/", { replace: true });
     })
     .catch(() => {

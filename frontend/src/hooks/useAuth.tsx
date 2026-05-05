@@ -37,34 +37,37 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
 
   // Boot: cek token di storage, validasi ke /auth/me
   useEffect(() => {
-  const IS_PROD = import.meta.env.PROD;
-  const token = getToken();
+    const IS_PROD = import.meta.env.PROD;
+    const token = getToken();
 
-  // Local: harus ada token di localStorage
-  // Production: tidak perlu cek token, langsung hit /auth/me (cookie dikirim otomatis)
-  if (!IS_PROD && !token) {
-    setLoading(false);
-    return;
-  }
+    // Local: harus ada token di localStorage
+    // Production: tidak perlu cek token, langsung hit /auth/me (cookie dikirim otomatis)
+    if (!IS_PROD && !token) {
+      console.log("hooks :No token found, skipping auth check");
+      setLoading(false);
+      return;
+    }
 
-  api
-    .get("/auth/me")
-    .then((res) => setUser(res.data.data))
-    .catch(() => {
-      clearToken();
-      setUser(null);
-    })
-    .finally(() => setLoading(false));
-}, []);
+    api
+      .get("/auth/me")
+      .then((res) => setUser(res.data.data))
+      .catch(() => {
+        clearToken();
+        setUser(null);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   // Login: simpan token + set user
   const login = (token: string, userData: User, remember = true): void => {
     if (remember) {
       localStorage.setItem("appacc_token", token);
       sessionStorage.removeItem("appacc_token");
+      console.log("hooks :Token stored in localStorage");
     } else {
       sessionStorage.setItem("appacc_token", token);
       localStorage.removeItem("appacc_token");
+      console.log("hooks :Token stored in sessionStorage");
     }
     setUser(userData);
   };
@@ -75,6 +78,9 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
       await api.post("/auth/logout");
     } catch {
       // tetap logout meski request gagal
+      console.warn(
+        "hooks :Logout request failed, but clearing local auth state anyway",
+      );
     } finally {
       clearToken();
       setUser(null);

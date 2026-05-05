@@ -119,11 +119,9 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
   // Agar PPN effect & PO lookup bisa mengubah nilai yang ditampilkan
   // tanpa melalui onChange flow yang menimbulkan race condition.
   //
-  const [amountRaw, setAmountRaw] = useState<number>(
-    receipt?.amount ?? 0
-  );
+  const [amountRaw, setAmountRaw] = useState<number>(receipt?.amount ?? 0);
   const [amountDisplay, setAmountDisplay] = useState<string>(
-    receipt?.amount?.toString() ?? ""
+    receipt?.amount?.toString() ?? "",
   );
   const [baseAmount, setBaseAmount] = useState<string>("");
 
@@ -133,7 +131,9 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
     const base = parseFloat(baseAmount);
     if (isNaN(base)) return;
 
-    const total = ppnEnabled ? Math.round(base + (base * ppnRate) / 100) : Math.round(base);
+    const total = ppnEnabled
+      ? Math.round(base + (base * ppnRate) / 100)
+      : Math.round(base);
     const totalStr = String(total);
 
     // Set semua dalam satu batch — amountDisplay memicu reformat di NumberInput
@@ -228,6 +228,7 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
           next.vendor_id = data.vendor_id.toString();
           filled.add("vendor_id");
         }
+
 
         if (data.amount !== undefined) {
           const amountStr = data.amount.toString();
@@ -400,7 +401,6 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
       />
       <Modal.Body>
         <div className={styles.formGrid}>
-
           {/* PO Number */}
           <div className={styles.poField}>
             <Input
@@ -453,7 +453,9 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
             type="number"
             placeholder="0"
             value={amountDisplay}
-            onChange={() => {/* no-op: amount dihandle via onValueChange */}}
+            onChange={() => {
+              /* no-op: amount dihandle via onValueChange */
+            }}
             onValueChange={(raw) => {
               setAmountRaw(raw);
               setAmountDisplay(String(raw));
@@ -466,6 +468,7 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
 
           {/* PPN toggle */}
           {autoFilled.has("amount") && (
+            {pofound && autoFilled.has("amount") &&  && (}
             <div className={styles.ppnWrapper}>
               <label className={styles.ppnToggleLabel}>
                 <input
@@ -518,9 +521,7 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
                       className={`${styles.ppnBreakdownRow} ${styles.ppnTotal}`}
                     >
                       <span>Total</span>
-                      <span>
-                        Rp {amountRaw.toLocaleString("id-ID")}
-                      </span>
+                      <span>Rp {amountRaw.toLocaleString("id-ID")}</span>
                     </span>
                   </div>
                 </div>

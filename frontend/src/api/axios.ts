@@ -20,8 +20,11 @@ export const getToken = (): string | null =>
 export const setToken = (token: string): void => {
   if (sessionStorage.getItem(TOKEN_KEY)) {
     sessionStorage.setItem(TOKEN_KEY, token);
+    console.log("axios :Token stored in sessionStorage (remember=false)");  
   } else {
     localStorage.setItem(TOKEN_KEY, token);
+
+    console.log("axios :Token stored in localStorage (remember=true)");
   }
 };
 
@@ -55,6 +58,7 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     }
   }
   // Production: browser otomatis kirim HttpOnly cookie, tidak perlu inject
+    console.log("axios :Request Interceptor - IS_PROD =", IS_PROD, ", config:", config);  
   return config;
 });
 
@@ -92,11 +96,18 @@ api.interceptors.response.use(
 
     // Bukan 401, atau sudah pernah retry → lempar error langsung
     if (error.response?.status !== 401 || originalRequest._retry) {
+      console.warn(
+        "axios :Response Interceptor - Non-401 error or already retried, rejecting:",
+        error.response?.status,
+        error.response?.data,
+      );
       return Promise.reject(error);
+
     }
 
     // Refresh endpoint sendiri yang 401 → token sudah tidak bisa di-refresh → logout
     if (originalRequest.url?.includes("/auth/refresh")) {
+      console.warn("axios :Response Interceptor - Refresh endpoint returned 401, forcing logout");
       forceLogout();
       return Promise.reject(error);
     }
@@ -111,10 +122,11 @@ api.interceptors.response.use(
         if (!IS_PROD && token) {
           originalRequest.headers.Authorization = `Bearer ${token}`;
         }
+        console.log("axios :Processed queued request with new token");
         return api(originalRequest);
       });
     }
-
+    console.log("axios :Response Interceptor - Starting token refresh");
     isRefreshing = true;
 
     try {
@@ -135,12 +147,14 @@ api.interceptors.response.use(
         // ── Production ───────────────────────────────────────────────────────
         // Backend sudah set HttpOnly cookie baru via Set-Cookie header
         // Frontend tidak perlu lakukan apa-apa, browser otomatis pakai cookie baru
+        console.log("axios :Response Interceptor - Using new HttpOnly cookie");
         processQueue(null, null);
       }
 
       return api(originalRequest);
 
     } catch (refreshError) {
+      console.error("axios :Response Interceptor - Token refresh failed:", refreshError); 
       processQueue(refreshError, null);
       forceLogout();
       return Promise.reject(refreshError);
