@@ -1,22 +1,32 @@
 // Table.tsx
-import { forwardRef, useImperativeHandle, ReactNode, useMemo, useId, useState, useEffect, useCallback } from "react";
+import {
+  forwardRef,
+  useImperativeHandle,
+  ReactNode,
+  useMemo,
+  useId,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import { utils, writeFile } from "xlsx";
 import {
   Search,
-  Download,
   ChevronUp,
   ChevronDown,
   ChevronsUpDown,
   Inbox,
   XCircle,
   Filter,
+  FileSpreadsheet,
+  FileText,
 } from "lucide-react";
 import { useTableData } from "./useTableData";
 import Card from "./Card";
 import Button from "./Button";
 import styles from "./Table.module.css";
 
-// ========== HOOK DEBOUNCE ==========
+// ========== DEBOUNCE ==========
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
   useEffect(() => {
@@ -26,6 +36,97 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
+// ========== EXPORT PDF ==========
+function exportToPdf(
+  rows: Record<string, any>[],
+  cols: { key: string; label: string }[],
+  exportName: string
+) {
+  const colLabels = cols.map((c) => c.label);
+
+  const tableRows = rows
+    .map(
+      (row) =>
+        `<tr>${colLabels.map((label) => `<td>${row[label] ?? ""}</td>`).join("")}</tr>`
+    )
+    .join("");
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8" />
+      <title>${exportName}</title>
+      <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          font-size: 12px;
+          color: #111;
+          padding: 24px;
+        }
+        h2 { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
+        table { border-collapse: collapse; width: 100%; }
+        thead tr { background: #f3f4f6; }
+        th {
+          border: 1px solid #d1d5db;
+          padding: 6px 10px;
+          font-size: 11px;
+          font-weight: 600;
+          text-align: left;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: #6b7280;
+          white-space: nowrap;
+        }
+        td {
+          border: 1px solid #e5e7eb;
+          padding: 5px 10px;
+          font-size: 11px;
+          color: #374151;
+          vertical-align: middle;
+        }
+        tr:nth-child(even) td { background: #f9fafb; }
+        .meta { margin-top: 16px; font-size: 10px; color: #9ca3af; }
+        @media print {
+          body { padding: 12px; }
+          @page { margin: 1cm; }
+        }
+      </style>
+    </head>
+    <body>
+      <h2>${exportName}</h2>
+      <table>
+        <thead>
+          <tr>${colLabels.map((l) => `<th>${l}</th>`).join("")}</tr>
+        </thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+      <p class="meta">
+        Diekspor pada: ${new Date().toLocaleString("id-ID")} · Total: ${rows.length} data
+      </p>
+      <script>
+        window.onload = function () {
+          setTimeout(function () {
+            window.print();
+            window.onafterprint = function () { window.close(); };
+          }, 300);
+        };
+      <\/script>
+    </body>
+    </html>
+  `;
+
+  const win = window.open("", "_blank");
+  if (!win) {
+    alert("Pop-up diblokir browser. Izinkan pop-up untuk export PDF.");
+    return;
+  }
+  win.document.write(html);
+  win.document.close();
+}
+
+// ========== INTERFACES ==========
 interface Column {
   key: string;
   label: string;
@@ -35,6 +136,7 @@ interface Column {
   filterType?: "text" | "select";
   filterOptions?: Array<{ value: string; label: string }>;
   filterPlaceholder?: string;
+  exportable?: boolean; // set false untuk skip kolom ini saat export (misal kolom Aksi)
 }
 
 interface TableProps {
@@ -53,6 +155,7 @@ interface TableProps {
   filterDebounceMs?: number;
 }
 
+// ========== KOMPONEN ==========
 const Table = forwardRef<any, TableProps>((props, ref) => {
   const {
     url,
@@ -70,12 +173,11 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
     filterDebounceMs = 300,
   } = props;
 
-  // ========== STATE FILTER PER KOLOM (harus sebelum useTableData) ==========
+  // ========== STATE FILTER KOLOM ==========
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
   const [immediateFilters, setImmediateFilters] = useState<Record<string, string>>({});
   const debouncedFilters = useDebounce(immediateFilters, filterDebounceMs);
 
-  // Sinkronkan debouncedFilters ke columnFilters
   useEffect(() => {
     setColumnFilters(debouncedFilters);
   }, [debouncedFilters]);
@@ -87,6 +189,7 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
     loading,
     error,
     refetch,
+    fetchAll,
     search,
     setSearch,
     sortKey,
@@ -112,50 +215,41 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
 
   const fallbackId = useId();
 
-  // Reset halaman ketika columnFilters berubah (setelah debounce)
+  // Reset page saat filter kolom berubah
   useEffect(() => {
-    if (serverSide) {
-      setPage(1);
-    }
+    if (serverSide) setPage(1);
   }, [columnFilters, serverSide, setPage]);
 
-  // Fungsi untuk menghapus semua filter kolom
   const clearColumnFilters = useCallback(() => {
     setImmediateFilters({});
     setColumnFilters({});
     if (serverSide) setPage(1);
   }, [serverSide, setPage]);
 
-  // Fungsi untuk menghapus semua filter (termasuk search global)
   const clearAllFilters = useCallback(() => {
     clearColumnFilters();
     setSearch("");
   }, [clearColumnFilters, setSearch]);
 
-  // Hitung jumlah filter aktif (kolom + search)
   const activeFilterCount = useMemo(() => {
-    let count = Object.values(columnFilters).filter(v => v && v.trim() !== "").length;
+    let count = Object.values(columnFilters).filter((v) => v && v.trim() !== "").length;
     if (search.trim()) count++;
     return count;
   }, [columnFilters, search]);
 
-  // Peringatan jika serverSide=true dan tidak menggunakan serverSideFiltering
   useEffect(() => {
     if (serverSide && !serverSideFiltering && activeFilterCount > 0) {
       console.warn(
-        "Filter pada serverSide=true hanya akan memfilter data yang sudah di-cache. Untuk filter lengkap, set serverSide=false atau aktifkan serverSideFiltering dan implementasikan parameter filter di API."
+        "Filter pada serverSide=true hanya memfilter data cache. Untuk filter lengkap, set serverSide=false atau aktifkan serverSideFiltering."
       );
     }
   }, [serverSide, serverSideFiltering, activeFilterCount]);
 
-  // ========== FILTER & SORTING CLIENT-SIDE (hanya jika serverSide=false atau serverSideFiltering=false) ==========
+  // ========== FILTER & SORT CLIENT-SIDE ==========
   const shouldFilterClientSide = !serverSide || !serverSideFiltering;
 
   const filteredData = useMemo(() => {
-    if (!shouldFilterClientSide) {
-      // Server-side filtering aktif, data dari server sudah sesuai
-      return [...allData];
-    }
+    if (!shouldFilterClientSide) return [...allData];
 
     let result = [...allData];
 
@@ -185,66 +279,99 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
   const sortedData = useMemo(() => {
     if (!sortKey) return filteredData;
     const sorted = [...filteredData];
-    const column = columns.find((c) => c.key === sortKey);
-    if (!column) return sorted;
-
     sorted.sort((a, b) => {
       let aVal = a[sortKey];
       let bVal = b[sortKey];
-
       if (aVal == null && bVal == null) return 0;
       if (aVal == null) return 1;
       if (bVal == null) return -1;
-
       if (!isNaN(Number(aVal)) && !isNaN(Number(bVal))) {
         aVal = Number(aVal);
         bVal = Number(bVal);
       }
-
       if (aVal < bVal) return sortDir === "asc" ? -1 : 1;
       if (aVal > bVal) return sortDir === "asc" ? 1 : -1;
       return 0;
     });
     return sorted;
-  }, [filteredData, sortKey, sortDir, columns]);
+  }, [filteredData, sortKey, sortDir]);
 
   // ========== PAGINATION ==========
-  // Untuk client-side, kita hitung sendiri; untuk server-side, gunakan dari hook
   const clientTotalRows = sortedData.length;
   const clientTotalPages = Math.ceil(clientTotalRows / pageSize);
 
   const effectiveTotalRows = serverSide ? serverTotalRows : clientTotalRows;
   const effectiveTotalPages = serverSide ? serverTotalPages : clientTotalPages;
 
-  // Data yang ditampilkan: jika server-side, gunakan hookData (sudah dipaginasi oleh server)
-  // Jika client-side, lakukan paginasi manual
   const paginatedData = useMemo(() => {
-    if (serverSide) {
-      return hookData; // server sudah mengembalikan data per halaman
-    } else {
-      const start = (page - 1) * pageSize;
-      return sortedData.slice(start, start + pageSize);
-    }
+    if (serverSide) return hookData;
+    const start = (page - 1) * pageSize;
+    return sortedData.slice(start, start + pageSize);
   }, [serverSide, hookData, sortedData, page, pageSize]);
 
-  // ========== EKSPOR ==========
-  const handleExport = () => {
-    if (serverSide && allData.length < serverTotalRows && !serverSideFiltering) {
-      console.warn(
-        "Export hanya berdasarkan data yang sudah dimuat. Untuk export lengkap, set serverSide=false atau aktifkan serverSideFiltering."
-      );
-    }
+  // ========== EXPORT ==========
+  // Kolom yang di-export: semua kecuali yang exportable=false
+  const exportCols = useMemo(
+    () => columns.filter((c) => c.exportable !== false),
+    [columns]
+  );
 
-    const exportCols = columns.filter((c) => !c.render);
-    const rows = filteredData.map((row) =>
-      Object.fromEntries(exportCols.map((c) => [c.label, row[c.key] ?? ""]))
-    );
-    if (rows.length === 0) return;
-    const ws = utils.json_to_sheet(rows);
-    const wb = utils.book_new();
-    utils.book_append_sheet(wb, ws, "Data");
-    writeFile(wb, `${exportName}.xlsx`);
-  };
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = useCallback(
+    async (format: "xlsx" | "pdf" = "xlsx") => {
+      if (exporting) return;
+      setExporting(true);
+
+      try {
+        let exportData: any[] = [];
+
+        if (url && serverSide) {
+          // Fetch semua data dari server dengan filter aktif (per_page=9999)
+          exportData = await fetchAll();
+        } else {
+          // Client-side: pakai data yang sudah difilter & diurutkan
+          exportData = sortedData;
+        }
+
+        if (exportData.length === 0) return;
+
+        // Build rows: gunakan raw value (bukan render) untuk setiap kolom
+        const rows = exportData.map((row) =>
+          Object.fromEntries(
+            exportCols.map((col) => [col.label, row[col.key] ?? ""])
+          )
+        );
+
+        if (format === "xlsx") {
+          const ws = utils.json_to_sheet(rows);
+
+          // Auto column width
+          ws["!cols"] = exportCols.map((col) => ({
+            wch: Math.min(
+              Math.max(
+                col.label.length,
+                ...exportData.map((row) => String(row[col.key] ?? "").length)
+              ) + 2,
+              50
+            ),
+          }));
+
+          const wb = utils.book_new();
+          utils.book_append_sheet(wb, ws, "Data");
+          writeFile(wb, `${exportName}.xlsx`);
+        } else {
+          exportToPdf(rows, exportCols, exportName);
+        }
+      } catch (err: any) {
+        console.error("Export gagal:", err);
+        alert(`Export gagal: ${err?.message ?? "Terjadi kesalahan"}`);
+      } finally {
+        setExporting(false);
+      }
+    },
+    [exporting, url, serverSide, fetchAll, sortedData, exportCols, exportName]
+  );
 
   // ========== SORT ICON ==========
   const SortIcon = ({ colKey }: { colKey: string }) => {
@@ -257,17 +384,19 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
     );
   };
 
-  // ========== PAGINATION NUMBERS ==========
+  // ========== PAGE NUMBERS ==========
   const pageNumbers = useMemo(() => {
     const pages: (number | string)[] = [];
     if (!effectiveTotalPages || effectiveTotalPages <= 1) return pages;
-
     const delta = 1;
     const range: number[] = [];
-    for (let i = Math.max(1, page - delta); i <= Math.min(effectiveTotalPages, page + delta); i++) {
+    for (
+      let i = Math.max(1, page - delta);
+      i <= Math.min(effectiveTotalPages, page + delta);
+      i++
+    ) {
       range.push(i);
     }
-
     if (range[0] > 1) {
       pages.push(1);
       if (range[0] > 2) pages.push("...");
@@ -281,9 +410,9 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
   }, [page, effectiveTotalPages]);
 
   const goToPrevPage = () => setPage((p) => Math.max(1, p - 1));
-  const goToNextPage = () => setPage((p) => (effectiveTotalPages ? Math.min(effectiveTotalPages, p + 1) : p));
+  const goToNextPage = () =>
+    setPage((p) => (effectiveTotalPages ? Math.min(effectiveTotalPages, p + 1) : p));
 
-  // Expose methods via ref
   useImperativeHandle(ref, () => ({
     refetch,
     data: paginatedData,
@@ -295,6 +424,7 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
     setImmediateFilters((prev) => ({ ...prev, [colKey]: value }));
   };
 
+  // ========== RENDER ==========
   return (
     <Card variant="outlined">
       <Card.Header
@@ -315,6 +445,7 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
                 />
               </div>
             )}
+
             {activeFilterCount > 0 && (
               <Button
                 variant="outline"
@@ -327,23 +458,52 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
                 Reset filter ({activeFilterCount})
               </Button>
             )}
-            <Button
-              className={styles.exportBtn}
-              onClick={handleExport}
-              title="Export ke Excel"
-              disabled={filteredData.length === 0}
-            >
-              <Download size={14} />
-              Export
-            </Button>
+
+            {/* Export buttons */}
+            <div className={styles.exportGroup}>
+              <Button
+                className={styles.exportBtn}
+                onClick={() => handleExport("xlsx")}
+                disabled={filteredData.length === 0 || exporting}
+                title="Export ke Excel"
+              >
+                <FileSpreadsheet size={14} />
+                {exporting ? "..." : "XLS"}
+              </Button>
+              <Button
+                className={styles.exportBtn}
+                onClick={() => handleExport("pdf")}
+                disabled={filteredData.length === 0 || exporting}
+                title="Export ke PDF"
+              >
+                <FileText size={14} />
+                {exporting ? "..." : "PDF"}
+              </Button>
+            </div>
           </div>
         }
       />
 
       {error && (
-        <div style={{ padding: "var(--space-4)", color: "var(--color-danger)", fontSize: "var(--text-sm)" }}>
+        <div
+          style={{
+            padding: "var(--space-4)",
+            color: "var(--color-danger)",
+            fontSize: "var(--text-sm)",
+          }}
+        >
           Gagal memuat data: {error}.{" "}
-          <Button onClick={refetch} variant="outline" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, marginLeft: "var(--space-1)" }}>
+          <Button
+            onClick={refetch}
+            variant="outline"
+            style={{
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              padding: 0,
+              marginLeft: "var(--space-1)",
+            }}
+          >
             Coba lagi
           </Button>
         </div>
@@ -359,7 +519,9 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
                     type="checkbox"
                     className={styles.checkbox}
                     checked={isAllSelected}
-                    ref={(el) => { if (el) el.indeterminate = isIndeterminate; }}
+                    ref={(el) => {
+                      if (el) el.indeterminate = isIndeterminate;
+                    }}
                     onChange={toggleAll}
                     aria-label="Pilih semua"
                   />
@@ -370,7 +532,13 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
                   key={col.key}
                   className={`${styles.th} ${col.sortable ? styles.thSortable : ""}`}
                   onClick={() => col.sortable && handleSort(col.key)}
-                  aria-sort={sortKey === col.key ? (sortDir === "asc" ? "ascending" : "descending") : undefined}
+                  aria-sort={
+                    sortKey === col.key
+                      ? sortDir === "asc"
+                        ? "ascending"
+                        : "descending"
+                      : undefined
+                  }
                 >
                   <span className={styles.thInner}>
                     {col.label}
@@ -384,6 +552,7 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
                 </th>
               ))}
             </tr>
+
             {columns.some((col) => col.filterable) && (
               <tr className={styles.filterRow}>
                 {selectable && <td className={styles.filterCell} />}
@@ -394,12 +563,16 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
                         {col.filterType === "select" ? (
                           <select
                             value={immediateFilters[col.key] || ""}
-                            onChange={(e) => handleFilterChange(col.key, e.target.value)}
+                            onChange={(e) =>
+                              handleFilterChange(col.key, e.target.value)
+                            }
                             className={styles.filterSelect}
                           >
                             <option value="">Semua</option>
                             {col.filterOptions?.map((opt) => (
-                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                              <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </option>
                             ))}
                           </select>
                         ) : (
@@ -407,7 +580,9 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
                             type="text"
                             placeholder={col.filterPlaceholder || `Filter ${col.label}`}
                             value={immediateFilters[col.key] || ""}
-                            onChange={(e) => handleFilterChange(col.key, e.target.value)}
+                            onChange={(e) =>
+                              handleFilterChange(col.key, e.target.value)
+                            }
                             className={styles.filterInput}
                           />
                         )}
@@ -418,27 +593,48 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
               </tr>
             )}
           </thead>
+
           <tbody>
-            {loading && Array.from({ length: pageSize }).map((_, i) => (
-              <tr key={`skeleton-${i}`} className={styles.tr}>
-                {selectable && <td className={styles.checkboxCell}><div className={styles.skeleton} style={{ width: 16, height: 16 }} /></td>}
-                {columns.map((col) => (
-                  <td key={col.key} className={styles.td}>
-                    <div className={styles.skeleton} style={{ width: `${60 + Math.random() * 30}%` }} />
-                  </td>
-                ))}
-              </tr>
-            ))}
+            {loading &&
+              Array.from({ length: pageSize }).map((_, i) => (
+                <tr key={`skeleton-${i}`} className={styles.tr}>
+                  {selectable && (
+                    <td className={styles.checkboxCell}>
+                      <div className={styles.skeleton} style={{ width: 16, height: 16 }} />
+                    </td>
+                  )}
+                  {columns.map((col) => (
+                    <td key={col.key} className={styles.td}>
+                      <div
+                        className={styles.skeleton}
+                        style={{ width: `${60 + Math.random() * 30}%` }}
+                      />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+
             {!loading && !error && paginatedData.length === 0 && (
               <tr>
                 <td colSpan={columns.length + (selectable ? 1 : 0)}>
                   <div className={styles.empty}>
-                    <div className={styles.emptyIcon}><Inbox size={40} /></div>
+                    <div className={styles.emptyIcon}>
+                      <Inbox size={40} />
+                    </div>
                     <p className={styles.emptyText}>
-                      {activeFilterCount > 0 ? "Tidak ada data yang sesuai dengan filter" : search ? `Tidak ada hasil untuk "${search}"` : "Belum ada data"}
+                      {activeFilterCount > 0
+                        ? "Tidak ada data yang sesuai dengan filter"
+                        : search
+                        ? `Tidak ada hasil untuk "${search}"`
+                        : "Belum ada data"}
                     </p>
                     {activeFilterCount > 0 && (
-                      <Button variant="outline" size="sm" onClick={clearAllFilters} className={styles.clearFilterBtn}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={clearAllFilters}
+                        className={styles.clearFilterBtn}
+                      >
                         <XCircle size={14} /> Hapus semua filter
                       </Button>
                     )}
@@ -446,35 +642,39 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
                 </td>
               </tr>
             )}
-            {!loading && paginatedData.map((row, index) => {
-              const rowId = row[rowIdKey];
-              return (
-                <tr
-                  key={rowId ?? `${fallbackId}-${index}`}
-                  className={`${styles.tr} ${selectable && isSelected(rowId) ? styles.trSelected : ""}`}
-                  onClick={() => selectable && toggleRow(rowId)}
-                >
-                  {selectable && (
-                    <td className={styles.checkboxCell}>
-                      <input
-                        type="checkbox"
-                        className={styles.checkbox}
-                        checked={isSelected(rowId)}
-                        onChange={() => toggleRow(rowId)}
-                        onClick={(e) => e.stopPropagation()}
-                        aria-label={`Pilih baris ${rowId}`}
-                        disabled={rowId === undefined}
-                      />
-                    </td>
-                  )}
-                  {columns.map((col) => (
-                    <td key={col.key} className={styles.td}>
-                      {col.render ? col.render(row, refetch) : (row[col.key] ?? "—")}
-                    </td>
-                  ))}
-                </tr>
-              );
-            })}
+
+            {!loading &&
+              paginatedData.map((row, index) => {
+                const rowId = row[rowIdKey];
+                return (
+                  <tr
+                    key={rowId ?? `${fallbackId}-${index}`}
+                    className={`${styles.tr} ${
+                      selectable && isSelected(rowId) ? styles.trSelected : ""
+                    }`}
+                    onClick={() => selectable && toggleRow(rowId)}
+                  >
+                    {selectable && (
+                      <td className={styles.checkboxCell}>
+                        <input
+                          type="checkbox"
+                          className={styles.checkbox}
+                          checked={isSelected(rowId)}
+                          onChange={() => toggleRow(rowId)}
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label={`Pilih baris ${rowId}`}
+                          disabled={rowId === undefined}
+                        />
+                      </td>
+                    )}
+                    {columns.map((col) => (
+                      <td key={col.key} className={styles.td}>
+                        {col.render ? col.render(row, refetch) : (row[col.key] ?? "—")}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
           </tbody>
         </table>
       </div>
@@ -485,22 +685,53 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
             {selectable && selected.length > 0 && `${selected.length} dipilih · `}
             {effectiveTotalRows} data
             {activeFilterCount > 0 && (
-              <Button variant="ghost" size="sm" onClick={clearAllFilters} className={styles.clearFilterFooter}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearAllFilters}
+                className={styles.clearFilterFooter}
+              >
                 <XCircle size={12} /> Reset semua filter ({activeFilterCount})
               </Button>
             )}
           </span>
           {effectiveTotalPages > 1 && (
             <div className={styles.pagination}>
-              <Button className={styles.pageBtn} onClick={goToPrevPage} disabled={page === 1}>‹</Button>
-              {pageNumbers.map((p, i) => p === "..." ? (
-                <span key={`dots-${i}`} className={styles.footerInfo} style={{ padding: "0 4px" }}>…</span>
-              ) : (
-                <button key={p} className={`${styles.pageBtn} ${page === p ? styles.pageBtnActive : ""}`} onClick={() => setPage(p as number)}>
-                  {p}
-                </button>
-              ))}
-              <Button className={styles.pageBtn} onClick={goToNextPage} disabled={page === effectiveTotalPages}>›</Button>
+              <Button
+                className={styles.pageBtn}
+                onClick={goToPrevPage}
+                disabled={page === 1}
+              >
+                ‹
+              </Button>
+              {pageNumbers.map((p, i) =>
+                p === "..." ? (
+                  <span
+                    key={`dots-${i}`}
+                    className={styles.footerInfo}
+                    style={{ padding: "0 4px" }}
+                  >
+                    …
+                  </span>
+                ) : (
+                  <button
+                    key={p}
+                    className={`${styles.pageBtn} ${
+                      page === p ? styles.pageBtnActive : ""
+                    }`}
+                    onClick={() => setPage(p as number)}
+                  >
+                    {p}
+                  </button>
+                )
+              )}
+              <Button
+                className={styles.pageBtn}
+                onClick={goToNextPage}
+                disabled={page === effectiveTotalPages}
+              >
+                ›
+              </Button>
             </div>
           )}
         </div>

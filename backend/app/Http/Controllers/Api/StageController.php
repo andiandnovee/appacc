@@ -24,7 +24,7 @@ class StageController extends Controller
                 $q->where('name', 'like', "%{$request->search}%")
             )
             ->orderByDesc('year')
-            ->orderBy('name');
+            ->orderBy('id');
 
         // Jika ada request paginate (dari Table component), gunakan paginate
         if ($request->boolean('paginate', true) && $request->filled('per_page')) {

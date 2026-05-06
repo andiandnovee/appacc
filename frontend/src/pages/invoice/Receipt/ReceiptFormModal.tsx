@@ -29,6 +29,7 @@ interface Receipt {
   business_area_id: number | null;
   business_area_code: string | null;
   pgr_id: string | null;
+  is_pkp: boolean;
 }
 
 interface ReceiptFormModalProps {
@@ -50,6 +51,7 @@ interface FormData {
   business_area_code: string;
   buyer_name: string;
   pgr_id: string;
+  is_pkp: boolean;
 }
 
 type FormErrors = Partial<Record<keyof FormData | "general", string>>;
@@ -72,12 +74,11 @@ const makeInitialForm = (
     (selectedYear ? parseInt(selectedYear) : new Date().getFullYear()),
   po_number: receipt?.po_number ?? "",
   invoice_number: receipt?.invoice_number ?? "",
-  // FIX: form.amount selalu raw number string, BUKAN formatted string.
-  // NumberInput akan format sendiri dari value ini via useNumberFormat.
   amount: receipt?.amount?.toString() ?? "",
   business_area_code: receipt?.business_area_code ?? "",
   buyer_name: "",
   pgr_id: receipt?.pgr_id ?? "",
+  is_pkp: receipt?.is_pkp ?? false,
 });
 
 // ======================== COMPONENT ========================
@@ -106,19 +107,6 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
   const [ppnRate, setPpnRate] = useState(11);
 
   // ── Amount state ───────────────────────────────────────────────────────────
-  //
-  // ARSITEKTUR:
-  // - form.amount  : raw number string ("250600"), SELALU raw, dikirim ke API.
-  //                  JANGAN simpan formatted string di sini.
-  // - amountRaw    : number aktual (250600), untuk validasi & payload API.
-  // - amountDisplay: string yang ditampilkan di NumberInput (value prop).
-  //                  Bisa raw ("250600") — NumberInput akan format sendiri.
-  //                  Setelah user ketik, NumberInput update via onValueChange.
-  //
-  // Kenapa amountDisplay terpisah?
-  // Agar PPN effect & PO lookup bisa mengubah nilai yang ditampilkan
-  // tanpa melalui onChange flow yang menimbulkan race condition.
-  //
   const [amountRaw, setAmountRaw] = useState<number>(receipt?.amount ?? 0);
   const [amountDisplay, setAmountDisplay] = useState<string>(
     receipt?.amount?.toString() ?? "",
@@ -136,10 +124,9 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
       : Math.round(base);
     const totalStr = String(total);
 
-    // Set semua dalam satu batch — amountDisplay memicu reformat di NumberInput
     setAmountRaw(total);
     setForm((prev) => ({ ...prev, amount: totalStr }));
-    setAmountDisplay(totalStr); // ← NumberInput terima raw string, format sendiri
+    setAmountDisplay(totalStr);
   }, [ppnEnabled, ppnRate, baseAmount]);
 
   // ── Edit mode: lookup buyer name dari pgr_id ───────────────────────────────
@@ -188,6 +175,7 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
           company_id: "",
           business_area_code: "",
           pgr_id: "",
+          is_pkp: false,
         }));
         return;
       }
@@ -229,14 +217,12 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
           filled.add("vendor_id");
         }
 
-
         if (data.amount !== undefined) {
           const amountStr = data.amount.toString();
           setBaseAmount(amountStr);
-          // FIX: set display & raw — form.amount di-set via effect PPN
           setAmountDisplay(amountStr);
           setAmountRaw(parseFloat(amountStr));
-          next.amount = amountStr; // raw string
+          next.amount = amountStr;
           filled.add("amount");
         }
 
@@ -250,6 +236,16 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
             ? `${data.purc_grp} — ${data.buyer_name}`
             : data.purc_grp;
           filled.add("pgr_id");
+        }
+
+        // ── is_pkp dari PO lookup ──────────────────────────────────────────
+        // Jika vendor PKP, otomatis enable PPN 11%
+        if (data.is_pkp !== undefined) {
+          next.is_pkp = Boolean(data.is_pkp);
+          filled.add("is_pkp");
+          if (data.is_pkp) {
+            setPpnEnabled(true); // trigger PPN effect via useEffect
+          }
         }
 
         setForm(next);
@@ -315,7 +311,6 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
     if (!form.vendor_id) err.vendor_id = "Vendor wajib dipilih.";
     if (!form.company_id) err.company_id = "Perusahaan wajib dipilih.";
     if (!form.stage_id) err.stage_id = "Stage wajib dipilih.";
-    // FIX: validasi pakai amountRaw (number), bukan form.amount (string)
     if (!amountRaw || amountRaw <= 0)
       err.amount = "Jumlah harus berupa angka positif.";
     return err;
@@ -340,10 +335,10 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
         stage_id: parseInt(form.stage_id, 10),
         po_number: form.po_number || null,
         invoice_number: form.invoice_number || null,
-        // FIX: pakai amountRaw — angka bersih, bukan parseFloat dari formatted string
         amount: amountRaw,
         business_area_code: form.business_area_code || null,
         pgr_id: form.pgr_id ? form.pgr_id.split(" — ")[0].trim() || null : null,
+        is_pkp: form.is_pkp,
       };
 
       if (isEdit && receipt) {
@@ -442,12 +437,6 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
             error={errors.invoice_number}
           />
 
-          {/*
-            FIX: value pakai amountDisplay (raw number string),
-            bukan form.amount yang bisa sudah formatted.
-            onValueChange update amountRaw & form.amount (raw).
-            onChange TIDAK dipakai untuk amount — semua lewat onValueChange.
-          */}
           <Input
             label="Jumlah (Net Value)"
             type="number"
@@ -466,9 +455,8 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
             hint={autoFilled.has("amount") ? "Dari SAP" : undefined}
           />
 
-          {/* PPN toggle */}
+          {/* PPN toggle — tampil hanya jika amount dari SAP (autoFilled) */}
           {autoFilled.has("amount") && (
-            {pofound && autoFilled.has("amount") &&  && (}
             <div className={styles.ppnWrapper}>
               <label className={styles.ppnToggleLabel}>
                 <input
@@ -477,7 +465,12 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
                   onChange={(e) => setPpnEnabled(e.target.checked)}
                   className={styles.ppnCheckbox}
                 />
-                <span>Tambah PPN</span>
+                <span>
+                  Tambah PPN
+                  {form.is_pkp && (
+                    <span className={styles.pkpBadge}>Vendor PKP</span>
+                  )}
+                </span>
               </label>
 
               {ppnEnabled && (

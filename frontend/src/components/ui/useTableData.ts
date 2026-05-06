@@ -1,13 +1,13 @@
-// hooks/useTableData.js (perbaikan)
+// hooks/useTableData.js
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import api from "../../api/axios"; // ← gunakan api client yang sudah ada
+import api from "../../api/axios";
 
 export function useTableData(url, {
   pageSize = 10,
   dataKey = '',
   defaultParams = {},
   serverSide = true,
-  filters = {},        // ← tambahan: filter per kolom
+  filters = {},
 } = {}) {
 
   const [rawData, setRawData] = useState([])
@@ -22,90 +22,124 @@ export function useTableData(url, {
   const [selected, setSelected] = useState([])
   const [refetchCount, setRefetchCount] = useState(0)
 
-  // Gabungkan filters dari props dengan state internal (jika perlu)
-  // Di sini kita asumsikan filters di-pass dari komponen induk (Table)
-  // Untuk memudahkan, kita jadikan filters sebagai dependency.
+  const queryString = useMemo(() => {
+    if (!serverSide) return ''
 
-  // Di dalam useTableData, pada bagian queryString
+    const params = new URLSearchParams()
 
-const queryString = useMemo(() => {
-  if (!serverSide) return ''
-
-  const params = new URLSearchParams()
-
-  // Default params (misal: trash_filter)
-  Object.entries(defaultParams).forEach(([key, value]) => {
-    if (value != null && value !== '') {
-      params.append(key, String(value))   // ← konversi ke string
-    }
-  })
-
-  // Pagination
-  params.append('per_page', String(pageSize))   // ← konversi
-  params.append('page', String(page))           // ← konversi
-
-  // Search global
-  if (search) params.append('search', search)
-
-  // Sorting
-  if (sortKey) {
-    params.append('sort_by', sortKey)
-    params.append('sort_dir', sortDir)
-  }
-
-  // Filter per kolom (server-side)
-  Object.entries(filters).forEach(([key, value]) => {
-    if (value != null && value !== '') {
-      params.append(`filter[${key}]`, String(value))   // ← konversi
-    }
-  })
-
-  return params.toString()
-}, [defaultParams, pageSize, page, search, sortKey, sortDir, serverSide, filters])
-  // Fetch effect (sama seperti sebelumnya, tapi gunakan queryString)
-  useEffect(() => {
-  const fetchData = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      // api.get menerima path relatif + params terpisah
-      // jangan gabung manual jadi satu string URL
-      const response = await api.get(url, {
-        params: serverSide
-          ? Object.fromEntries(new URLSearchParams(queryString))
-          : undefined,
-      });
-
-      const json = response.data;
-
-      if (serverSide) {
-        const data = dataKey ? json[dataKey] : json.data;
-        setRawData(Array.isArray(data) ? data : []);
-        setTotalRows(json.meta?.total || json.total || data?.length || 0);
-      } else {
-        const data = dataKey ? json[dataKey] : json;
-        if (!Array.isArray(data)) throw new Error("Response bukan array");
-        setRawData(data);
-        setTotalRows(data.length);
+    Object.entries(defaultParams).forEach(([key, value]) => {
+      if (value != null && value !== '') {
+        params.append(key, String(value))
       }
-    } catch (err) {
-      // Axios lempar error dengan struktur berbeda dari fetch
-      const message = err.response?.data?.message || err.message || "Terjadi kesalahan";
-      setError(message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    })
 
-  fetchData();
-}, [url, queryString, serverSide, dataKey, refetchCount]);
+    params.append('per_page', String(pageSize))
+    params.append('page', String(page))
+
+    if (search) params.append('search', search)
+
+    if (sortKey) {
+      params.append('sort_by', sortKey)
+      params.append('sort_dir', sortDir)
+    }
+
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value != null && value !== '') {
+        params.append(`filter[${key}]`, String(value))
+      }
+    })
+
+    return params.toString()
+  }, [defaultParams, pageSize, page, search, sortKey, sortDir, serverSide, filters])
+
+  // ========== FETCH DATA HALAMAN ==========
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const response = await api.get(url, {
+          params: serverSide
+            ? Object.fromEntries(new URLSearchParams(queryString))
+            : undefined,
+        })
+
+        const json = response.data
+
+        if (serverSide) {
+          const data = dataKey ? json[dataKey] : json.data
+          setRawData(Array.isArray(data) ? data : [])
+          setTotalRows(json.meta?.total || json.total || data?.length || 0)
+        } else {
+          const data = dataKey ? json[dataKey] : json
+          if (!Array.isArray(data)) throw new Error("Response bukan array")
+          setRawData(data)
+          setTotalRows(data.length)
+        }
+      } catch (err) {
+        const message = err.response?.data?.message || err.message || "Terjadi kesalahan"
+        setError(message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [url, queryString, serverSide, dataKey, refetchCount])
 
   // Reset page saat search, sort, atau filters berubah
   useEffect(() => {
     if (serverSide) setPage(1)
   }, [search, sortKey, sortDir, filters, serverSide])
 
-  // Client-side filtering (hanya jika serverSide=false)
+  // ========== FETCH ALL (untuk export) ==========
+  // Kirim semua filter/search/sort yang aktif, tapi per_page=9999
+  const fetchAll = useCallback(async () => {
+    try {
+      const params = {}
+
+      // Default params
+      Object.entries(defaultParams).forEach(([key, value]) => {
+        if (value != null && value !== '') params[key] = String(value)
+      })
+
+      // per_page besar, page 1
+      params.per_page = 9999
+      params.page = 1
+
+      // Search
+      if (search) params.search = search
+
+      // Sort
+      if (sortKey) {
+        params.sort_by = sortKey
+        params.sort_dir = sortDir
+      }
+
+      // Column filters
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value != null && value !== '') {
+          params[`filter[${key}]`] = String(value)
+        }
+      })
+
+      const response = await api.get(url, { params })
+      const json = response.data
+
+      if (serverSide) {
+        const data = dataKey ? json[dataKey] : json.data
+        return Array.isArray(data) ? data : []
+      } else {
+        const data = dataKey ? json[dataKey] : json
+        return Array.isArray(data) ? data : []
+      }
+    } catch (err) {
+      const message = err.response?.data?.message || err.message || "Terjadi kesalahan"
+      throw new Error(message)
+    }
+  }, [url, defaultParams, search, sortKey, sortDir, filters, serverSide, dataKey])
+
+  // ========== CLIENT-SIDE FILTER & SORT ==========
   const filtered = useMemo(() => {
     if (serverSide) return rawData
     if (!search.trim()) return rawData
@@ -175,6 +209,7 @@ const queryString = useMemo(() => {
     loading,
     error,
     refetch: () => setRefetchCount(c => c + 1),
+    fetchAll,                                          // ← expose untuk export
     totalRows: serverSide ? totalRows : clientTotalRows,
     totalPages: serverSide ? Math.ceil(totalRows / pageSize) : clientTotalPages,
     search, setSearch,

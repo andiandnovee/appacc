@@ -52,12 +52,21 @@ const NAV_GROUPS = [
         label: "Input Penerimaan",
         badge: "operator",
       },
-      { to: "/invoice/rekap", icon: BarChart2, label: "Rekap & Export" },
+      
       { to: "/invoice/pph", icon: Percent, label: "Rekap PPh" },
     ],
   },
+  
   {
-    label: "Utility",
+    label: "Database",
+    items: [
+      { to: "/ref/vendors", icon: Users, label: "Vendor" },
+      { to: "/ref/busa", icon: MapPin, label: "Business Area" },
+      { to: "/ref/stages", icon:Star, label: "Ref Stage" },
+    ],
+  },
+  {
+    label: "Tools & Utility",
     items: [
       { to: "/utility/kendaraan", icon: Car, label: "Kendaraan & STNK" },
       {
@@ -66,16 +75,6 @@ const NAV_GROUPS = [
         label: "Import PO (SAP)",
         badge: "operator",
       },
-    ],
-  },
-  {
-    label: "Referensi",
-    items: [
-      { to: "/ref/vendors", icon: Users, label: "Vendor" },
-      { to: "/ref/busa", icon: MapPin, label: "Business Area" },
-      { to: "/ref/pph", icon: List, label: "Ref PPh" },
-      { to: "/ref/po", icon: Database, label: "Ref PO" },
-      { to: "/ref/stages", icon:Star, label: "Ref Stage" },
     ],
   },
   {
