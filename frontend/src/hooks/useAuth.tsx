@@ -59,18 +59,23 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   // Login: simpan token + set user
-  const login = (token: string, userData: User, remember = true): void => {
+  const login = (token: string | null, userData: User, remember = true): void => {
+  const IS_PROD = import.meta.env.PROD;
+
+  if (!IS_PROD && token) {
+    // Local/dev: simpan token ke storage
     if (remember) {
       localStorage.setItem("appacc_token", token);
       sessionStorage.removeItem("appacc_token");
-      console.log("hooks :Token stored in localStorage");
     } else {
       sessionStorage.setItem("appacc_token", token);
       localStorage.removeItem("appacc_token");
-      console.log("hooks :Token stored in sessionStorage");
     }
-    setUser(userData);
-  };
+  }
+  // Production: tidak simpan apa-apa, token sudah di HttpOnly cookie
+
+  setUser(userData);
+};
 
   // Logout: invalidate di backend + hapus token lokal
   const logout = async (): Promise<void> => {

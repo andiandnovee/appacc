@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\AuthController;
 use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
@@ -35,7 +38,7 @@ class SocialAuthController extends Controller
     }
 
     /**
-     * Handle OAuth callback dari provider → redirect ke frontend dengan JWT
+     * Handle OAuth callback dari Google/Facebook
      * GET /api/auth/{provider}/callback
      */
     public function callback(string $provider)
@@ -69,32 +72,61 @@ class SocialAuthController extends Controller
             return $this->redirectWithError('Gagal membuat token. Silakan coba lagi.');
         }
 
-        // Semua variabel sudah siap di sini
-        $ttl         = auth('api')->factory()->getTTL();
-        $isProd      = app()->environment('production');
         $frontendUrl = config('app.frontend_url') . '/auth/callback';
+        $isProd      = app()->environment('production');
 
         if ($isProd) {
-            // Production: token di HttpOnly cookie
-            return redirect($frontendUrl)->withCookie(
-                cookie(
-                    name:     'appacc_token',
-                    value:    $token,
-                    minutes:  $ttl,
-                    path:     '/',
-                    domain:   '.warga007.web.id',
-                    secure:   true,
-                    httpOnly: true,
-                    sameSite: 'None',
-                )
-            );
+            // Production: jangan taruh token di redirect!
+            // Simpan di cache, kirim short-lived code ke frontend
+            $code = Str::random(64);
+            Cache::put("oauth_code:{$code}", $token, now()->addMinutes(5));
+
+            return redirect($frontendUrl . '?code=' . $code);
         }
 
-        // Dev/local: token di URL karena cookie tidak work di HTTP
+        // Local/dev: token langsung di URL (HTTP, cookie tidak bisa Secure)
         return redirect($frontendUrl . '?token=' . $token);
     }
 
-    // ─── Helpers ────────────────────────────────────────────────────────────
+    /**
+     * Tukar short-lived code → HttpOnly cookie
+     * POST /api/auth/exchange
+     */
+    public function exchange(Request $request)
+    {
+        $code  = $request->input('code');
+
+        if (!$code) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Code diperlukan.',
+            ], 422);
+        }
+
+        $token = Cache::pull("oauth_code:{$code}"); // get + delete sekaligus
+
+        if (!$token) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Code tidak valid atau sudah expired.',
+            ], 401);
+        }
+
+        try {
+            $user = auth('api')->setToken($token)->authenticate();
+        } catch (JWTException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Token tidak valid.',
+            ], 401);
+        }
+
+        // Delegate ke respondWithToken di AuthController
+        // supaya cookie logic tidak duplikat
+        return app(AuthController::class)->respondWithTokenPublic($token, $user);
+    }
+
+    // ─── Helpers ─────────────────────────────────────────────────────────────
 
     protected function findOrCreateUser($socialUser, string $provider): User
     {
@@ -130,7 +162,7 @@ class SocialAuthController extends Controller
             try {
                 $user->assignRole('viewer');
             } catch (\Exception $e) {
-                // Role 'viewer' belum exist — skip
+                // Role belum exist — skip
             }
         }
 

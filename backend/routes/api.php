@@ -30,11 +30,19 @@ Route::prefix('auth')->group(function () {
     Route::post('/login',   [AuthController::class, 'login']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
 
+    Route::post('/exchange', [SocialAuthController::class, 'exchange']);
+
     Route::prefix('{provider}')->group(function () {
         Route::get('/redirect', [SocialAuthController::class, 'redirect']);
         Route::get('/callback', [SocialAuthController::class, 'callback']);
+       
     });
+
+
+
 });
+
+ 
 
 // ── PROTECTED (JWT) ───────────────────────────────────────────────────────
 

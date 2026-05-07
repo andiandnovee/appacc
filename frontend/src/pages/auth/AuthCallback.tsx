@@ -14,30 +14,47 @@ export default function AuthCallback() {
   const [searchParams]     = useSearchParams();
 
   useEffect(() => {
+  const IS_PROD = import.meta.env.PROD;
+
   const error = searchParams.get("error");
   if (error) {
     navigate(`/login?error=${encodeURIComponent(error)}`, { replace: true });
     return;
   }
 
-  const tokenFromUrl = searchParams.get("token");
+  const code         = searchParams.get("code");    // production OAuth
+  const tokenFromUrl = searchParams.get("token");   // local/dev
 
-  if (tokenFromUrl) {
-    console.log("AuthCallback: Received token from URL, saving to localStorage"); 
-    // Simpan ke localStorage supaya persist saat browser ditutup
+  // Local/dev: token langsung di URL
+  if (!IS_PROD && tokenFromUrl) {
     localStorage.setItem("appacc_token", tokenFromUrl);
-    window.history.replaceState({}, '', '/auth/callback');
-  }
+    window.history.replaceState({}, "", "/auth/callback");
 
-  api.get("/auth/me")
-    .then((res) => {
-      login(tokenFromUrl ?? null, res.data.data, true); // true = localStorage
-      console.log("AuthCallback: User data fetched successfully, logging in");
+    api.get("/auth/me").then((res) => {
+      login(tokenFromUrl, res.data.data, true);
       navigate("/", { replace: true });
-    })
-    .catch(() => {
+    }).catch(() => {
       navigate("/login?error=Token+tidak+valid", { replace: true });
     });
+    return;
+  }
+
+  // Production: tukar code → cookie di-set backend
+  if (IS_PROD && code) {
+    api.post("/auth/exchange", { code })
+      .then((res) => {
+        // Cookie sudah di-set oleh respondWithToken
+        login(null, res.data.data, true);
+        navigate("/", { replace: true });
+      })
+      .catch(() => {
+        navigate("/login?error=Token+tidak+valid", { replace: true });
+      });
+    return;
+  }
+
+  // Tidak ada code maupun token
+  navigate("/login?error=Parameter+tidak+valid", { replace: true });
 }, []);
 
   return (
