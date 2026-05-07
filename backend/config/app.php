@@ -13,6 +13,7 @@ return [
     'faker_locale' => 'en_US',
     'key' => env('APP_KEY'),
     'cipher' => 'AES-256-CBC',
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
 
     'providers' => [
 
