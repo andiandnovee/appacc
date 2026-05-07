@@ -36,14 +36,12 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   // Boot: cek token di storage, validasi ke /auth/me
+  // Boot check — sudah benar, tapi pastikan catch tidak clearToken di production
   useEffect(() => {
     const IS_PROD = import.meta.env.PROD;
     const token = getToken();
 
-    // Local: harus ada token di localStorage
-    // Production: tidak perlu cek token, langsung hit /auth/me (cookie dikirim otomatis)
     if (!IS_PROD && !token) {
-      console.log("hooks :No token found, skipping auth check");
       setLoading(false);
       return;
     }
@@ -52,30 +50,34 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
       .get("/auth/me")
       .then((res) => setUser(res.data.data))
       .catch(() => {
-        clearToken();
+        if (!IS_PROD) clearToken(); // local: hapus token invalid
+        // production: tidak lakukan apa-apa, user memang belum login
         setUser(null);
       })
       .finally(() => setLoading(false));
   }, []);
-
   // Login: simpan token + set user
-  const login = (token: string | null, userData: User, remember = true): void => {
-  const IS_PROD = import.meta.env.PROD;
+  const login = (
+    token: string | null,
+    userData: User,
+    remember = true,
+  ): void => {
+    const IS_PROD = import.meta.env.PROD;
 
-  if (!IS_PROD && token) {
-    // Local/dev: simpan token ke storage
-    if (remember) {
-      localStorage.setItem("appacc_token", token);
-      sessionStorage.removeItem("appacc_token");
-    } else {
-      sessionStorage.setItem("appacc_token", token);
-      localStorage.removeItem("appacc_token");
+    if (!IS_PROD && token) {
+      // Local/dev: simpan token ke storage
+      if (remember) {
+        localStorage.setItem("appacc_token", token);
+        sessionStorage.removeItem("appacc_token");
+      } else {
+        sessionStorage.setItem("appacc_token", token);
+        localStorage.removeItem("appacc_token");
+      }
     }
-  }
-  // Production: tidak simpan apa-apa, token sudah di HttpOnly cookie
+    // Production: tidak simpan apa-apa, token sudah di HttpOnly cookie
 
-  setUser(userData);
-};
+    setUser(userData);
+  };
 
   // Logout: invalidate di backend + hapus token lokal
   const logout = async (): Promise<void> => {

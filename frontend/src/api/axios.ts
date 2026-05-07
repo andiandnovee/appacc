@@ -86,6 +86,7 @@ const forceLogout = (): void => {
 };
 
 // ─── Response Interceptor ─────────────────────────────────────────────────────
+// ─── Response Interceptor ─────────────────────────────────────────────────────
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
 
@@ -102,13 +103,16 @@ api.interceptors.response.use(
         error.response?.data,
       );
       return Promise.reject(error);
-
     }
 
-    // Refresh endpoint sendiri yang 401 → token sudah tidak bisa di-refresh → logout
-    if (originalRequest.url?.includes("/auth/refresh")) {
-      console.warn("axios :Response Interceptor - Refresh endpoint returned 401, forcing logout");
-      forceLogout();
+    // Skip refresh untuk endpoint auth dasar — cukup reject, jangan loop
+    const skipRefreshUrls = ["/auth/refresh", "/auth/me", "/auth/login", "/auth/exchange"];
+    if (skipRefreshUrls.some(url => originalRequest.url?.includes(url))) {
+      console.warn("axios :Skipping refresh for auth endpoint:", originalRequest.url);
+      // Khusus /auth/refresh → forceLogout (token benar2 expired)
+      if (originalRequest.url?.includes("/auth/refresh")) {
+        forceLogout();
+      }
       return Promise.reject(error);
     }
 
@@ -126,6 +130,7 @@ api.interceptors.response.use(
         return api(originalRequest);
       });
     }
+
     console.log("axios :Response Interceptor - Starting token refresh");
     isRefreshing = true;
 
@@ -133,20 +138,13 @@ api.interceptors.response.use(
       const { data } = await api.post<{ token?: string }>("/auth/refresh");
 
       if (!IS_PROD) {
-        // ── Local/Dev ────────────────────────────────────────────────────────
-        // Backend return token di body (X-Client-Type: mobile)
         const newToken = data.token;
         if (!newToken) throw new Error("Token tidak ada di response refresh");
-
         setToken(newToken);
         api.defaults.headers.common.Authorization = `Bearer ${newToken}`;
         processQueue(null, newToken);
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
-
       } else {
-        // ── Production ───────────────────────────────────────────────────────
-        // Backend sudah set HttpOnly cookie baru via Set-Cookie header
-        // Frontend tidak perlu lakukan apa-apa, browser otomatis pakai cookie baru
         console.log("axios :Response Interceptor - Using new HttpOnly cookie");
         processQueue(null, null);
       }
@@ -154,7 +152,7 @@ api.interceptors.response.use(
       return api(originalRequest);
 
     } catch (refreshError) {
-      console.error("axios :Response Interceptor - Token refresh failed:", refreshError); 
+      console.error("axios :Response Interceptor - Token refresh failed:", refreshError);
       processQueue(refreshError, null);
       forceLogout();
       return Promise.reject(refreshError);
@@ -164,5 +162,4 @@ api.interceptors.response.use(
     }
   }
 );
-
 export default api;
