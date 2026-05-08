@@ -28,12 +28,14 @@ interface UserManagementProps {
 // ─── API helper ───────────────────────────────────────────────
 const BASE = import.meta.env.VITE_API_URL ?? "/api";
 
-const api = (path, options = {}) => {
-  return fetch(`${BASE}/admin${path}`, {
-    credentials: "include", // kirim cookie
+const api = async (path, options = {}) => {
+  const res = await fetch(`${BASE}/admin${path}`, {
+    credentials: "include",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     ...options,
   });
+  if (!res.ok) throw new Error(res.statusText);
+  return res.json();
 };
 
 // ─── Role → Badge variant mapping ─────────────────────────────
