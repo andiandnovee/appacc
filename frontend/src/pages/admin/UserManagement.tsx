@@ -18,6 +18,8 @@ import { useToast } from "../../components/ui/Toast";
 import { Users, KeyRound, ShieldCheck, Trash2, Pencil } from "lucide-react";
 import styles from "./UserManagement.module.css";
 
+import api from "../../api/axios";  // ← import axios instance
+
 interface UserManagementProps {
   user?: any;
   allRoles?: any;
@@ -25,17 +27,17 @@ interface UserManagementProps {
   onSaved?: any;
 }
 
-// ─── API helper ───────────────────────────────────────────────
-const BASE = import.meta.env.VITE_API_URL ?? "/api";
-
-const api = async (path, options = {}) => {
-  const res = await fetch(`${BASE}/admin${path}`, {
-    credentials: "include",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    ...options,
-  });
-  if (!res.ok) throw new Error(res.statusText);
-  return res.json();
+// ─── AdminApi helper ───────────────────────────────────────────────
+const AdminApi = (path, options: any = {}) => {
+  const { method = "GET", body, ...rest } = options;
+  return api
+    .request({
+      url: `/admin${path}`,
+      method,
+      data: body ? JSON.parse(body) : undefined,
+      ...rest,
+    })
+    .then((res) => res.data);
 };
 
 // ─── Role → Badge variant mapping ─────────────────────────────
@@ -69,7 +71,7 @@ function AssignRoleModal({ user, allRoles, onClose, onSaved }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await api(`/users/${user.id}/roles`, {
+      const res = await AdminApi(`/users/${user.id}/roles`, {
         method: "PUT",
         body: JSON.stringify({ roles: selected }),
       });
@@ -135,11 +137,11 @@ function RoleFormModal({ role, onClose, onSaved }) {
     setError(null);
     try {
       const res = isEdit
-        ? await api(`/roles/${role.id}`, {
+        ? await AdminApi(`/roles/${role.id}`, {
             method: "PUT",
             body: JSON.stringify({ name }),
           })
-        : await api("/roles", {
+        : await AdminApi("/roles", {
             method: "POST",
             body: JSON.stringify({ name }),
           });
@@ -198,7 +200,7 @@ function UsersTab({ allRoles, toast }) {
 
   const fetchUsers = useCallback(() => {
     setLoading(true);
-    api(`/users?page=${page}&search=${query}`)
+    AdminApi(`/users?page=${page}&search=${query}`)
       .then((res) => {
         setUsers(res.data);
         setMeta(res.meta);
@@ -229,7 +231,7 @@ function UsersTab({ allRoles, toast }) {
   const handleDelete = async (user) => {
     if (!confirm(`Hapus akun ${user.name}?`)) return;
     try {
-      await api(`/users/${user.id}`, { method: "DELETE" });
+      await AdminApi(`/users/${user.id}`, { method: "DELETE" });
       fetchUsers();
       toast({ variant: "danger", title: `${user.name} dihapus.` });
     } catch {
@@ -405,7 +407,7 @@ function RolesTab({ roles, setRoles, toast }) {
     }
     if (!confirm(`Hapus role "${role.name}"?`)) return;
     try {
-      await api(`/roles/${role.id}`, { method: "DELETE" });
+      await AdminApi(`/roles/${role.id}`, { method: "DELETE" });
       setRoles((prev) => prev.filter((r) => r.id !== role.id));
       toast({ variant: "info", title: `Role "${role.name}" dihapus.` });
     } catch {
@@ -529,7 +531,7 @@ export default function UserManagement() {
   const { addToast } = useToast();
 
   useEffect(() => {
-    api("/roles").then((res) => setAllRoles(res.data));
+    AdminApi("/roles").then((res) => setAllRoles(res.data));
   }, []);
 
   const tabs = [
