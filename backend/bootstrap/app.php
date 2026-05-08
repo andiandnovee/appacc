@@ -65,14 +65,15 @@
 
         ->withExceptions(function (Exceptions $exceptions) {
 
-            // 🔥 Override total AuthenticationException
-            $exceptions->render(function (AuthenticationException $e, Request $request) {
-                return response()->json([
-                    'message' => 'Unauthenticated',
-                ], 401);
-            });
+    $exceptions->render(function (AuthenticationException $e, Request $request) {
+        return response()->json(['message' => 'Unauthenticated.'], 401);
+    });
 
-        })
+    $exceptions->render(function (\Symfony\Component\Routing\Exception\RouteNotFoundException $e, Request $request) {
+        return response()->json(['message' => 'Unauthenticated.'], 401);
+    });
+
+})
 
         ->withRouting(
             web: __DIR__.'/../routes/web.php',
