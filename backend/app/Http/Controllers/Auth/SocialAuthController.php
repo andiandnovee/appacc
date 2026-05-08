@@ -97,39 +97,53 @@ class SocialAuthController extends Controller
     $code = $request->input('code');
 
     if (!$code) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Code diperlukan.',
-        ], 422);
+        return response()->json(['success' => false, 'message' => 'Code diperlukan.'], 422);
     }
 
     $token = Cache::pull("oauth_code:{$code}");
 
     if (!$token) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Code tidak valid atau sudah expired.',
-        ], 401);
+        return response()->json(['success' => false, 'message' => 'Code tidak valid atau sudah expired.'], 401);
     }
 
     try {
-        // Gunakan JWTAuth facade langsung
         $user = \PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth::setToken($token)->authenticate();
-        
-        if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Token tidak valid.',
-            ], 401);
-        }
+        if (!$user) throw new \Exception('User not found');
     } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Token tidak valid.',
-        ], 401);
+        return response()->json(['success' => false, 'message' => 'Token tidak valid.'], 401);
     }
 
-    return app(AuthController::class)->respondWithTokenPublic($token, $user);
+    $isProd     = app()->environment('production');
+    $refreshTtl = config('jwt.refresh_ttl', 20160);
+
+    $payload = [
+        'success'    => true,
+        'message'    => 'Login berhasil.',
+        'token_type' => 'bearer',
+        'data'       => [
+            'id'          => $user->id,
+            'name'        => $user->name,
+            'email'       => $user->email,
+            'avatar'      => $user->avatar,
+            'provider'    => $user->provider ?? null,
+            'is_active'   => $user->is_active,
+            'roles'       => $user->role_names,
+            'permissions' => $user->permission_names,
+        ],
+    ];
+
+    return response()->json($payload)->withCookie(
+        cookie(
+            name:     'appacc_token',
+            value:    $token,
+            minutes:  $refreshTtl,
+            path:     '/',
+            domain:   $isProd ? '.warga007.web.id' : null,
+            secure:   $isProd,
+            httpOnly: true,
+            sameSite: $isProd ? 'None' : 'Lax',
+        )
+    );
 }
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
