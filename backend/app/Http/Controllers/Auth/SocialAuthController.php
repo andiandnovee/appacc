@@ -92,39 +92,45 @@ class SocialAuthController extends Controller
      * Tukar short-lived code → HttpOnly cookie
      * POST /api/auth/exchange
      */
-    public function exchange(Request $request)
-    {
-        $code  = $request->input('code');
+   public function exchange(Request $request)
+{
+    $code = $request->input('code');
 
-        if (!$code) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Code diperlukan.',
-            ], 422);
-        }
+    if (!$code) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Code diperlukan.',
+        ], 422);
+    }
 
-        $token = Cache::pull("oauth_code:{$code}"); // get + delete sekaligus
+    $token = Cache::pull("oauth_code:{$code}");
 
-        if (!$token) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Code tidak valid atau sudah expired.',
-            ], 401);
-        }
+    if (!$token) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Code tidak valid atau sudah expired.',
+        ], 401);
+    }
 
-        try {
-            $user = auth('api')->setToken($token)->authenticate();
-        } catch (JWTException $e) {
+    try {
+        // Gunakan JWTAuth facade langsung
+        $user = \PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth::setToken($token)->authenticate();
+        
+        if (!$user) {
             return response()->json([
                 'success' => false,
                 'message' => 'Token tidak valid.',
             ], 401);
         }
-
-        // Delegate ke respondWithToken di AuthController
-        // supaya cookie logic tidak duplikat
-        return app(AuthController::class)->respondWithTokenPublic($token, $user);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Token tidak valid.',
+        ], 401);
     }
+
+    return app(AuthController::class)->respondWithTokenPublic($token, $user);
+}
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
