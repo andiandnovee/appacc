@@ -113,6 +113,10 @@ class AuthController extends Controller
         }
     }
 
+    public function respondWithTokenPublic(string $token, $user): \Illuminate\Http\JsonResponse
+{
+    return $this->respondWithToken($token, $user);
+}
     // ─── Helpers ────────────────────────────────────────────────────────────
 
    private function respondWithToken(string $token, $user): \Illuminate\Http\JsonResponse
@@ -137,18 +141,18 @@ class AuthController extends Controller
     }
 
     // Browser: token di HttpOnly cookie
-    return response()->json($payload)->withCookie(
-        cookie(
-            name:     'appacc_token',
-            value:    $token,
-            minutes:  $refreshTtl,
-            path:     '/',
-            domain:   $isProd ? '.warga007.web.id' : null,
-            secure:   env('COOKIE_SECURE', false),
-            httpOnly: true,
-            sameSite: $isProd ? 'None' : 'Lax',
-        )
-    );
+   return response()->json($payload)->withCookie(
+    cookie(
+        name:     'appacc_token',
+        value:    $token,
+        minutes:  $refreshTtl,
+        path:     '/',
+        domain:   $isProd ? '.warga007.web.id' : null,
+        secure:   $isProd,        // ← hardcode: production selalu true
+        httpOnly: true,
+        sameSite: $isProd ? 'None' : 'Lax',
+    )
+);
 }
 
     private function formatUser($user): array
