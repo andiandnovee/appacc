@@ -7,24 +7,54 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import {
-  GoogleSignin,
-  statusCodes,
-} from '@react-native-google-signin/google-signin';
 import useAuthStore from '../store/authStore';
 import { googleAuthCallback } from '../api/auth';
 
-GoogleSignin.configure({
-  webClientId: '478317070172-k2hmh3a5gmgjgmiu46f1v1ori3ic6adc.apps.googleusercontent.com',
-  offlineAccess: true,
-  forceCodeForRefreshToken: true,
-});
+// Google Signin hanya load di APK (bukan Expo Go)
+let GoogleSignin: any = null;
+let statusCodes: any = {};
+
+try {
+  const gsModule = require('@react-native-google-signin/google-signin');
+  GoogleSignin = gsModule.GoogleSignin;
+  statusCodes = gsModule.statusCodes;
+
+  GoogleSignin.configure({
+    webClientId: '478317070172-k2hmh3a5gmgjgmiu46f1v1ori3ic6adc.apps.googleusercontent.com',
+    offlineAccess: true,
+    forceCodeForRefreshToken: true,
+  });
+} catch (e) {
+  // Expo Go — native module tidak tersedia
+}
+
+const IS_EXPO_GO = !GoogleSignin;
 
 export default function LoginScreen() {
   const { setAuth } = useAuthStore();
   const [loading, setLoading] = useState(false);
 
+  // ── DEV MODE: bypass login langsung masuk ──────────────────────────────
+  const handleDevLogin = async () => {
+    setLoading(true);
+    try {
+      await setAuth(
+        {
+          id: 1,
+          name: 'Andi Dev',
+          email: 'andi@dev.local',
+          roles: ['accounting'],
+        },
+        'dummy-token-dev'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ── PRODUCTION MODE: Google Sign-In native ─────────────────────────────
   const handleGoogleLogin = async () => {
+    if (!GoogleSignin) return;
     setLoading(true);
     try {
       await GoogleSignin.hasPlayServices();
@@ -33,13 +63,12 @@ export default function LoginScreen() {
 
       if (!idToken) throw new Error('Gagal mendapatkan ID token dari Google');
 
-      // Kirim idToken ke backend APPACC
       const { user, token } = await googleAuthCallback(idToken);
       await setAuth(user, token);
 
     } catch (error: any) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        // user cancel, diam saja
+        // user cancel
       } else if (error.code === statusCodes.IN_PROGRESS) {
         Alert.alert('Info', 'Login sedang diproses');
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
@@ -61,15 +90,23 @@ export default function LoginScreen() {
 
       <TouchableOpacity
         style={[styles.googleBtn, loading && styles.googleBtnDisabled]}
-        onPress={handleGoogleLogin}
+        onPress={IS_EXPO_GO ? handleDevLogin : handleGoogleLogin}
         disabled={loading}
       >
         {loading ? (
           <ActivityIndicator color="#ffffff" />
         ) : (
-          <Text style={styles.googleBtnText}>Masuk dengan Google</Text>
+          <Text style={styles.googleBtnText}>
+            {IS_EXPO_GO ? 'Masuk (Dev Mode)' : 'Masuk dengan Google'}
+          </Text>
         )}
       </TouchableOpacity>
+
+      {IS_EXPO_GO && (
+        <Text style={styles.devNote}>
+          ⚠️ Expo Go — Google Sign-In aktif setelah build APK
+        </Text>
+      )}
     </View>
   );
 }
@@ -109,5 +146,11 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  devNote: {
+    marginTop: 16,
+    fontSize: 12,
+    color: '#9ca3af',
+    textAlign: 'center',
   },
 });

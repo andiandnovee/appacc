@@ -28,11 +28,16 @@ export interface PoResult {
   sap_vendor_id: string;
   vendor_id: number;
   vendor_name: string;
-  is_pkp: boolean | null;
+  is_pkp: boolean;
   sap_business_area_id: string;
+  business_area_code: string;
   buyer_name: string;
   purc_grp: string;
+  dpp: number;
+  ppn: number;
   amount: number;
+  company_id: number;
+  company_name: string;
   items: PoItem[];
 }
 
@@ -67,22 +72,9 @@ export interface ReceiptItem {
   po_number: string;
   invoice_number?: string;
   amount: number;
-  vendor?: {
-    id: number;
-    name: string;
-  };
-  stage?: {
-    id: number;
-    name: string;
-    year: number;
-  };
-  company?: {
-    id: number;
-    name: string;
-  };
-  latest_status?: {
-    status_value: string;
-    status_date: string;
-  };
+  vendor?: { id: number; name: string };
+  stage?: { id: number; name: string; year: number };
+  company?: { id: number; name: string };
+  latest_status?: { status_value: string; status_date: string };
   created_at: string;
 }

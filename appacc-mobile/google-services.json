@@ -1,1 +1,29 @@
-{"installed":{"client_id":"478317070172-mrfj2aed4cab9kqff7mj5sbbhs807ciq.apps.googleusercontent.com","project_id":"appacc-484403","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs"}}
+{
+  "project_info": {
+    "project_number": "667599806434",
+    "project_id": "appacc-8a457",
+    "storage_bucket": "appacc-8a457.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:667599806434:android:6e74f8f16856d44c7ca3bb",
+        "android_client_info": {
+          "package_name": "com.appacc.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCSY8QDppLGIpTR1c_pzXXFGutaCWIvPeU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
