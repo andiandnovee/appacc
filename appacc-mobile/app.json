@@ -17,20 +17,26 @@
         "backgroundColor": "#1e1b4b"
       },
       "package": "com.appacc.mobile",
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "plugins": [
       "expo-secure-store",
       "@react-native-google-signin/google-signin",
-      "expo-web-browser"
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "APPACC butuh akses kamera untuk scan nomor PO dari dokumen invoice."
+        }
+      ]
     ],
     "extra": {
       "eas": {
         "projectId": "95185d8a-0ee1-4deb-83ec-c266d49009ff"
       }
-    },
-    "ios": {
-      "bundleIdentifier": "com.appacc.mobile"
     }
   }
 }

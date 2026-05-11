@@ -8,6 +8,7 @@ import HomeScreen from './src/screens/HomeScreen';
 import ScanPOScreen from './src/screens/ScanPOScreen';
 import ReceiptFormScreen from './src/screens/ReceiptFormScreen';
 import HistoryScreen from './src/screens/HistoryScreen';
+import CameraOCRScreen from './src/screens/CameraOCRScreen';
 import { View, ActivityIndicator } from 'react-native';
 
 const Stack = createNativeStackNavigator();
@@ -40,6 +41,7 @@ export default function App() {
           <>
             <Stack.Screen name="Home" component={HomeScreen} />
             <Stack.Screen name="ScanPO" component={ScanPOScreen} />
+            <Stack.Screen name="CameraOCR" component={CameraOCRScreen} />
             <Stack.Screen name="ReceiptForm" component={ReceiptFormScreen} />
             <Stack.Screen name="History" component={HistoryScreen} />
           </>
