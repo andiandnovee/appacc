@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\InvoiceReceiptController;
 use App\Http\Controllers\Api\StageController;
 use App\Http\Controllers\Api\VendorController;
 use App\Http\Controllers\Auth\SocialAuthController;
+use App\Http\Controllers\Auth\MobileAuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
@@ -31,6 +32,7 @@ Route::prefix('auth')->group(function () {
     Route::post('/refresh', [AuthController::class, 'refresh']);
 
     Route::post('/exchange', [SocialAuthController::class, 'exchange']);
+    Route::post('/google/mobile', [MobileAuthController::class, 'googleMobile']);
 
     Route::prefix('{provider}')->group(function () {
         Route::get('/redirect', [SocialAuthController::class, 'redirect']);
@@ -141,3 +143,6 @@ Route::middleware('auth:api')->group(function () {
         Route::delete('/roles/{role}', [RoleManagementController::class, 'destroy']);
     });
 });
+
+
+

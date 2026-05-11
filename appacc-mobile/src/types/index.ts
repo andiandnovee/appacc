@@ -15,40 +15,74 @@ export interface AuthState {
   clearAuth: () => void;
 }
 
-export interface Vendor {
-  id: number;
-  vendor_code: string;
-  name: string;
-  npwp?: string;
-  is_pkp: boolean;
+export interface PoItem {
+  item_no: string;
+  po_uom: string;
+  po_qty: number;
+  net_value: number;
 }
 
 export interface PoResult {
-  id: number;
+  found: boolean;
   po_number: string;
-  po_item_line: string;
-  plant: string;
-  vendor_code: string;
+  sap_vendor_id: string;
+  vendor_id: number;
   vendor_name: string;
-  amount_po: number;
-  purchasing_group: string;
+  is_pkp: boolean | null;
+  sap_business_area_id: string;
+  buyer_name: string;
+  purc_grp: string;
+  amount: number;
+  items: PoItem[];
 }
 
 export interface Stage {
   id: number;
-  tahap_kode: string;
-  tahap_nama: string;
-  tahap_tahun: number;
+  name: string;
+  year: number;
+  start_date?: string;
+}
+
+export interface Company {
+  id: number;
+  name: string;
+  sap_id?: string;
 }
 
 export interface ReceiptPayload {
+  receipt_date: string;
+  vendor_id: number;
   po_number: string;
-  po_item_line: string;
-  vendor_code: string;
-  no_invoice: string;
-  tanggal_invoice: string;
-  nilai_invoice: number;
+  amount: number;
+  company_id: number;
   stage_id: number;
-  is_pkp: boolean;
-  keterangan?: string;
+  pgr_id?: string;
+  business_area_code?: string;
+  invoice_number?: string;
+}
+
+export interface ReceiptItem {
+  id: number;
+  receipt_date: string;
+  po_number: string;
+  invoice_number?: string;
+  amount: number;
+  vendor?: {
+    id: number;
+    name: string;
+  };
+  stage?: {
+    id: number;
+    name: string;
+    year: number;
+  };
+  company?: {
+    id: number;
+    name: string;
+  };
+  latest_status?: {
+    status_value: string;
+    status_date: string;
+  };
+  created_at: string;
 }

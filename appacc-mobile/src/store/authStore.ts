@@ -6,7 +6,7 @@ const useAuthStore = create<AuthState>((set) => ({
   user: null,
   token: null,
   isAuthenticated: false,
-  isLoading: true,
+  isLoading: false,
 
   setAuth: async (user, token) => {
     await SecureStore.setItemAsync('access_token', token);

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -11,27 +11,29 @@ import {
   GoogleSignin,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
-import * as SecureStore from 'expo-secure-store';
 import useAuthStore from '../store/authStore';
 import { googleAuthCallback } from '../api/auth';
 
 GoogleSignin.configure({
-  webClientId: 'GANTI_DENGAN_WEB_CLIENT_ID_GOOGLE_KAMU',
+  webClientId: '478317070172-k2hmh3a5gmgjgmiu46f1v1ori3ic6adc.apps.googleusercontent.com',
   offlineAccess: true,
+  forceCodeForRefreshToken: true,
 });
 
 export default function LoginScreen() {
-  const { setAuth, isLoading } = useAuthStore();
+  const { setAuth } = useAuthStore();
+  const [loading, setLoading] = useState(false);
 
   const handleGoogleLogin = async () => {
+    setLoading(true);
     try {
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
       const idToken = userInfo.data?.idToken;
 
-      if (!idToken) throw new Error('Gagal mendapatkan ID token');
+      if (!idToken) throw new Error('Gagal mendapatkan ID token dari Google');
 
-      // Kirim ke backend APPACC
+      // Kirim idToken ke backend APPACC
       const { user, token } = await googleAuthCallback(idToken);
       await setAuth(user, token);
 
@@ -40,19 +42,15 @@ export default function LoginScreen() {
         // user cancel, diam saja
       } else if (error.code === statusCodes.IN_PROGRESS) {
         Alert.alert('Info', 'Login sedang diproses');
+      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        Alert.alert('Error', 'Google Play Services tidak tersedia');
       } else {
         Alert.alert('Login Gagal', error.message ?? 'Terjadi kesalahan');
       }
+    } finally {
+      setLoading(false);
     }
   };
-
-  if (isLoading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#6366f1" />
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>
@@ -61,8 +59,16 @@ export default function LoginScreen() {
         <Text style={styles.subtitle}>Invoice Receipt Mobile</Text>
       </View>
 
-      <TouchableOpacity style={styles.googleBtn} onPress={handleGoogleLogin}>
-        <Text style={styles.googleBtnText}>Masuk dengan Google</Text>
+      <TouchableOpacity
+        style={[styles.googleBtn, loading && styles.googleBtnDisabled]}
+        onPress={handleGoogleLogin}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#ffffff" />
+        ) : (
+          <Text style={styles.googleBtnText}>Masuk dengan Google</Text>
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -74,11 +80,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8fafc',
     justifyContent: 'center',
     paddingHorizontal: 32,
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   header: {
     alignItems: 'center',
@@ -100,6 +101,9 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
+  },
+  googleBtnDisabled: {
+    opacity: 0.6,
   },
   googleBtnText: {
     color: '#ffffff',

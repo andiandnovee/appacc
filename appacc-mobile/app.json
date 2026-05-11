@@ -1,34 +1,36 @@
 {
   "expo": {
-    "name": "appacc-mobile",
+    "name": "APPACC Mobile",
     "slug": "appacc-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
-    "ios": {
-      "supportsTablet": true
+      "backgroundColor": "#1e1b4b"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#1e1b4b"
       },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
+      "package": "com.appacc.mobile",
+      "googleServicesFile": "./google-services.json"
     },
     "plugins": [
       "expo-secure-store",
-      "@react-native-google-signin/google-signin"
-    ]
+      "@react-native-google-signin/google-signin",
+      "expo-web-browser"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "95185d8a-0ee1-4deb-83ec-c266d49009ff"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.appacc.mobile"
+    }
   }
 }
