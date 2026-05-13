@@ -37,6 +37,9 @@
       "eas": {
         "projectId": "95185d8a-0ee1-4deb-83ec-c266d49009ff"
       }
+    },
+    "ios": {
+      "bundleIdentifier": "com.appacc.mobile"
     }
   }
 }
