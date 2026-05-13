@@ -299,3 +299,9 @@
   align-items: center;
   padding-top: var(--space-1);
 }
+
+.lastUpdated {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}

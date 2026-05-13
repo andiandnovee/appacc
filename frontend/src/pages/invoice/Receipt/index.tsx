@@ -9,6 +9,7 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 import styles from "./ReceiptManagement.module.css";
 import apiClient from "../../../api/axios";
 import { useFilterStore } from "../../../stores/filterReceipt";
+import { useInterval } from "../../../hooks/useInterval";
 
 const api = async (
   path: string,
@@ -72,6 +73,25 @@ export default function InvoiceReceiptManagement() {
     };
     fetchStages();
   }, [selectedYear]);
+
+  const POLL_INTERVAL_MS = 2 * 60 * 1000; // 2 menit, ubah sesuai kebutuhan
+const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+// Pause polling saat modal terbuka
+const isModalOpen = formTarget !== null;
+
+useInterval(
+  useCallback(() => {
+    tableRef.current?.refetch();
+    setLastUpdated(new Date());
+  }, []),
+  isModalOpen ? null : POLL_INTERVAL_MS
+);
+
+// Set lastUpdated pertama kali saat tabel mount
+useEffect(() => {
+  setLastUpdated(new Date());
+}, []);
 
   // 🔥 HAPUS useEffect yang mereset stage jika ingin stage tetap tersimpan
   // Jika Anda tetap ingin reset stage saat tahun berubah namun tidak saat refresh, gunakan kode di bawah ini (dikomentari)
@@ -246,6 +266,18 @@ export default function InvoiceReceiptManagement() {
           <p className={styles.pageSubtitle}>
             Kelola data invoice receipt perusahaan
           </p>
+   {/* ← tambah ini */}
+    {lastUpdated && (
+      <p className={styles.lastUpdated}>
+        Diperbarui:{" "}
+        {lastUpdated.toLocaleTimeString("id-ID", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        })}
+      </p>
+    )}
+
         </div>
         <Button iconLeft={<Plus size={14} />} onClick={() => setFormTarget({})}>
           Tambah Receipt
