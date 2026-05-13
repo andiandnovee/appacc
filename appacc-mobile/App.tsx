@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import * as SecureStore from 'expo-secure-store';
 import useAuthStore from './src/store/authStore';
 import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
@@ -14,14 +13,10 @@ import { View, ActivityIndicator } from 'react-native';
 const Stack = createNativeStackNavigator();
 
 export default function App() {
-  const { isAuthenticated, isLoading, clearAuth } = useAuthStore();
+  const { initAuth, isAuthenticated, isLoading } = useAuthStore();
 
   useEffect(() => {
-    const bootstrapAuth = async () => {
-      const token = await SecureStore.getItemAsync('access_token');
-      if (!token) clearAuth();
-    };
-    bootstrapAuth();
+    initAuth(); // cek token + validasi ke server, set isLoading false setelahnya
   }, []);
 
   if (isLoading) {

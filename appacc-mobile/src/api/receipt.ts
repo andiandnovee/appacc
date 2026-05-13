@@ -7,6 +7,15 @@ export interface Company {
   sap_id?: string;
 }
 
+export interface Vendor {
+  id: number;
+  sap_id?: string;
+  name: string;
+  npwp?: string;
+  is_pkp: boolean;
+  is_active: boolean;
+}
+
 export const getStages = async (): Promise<Stage[]> => {
   const response = await api.get('/stages');
   return response.data?.data ?? response.data;
@@ -14,6 +23,12 @@ export const getStages = async (): Promise<Stage[]> => {
 
 export const getCompanies = async (): Promise<Company[]> => {
   const response = await api.get('/companies');
+  return response.data?.data ?? response.data;
+};
+
+// Dropdown — pakai ?all=true biar tidak paginated
+export const getVendors = async (): Promise<Vendor[]> => {
+  const response = await api.get('/vendors', { params: { all: true } });
   return response.data?.data ?? response.data;
 };
 
