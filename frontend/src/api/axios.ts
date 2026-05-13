@@ -58,7 +58,7 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     }
   }
   // Production: browser otomatis kirim HttpOnly cookie, tidak perlu inject
-    console.log("axios :Request Interceptor - IS_PROD =", IS_PROD, ", config:", config);  
+    //console.log("axios :Request Interceptor - IS_PROD =", IS_PROD, ", config:", config);  
   return config;
 });
 

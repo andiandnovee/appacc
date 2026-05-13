@@ -6,16 +6,17 @@ import Button from "../../components/ui/Button";
 import Alert from "../../components/ui/Alert";
 import Badge from "../../components/ui/Badge";
 import styles from "./SapPoImportPage.module.css";
+import api from "../../api/axios"; // ← langsung pakai api
 
 const CHUNK_SIZE = 500;
 
 export default function SapPoImportPage() {
-  const [file, setFile]           = useState<File | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
-  const [progress, setProgress]   = useState({ current: 0, total: 0 });
-  const [result, setResult]       = useState<any>(null);
-  const [error, setError]         = useState<string | null>(null);
-  const abortRef                  = useRef(false);
+  const [progress, setProgress] = useState({ current: 0, total: 0 });
+  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const abortRef = useRef(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFile(e.target.files?.[0] ?? null);
@@ -28,8 +29,8 @@ export default function SapPoImportPage() {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
-          const wb   = XLSX.read(e.target?.result, { type: "binary" });
-          const ws   = wb.Sheets[wb.SheetNames[0]];
+          const wb = XLSX.read(e.target?.result, { type: "binary" });
+          const ws = wb.Sheets[wb.SheetNames[0]];
           const rows = XLSX.utils.sheet_to_json(ws, { defval: null });
           resolve(rows as any[]);
         } catch (err) {
@@ -42,10 +43,10 @@ export default function SapPoImportPage() {
   };
 
   const handleImport = async () => {
-    if (!file) { setError("Pilih file terlebih dahulu"); return; }
-
-    const token = localStorage.getItem("appacc_token") ?? sessionStorage.getItem("appacc_token");
-    if (!token) { setError("Sesi login habis, silakan login kembali"); return; }
+    if (!file) {
+      setError("Pilih file terlebih dahulu");
+      return;
+    }
 
     setImporting(true);
     setError(null);
@@ -53,65 +54,104 @@ export default function SapPoImportPage() {
     abortRef.current = false;
 
     try {
-      const rows    = await parseExcel(file);
+      // Parse Excel
+      const rows = await parseExcel(file);
+
+      if (!rows.length) {
+        throw new Error("File kosong atau tidak memiliki data");
+      }
+
       const batchId = new Date().toISOString().slice(0, 7); // YYYY-MM
+
+      // Split chunks
       const chunks: any[][] = [];
 
       for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
         chunks.push(rows.slice(i, i + CHUNK_SIZE));
       }
 
-      setProgress({ current: 0, total: chunks.length });
-
-      let totalImported   = 0;
-      let totalDuplicates = 0;
-      let totalVendors    = 0;
-      let totalGroups     = 0;
-      const allErrors: any[] = [];
-
-      for (let i = 0; i < chunks.length; i++) {
-        if (abortRef.current) break;
-
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/sap/import-po-chunk`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ rows: chunks[i], batch_id: batchId }),
-          }
-        );
-
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.message || "Import chunk gagal");
-
-        totalImported   += data.imported        ?? 0;
-        totalDuplicates += data.duplicates      ?? 0;
-        totalVendors    += data.vendors_synced  ?? 0;
-        totalGroups     += data.groups_synced   ?? 0;
-        allErrors.push(...(data.errors ?? []));
-
-        setProgress({ current: i + 1, total: chunks.length });
-      }
-
-      setResult({
-        success:        !abortRef.current,
-        aborted:        abortRef.current,
-        batch_id:       batchId,
-        total_rows:     rows.length,
-        imported:       totalImported,
-        duplicates:     totalDuplicates,
-        vendors_synced: totalVendors,
-        groups_synced:  totalGroups,
-        errors:         allErrors,
+      setProgress({
+        current: 0,
+        total: chunks.length,
       });
 
-      if (!abortRef.current) setFile(null);
+      // Aggregated result
+      let totalImported = 0;
+      let totalDuplicates = 0;
+      let totalVendors = 0;
+      let totalGroups = 0;
 
+      const allErrors: any[] = [];
+
+      // Upload per chunk
+      for (let i = 0; i < chunks.length; i++) {
+        if (abortRef.current) {
+          console.warn("Import dibatalkan user");
+          break;
+        }
+
+        const { data } = await api.post("/sap/import-po-chunk", {
+          rows: chunks[i],
+          batch_id: batchId,
+        });
+
+        totalImported += data.imported ?? 0;
+        totalDuplicates += data.duplicates ?? 0;
+        totalVendors += data.vendors_synced ?? 0;
+        totalGroups += data.groups_synced ?? 0;
+
+        if (Array.isArray(data.errors)) {
+          allErrors.push(...data.errors);
+        }
+
+        setProgress({
+          current: i + 1,
+          total: chunks.length,
+        });
+      }
+
+      // Final result
+      setResult({
+        success: !abortRef.current,
+        aborted: abortRef.current,
+        batch_id: batchId,
+        total_rows: rows.length,
+        imported: totalImported,
+        duplicates: totalDuplicates,
+        vendors_synced: totalVendors,
+        groups_synced: totalGroups,
+        errors: allErrors,
+      });
+
+      // Reset file kalau sukses
+      if (!abortRef.current) {
+        setFile(null);
+      }
     } catch (err: any) {
-      setError(err.message ?? "Gagal mengimport data");
+      console.error("Import error:", err);
+
+      // Laravel validation
+      if (err.response?.status === 422) {
+        setError(err.response?.data?.message || "Validasi gagal");
+
+        return;
+      }
+
+      // Unauthorized
+      if (err.response?.status === 401) {
+        setError("Sesi login habis, silakan login kembali");
+        return;
+      }
+
+      // Forbidden
+      if (err.response?.status === 403) {
+        setError("Anda tidak memiliki akses");
+        return;
+      }
+
+      setError(
+        err.response?.data?.message || err.message || "Gagal mengimport data",
+      );
     } finally {
       setImporting(false);
     }
@@ -160,13 +200,20 @@ export default function SapPoImportPage() {
             {importing && (
               <div className={styles.progressWrap}>
                 <div className={styles.progressBar}>
-                  <div className={styles.progressFill} style={{ width: `${percent}%` }} />
+                  <div
+                    className={styles.progressFill}
+                    style={{ width: `${percent}%` }}
+                  />
                 </div>
                 <div className={styles.progressMeta}>
-                  <span>{percent}% — chunk {progress.current} dari {progress.total}</span>
+                  <span>
+                    {percent}% — chunk {progress.current} dari {progress.total}
+                  </span>
                   <button
                     className={styles.abortBtn}
-                    onClick={() => { abortRef.current = true; }}
+                    onClick={() => {
+                      abortRef.current = true;
+                    }}
                   >
                     Batalkan
                   </button>
@@ -206,16 +253,36 @@ export default function SapPoImportPage() {
             <div className={styles.instructions}>
               <h4>Format Kolom Excel:</h4>
               <ul>
-                <li><strong>PO No</strong> — Nomor PO (wajib)</li>
-                <li><strong>Item No</strong> — Line item PO (wajib)</li>
-                <li><strong>PO UoM</strong> — Satuan</li>
-                <li><strong>PO Qty</strong> — Jumlah</li>
-                <li><strong>Net Value</strong> — Nilai PO (angka)</li>
-                <li><strong>Plant</strong> — Kode Business Area</li>
-                <li><strong>Vendor</strong> — Kode vendor SAP</li>
-                <li><strong>Vendor Name</strong> — Nama vendor</li>
-                <li><strong>Purc. Grp</strong> — Purchasing Group</li>
-                <li><strong>Buyer Name</strong> — Nama buyer</li>
+                <li>
+                  <strong>PO No</strong> — Nomor PO (wajib)
+                </li>
+                <li>
+                  <strong>Item No</strong> — Line item PO (wajib)
+                </li>
+                <li>
+                  <strong>PO UoM</strong> — Satuan
+                </li>
+                <li>
+                  <strong>PO Qty</strong> — Jumlah
+                </li>
+                <li>
+                  <strong>Net Value</strong> — Nilai PO (angka)
+                </li>
+                <li>
+                  <strong>Plant</strong> — Kode Business Area
+                </li>
+                <li>
+                  <strong>Vendor</strong> — Kode vendor SAP
+                </li>
+                <li>
+                  <strong>Vendor Name</strong> — Nama vendor
+                </li>
+                <li>
+                  <strong>Purc. Grp</strong> — Purchasing Group
+                </li>
+                <li>
+                  <strong>Buyer Name</strong> — Nama buyer
+                </li>
               </ul>
               <h4 style={{ marginTop: "var(--spacing-4)" }}>Catatan:</h4>
               <ul>
@@ -235,19 +302,46 @@ export default function SapPoImportPage() {
           <Card.Header
             title={`Hasil Import — Batch ${result.batch_id}`}
             action={
-              <Badge variant={result.aborted ? "warning" : "success"} icon={<CheckCircle size={14} />}>
+              <Badge
+                variant={result.aborted ? "warning" : "success"}
+                icon={<CheckCircle size={14} />}
+              >
                 {result.aborted ? "Dibatalkan" : "Selesai"}
               </Badge>
             }
           />
           <Card.Body>
             <div className={styles.resultGrid}>
-              <StatCard label="Total Baris"        value={result.total_rows.toLocaleString("id-ID")}     variant="default"  />
-              <StatCard label="Berhasil Diimport"  value={result.imported.toLocaleString("id-ID")}       variant="success"  />
-              <StatCard label="Duplikat Dilewati"  value={result.duplicates.toLocaleString("id-ID")}     variant="warning"  />
-              <StatCard label="Vendor Baru"         value={result.vendors_synced.toLocaleString("id-ID")} variant="info"     />
-              <StatCard label="Purc. Group Baru"   value={result.groups_synced.toLocaleString("id-ID")}  variant="info"     />
-              <StatCard label="Error"               value={result.errors.length.toLocaleString("id-ID")}  variant={result.errors.length > 0 ? "danger" : "default"} />
+              <StatCard
+                label="Total Baris"
+                value={result.total_rows.toLocaleString("id-ID")}
+                variant="default"
+              />
+              <StatCard
+                label="Berhasil Diimport"
+                value={result.imported.toLocaleString("id-ID")}
+                variant="success"
+              />
+              <StatCard
+                label="Duplikat Dilewati"
+                value={result.duplicates.toLocaleString("id-ID")}
+                variant="warning"
+              />
+              <StatCard
+                label="Vendor Baru"
+                value={result.vendors_synced.toLocaleString("id-ID")}
+                variant="info"
+              />
+              <StatCard
+                label="Purc. Group Baru"
+                value={result.groups_synced.toLocaleString("id-ID")}
+                variant="info"
+              />
+              <StatCard
+                label="Error"
+                value={result.errors.length.toLocaleString("id-ID")}
+                variant={result.errors.length > 0 ? "danger" : "default"}
+              />
             </div>
 
             {result.errors.length > 0 && (
@@ -261,7 +355,9 @@ export default function SapPoImportPage() {
                   {result.errors.slice(0, 50).map((err: any, i: number) => (
                     <div key={i} className={styles.errorItem}>
                       <AlertTriangle size={14} />
-                      <span><strong>Baris {err.row}:</strong> {err.error}</span>
+                      <span>
+                        <strong>Baris {err.row}:</strong> {err.error}
+                      </span>
                     </div>
                   ))}
                   {result.errors.length > 50 && (
@@ -279,11 +375,21 @@ export default function SapPoImportPage() {
   );
 }
 
-function StatCard({ label, value, variant = "default" }: { label: string; value: any; variant?: string }) {
+function StatCard({
+  label,
+  value,
+  variant = "default",
+}: {
+  label: string;
+  value: any;
+  variant?: string;
+}) {
   return (
     <div className={styles.statCard}>
       <span className={styles.statLabel}>{label}</span>
-      <span className={`${styles.statValue} ${styles[`stat_${variant}`]}`}>{value}</span>
+      <span className={`${styles.statValue} ${styles[`stat_${variant}`]}`}>
+        {value}
+      </span>
     </div>
   );
 }

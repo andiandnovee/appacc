@@ -25,6 +25,7 @@ export interface PoItem {
 export interface PoResult {
   found: boolean;
   po_number: string;
+  invoice_number?: string;   // ← tambah ini
   sap_vendor_id: string;
   vendor_id: number;
   vendor_name: string;
