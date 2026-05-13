@@ -83,11 +83,11 @@ class InvoiceReceiptController extends Controller
     $sortBy = $request->get('sort_by');
     $sortDir = $request->get('sort_dir', 'asc');
     if ($sortBy && in_array($sortBy, ['po_number', 'invoice_number', 'receipt_date', 'amount','stage_id'])) {
-        $query->orderBy($sortBy, $sortDir === 'desc' ? 'asc' : 'desc');
+        $query->orderBy($sortBy, $sortDir === 'asc' ? 'asc' : 'desc');
     } else {
-        $query->orderByDesc('receipt_date');
+        $query->orderByDesc('id');
     }
-    
+
     // ========== PAGINATION ==========
     $perPage = $request->get('per_page', 25);
     $receipts = $query->paginate($perPage);
