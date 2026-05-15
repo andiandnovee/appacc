@@ -1,7 +1,9 @@
 import { FC, ReactNode, ReactElement } from 'react'
 import Card from "../../components/ui/Card";
 import RevenueChart from "../../components/charts/Revenuechart";
+import Collapsible, {CollapsibleTrigger} from "../../components/ui/Collapsible";
 import { useAuth } from "../../hooks/useAuth";
+
 
 interface HomeProps {
   // Props here
@@ -19,10 +21,20 @@ export default function Home() {
   ];
 
   return (
+    
     <div>
+      <Collapsible peekHeight={120} defaultOpen={true}>
       <h1 style={{ fontSize: "1.5rem", fontWeight: 700, marginBottom: "1.5rem" }}>
         Selamat datang, {user?.name ?? "..."} 👋
       </h1>
+
+      
+     
+
+      
+      
+        
+
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1.5rem" }}>
         {stats.map((s) => (
@@ -35,9 +47,21 @@ export default function Home() {
         ))}
       </div>
 
+    
+
+
       <div style={{ marginTop: "2rem" }}>
         <RevenueChart />
       </div>
+
+
+
+
+         <CollapsibleTrigger
+      labelClose="Baca selengkapnya"
+      labelOpen="Sembunyikan"
+    />
+      </Collapsible>
     </div>
   );
 }
