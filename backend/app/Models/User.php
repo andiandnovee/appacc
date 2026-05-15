@@ -21,6 +21,8 @@ class User extends Authenticatable implements JWTSubject  // ← implements
         'provider',
         'provider_id',
         'is_active',
+        'sap_user',
+        'sap_server_con',
     ];
 
     protected $hidden = [

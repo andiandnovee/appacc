@@ -62,6 +62,8 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/activity', [DashboardController::class, 'activity']);
     });
 
+        Route::patch('user/sap-profile', [UserController::class, 'updateSapProfile']);
+
     // Users
     Route::prefix('users')->group(function () {
         Route::get('/',        [UserController::class, 'index']);

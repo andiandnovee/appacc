@@ -41,9 +41,10 @@ class UserController extends Controller
                 'roles' => $user->role_names,
                 'permissions' => $user->permission_names,
                 'created_at' => $user->created_at,
+                'sap_user' => $user->sap_user,
+                'sap_server_con' => $user->sap_server_con,
             ];
         });
-
         return response()->json([
             'success' => true,
             'data' => $users->items(),
@@ -81,6 +82,8 @@ class UserController extends Controller
                 'roles' => $user->role_names,
                 'permissions' => $user->permission_names,
                 'created_at' => $user->created_at,
+                'sap_user' => $user->sap_user,
+                'sap_server_con' => $user->sap_server_con,
             ],
         ]);
     }
@@ -142,6 +145,30 @@ class UserController extends Controller
         ]);
     }
 
+    /**
+ * Update SAP credentials for current authenticated user
+ */
+public function updateSapProfile(Request $request)
+{
+    $request->validate([
+        'sap_user'       => 'nullable|string|max:255',
+        'sap_server_con' => 'nullable|string|max:255',
+    ]);
+
+    $user = auth()->user();
+
+    $user->update($request->only(['sap_user', 'sap_server_con']));
+
+    return response()->json([
+        'success' => true,
+        'message' => 'SAP profile updated successfully',
+        'data' => [
+            'id'             => $user->id,
+            'sap_user'       => $user->sap_user,
+            'sap_server_con' => $user->sap_server_con,
+        ],
+    ]);
+}
     /**
      * Delete user
      */

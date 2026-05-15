@@ -19,8 +19,9 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (token: string, userData: User, remember?: boolean) => void;
+  login: (token: string | null, userData: User, remember?: boolean) => void;
   logout: () => Promise<void>;
+  updateUser: (partial: Partial<User>) => void;
 }
 
 // ─── Context ─────────────────────────────────────────────────────
@@ -36,7 +37,6 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   // Boot: cek token di storage, validasi ke /auth/me
-  // Boot check — sudah benar, tapi pastikan catch tidak clearToken di production
   useEffect(() => {
     const IS_PROD = import.meta.env.PROD;
     const token = getToken();
@@ -50,12 +50,12 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
       .get("/auth/me")
       .then((res) => setUser(res.data.data))
       .catch(() => {
-        if (!IS_PROD) clearToken(); // local: hapus token invalid
-        // production: tidak lakukan apa-apa, user memang belum login
+        if (!IS_PROD) clearToken();
         setUser(null);
       })
       .finally(() => setLoading(false));
   }, []);
+
   // Login: simpan token + set user
   const login = (
     token: string | null,
@@ -65,7 +65,6 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
     const IS_PROD = import.meta.env.PROD;
 
     if (!IS_PROD && token) {
-      // Local/dev: simpan token ke storage
       if (remember) {
         localStorage.setItem("appacc_token", token);
         sessionStorage.removeItem("appacc_token");
@@ -74,7 +73,6 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
         localStorage.removeItem("appacc_token");
       }
     }
-    // Production: tidak simpan apa-apa, token sudah di HttpOnly cookie
 
     setUser(userData);
   };
@@ -84,18 +82,20 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
     try {
       await api.post("/auth/logout");
     } catch {
-      // tetap logout meski request gagal
-      console.warn(
-        "hooks :Logout request failed, but clearing local auth state anyway",
-      );
+      console.warn("hooks: Logout request failed, clearing local auth state anyway");
     } finally {
       clearToken();
       setUser(null);
     }
   };
 
+  // Update sebagian data user (tanpa refetch ke server)
+  const updateUser = (partial: Partial<User>): void => {
+    setUser((prev) => (prev ? { ...prev, ...partial } : prev));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
