@@ -1,25 +1,18 @@
 import { useState, useCallback, useRef, useMemo, useEffect } from "react";
 import ReceiptFormModal from "./ReceiptFormModal";
 import Button from "../../../components/ui/Button";
+import { SplitButton } from "../../../components/ui/Button";
 import Table from "../../../components/ui/Table";
 import Select from "../../../components/ui/Select";
-import Toggle from "../../../components/ui/Toggle";
 import { useToast } from "../../../components/ui/Toast";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import styles from "./ReceiptManagement.module.css";
 import apiClient from "../../../api/axios";
 import { useFilterStore } from "../../../stores/filterReceipt";
 import { useInterval } from "../../../hooks/useInterval";
+import api2, { getToken } from "../../../api/axios";
 
-const api = async (
-  path: string,
-  options: { method?: string; body?: string } = {},
-) => {
-  const method = (options.method || "GET").toLowerCase();
-  const data = options.body ? JSON.parse(options.body) : undefined;
-  const res = await (apiClient as any)[method](path, data);
-  return res.data;
-};
+const IS_PROD = import.meta.env.PROD;
 
 export default function InvoiceReceiptManagement() {
   // Zustand store
@@ -41,8 +34,6 @@ export default function InvoiceReceiptManagement() {
   const [deletingId, setDeletingId] = useState(null);
   const tableRef = useRef(null);
   const { addToast } = useToast();
-  const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-  const fullUrl = useMemo(() => `/receipts`, [apiBase]);
 
   // State untuk options stage
   const [loadingStages, setLoadingStages] = useState(false);
@@ -50,7 +41,7 @@ export default function InvoiceReceiptManagement() {
     Array<{ value: string; label: string }>
   >([]);
 
-  // Fetch stages berdasarkan selectedYear
+  // Fetch stages berdasarkan selectedYear — pakai apiClient langsung
   useEffect(() => {
     if (!selectedYear) {
       setStageOptions([]);
@@ -59,8 +50,10 @@ export default function InvoiceReceiptManagement() {
     const fetchStages = async () => {
       setLoadingStages(true);
       try {
-        const res = await api(`/stages?year=${selectedYear}`);
-        const stages = res.data || [];
+        const res = await apiClient.get(`/stages`, {
+          params: { year: selectedYear },
+        });
+        const stages = res.data?.data || [];
         setStageOptions(
           stages.map((s: any) => ({ value: s.id.toString(), label: s.name })),
         );
@@ -74,37 +67,26 @@ export default function InvoiceReceiptManagement() {
     fetchStages();
   }, [selectedYear]);
 
-  const POLL_INTERVAL_MS = 1 * 60 * 1000; // 2 menit, ubah sesuai kebutuhan
+  const POLL_INTERVAL_MS = 1 * 60 * 1000;
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   // Pause polling saat modal terbuka
   const isModalOpen = formTarget !== null;
 
+  // ReceiptManagement.tsx — di dalam useInterval callback
+
   useInterval(
     useCallback(() => {
+      // jangan poll kalau token belum ada (dev: localStorage, prod: cookie tidak bisa dicek)
+      if (!IS_PROD && !getToken()) return; // ← import getToken dari axios.ts
       tableRef.current?.refetch();
       setLastUpdated(new Date());
     }, []),
     isModalOpen ? null : POLL_INTERVAL_MS,
   );
-
-  // Set lastUpdated pertama kali saat tabel mount
   useEffect(() => {
     setLastUpdated(new Date());
   }, []);
-
-  // 🔥 HAPUS useEffect yang mereset stage jika ingin stage tetap tersimpan
-  // Jika Anda tetap ingin reset stage saat tahun berubah namun tidak saat refresh, gunakan kode di bawah ini (dikomentari)
-  /*
-  const isFirstRender = useRef(true);
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-    setSelectedStage("");
-  }, [selectedYear, setSelectedStage]);
-  */
 
   // Filter params untuk tabel
   const filterParams = useMemo<Record<string, any>>(() => {
@@ -112,7 +94,7 @@ export default function InvoiceReceiptManagement() {
     if (selectedCompany) params.company_id = selectedCompany;
     if (selectedVendor) params.vendor_id = selectedVendor;
     if (selectedStage) params.stage_id = selectedStage;
-    if (selectedIsPkp !== null) params.is_pkp = selectedIsPkp ? 1 : 0; // ← tambah
+    if (selectedIsPkp !== null) params.is_pkp = selectedIsPkp ? 1 : 0;
     return params;
   }, [selectedCompany, selectedVendor, selectedStage, selectedIsPkp]);
 
@@ -126,7 +108,7 @@ export default function InvoiceReceiptManagement() {
         return;
       setDeletingId(receipt.id);
       try {
-        await api(`/receipts/${receipt.id}`, { method: "DELETE" });
+        await apiClient.delete(`/receipts/${receipt.id}`);
         addToast({
           variant: "success",
           title: "Invoice receipt berhasil dihapus.",
@@ -160,6 +142,18 @@ export default function InvoiceReceiptManagement() {
     });
     tableRef.current?.refetch();
   }, [addToast]);
+
+  const handleSAPMir7 = useCallback(() => {
+    alert("Fitur integrasi SAP MIR7 belum diimplementasikan.");
+  }, []);
+
+  const handleSAPME2n = useCallback(() => {
+    alert("Fitur integrasi SAP ME2n belum diimplementasikan.");
+  }, []);
+
+  const handleSAPcekICA = useCallback(() => {
+    alert("Fitur cek PGR ID ICA belum diimplementasikan.");
+  }, []);
 
   const columns = useMemo(
     () => [
@@ -231,28 +225,55 @@ export default function InvoiceReceiptManagement() {
         key: "actions",
         label: "Aksi",
         sortable: false,
-        render: (row) => (
-          <div className={styles.actions}>
-            <Button
-              variant="ghost"
-              size="sm"
-              iconLeft={<Pencil size={13} />}
-              onClick={() => setFormTarget(row)}
-            >
-              Edit
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              iconLeft={<Trash2 size={13} />}
-              onClick={() => handleDelete(row, tableRef.current?.refetch)}
-              disabled={deletingId === row.id}
-              className={styles.deleteBtn}
-            >
-              Hapus
-            </Button>
-          </div>
-        ),
+        render: (row) => {
+          const pgr = row.pgr_id ?? "";
+
+          const sapOptions =
+            pgr === "ICA"
+              ? [
+                  {
+                    label: "ICAT Check",
+                    icon: <Trash2 size={13} />,
+                    onClick: () => handleSAPcekICA(),
+                  },
+                ]
+              : pgr !== ""
+                ? [
+                    {
+                      label: "MIR7",
+                      icon: <Trash2 size={13} />,
+                      onClick: () => handleSAPMir7(),
+                    },
+                  ]
+                : [];
+
+          return (
+            <div style={{ display: "flex", gap: "var(--space-2)" }}>
+              <SplitButton
+                label="Edit"
+                variant="outline"
+                size="sm"
+                onClick={() => setFormTarget(row)}
+                options={[
+                  {
+                    label: "Hapus",
+                    icon: <Trash2 size={13} />,
+                    onClick: () => handleDelete(row, tableRef.current?.refetch),
+                  },
+                ]}
+                disabled={deletingId === row.id}
+              />
+              <SplitButton
+                label="ME2N"
+                variant="outline"
+                size="sm"
+                onClick={() => handleSAPME2n()}
+                options={sapOptions}
+                disabled={pgr === "" || deletingId === row.id}
+              />
+            </div>
+          );
+        },
       },
     ],
     [handleDelete, deletingId],
@@ -266,7 +287,6 @@ export default function InvoiceReceiptManagement() {
           <p className={styles.pageSubtitle}>
             Kelola data invoice receipt perusahaan
           </p>
-          {/* ← tambah ini */}
           {lastUpdated && (
             <p className={styles.lastUpdated}>
               Diperbarui:{" "}
@@ -341,7 +361,7 @@ export default function InvoiceReceiptManagement() {
 
       <Table
         ref={tableRef}
-        url={fullUrl}
+        url={`/receipts`}
         columns={columns}
         dataKey="data"
         pageSize={15}
@@ -358,8 +378,8 @@ export default function InvoiceReceiptManagement() {
         <ReceiptFormModal
           receipt={formTarget.id ? formTarget : null}
           onClose={() => setFormTarget(null)}
-          onSaved={handleSaved} // ← untuk tambah: refetch saja, tidak close
-          onSavedAndClose={handleSavedAndClose} // ← untuk edit: refetch + close
+          onSaved={handleSaved}
+          onSavedAndClose={handleSavedAndClose}
         />
       )}
     </div>

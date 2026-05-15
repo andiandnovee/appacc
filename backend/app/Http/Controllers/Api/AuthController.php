@@ -122,7 +122,7 @@ class AuthController extends Controller
    private function respondWithToken(string $token, $user): \Illuminate\Http\JsonResponse
 {
     $ttl        =$this->jwtGuard()->factory()->getTTL();
-    $refreshTtl =$this->jwtGuard()->factory()->getRefreshTTL();
+    $refreshTtl = config('jwt.refresh_ttl', 20160);
     $clientType = request()->header('X-Client-Type', 'browser');
     $isProd     = app()->environment('production');
 

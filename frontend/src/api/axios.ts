@@ -105,16 +105,17 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Skip refresh untuk endpoint auth dasar — cukup reject, jangan loop
-    const skipRefreshUrls = ["/auth/refresh", "/auth/me", "/auth/login", "/auth/exchange"];
-    if (skipRefreshUrls.some(url => originalRequest.url?.includes(url))) {
-      console.warn("axios :Skipping refresh for auth endpoint:", originalRequest.url);
-      // Khusus /auth/refresh → forceLogout (token benar2 expired)
-      if (originalRequest.url?.includes("/auth/refresh")) {
-        forceLogout();
-      }
-      return Promise.reject(error);
-    }
+   // axios.ts — ganti bagian skipRefreshUrls
+
+const skipRefreshUrls = ["/auth/login", "/auth/exchange"];
+//   ↑ hapus /auth/refresh, /auth/me dari sini — mereka butuh handling berbeda
+
+if (skipRefreshUrls.some(url => originalRequest.url?.includes(url))) {
+  return Promise.reject(error);
+}
+
+// /auth/refresh gagal → memang harus logout, sudah benar
+// /auth/me gagal → JANGAN langsung logout, biarkan jatuh ke refresh flow normal
 
     originalRequest._retry = true;
 
