@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -22,7 +22,9 @@ import { PoResult, Company } from "../types";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const SCAN_BOX_SIZE = SCREEN_WIDTH * 0.75;
-const SCAN_INTERVAL_MS = 2500; // scan tiap 1.5 detik
+
+// Jeda autofocus sebelum capture (ms)
+const AUTOFOCUS_DELAY_MS = 600;
 
 const normalizeDigits = (s: string) => s.replace(/\D/g, "");
 
@@ -56,6 +58,7 @@ const formatCurrency = (text: string) => {
 };
 
 type Mode = "camera" | "manual";
+type ScanState = "idle" | "focusing" | "capturing" | "processing" | "searching";
 
 interface ManualState {
   tokens: string[];
@@ -68,21 +71,22 @@ interface ManualState {
   vendorName: string;
 }
 
+const SCAN_STATE_LABEL: Record<ScanState, string> = {
+  idle: "Tap tombol untuk scan",
+  focusing: "Fokus...",
+  capturing: "Mengambil gambar...",
+  processing: "Membaca teks...",
+  searching: "Mencari PO di database...",
+};
+
 export default function CameraOCRScreen() {
   const navigation = useNavigation<any>();
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
 
   const [mode, setMode] = useState<Mode>("camera");
-  const [scanning, setScanning] = useState(false); // OCR processing
-  const [searching, setSearching] = useState(false); // API lookup
+  const [scanState, setScanState] = useState<ScanState>("idle");
   const [flashOn, setFlashOn] = useState(false);
-  const [scanStatus, setScanStatus] = useState("Mengarahkan kamera...");
-
-  // Ref untuk kontrol loop — tidak perlu re-render
-  const isProcessing = useRef(false);
-  const lastPoScanned = useRef<string | null>(null);
-  const scanTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [manual, setManual] = useState<ManualState>({
     tokens: [],
@@ -106,16 +110,6 @@ export default function CameraOCRScreen() {
     if (!permission?.granted) requestPermission();
   }, []);
 
-  // Start/stop scan loop berdasarkan mode
-  useEffect(() => {
-    if (mode === "camera" && permission?.granted) {
-      startScanLoop();
-    } else {
-      stopScanLoop();
-    }
-    return () => stopScanLoop();
-  }, [mode, permission?.granted]);
-
   // Fetch companies + vendors saat masuk manual mode
   useEffect(() => {
     if (mode !== "manual") return;
@@ -135,84 +129,83 @@ export default function CameraOCRScreen() {
     }
   }, [mode]);
 
-  // ── Scan loop ──────────────────────────────────────────────────────────────
+  // ── Tap-to-scan ────────────────────────────────────────────────────────────
 
-  const startScanLoop = () => {
-    stopScanLoop();
-    scanTimer.current = setInterval(runOcrFrame, SCAN_INTERVAL_MS);
-  };
-
-  const stopScanLoop = () => {
-    if (scanTimer.current) {
-      clearInterval(scanTimer.current);
-      scanTimer.current = null;
-    }
-  };
-
-  const runOcrFrame = useCallback(async () => {
-    if (!cameraRef.current || isProcessing.current) return;
-    isProcessing.current = true;
+  const handleScan = async () => {
+    if (scanState !== "idle" || !cameraRef.current) return;
 
     try {
+      // 1. Beri waktu autofocus settle
+      setScanState("focusing");
+      await new Promise((res) => setTimeout(res, AUTOFOCUS_DELAY_MS));
+
+      // 2. Capture dengan kualitas penuh
+      setScanState("capturing");
       const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.6, // lebih rendah = lebih cepat untuk realtime
+        quality: 1.0,
         base64: false,
-        skipProcessing: true,
       });
 
-      if (!photo?.uri) return;
+      if (!photo?.uri) {
+        Alert.alert("Gagal", "Tidak dapat mengambil gambar");
+        return;
+      }
 
+      // 3. OCR
+      setScanState("processing");
       const result = await TextRecognition.recognize(photo.uri);
       const rawText = result.text ?? "";
 
       if (!rawText.trim()) {
-        setScanStatus("Tidak ada teks — arahkan ke dokumen");
+        Alert.alert(
+          "Tidak ada teks",
+          "Pastikan dokumen terbaca jelas dan pencahayaan cukup"
+        );
         return;
       }
 
       const { poCandidates, tokens } = parseOcrText(rawText);
 
+      // Simpan tokens untuk manual mode
+      setManual((prev) => ({ ...prev, tokens }));
+
       if (poCandidates.length === 0) {
-        setScanStatus("Teks terdeteksi — PO belum ditemukan");
-        // Simpan tokens terbaru untuk manual mode
-        setManual((prev) => ({ ...prev, tokens }));
+        // Teks ada tapi tidak ada PO candidate — tawarkan manual
+        Alert.alert(
+          "PO Tidak Ditemukan",
+          "Teks terdeteksi tapi nomor PO (format 4xxxxxxxxx) tidak ditemukan. Lanjut ke entry manual?",
+          [
+            { text: "Scan Ulang", style: "cancel" },
+            { text: "Entry Manual", onPress: () => setMode("manual") },
+          ]
+        );
         return;
       }
 
+      // 4. Cari PO di database
+      setScanState("searching");
       const poNumber = poCandidates[0];
-
-      // Skip kalau sudah pernah di-scan
-      if (poNumber === lastPoScanned.current) return;
-      lastPoScanned.current = poNumber;
-
-      setScanStatus(`PO terdeteksi: ${poNumber}`);
-      stopScanLoop();
-      setSearching(true);
-
       const data = await searchPo(poNumber);
 
       if (!data || !data.found) {
-        // PO tidak di DB — manual mode, pre-fill poNo + bawa tokens
+        // PO tidak di DB — manual mode, pre-fill poNo
         setManual((prev) => ({ ...prev, poNo: poNumber }));
         setMode("manual");
-        lastPoScanned.current = null;
         return;
       }
 
       // PO ditemukan — ke ScanPOScreen
       navigation.navigate("ScanPO", { detectedPo: poNumber });
-    } catch {
-      // Silent fail — lanjut scan berikutnya
+    } catch (err) {
+      Alert.alert("Error", "Terjadi kesalahan saat scan. Coba lagi.");
     } finally {
-      isProcessing.current = false;
-      setSearching(false);
+      setScanState("idle");
     }
-  }, [navigation]);
+  };
 
   // ── Manual mode helpers ────────────────────────────────────────────────────
 
   const enterManualMode = () => {
-    stopScanLoop();
     setManual((prev) => ({
       ...prev,
       invoiceNo: "",
@@ -231,15 +224,7 @@ export default function CameraOCRScreen() {
   };
 
   const submitManual = () => {
-    const {
-      invoiceNo,
-      poNo,
-      amount,
-      companyId,
-      companyName,
-      vendorId,
-      vendorName,
-    } = manual;
+    const { invoiceNo, poNo, amount, companyId, companyName, vendorId, vendorName } = manual;
 
     if (!vendorId) {
       Alert.alert("Wajib", "Vendor harus dipilih");
@@ -299,10 +284,7 @@ export default function CameraOCRScreen() {
           <Text style={styles.permissionDesc}>
             APPACC butuh akses kamera untuk scan nomor PO dari dokumen invoice.
           </Text>
-          <TouchableOpacity
-            style={styles.permissionBtn}
-            onPress={requestPermission}
-          >
+          <TouchableOpacity style={styles.permissionBtn} onPress={requestPermission}>
             <Text style={styles.permissionBtnText}>Izinkan Akses Kamera</Text>
           </TouchableOpacity>
         </View>
@@ -317,10 +299,7 @@ export default function CameraOCRScreen() {
       <SafeAreaView style={[styles.container, styles.manualContainer]}>
         <View style={styles.manualHeader}>
           <TouchableOpacity
-            onPress={() => {
-              setMode("camera");
-              lastPoScanned.current = null;
-            }}
+            onPress={() => setMode("camera")}
             style={styles.topBtn}
           >
             <Text style={styles.manualBackText}>← Scan Ulang</Text>
@@ -347,14 +326,8 @@ export default function CameraOCRScreen() {
                     style={styles.chip}
                     onPress={() =>
                       Alert.alert(token, "Gunakan sebagai:", [
-                        {
-                          text: "No. Invoice",
-                          onPress: () => selectToken("invoiceNo", token),
-                        },
-                        {
-                          text: "No. PO",
-                          onPress: () => selectToken("poNo", token),
-                        },
+                        { text: "No. Invoice", onPress: () => selectToken("invoiceNo", token) },
+                        { text: "No. PO", onPress: () => selectToken("poNo", token) },
                         { text: "Batal", style: "cancel" },
                       ])
                     }
@@ -401,11 +374,7 @@ export default function CameraOCRScreen() {
                 style={[styles.input, styles.selectRow]}
                 onPress={() => setShowVendorPicker(true)}
               >
-                <Text
-                  style={
-                    manual.vendorId ? styles.inputText : styles.inputPlaceholder
-                  }
-                >
+                <Text style={manual.vendorId ? styles.inputText : styles.inputPlaceholder}>
                   {manual.vendorName || "Pilih vendor..."}
                 </Text>
                 <Text style={styles.selectArrow}>▼</Text>
@@ -423,13 +392,7 @@ export default function CameraOCRScreen() {
                 style={[styles.input, styles.selectRow]}
                 onPress={() => setShowCompanyPicker(true)}
               >
-                <Text
-                  style={
-                    manual.companyId
-                      ? styles.inputText
-                      : styles.inputPlaceholder
-                  }
-                >
+                <Text style={manual.companyId ? styles.inputText : styles.inputPlaceholder}>
                   {manual.companyName || "Pilih perusahaan..."}
                 </Text>
                 <Text style={styles.selectArrow}>▼</Text>
@@ -445,9 +408,7 @@ export default function CameraOCRScreen() {
               <TextInput
                 style={styles.inputWithPrefix}
                 value={manual.amount}
-                onChangeText={(v) =>
-                  setManual((p) => ({ ...p, amount: formatCurrency(v) }))
-                }
+                onChangeText={(v) => setManual((p) => ({ ...p, amount: formatCurrency(v) }))}
                 placeholder="0"
                 placeholderTextColor="#9ca3af"
                 keyboardType="numeric"
@@ -459,9 +420,7 @@ export default function CameraOCRScreen() {
           </View>
 
           <TouchableOpacity style={styles.submitBtn} onPress={submitManual}>
-            <Text style={styles.submitBtnText}>
-              Lanjut ke Form Penerimaan →
-            </Text>
+            <Text style={styles.submitBtnText}>Lanjut ke Form Penerimaan →</Text>
           </TouchableOpacity>
         </ScrollView>
 
@@ -486,11 +445,7 @@ export default function CameraOCRScreen() {
                 <TouchableOpacity
                   style={styles.modalItem}
                   onPress={() => {
-                    setManual((p) => ({
-                      ...p,
-                      vendorId: item.id,
-                      vendorName: item.name,
-                    }));
+                    setManual((p) => ({ ...p, vendorId: item.id, vendorName: item.name }));
                     setShowVendorPicker(false);
                   }}
                 >
@@ -505,9 +460,7 @@ export default function CameraOCRScreen() {
                   )}
                 </TouchableOpacity>
               )}
-              ItemSeparatorComponent={() => (
-                <View style={styles.modalSeparator} />
-              )}
+              ItemSeparatorComponent={() => <View style={styles.modalSeparator} />}
             />
           </SafeAreaView>
         </Modal>
@@ -533,11 +486,7 @@ export default function CameraOCRScreen() {
                 <TouchableOpacity
                   style={styles.modalItem}
                   onPress={() => {
-                    setManual((p) => ({
-                      ...p,
-                      companyId: item.id,
-                      companyName: item.name,
-                    }));
+                    setManual((p) => ({ ...p, companyId: item.id, companyName: item.name }));
                     setShowCompanyPicker(false);
                   }}
                 >
@@ -547,9 +496,7 @@ export default function CameraOCRScreen() {
                   )}
                 </TouchableOpacity>
               )}
-              ItemSeparatorComponent={() => (
-                <View style={styles.modalSeparator} />
-              )}
+              ItemSeparatorComponent={() => <View style={styles.modalSeparator} />}
             />
           </SafeAreaView>
         </Modal>
@@ -557,7 +504,9 @@ export default function CameraOCRScreen() {
     );
   }
 
-  // ── Render: camera (auto-scan) ─────────────────────────────────────────────
+  // ── Render: camera (tap-to-scan) ───────────────────────────────────────────
+
+  const isBusy = scanState !== "idle";
 
   return (
     <View style={styles.container}>
@@ -566,6 +515,7 @@ export default function CameraOCRScreen() {
         style={StyleSheet.absoluteFillObject}
         facing="back"
         enableTorch={flashOn}
+        autofocus="on"
       />
 
       <View style={styles.overlay}>
@@ -574,6 +524,7 @@ export default function CameraOCRScreen() {
             <TouchableOpacity
               onPress={() => navigation.goBack()}
               style={styles.topBtn}
+              disabled={isBusy}
             >
               <Text style={styles.topBtnText}>✕ Tutup</Text>
             </TouchableOpacity>
@@ -581,43 +532,52 @@ export default function CameraOCRScreen() {
             <TouchableOpacity
               onPress={() => setFlashOn(!flashOn)}
               style={styles.topBtn}
+              disabled={isBusy}
             >
-              <Text style={styles.topBtnText}>
-                {flashOn ? "⚡ ON" : "⚡ OFF"}
-              </Text>
+              <Text style={styles.topBtnText}>{flashOn ? "⚡ ON" : "⚡ OFF"}</Text>
             </TouchableOpacity>
           </View>
         </SafeAreaView>
 
+        {/* Scan box */}
         <View style={styles.scanArea}>
           <View style={styles.scanBox}>
             <View style={[styles.corner, styles.cornerTL]} />
             <View style={[styles.corner, styles.cornerTR]} />
             <View style={[styles.corner, styles.cornerBL]} />
             <View style={[styles.corner, styles.cornerBR]} />
-            {/* Pulse indicator saat scanning */}
-            {scanning || searching ? <View style={styles.scanPulse} /> : null}
+            {isBusy && <ActivityIndicator size="large" color="#6366f1" />}
           </View>
           <Text style={styles.scanHint}>Arahkan nomor PO ke dalam kotak</Text>
-          <Text style={styles.scanStatus}>{scanStatus}</Text>
-          {searching && (
-            <View style={styles.searchingBadge}>
-              <ActivityIndicator size="small" color="#ffffff" />
-              <Text style={styles.searchingBadgeText}>
-                Mencari PO di database...
-              </Text>
-            </View>
-          )}
+          <Text style={styles.scanStatus}>{SCAN_STATE_LABEL[scanState]}</Text>
         </View>
 
+        {/* Bottom bar */}
         <View style={styles.bottomBar}>
-          <TouchableOpacity style={styles.manualBtn} onPress={enterManualMode}>
-            <Text style={styles.manualBtnText}>Input{"\n"}Manual</Text>
+          <TouchableOpacity
+            style={styles.manualBtn}
+            onPress={enterManualMode}
+            disabled={isBusy}
+          >
+            <Text style={[styles.manualBtnText, isBusy && styles.disabledText]}>
+              Input{"\n"}Manual
+            </Text>
           </TouchableOpacity>
-          <View style={styles.scanIndicator}>
-            <ActivityIndicator size="small" color="#6366f1" />
-            <Text style={styles.scanIndicatorText}>Auto scan</Text>
-          </View>
+
+          {/* Tombol scan utama */}
+          <TouchableOpacity
+            style={[styles.scanBtn, isBusy && styles.scanBtnBusy]}
+            onPress={handleScan}
+            disabled={isBusy}
+            activeOpacity={0.8}
+          >
+            {isBusy ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <Text style={styles.scanBtnIcon}>📷</Text>
+            )}
+          </TouchableOpacity>
+
           <View style={{ width: 80 }} />
         </View>
       </View>
@@ -691,13 +651,7 @@ const styles = StyleSheet.create({
   cornerTR: { top: 0, right: 0, borderLeftWidth: 0, borderBottomWidth: 0 },
   cornerBL: { bottom: 0, left: 0, borderRightWidth: 0, borderTopWidth: 0 },
   cornerBR: { bottom: 0, right: 0, borderLeftWidth: 0, borderTopWidth: 0 },
-  scanPulse: {
-    position: "absolute",
-    width: "90%",
-    height: 2,
-    backgroundColor: "#6366f1",
-    opacity: 0.8,
-  },
+
   scanHint: {
     color: "#ffffff",
     fontSize: 13,
@@ -711,17 +665,6 @@ const styles = StyleSheet.create({
     marginTop: 6,
     textAlign: "center",
   },
-  searchingBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: "rgba(99,102,241,0.8)",
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginTop: 12,
-  },
-  searchingBadgeText: { color: "#ffffff", fontSize: 13, fontWeight: "600" },
 
   bottomBar: {
     flexDirection: "row",
@@ -739,8 +682,27 @@ const styles = StyleSheet.create({
     textAlign: "center",
     opacity: 0.8,
   },
-  scanIndicator: { alignItems: "center", gap: 6 },
-  scanIndicatorText: { color: "#6366f1", fontSize: 11, fontWeight: "600" },
+  disabledText: { opacity: 0.3 },
+
+  // Tombol scan utama
+  scanBtn: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "#6366f1",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#6366f1",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  scanBtnBusy: {
+    backgroundColor: "#4338ca",
+    opacity: 0.8,
+  },
+  scanBtnIcon: { fontSize: 28 },
 
   // Manual mode
   manualContainer: { backgroundColor: "#f9fafb" },
