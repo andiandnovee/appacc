@@ -46,12 +46,12 @@ const NAV_GROUPS = [
     label: "Penerimaan Invoice",
     items: [
       { to: "/invoice/receipts", icon: FileText, label: "Monitor Invoice" },
-      {
-        to: "/invoice/input",
-        icon: FilePlus,
-        label: "Input Penerimaan",
-        badge: "operator",
-      },
+      // {
+      //   to: "/invoice/input",
+      //   icon: FilePlus,
+      //   label: "Input Penerimaan",
+      //   badge: "operator",
+      // },
       
       { to: "/invoice/pph", icon: Percent, label: "Rekap PPh" },
     ],
