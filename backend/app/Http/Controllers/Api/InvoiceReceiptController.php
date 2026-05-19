@@ -67,6 +67,12 @@ class InvoiceReceiptController extends Controller
     if ($request->filled('business_area_code')) {
         $query->where('business_area_code', $request->business_area_code);
     }
+
+    if ($request->filled('po_number')) {
+    $query->where('po_number', $request->po_number);
+}    
+
+
     if ($request->filled('status_value')) {
         $query->whereHas('latestStatus', function ($q) use ($request) {
             $q->where('status_value', $request->status_value);

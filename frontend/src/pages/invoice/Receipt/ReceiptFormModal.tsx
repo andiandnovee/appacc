@@ -13,6 +13,7 @@ import Select from "../../../components/ui/Select";
 import styles from "./ReceiptManagement.module.css";
 import api from "../../../api/axios";
 import { useFilterStore } from "../../../stores/filterReceipt";
+import Badge from "../../../components/ui/Badge";
 
 // ======================== TYPES ========================
 
@@ -110,7 +111,7 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
 
   // ── PPN state ──────────────────────────────────────────────────────────────
   const [ppnEnabled, setPpnEnabled] = useState(false);
-  const [pendingPpn, setPendingPpn] = useState(false);
+
   const [baseAmount, setBaseAmount] = useState<string>("");
   const [amountRaw, setAmountRaw] = useState<number>(receipt?.amount ?? 0);
   const [amountDisplay, setAmountDisplay] = useState<string>(
@@ -132,17 +133,11 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
     setPoDuplicate(false);
     setAutoFilled(new Set());
     setPpnEnabled(false);
-    setPendingPpn(false);
+
     setErrors({});
   }, [receipt]);
 
   // ── PPN: aktifkan setelah baseAmount siap ─────────────────────────────────
-  useEffect(() => {
-    if (pendingPpn && baseAmount) {
-      setPpnEnabled(true);
-      setPendingPpn(false);
-    }
-  }, [pendingPpn, baseAmount]);
 
   // ── PPN: hitung total saat ppnEnabled atau baseAmount berubah ─────────────
   useEffect(() => {
@@ -206,7 +201,7 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
         setAutoFilled(new Set());
         setBaseAmount("");
         setPpnEnabled(false);
-        setPendingPpn(false);
+
         setAmountRaw(0);
         setAmountDisplay("");
         setForm((prev) => ({
@@ -261,6 +256,7 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
   }, []);
 
   // ── PO Lookup ──────────────────────────────────────────────────────────────
+
   const handlePoBlur = useCallback(async () => {
     const poNumber = form.po_number.trim();
     if (!poNumber) return;
@@ -269,22 +265,27 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
     setPoFound(null);
     setPoDuplicate(false);
 
+    // 1. Cek duplikat di invoice receipts — TERPISAH, tidak block SAP lookup
     try {
-      // 1. Cek duplikat di receipts
       const dupRes = await api.get(`/receipts`, {
         params: { po_number: poNumber, per_page: 1 },
       });
-      const dupData = dupRes.data?.data ?? dupRes.data ?? [];
-      const isDuplicate = Array.isArray(dupData)
-        ? dupData.length > 0
-        : (dupRes.data?.total ?? 0) > 0;
+      const total =
+        dupRes.data?.meta?.total ??
+        dupRes.data?.total ??
+        dupRes.data?.data?.length ??
+        0;
 
-      if (isDuplicate) {
+      if (total > 0) {
         setPoDuplicate(true);
-        onPoAlreadyExists?.(poNumber); // ← kasih tahu parent
+        onPoAlreadyExists?.(poNumber);
       }
+    } catch {
+      // gagal cek duplikat — abaikan, lanjut ke SAP
+    }
 
-      // 2. Tetap lanjut lookup SAP
+    // 2. Lookup SAP — blok sendiri, tidak terpengaruh hasil cek duplikat
+    try {
       const res = await api.get(`/sap/po-lookup`, {
         params: { po_number: poNumber },
       });
@@ -299,7 +300,6 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
           filled.add("vendor_id");
         }
         if (data.amount !== undefined) {
-          // baseAmount SELALU net value dari SAP — tidak pernah dari receipt tersimpan
           const amountStr = data.amount.toString();
           setBaseAmount(amountStr);
           setAmountDisplay(amountStr);
@@ -321,13 +321,13 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
           next.is_pkp = Boolean(data.is_pkp);
           filled.add("is_pkp");
           if (data.is_pkp === true) {
-            // set pending — tunggu baseAmount ready via useEffect
-            setPendingPpn(true);
+            // setTimeout(() => setPpnEnabled(true), 0);
           }
         }
 
         setForm(next);
 
+        // lookup BA
         if (data.sap_business_area_id) {
           try {
             const baRes = await api.get(`/busa`, {
@@ -335,9 +335,7 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
             });
             const baList = baRes.data?.data ?? baRes.data ?? [];
             const ba = Array.isArray(baList)
-              ? baList.find(
-                  (b: any) => b.sap_id === data.sap_business_area_id,
-                )
+              ? baList.find((b: any) => b.sap_id === data.sap_business_area_id)
               : null;
             if (ba?.company_id) {
               setForm((prev) => ({
@@ -405,7 +403,7 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
     setAmountRaw(0);
     setAmountDisplay("");
     setPpnEnabled(false);
-    setPendingPpn(false);
+
     setErrors({});
   };
 
@@ -430,9 +428,7 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
         invoice_number: form.invoice_number || null,
         amount: amountRaw,
         business_area_code: form.business_area_code || null,
-        pgr_id: form.pgr_id
-          ? form.pgr_id.split(" — ")[0].trim() || null
-          : null,
+        pgr_id: form.pgr_id ? form.pgr_id.split(" — ")[0].trim() || null : null,
         is_pkp: form.is_pkp,
       };
 
@@ -503,16 +499,18 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
         />
         <div className={styles.poBadgeRow}>
           {poFound && autoFilled.size > 0 && (
-            <span className={styles.sapBadge}>Data dari SAP</span>
+            <Badge variant="success" size="sm" pill dot>
+              Data dari SAP
+            </Badge>
           )}
           {poDuplicate && (
-            <span className={styles.dupBadge}>
-              ⚠ PO ini sudah pernah diinput
-            </span>
+            <Badge variant="warning" size="sm" pill dot>
+              PO ini sudah pernah diinput
+            </Badge>
           )}
         </div>
-      </div>
-
+      </div>{" "}
+      {/* ← ini penutup poField yang hilang */}
       <Input
         label="Tanggal Receipt"
         type="date"
@@ -521,7 +519,6 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
         error={errors.receipt_date}
         required
       />
-
       <Input
         label="Invoice Number"
         placeholder="contoh: INV-2026-001"
@@ -529,7 +526,6 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
         onChange={handleInputChange("invoice_number")}
         error={errors.invoice_number}
       />
-
       <Input
         label="Jumlah (Net Value)"
         type="number"
@@ -546,7 +542,6 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
         required
         hint={autoFilled.has("amount") ? "Dari SAP" : undefined}
       />
-
       {/* PPN */}
       {(autoFilled.has("amount") || amountRaw > 0) && (
         <div className={`${styles.ppnWrapper} ${styles.fullWidth}`}>
@@ -566,7 +561,7 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
             </span>
           </label>
 
-          {ppnEnabled && baseAmount && (
+          {/* {ppnEnabled && baseAmount && (
             <div className={styles.ppnBreakdown}>
               <span className={styles.ppnBreakdownRow}>
                 <span>Net Value</span>
@@ -590,10 +585,9 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
                 <span>Rp {amountRaw.toLocaleString("id-ID")}</span>
               </span>
             </div>
-          )}
+          )} */}
         </div>
       )}
-
       <Select
         label="Vendor"
         value={form.vendor_id}
@@ -604,7 +598,6 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
         required
         disabled={autoFilled.has("vendor_id")}
       />
-
       <Select
         label="Perusahaan"
         value={form.company_id}
@@ -616,7 +609,6 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
         disabled={autoFilled.has("company_id")}
         hint={autoFilled.has("company_id") ? "Dari SAP" : undefined}
       />
-
       <Input
         label="Tahun"
         type="number"
@@ -627,7 +619,6 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
         min="2000"
         max="2099"
       />
-
       <Select
         label="Periode"
         value={form.stage_id}
@@ -637,7 +628,6 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
         error={errors.stage_id}
         required
       />
-
       <Input
         label="Area Bisnis"
         placeholder="contoh: BA001"
@@ -647,7 +637,6 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
         disabled={autoFilled.has("business_area_code")}
         hint={autoFilled.has("business_area_code") ? "Dari SAP" : undefined}
       />
-
       <Input
         label="Purchasing Group"
         placeholder="Otomatis dari PO SAP"
@@ -663,7 +652,6 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
               : "Isi PO Number untuk auto-fill"
         }
       />
-
       {errors.general && (
         <p
           className={`${styles.errorText} ${styles.errorGeneral} ${styles.fullWidth}`}
@@ -671,7 +659,6 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
           {errors.general}
         </p>
       )}
-
       <div className={`${styles.formActions} ${styles.fullWidth}`}>
         <Button variant="ghost" onClick={onCancel} disabled={loading}>
           Batal

@@ -166,8 +166,8 @@ class AuthController extends Controller
             'is_active'   => $user->is_active,
             'roles'       => $user->role_names,
             'permissions' => $user->permission_names,
-            'sap_user' => $user->sap_username,  
-            'sap_server_con' => $user->sap_server,
+            'sap_user' => $user->sap_user,  
+            'sap_server_con' => $user->sap_server_con,
             
         ];
     }
