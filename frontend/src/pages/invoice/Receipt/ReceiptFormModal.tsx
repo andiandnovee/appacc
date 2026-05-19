@@ -5,8 +5,8 @@ import {
   useCallback,
   ChangeEvent,
   useEffect,
+  useRef,
 } from "react";
-import Modal from "../../../components/ui/Modal";
 import Button from "../../../components/ui/Button";
 import Input from "../../../components/ui/Input";
 import Select from "../../../components/ui/Select";
@@ -34,9 +34,9 @@ interface Receipt {
 
 interface ReceiptFormModalProps {
   receipt?: Receipt | null;
-  onClose: () => void;
+  onCancel: () => void;
   onSaved: () => void;
-  onSavedAndClose: () => void;
+  onSavedAndNew: () => void;
 }
 
 interface FormData {
@@ -85,9 +85,9 @@ const makeInitialForm = (
 
 const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
   receipt,
-  onClose,
+  onCancel,
   onSaved,
-  onSavedAndClose,
+  onSavedAndNew,
 }) => {
   const isEdit = Boolean(receipt?.id);
 
@@ -98,6 +98,8 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
     makeInitialForm(receipt, selectedStage, selectedYear),
   );
 
+
+  const poInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [poLooking, setPoLooking] = useState(false);
   const [poFound, setPoFound] = useState<boolean | null>(null);
@@ -106,12 +108,23 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
   const [ppnEnabled, setPpnEnabled] = useState(false);
   const [ppnRate, setPpnRate] = useState(11);
 
-  // ── Amount state ───────────────────────────────────────────────────────────
   const [amountRaw, setAmountRaw] = useState<number>(receipt?.amount ?? 0);
   const [amountDisplay, setAmountDisplay] = useState<string>(
     receipt?.amount?.toString() ?? "",
   );
   const [baseAmount, setBaseAmount] = useState<string>("");
+
+  // ── Reset saat receipt prop berubah ───────────────────────────────────────
+  useEffect(() => {
+    setForm(makeInitialForm(receipt, selectedStage, selectedYear));
+    setAmountRaw(receipt?.amount ?? 0);
+    setAmountDisplay(receipt?.amount?.toString() ?? "");
+    setBaseAmount("");
+    setPoFound(null);
+    setAutoFilled(new Set());
+    setPpnEnabled(false);
+    setErrors({});
+  }, [receipt]);
 
   // ── PPN effect ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -129,10 +142,9 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
     setAmountDisplay(totalStr);
   }, [ppnEnabled, ppnRate, baseAmount]);
 
-  // ── Edit mode: lookup buyer name dari pgr_id ───────────────────────────────
+  // ── Edit mode: lookup buyer name dari pgr_id ──────────────────────────────
   useEffect(() => {
     if (!isEdit || !form.pgr_id) return;
-
     const lookupPgr = async () => {
       try {
         const res = await api.get(`/pgr`, { params: { search: form.pgr_id } });
@@ -140,7 +152,6 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
         const matched = Array.isArray(list)
           ? list.find((p: any) => p.PGr === form.pgr_id)
           : null;
-
         if (matched?.Description) {
           setForm((prev) => ({
             ...prev,
@@ -151,11 +162,24 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
         // gagal lookup — tampilkan kode saja
       }
     };
-
     lookupPgr();
   }, []); // hanya saat mount
+// ── Ctrl+S untuk simpan & tambah lagi ─────────────────────────────────────
+useEffect(() => {
+  const handleKeyDown = async (e: KeyboardEvent) => {
+    if (e.ctrlKey && e.key === "s") {
+      e.preventDefault();
+      await handleSave(true);
+      poInputRef.current?.focus();
+    }
+  };
 
-  // ── Field change handlers ──────────────────────────────────────────────────
+  window.addEventListener("keydown", handleKeyDown);
+  return () => window.removeEventListener("keydown", handleKeyDown);
+}, [amountRaw, form]);
+
+
+  // ── Field handlers ─────────────────────────────────────────────────────────
   const handleInputChange =
     (field: keyof FormData) => (e: ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
@@ -180,10 +204,7 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
         return;
       }
 
-      if (field === "year") {
-        setSelectedYear(value);
-      }
-
+      if (field === "year") setSelectedYear(value);
       setForm((prev) => ({ ...prev, [field]: value }));
     };
 
@@ -216,7 +237,6 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
           next.vendor_id = data.vendor_id.toString();
           filled.add("vendor_id");
         }
-
         if (data.amount !== undefined) {
           const amountStr = data.amount.toString();
           setBaseAmount(amountStr);
@@ -225,27 +245,20 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
           next.amount = amountStr;
           filled.add("amount");
         }
-
         if (data.sap_business_area_id) {
           next.business_area_code = data.sap_business_area_id;
           filled.add("business_area_code");
         }
-
         if (data.purc_grp) {
           next.pgr_id = data.buyer_name
             ? `${data.purc_grp} — ${data.buyer_name}`
             : data.purc_grp;
           filled.add("pgr_id");
         }
-
-        // ── is_pkp dari PO lookup ──────────────────────────────────────────
-        // Jika vendor PKP, otomatis enable PPN 11%
         if (data.is_pkp !== undefined) {
           next.is_pkp = Boolean(data.is_pkp);
           filled.add("is_pkp");
-          if (data.is_pkp) {
-            setPpnEnabled(true); // trigger PPN effect via useEffect
-          }
+          if (data.is_pkp) setPpnEnabled(true);
         }
 
         setForm(next);
@@ -259,7 +272,6 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
             const ba = Array.isArray(baList)
               ? baList.find((b: any) => b.sap_id === data.sap_business_area_id)
               : null;
-
             if (ba?.company_id) {
               setForm((prev) => ({
                 ...prev,
@@ -316,8 +328,20 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
     return err;
   };
 
+  // ── Reset ke form kosong ───────────────────────────────────────────────────
+  const resetToNew = () => {
+    setForm(makeInitialForm(null, selectedStage, selectedYear));
+    setPoFound(null);
+    setAutoFilled(new Set());
+    setBaseAmount("");
+    setAmountRaw(0);
+    setAmountDisplay("");
+    setPpnEnabled(false);
+    setErrors({});
+  };
+
   // ── Submit ─────────────────────────────────────────────────────────────────
-  const handleSave = async () => {
+  const handleSave = async (andNew = false) => {
     const err = validate();
     if (Object.keys(err).length) {
       setErrors(err);
@@ -337,7 +361,9 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
         invoice_number: form.invoice_number || null,
         amount: amountRaw,
         business_area_code: form.business_area_code || null,
-        pgr_id: form.pgr_id ? form.pgr_id.split(" — ")[0].trim() || null : null,
+        pgr_id: form.pgr_id
+          ? form.pgr_id.split(" — ")[0].trim() || null
+          : null,
         is_pkp: form.is_pkp,
       };
 
@@ -346,15 +372,12 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
         onSaved();
       } else {
         await api.post("/receipts", payload);
-        setForm(makeInitialForm(null, selectedStage, selectedYear));
-        setPoFound(null);
-        setAutoFilled(new Set());
-        setBaseAmount("");
-        setAmountRaw(0);
-        setAmountDisplay("");
-        setPpnEnabled(false);
-        setErrors({});
-        onSaved();
+        if (andNew) {
+          resetToNew();
+          onSavedAndNew();
+        } else {
+          onSaved();
+        }
       }
     } catch (e: any) {
       const responseData = e?.response?.data;
@@ -382,232 +405,236 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <Modal isOpen onClose={onClose} size="lg">
-      <Modal.Header
-        onClose={onClose}
-        title={isEdit ? "Edit Invoice Receipt" : "Tambah Invoice Receipt Baru"}
-        subtitle={
-          isEdit && receipt
-            ? `Invoice #${receipt.invoice_number}`
-            : "Isi data invoice receipt dengan lengkap"
-        }
-        actions={null}
-        children={null}
+    <div className={styles.formGrid}>
+      {/* PO Number */}
+      <div className={styles.poField}>
+  <Input
+    ref={poInputRef}
+    label="PO Number"
+    placeholder="contoh: 4506911487"
+    value={form.po_number}
+    onChange={handleInputChange("po_number")}
+    onBlur={handlePoBlur}
+    onKeyDown={(e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handlePoBlur();
+      }
+    }}
+    error={errors.po_number}
+    hint={
+      poLooking
+        ? "Mencari data SAP..."
+        : poFound === true
+          ? "✓ Data ditemukan di SAP PO Import"
+          : poFound === false
+            ? "Data tidak ditemukan di SAP"
+            : "Isi lalu pindah fokus untuk auto-fill dari SAP"
+    }
+  />
+  {poFound && autoFilled.size > 0 && (
+    <span className={styles.sapBadge}>Data dari SAP</span>
+  )}
+</div>
+      <Input
+        label="Tanggal Receipt"
+        type="date"
+        value={form.receipt_date}
+        onChange={handleInputChange("receipt_date")}
+        error={errors.receipt_date}
+        required
       />
-      <Modal.Body>
-        <div className={styles.formGrid}>
-          {/* PO Number */}
-          <div className={styles.poField}>
-            <Input
-              label="PO Number"
-              placeholder="contoh: 4506911487"
-              value={form.po_number}
-              onChange={handleInputChange("po_number")}
-              onBlur={handlePoBlur}
-              error={errors.po_number}
-              hint={
-                poLooking
-                  ? "Mencari data SAP..."
-                  : poFound === true
-                    ? "✓ Data ditemukan di SAP PO Import"
-                    : poFound === false
-                      ? "Data tidak ditemukan di SAP"
-                      : "Isi lalu pindah fokus untuk auto-fill dari SAP"
-              }
+
+      <Input
+        label="Invoice Number"
+        placeholder="contoh: INV-2026-001"
+        value={form.invoice_number}
+        onChange={handleInputChange("invoice_number")}
+        error={errors.invoice_number}
+      />
+
+      <Input
+        label="Jumlah (Net Value)"
+        type="number"
+        placeholder="0"
+        value={amountDisplay}
+        onChange={() => {}}
+        onValueChange={(raw) => {
+          setAmountRaw(raw);
+          setAmountDisplay(String(raw));
+          setForm((prev) => ({ ...prev, amount: String(raw) }));
+        }}
+        error={errors.amount}
+        required
+        hint={autoFilled.has("amount") ? "Dari SAP" : undefined}
+      />
+
+      {autoFilled.has("amount") && (
+        <div className={styles.ppnWrapper}>
+          <label className={styles.ppnToggleLabel}>
+            <input
+              type="checkbox"
+              checked={ppnEnabled}
+              onChange={(e) => setPpnEnabled(e.target.checked)}
+              className={styles.ppnCheckbox}
             />
-            {poFound && autoFilled.size > 0 && (
-              <span className={styles.sapBadge}>Data dari SAP</span>
-            )}
-          </div>
-
-          <Input
-            label="Tanggal Receipt"
-            type="date"
-            value={form.receipt_date}
-            onChange={handleInputChange("receipt_date")}
-            error={errors.receipt_date}
-            required
-          />
-
-          <Input
-            label="Invoice Number"
-            placeholder="contoh: INV-2026-001"
-            value={form.invoice_number}
-            onChange={handleInputChange("invoice_number")}
-            error={errors.invoice_number}
-          />
-
-          <Input
-            label="Jumlah (Net Value)"
-            type="number"
-            placeholder="0"
-            value={amountDisplay}
-            onChange={() => {
-              /* no-op: amount dihandle via onValueChange */
-            }}
-            onValueChange={(raw) => {
-              setAmountRaw(raw);
-              setAmountDisplay(String(raw));
-              setForm((prev) => ({ ...prev, amount: String(raw) }));
-            }}
-            error={errors.amount}
-            required
-            hint={autoFilled.has("amount") ? "Dari SAP" : undefined}
-          />
-
-          {/* PPN toggle — tampil hanya jika amount dari SAP (autoFilled) */}
-          {autoFilled.has("amount") && (
-            <div className={styles.ppnWrapper}>
-              <label className={styles.ppnToggleLabel}>
-                <input
-                  type="checkbox"
-                  checked={ppnEnabled}
-                  onChange={(e) => setPpnEnabled(e.target.checked)}
-                  className={styles.ppnCheckbox}
-                />
-                <span>
-                  Tambah PPN
-                  {form.is_pkp && (
-                    <span className={styles.pkpBadge}>Vendor PKP</span>
-                  )}
-                </span>
-              </label>
-
-              {ppnEnabled && (
-                <div className={styles.ppnDetail}>
-                  <div className={styles.ppnRateRow}>
-                    <span>Tarif PPN</span>
-                    <div className={styles.ppnRateInput}>
-                      <input
-                        type="number"
-                        value={ppnRate}
-                        onChange={(e) =>
-                          setPpnRate(parseFloat(e.target.value) || 0)
-                        }
-                        min="0"
-                        max="100"
-                        step="0.1"
-                        className={styles.ppnRateField}
-                      />
-                      <span>%</span>
-                    </div>
-                  </div>
-                  <div className={styles.ppnBreakdown}>
-                    <span className={styles.ppnBreakdownRow}>
-                      <span>Net Value</span>
-                      <span>
-                        Rp{" "}
-                        {parseFloat(baseAmount || "0").toLocaleString("id-ID")}
-                      </span>
-                    </span>
-                    <span className={styles.ppnBreakdownRow}>
-                      <span>PPN {ppnRate}%</span>
-                      <span>
-                        Rp{" "}
-                        {(
-                          (parseFloat(baseAmount || "0") * ppnRate) /
-                          100
-                        ).toLocaleString("id-ID")}
-                      </span>
-                    </span>
-                    <span
-                      className={`${styles.ppnBreakdownRow} ${styles.ppnTotal}`}
-                    >
-                      <span>Total</span>
-                      <span>Rp {amountRaw.toLocaleString("id-ID")}</span>
-                    </span>
-                  </div>
-                </div>
+            <span>
+              Tambah PPN
+              {form.is_pkp && (
+                <span className={styles.pkpBadge}>Vendor PKP</span>
               )}
+            </span>
+          </label>
+
+          {ppnEnabled && (
+            <div className={styles.ppnDetail}>
+              <div className={styles.ppnRateRow}>
+                <span>Tarif PPN</span>
+                <div className={styles.ppnRateInput}>
+                  <input
+                    type="number"
+                    value={ppnRate}
+                    onChange={(e) =>
+                      setPpnRate(parseFloat(e.target.value) || 0)
+                    }
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    className={styles.ppnRateField}
+                  />
+                  <span>%</span>
+                </div>
+              </div>
+              <div className={styles.ppnBreakdown}>
+                <span className={styles.ppnBreakdownRow}>
+                  <span>Net Value</span>
+                  <span>
+                    Rp {parseFloat(baseAmount || "0").toLocaleString("id-ID")}
+                  </span>
+                </span>
+                <span className={styles.ppnBreakdownRow}>
+                  <span>PPN {ppnRate}%</span>
+                  <span>
+                    Rp{" "}
+                    {(
+                      (parseFloat(baseAmount || "0") * ppnRate) /
+                      100
+                    ).toLocaleString("id-ID")}
+                  </span>
+                </span>
+                <span
+                  className={`${styles.ppnBreakdownRow} ${styles.ppnTotal}`}
+                >
+                  <span>Total</span>
+                  <span>Rp {amountRaw.toLocaleString("id-ID")}</span>
+                </span>
+              </div>
             </div>
           )}
-
-          <Select
-            label="Vendor"
-            value={form.vendor_id}
-            onChange={handleSelectChange("vendor_id")}
-            placeholder="— Pilih Vendor —"
-            fetchOptions={vendorFetchOptions}
-            error={errors.vendor_id}
-            required
-            disabled={autoFilled.has("vendor_id")}
-          />
-
-          <Select
-            label="Perusahaan"
-            value={form.company_id}
-            onChange={handleSelectChange("company_id")}
-            placeholder="— Pilih Perusahaan —"
-            fetchOptions={companyFetchOptions}
-            error={errors.company_id}
-            required
-            disabled={autoFilled.has("company_id")}
-            hint={autoFilled.has("company_id") ? "Dari SAP" : undefined}
-          />
-
-          <Input
-            label="Tahun"
-            type="number"
-            value={form.year}
-            onChange={handleInputChange("year")}
-            error={errors.year}
-            hint="Filter untuk Stage"
-            min="2000"
-            max="2099"
-          />
-
-          <Select
-            label="Periode"
-            value={form.stage_id}
-            onChange={handleSelectChange("stage_id")}
-            placeholder="— Pilih Periode —"
-            fetchOptions={stageFetchOptions}
-            error={errors.stage_id}
-            required
-          />
-
-          <Input
-            label="Area Bisnis"
-            placeholder="contoh: BA001"
-            value={form.business_area_code}
-            onChange={handleInputChange("business_area_code")}
-            error={errors.business_area_code}
-            disabled={autoFilled.has("business_area_code")}
-            hint={autoFilled.has("business_area_code") ? "Dari SAP" : undefined}
-          />
-
-          <Input
-            label="Purchasing Group"
-            placeholder="Otomatis dari PO SAP"
-            value={form.pgr_id}
-            onChange={handleInputChange("pgr_id")}
-            error={errors.pgr_id}
-            disabled={autoFilled.has("pgr_id") || isEdit}
-            hint={
-              autoFilled.has("pgr_id")
-                ? "Dari SAP"
-                : isEdit
-                  ? "Dari data tersimpan"
-                  : "Isi PO Number untuk auto-fill"
-            }
-          />
         </div>
+      )}
 
-        {errors.general && (
-          <p className={`${styles.errorText} ${styles.errorGeneral}`}>
-            {errors.general}
-          </p>
-        )}
-      </Modal.Body>
-      <Modal.Footer>
-        <Button variant="ghost" onClick={onClose} disabled={loading}>
+      <Select
+        label="Vendor"
+        value={form.vendor_id}
+        onChange={handleSelectChange("vendor_id")}
+        placeholder="— Pilih Vendor —"
+        fetchOptions={vendorFetchOptions}
+        error={errors.vendor_id}
+        required
+        disabled={autoFilled.has("vendor_id")}
+      />
+
+      <Select
+        label="Perusahaan"
+        value={form.company_id}
+        onChange={handleSelectChange("company_id")}
+        placeholder="— Pilih Perusahaan —"
+        fetchOptions={companyFetchOptions}
+        error={errors.company_id}
+        required
+        disabled={autoFilled.has("company_id")}
+        hint={autoFilled.has("company_id") ? "Dari SAP" : undefined}
+      />
+
+      <Input
+        label="Tahun"
+        type="number"
+        value={form.year}
+        onChange={handleInputChange("year")}
+        error={errors.year}
+        hint="Filter untuk Stage"
+        min="2000"
+        max="2099"
+      />
+
+      <Select
+        label="Periode"
+        value={form.stage_id}
+        onChange={handleSelectChange("stage_id")}
+        placeholder="— Pilih Periode —"
+        fetchOptions={stageFetchOptions}
+        error={errors.stage_id}
+        required
+      />
+
+      <Input
+        label="Area Bisnis"
+        placeholder="contoh: BA001"
+        value={form.business_area_code}
+        onChange={handleInputChange("business_area_code")}
+        error={errors.business_area_code}
+        disabled={autoFilled.has("business_area_code")}
+        hint={autoFilled.has("business_area_code") ? "Dari SAP" : undefined}
+      />
+
+      <Input
+        label="Purchasing Group"
+        placeholder="Otomatis dari PO SAP"
+        value={form.pgr_id}
+        onChange={handleInputChange("pgr_id")}
+        error={errors.pgr_id}
+        disabled={autoFilled.has("pgr_id") || isEdit}
+        hint={
+          autoFilled.has("pgr_id")
+            ? "Dari SAP"
+            : isEdit
+              ? "Dari data tersimpan"
+              : "Isi PO Number untuk auto-fill"
+        }
+      />
+
+      {errors.general && (
+        <p
+          className={`${styles.errorText} ${styles.errorGeneral} ${styles.fullWidth}`}
+        >
+          {errors.general}
+        </p>
+      )}
+
+      {/* Footer actions */}
+      <div className={`${styles.formActions} ${styles.fullWidth}`}>
+        <Button variant="ghost" onClick={onCancel} disabled={loading}>
           Batal
         </Button>
-        <Button variant="primary" onClick={handleSave} loading={loading}>
-          {isEdit ? "Simpan Perubahan" : "Tambah Receipt"}
+        {!isEdit && (
+          <Button
+            variant="outline"
+            onClick={() => handleSave(true)}
+            loading={loading}
+          >
+            Simpan & Tambah Lagi
+          </Button>
+        )}
+        <Button
+          variant="primary"
+          onClick={() => handleSave(false)}
+          loading={loading}
+        >
+          {isEdit ? "Simpan Perubahan" : "Simpan Receipt"}
         </Button>
-      </Modal.Footer>
-    </Modal>
+      </div>
+    </div>
   );
 };
 

@@ -4,18 +4,18 @@ import Button from "../../../components/ui/Button";
 import { SplitButton } from "../../../components/ui/Button";
 import Table from "../../../components/ui/Table";
 import Select from "../../../components/ui/Select";
+import Collapsible from "../../../components/ui/Collapsible";
 import { useToast } from "../../../components/ui/Toast";
 import { Plus, Trash2 } from "lucide-react";
 import styles from "./ReceiptManagement.module.css";
 import apiClient from "../../../api/axios";
 import { useFilterStore } from "../../../stores/filterReceipt";
 import { useInterval } from "../../../hooks/useInterval";
-import api2, { getToken } from "../../../api/axios";
+import { getToken } from "../../../api/axios";
 
 const IS_PROD = import.meta.env.PROD;
 
 export default function InvoiceReceiptManagement() {
-  // Zustand store
   const {
     selectedCompany,
     selectedVendor,
@@ -30,18 +30,17 @@ export default function InvoiceReceiptManagement() {
     resetFilters,
   } = useFilterStore();
 
-  const [formTarget, setFormTarget] = useState(null);
+  const [formTarget, setFormTarget] = useState<any>({});
   const [deletingId, setDeletingId] = useState(null);
   const tableRef = useRef(null);
   const { addToast } = useToast();
 
-  // State untuk options stage
   const [loadingStages, setLoadingStages] = useState(false);
+  // ✅ benar
   const [stageOptions, setStageOptions] = useState<
-    Array<{ value: string; label: string }>
+    { value: string; label: string }[]
   >([]);
 
-  // Fetch stages berdasarkan selectedYear — pakai apiClient langsung
   useEffect(() => {
     if (!selectedYear) {
       setStageOptions([]);
@@ -69,26 +68,21 @@ export default function InvoiceReceiptManagement() {
 
   const POLL_INTERVAL_MS = 1 * 60 * 1000;
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-
-  // Pause polling saat modal terbuka
-  const isModalOpen = formTarget !== null;
-
-  // ReceiptManagement.tsx — di dalam useInterval callback
+  //const isModalOpen = formTarget !== null;
 
   useInterval(
     useCallback(() => {
-      // jangan poll kalau token belum ada (dev: localStorage, prod: cookie tidak bisa dicek)
-      if (!IS_PROD && !getToken()) return; // ← import getToken dari axios.ts
+      if (!IS_PROD && !getToken()) return;
       tableRef.current?.refetch();
       setLastUpdated(new Date());
     }, []),
-    isModalOpen ? null : POLL_INTERVAL_MS,
+    POLL_INTERVAL_MS, // ← polling jalan terus, form sudah tidak modal
   );
+
   useEffect(() => {
     setLastUpdated(new Date());
   }, []);
 
-  // Filter params untuk tabel
   const filterParams = useMemo<Record<string, any>>(() => {
     const params: Record<string, any> = {};
     if (selectedCompany) params.company_id = selectedCompany;
@@ -134,13 +128,13 @@ export default function InvoiceReceiptManagement() {
     tableRef.current?.refetch();
   }, [addToast]);
 
-  const handleSavedAndClose = useCallback(() => {
-    setFormTarget(null);
+  const handleSavedAndNew = useCallback(() => {
     addToast({
       variant: "success",
-      title: "Data invoice receipt berhasil disimpan.",
+      title: "Receipt disimpan. Form siap untuk data baru.",
     });
     tableRef.current?.refetch();
+    // formTarget tetap {}, form direset oleh ReceiptFormModal sendiri
   }, [addToast]);
 
   const handleSAPMir7 = useCallback(() => {
@@ -227,7 +221,6 @@ export default function InvoiceReceiptManagement() {
         sortable: false,
         render: (row) => {
           const pgr = row.pgr_id ?? "";
-
           const sapOptions =
             pgr === "ICA"
               ? [
@@ -281,6 +274,7 @@ export default function InvoiceReceiptManagement() {
 
   return (
     <div className={styles.page}>
+      {/* ── Page header ── */}
       <div className={styles.pageHeader}>
         <div>
           <h1 className={styles.pageTitle}>Manajemen Invoice Receipt</h1>
@@ -298,90 +292,108 @@ export default function InvoiceReceiptManagement() {
             </p>
           )}
         </div>
-        <Button iconLeft={<Plus size={14} />} onClick={() => setFormTarget({})}>
-          Tambah Receipt
-        </Button>
       </div>
 
-      <div className={styles.filterBar}>
-        <div className={styles.filterGroup}>
-          <label>Perusahaan</label>
-          <Select
-            value={selectedCompany}
-            onChange={(e) => setSelectedCompany(e.target.value)}
-            placeholder="Semua Perusahaan"
-            fetchOptions={{
-              endpoint: "/companies",
-              searchParam: "search",
-              limit: 10,
-            }}
-          />
-        </div>
-        <div className={styles.filterGroup}>
-          <label>Vendor</label>
-          <Select
-            value={selectedVendor}
-            onChange={(e) => setSelectedVendor(e.target.value)}
-            placeholder="Semua Vendor"
-            fetchOptions={{
-              endpoint: "/vendors",
-              searchParam: "search",
-              limit: 10,
-            }}
-          />
-        </div>
-        <div className={styles.filterGroup}>
-          <label>Tahun Stage</label>
-          <input
-            type="number"
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(e.target.value)}
-            className={styles.yearInput}
-            min="2000"
-            max="2099"
-          />
-        </div>
-        <div className={styles.filterGroup}>
-          <label>Stage</label>
-          <Select
-            value={selectedStage}
-            onChange={(e) => setSelectedStage(e.target.value)}
-            placeholder="Semua Stage"
-            options={stageOptions}
-            disabled={loadingStages}
-          />
-        </div>
-
-        <div className={styles.filterActions}>
-          <Button variant="ghost" onClick={resetFilters} size="sm">
-            Reset Filter
-          </Button>
-        </div>
-      </div>
-
-      <Table
-        ref={tableRef}
-        url={`/receipts`}
-        columns={columns}
-        dataKey="data"
-        pageSize={15}
-        exportName="invoice_receipts_export"
-        title="Daftar Invoice Receipt"
-        searchable={true}
-        selectable={false}
-        serverSide={true}
-        serverSideFiltering={true}
-        defaultParams={filterParams}
-      />
-
-      {formTarget !== null && (
+      {/* ── Form panel ── */}
+      <Collapsible
+        title={
+          formTarget?.id
+            ? "Edit Invoice Receipt"
+            : "Tambah Invoice Receipt Baru"
+        }
+        subtitle={
+          formTarget?.id
+            ? `Invoice #${formTarget.invoice_number ?? "—"}`
+            : "Isi data invoice receipt dengan lengkap"
+        }
+        defaultOpen={true}
+      >
         <ReceiptFormModal
-          receipt={formTarget.id ? formTarget : null}
-          onClose={() => setFormTarget(null)}
-          onSaved={handleSaved}
-          onSavedAndClose={handleSavedAndClose}
+          receipt={formTarget?.id ? formTarget : null}
+          onCancel={() => setFormTarget({})}
+          onSaved={() => {
+            handleSaved();
+            if (formTarget?.id) setFormTarget({});
+          }}
+          onSavedAndNew={handleSavedAndNew}
         />
-      )}
+      </Collapsible>
+
+      {/* ── Filter bar ── */}
+     <Collapsible title="Daftar Invoice Receipt" defaultOpen={false}>
+        <div className={styles.filterBar}>
+          <div className={styles.filterGroup}>
+            <label>Perusahaan</label>
+            <Select
+              value={selectedCompany}
+              onChange={(e) => setSelectedCompany(e.target.value)}
+              placeholder="Semua Perusahaan"
+              fetchOptions={{
+                endpoint: "/companies",
+                searchParam: "search",
+                limit: 10,
+              }}
+            />
+          </div>
+          <div className={styles.filterGroup}>
+            <label>Vendor</label>
+            <Select
+              value={selectedVendor}
+              onChange={(e) => setSelectedVendor(e.target.value)}
+              placeholder="Semua Vendor"
+              fetchOptions={{
+                endpoint: "/vendors",
+                searchParam: "search",
+                limit: 10,
+              }}
+            />
+          </div>
+          <div className={styles.filterGroup}>
+            <label>Tahun Stage</label>
+            <input
+              type="number"
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
+              className={styles.yearInput}
+              min="2000"
+              max="2099"
+            />
+          </div>
+          <div className={styles.filterGroup}>
+            <label>Stage</label>
+            <Select
+              value={selectedStage}
+              onChange={(e) => setSelectedStage(e.target.value)}
+              placeholder="Semua Stage"
+              options={stageOptions}
+              disabled={loadingStages}
+            />
+          </div>
+          <div className={styles.filterActions}>
+            <Button variant="ghost" onClick={resetFilters} size="sm">
+              Reset Filter
+            </Button>
+          </div>
+        </div>
+      
+
+      {/* ── Tabel ── */}
+      
+        <Table
+          ref={tableRef}
+          url={`/receipts`}
+          columns={columns}
+          dataKey="data"
+          pageSize={15}
+          exportName="invoice_receipts_export"
+          title=""
+          searchable={true}
+          selectable={false}
+          serverSide={true}
+          serverSideFiltering={true}
+          defaultParams={filterParams}
+        />
+      </Collapsible>
     </div>
   );
 }
