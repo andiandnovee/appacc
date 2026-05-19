@@ -98,15 +98,16 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
     makeInitialForm(receipt, selectedStage, selectedYear),
   );
 
-
   const poInputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef(form); // ← tambah ini
+useEffect(() => { formRef.current = form; }, [form]); // ← dan ini
   const [loading, setLoading] = useState(false);
   const [poLooking, setPoLooking] = useState(false);
   const [poFound, setPoFound] = useState<boolean | null>(null);
   const [autoFilled, setAutoFilled] = useState<Set<keyof FormData>>(new Set());
   const [errors, setErrors] = useState<FormErrors>({});
   const [ppnEnabled, setPpnEnabled] = useState(false);
-  const [ppnRate, setPpnRate] = useState(11);
+  const PPN_RATE = 11; // fixed, tidak bisa diubah user
 
   const [amountRaw, setAmountRaw] = useState<number>(receipt?.amount ?? 0);
   const [amountDisplay, setAmountDisplay] = useState<string>(
@@ -133,14 +134,13 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
     if (isNaN(base)) return;
 
     const total = ppnEnabled
-      ? Math.round(base + (base * ppnRate) / 100)
+      ? Math.round(base + (base * PPN_RATE) / 100)
       : Math.round(base);
-    const totalStr = String(total);
 
     setAmountRaw(total);
-    setForm((prev) => ({ ...prev, amount: totalStr }));
-    setAmountDisplay(totalStr);
-  }, [ppnEnabled, ppnRate, baseAmount]);
+    setForm((prev) => ({ ...prev, amount: String(total) }));
+    setAmountDisplay(String(total));
+  }, [ppnEnabled, baseAmount]);
 
   // ── Edit mode: lookup buyer name dari pgr_id ──────────────────────────────
   useEffect(() => {
@@ -164,21 +164,19 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
     };
     lookupPgr();
   }, []); // hanya saat mount
-// ── Ctrl+S untuk simpan & tambah lagi ─────────────────────────────────────
-useEffect(() => {
-  const handleKeyDown = async (e: KeyboardEvent) => {
-    if (e.ctrlKey && e.key === "s") {
-      e.preventDefault();
-      await handleSave(true);
-      poInputRef.current?.focus();
-    }
-  };
+  // ── Ctrl+S untuk simpan & tambah lagi ─────────────────────────────────────
+  useEffect(() => {
+    const handleKeyDown = async (e: KeyboardEvent) => {
+      if (e.ctrlKey && (e.key === "s" || e.key === "S")) {
+        e.preventDefault();
+        await handleSave(true);
+        poInputRef.current?.focus();
+      }
+    };
 
-  window.addEventListener("keydown", handleKeyDown);
-  return () => window.removeEventListener("keydown", handleKeyDown);
-}, [amountRaw, form]);
-
-
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [amountRaw, form]);
   // ── Field handlers ─────────────────────────────────────────────────────────
   const handleInputChange =
     (field: keyof FormData) => (e: ChangeEvent<HTMLInputElement>) => {
@@ -214,6 +212,37 @@ useEffect(() => {
       setForm((prev) => ({ ...prev, [field]: value }));
       if (field === "stage_id") setSelectedStage(value);
     };
+    // ── Handler checklist PPN ──────────────────────────────────────────────────
+
+useEffect(() => { formRef.current = form; }, [form]);
+
+const handlePpnToggle = useCallback(async (checked: boolean) => {
+  if (!checked) {
+    setPpnEnabled(false);
+    return;
+  }
+
+  const vendorId = parseInt(formRef.current.vendor_id, 10);
+
+  if (!vendorId || isNaN(vendorId)) {
+    window.alert("Pilih vendor terlebih dahulu.");
+    return;
+  }
+
+  const confirmed = window.confirm(
+    "Apakah vendor ini berstatus PKP (Pengusaha Kena Pajak)?\n\nJika Ya, status PKP vendor akan disimpan ke database dan nilai akan ditambah PPN 11%."
+  );
+  if (!confirmed) return;
+
+  try {
+    await api.patch(`/vendors/${vendorId}/pkp`);
+// tidak perlu kirim body apapun
+    setForm((prev) => ({ ...prev, is_pkp: true }));
+    setPpnEnabled(true);
+  } catch {
+    window.alert("Gagal memperbarui status PKP vendor. Coba lagi.");
+  }
+}, []); // dependency kosong — baca dari ref
 
   // ── PO Lookup ──────────────────────────────────────────────────────────────
   const handlePoBlur = useCallback(async () => {
@@ -258,7 +287,8 @@ useEffect(() => {
         if (data.is_pkp !== undefined) {
           next.is_pkp = Boolean(data.is_pkp);
           filled.add("is_pkp");
-          if (data.is_pkp) setPpnEnabled(true);
+          // jika vendor sudah PKP → langsung enable PPN, tanpa tanya
+          if (data.is_pkp === true) setPpnEnabled(true);
         }
 
         setForm(next);
@@ -361,9 +391,7 @@ useEffect(() => {
         invoice_number: form.invoice_number || null,
         amount: amountRaw,
         business_area_code: form.business_area_code || null,
-        pgr_id: form.pgr_id
-          ? form.pgr_id.split(" — ")[0].trim() || null
-          : null,
+        pgr_id: form.pgr_id ? form.pgr_id.split(" — ")[0].trim() || null : null,
         is_pkp: form.is_pkp,
       };
 
@@ -408,34 +436,34 @@ useEffect(() => {
     <div className={styles.formGrid}>
       {/* PO Number */}
       <div className={styles.poField}>
-  <Input
-    ref={poInputRef}
-    label="PO Number"
-    placeholder="contoh: 4506911487"
-    value={form.po_number}
-    onChange={handleInputChange("po_number")}
-    onBlur={handlePoBlur}
-    onKeyDown={(e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        handlePoBlur();
-      }
-    }}
-    error={errors.po_number}
-    hint={
-      poLooking
-        ? "Mencari data SAP..."
-        : poFound === true
-          ? "✓ Data ditemukan di SAP PO Import"
-          : poFound === false
-            ? "Data tidak ditemukan di SAP"
-            : "Isi lalu pindah fokus untuk auto-fill dari SAP"
-    }
-  />
-  {poFound && autoFilled.size > 0 && (
-    <span className={styles.sapBadge}>Data dari SAP</span>
-  )}
-</div>
+        <Input
+          ref={poInputRef}
+          label="PO Number"
+          placeholder="contoh: 4506911487"
+          value={form.po_number}
+          onChange={handleInputChange("po_number")}
+          onBlur={handlePoBlur}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handlePoBlur();
+            }
+          }}
+          error={errors.po_number}
+          hint={
+            poLooking
+              ? "Mencari data SAP..."
+              : poFound === true
+                ? "✓ Data ditemukan di SAP PO Import"
+                : poFound === false
+                  ? "Data tidak ditemukan di SAP"
+                  : "Isi lalu pindah fokus untuk auto-fill dari SAP"
+          }
+        />
+        {poFound && autoFilled.size > 0 && (
+          <span className={styles.sapBadge}>Data dari SAP</span>
+        )}
+      </div>
       <Input
         label="Tanggal Receipt"
         type="date"
@@ -469,70 +497,45 @@ useEffect(() => {
         hint={autoFilled.has("amount") ? "Dari SAP" : undefined}
       />
 
-      {autoFilled.has("amount") && (
-        <div className={styles.ppnWrapper}>
-          <label className={styles.ppnToggleLabel}>
-            <input
-              type="checkbox"
-              checked={ppnEnabled}
-              onChange={(e) => setPpnEnabled(e.target.checked)}
-              className={styles.ppnCheckbox}
-            />
-            <span>
-              Tambah PPN
-              {form.is_pkp && (
-                <span className={styles.pkpBadge}>Vendor PKP</span>
-              )}
-            </span>
-          </label>
+      {/* PPN — tampil jika amount sudah ada (dari SAP atau input manual) */}
+{(autoFilled.has("amount") || amountRaw > 0) && (
+  <div className={`${styles.ppnWrapper} ${styles.fullWidth}`}>
+    <label className={styles.ppnToggleLabel}>
+      <input
+        type="checkbox"
+        checked={ppnEnabled}
+        onChange={(e) => handlePpnToggle(e.target.checked)}
+        className={styles.ppnCheckbox}
+        disabled={form.is_pkp === true} // sudah PKP → locked checked
+      />
+      <span>
+        Tambah PPN 11%
+        {form.is_pkp && (
+          <span className={styles.pkpBadge}>Vendor PKP</span>
+        )}
+      </span>
+    </label>
 
-          {ppnEnabled && (
-            <div className={styles.ppnDetail}>
-              <div className={styles.ppnRateRow}>
-                <span>Tarif PPN</span>
-                <div className={styles.ppnRateInput}>
-                  <input
-                    type="number"
-                    value={ppnRate}
-                    onChange={(e) =>
-                      setPpnRate(parseFloat(e.target.value) || 0)
-                    }
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    className={styles.ppnRateField}
-                  />
-                  <span>%</span>
-                </div>
-              </div>
-              <div className={styles.ppnBreakdown}>
-                <span className={styles.ppnBreakdownRow}>
-                  <span>Net Value</span>
-                  <span>
-                    Rp {parseFloat(baseAmount || "0").toLocaleString("id-ID")}
-                  </span>
-                </span>
-                <span className={styles.ppnBreakdownRow}>
-                  <span>PPN {ppnRate}%</span>
-                  <span>
-                    Rp{" "}
-                    {(
-                      (parseFloat(baseAmount || "0") * ppnRate) /
-                      100
-                    ).toLocaleString("id-ID")}
-                  </span>
-                </span>
-                <span
-                  className={`${styles.ppnBreakdownRow} ${styles.ppnTotal}`}
-                >
-                  <span>Total</span>
-                  <span>Rp {amountRaw.toLocaleString("id-ID")}</span>
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+    {ppnEnabled && baseAmount && (
+      <div className={styles.ppnBreakdown}>
+        <span className={styles.ppnBreakdownRow}>
+          <span>Net Value</span>
+          <span>Rp {parseFloat(baseAmount).toLocaleString("id-ID")}</span>
+        </span>
+        <span className={styles.ppnBreakdownRow}>
+          <span>PPN 11%</span>
+          <span>
+            Rp {((parseFloat(baseAmount) * PPN_RATE) / 100).toLocaleString("id-ID")}
+          </span>
+        </span>
+        <span className={`${styles.ppnBreakdownRow} ${styles.ppnTotal}`}>
+          <span>Total</span>
+          <span>Rp {amountRaw.toLocaleString("id-ID")}</span>
+        </span>
+      </div>
+    )}
+  </div>
+)}
 
       <Select
         label="Vendor"
@@ -623,7 +626,7 @@ useEffect(() => {
             onClick={() => handleSave(true)}
             loading={loading}
           >
-            Simpan & Tambah Lagi
+            Simpan ( CTRL + S)
           </Button>
         )}
         <Button

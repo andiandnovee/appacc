@@ -114,6 +114,11 @@ class VendorController extends Controller
         ], 200);
     }
 
+    public function updatePkp(Vendor $vendor)
+{
+    $vendor->update(['is_pkp' => true]);
+    return response()->json($vendor);
+}
     /**
      * Restore a soft deleted vendor.
      */

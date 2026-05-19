@@ -128,7 +128,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('sap/po-lookup', [SapImportController::class, 'poLookup']);
         Route::post('sap/import-po-chunk', [SapImportController::class, 'importPoChunk']);
 
-
+        Route::patch('/vendors/{vendor}/pkp', [VendorController::class, 'updatePkp']);
 
     });
 
