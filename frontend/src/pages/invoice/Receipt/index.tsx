@@ -34,6 +34,20 @@ export default function InvoiceReceiptManagement() {
   const [deletingId, setDeletingId] = useState(null);
   const tableRef = useRef(null);
   const { addToast } = useToast();
+  // tambah state ini
+
+  // state
+  const [tableOpen, setTableOpen] = useState(false);
+  const [tableSearchPo, setTableSearchPo] = useState("");
+
+  // handler dari ReceiptFormModal
+  const handlePoAlreadyExists = useCallback((poNumber: string) => {
+    setTableOpen(true); // buka collapsible tabel
+    // set search setelah collapsible terbuka (tunggu render)
+    setTimeout(() => {
+      tableRef.current?.setSearch(poNumber);
+    }, 50);
+  }, []);
 
   const [loadingStages, setLoadingStages] = useState(false);
   // ✅ benar
@@ -316,11 +330,17 @@ export default function InvoiceReceiptManagement() {
             if (formTarget?.id) setFormTarget({});
           }}
           onSavedAndNew={handleSavedAndNew}
+          onPoAlreadyExists={handlePoAlreadyExists} // ← tambah ini
         />
       </Collapsible>
 
       {/* ── Filter bar ── */}
-     <Collapsible title="Daftar Invoice Receipt" defaultOpen={false}>
+      <Collapsible
+        title="Daftar Invoice Receipt"
+        defaultOpen={false}
+        open={tableOpen}
+        onToggle={(v) => setTableOpen(v)}
+      >
         <div className={styles.filterBar}>
           <div className={styles.filterGroup}>
             <label>Perusahaan</label>
@@ -375,10 +395,9 @@ export default function InvoiceReceiptManagement() {
             </Button>
           </div>
         </div>
-      
 
-      {/* ── Tabel ── */}
-      
+        {/* ── Tabel ── */}
+
         <Table
           ref={tableRef}
           url={`/receipts`}

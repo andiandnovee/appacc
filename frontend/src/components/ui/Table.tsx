@@ -418,6 +418,7 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
     data: paginatedData,
     loading,
     clearAllFilters,
+    setSearch, // ← tambah ini
   }));
 
   const handleFilterChange = (colKey: string, value: string) => {

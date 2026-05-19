@@ -37,6 +37,7 @@ interface ReceiptFormModalProps {
   onCancel: () => void;
   onSaved: () => void;
   onSavedAndNew: () => void;
+  onPoAlreadyExists?: (poNumber: string) => void; // ← callback ke parent
 }
 
 interface FormData {
@@ -56,8 +57,7 @@ interface FormData {
 
 type FormErrors = Partial<Record<keyof FormData | "general", string>>;
 
-// ======================== HELPERS ========================
-
+const PPN_RATE = 11;
 const today = () => new Date().toISOString().split("T")[0];
 
 const makeInitialForm = (
@@ -88,9 +88,9 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
   onCancel,
   onSaved,
   onSavedAndNew,
+  onPoAlreadyExists,
 }) => {
   const isEdit = Boolean(receipt?.id);
-
   const { selectedStage, selectedYear, setSelectedStage, setSelectedYear } =
     useFilterStore();
 
@@ -99,21 +99,28 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
   );
 
   const poInputRef = useRef<HTMLInputElement>(null);
-  const formRef = useRef(form); // ← tambah ini
-useEffect(() => { formRef.current = form; }, [form]); // ← dan ini
+  const formRef = useRef<FormData>(form);
+
   const [loading, setLoading] = useState(false);
   const [poLooking, setPoLooking] = useState(false);
   const [poFound, setPoFound] = useState<boolean | null>(null);
+  const [poDuplicate, setPoDuplicate] = useState(false); // ← PO sudah pernah diinput
   const [autoFilled, setAutoFilled] = useState<Set<keyof FormData>>(new Set());
   const [errors, setErrors] = useState<FormErrors>({});
-  const [ppnEnabled, setPpnEnabled] = useState(false);
-  const PPN_RATE = 11; // fixed, tidak bisa diubah user
 
+  // ── PPN state ──────────────────────────────────────────────────────────────
+  const [ppnEnabled, setPpnEnabled] = useState(false);
+  const [pendingPpn, setPendingPpn] = useState(false);
+  const [baseAmount, setBaseAmount] = useState<string>("");
   const [amountRaw, setAmountRaw] = useState<number>(receipt?.amount ?? 0);
   const [amountDisplay, setAmountDisplay] = useState<string>(
     receipt?.amount?.toString() ?? "",
   );
-  const [baseAmount, setBaseAmount] = useState<string>("");
+
+  // ── Sync formRef ───────────────────────────────────────────────────────────
+  useEffect(() => {
+    formRef.current = form;
+  }, [form]);
 
   // ── Reset saat receipt prop berubah ───────────────────────────────────────
   useEffect(() => {
@@ -122,12 +129,22 @@ useEffect(() => { formRef.current = form; }, [form]); // ← dan ini
     setAmountDisplay(receipt?.amount?.toString() ?? "");
     setBaseAmount("");
     setPoFound(null);
+    setPoDuplicate(false);
     setAutoFilled(new Set());
     setPpnEnabled(false);
+    setPendingPpn(false);
     setErrors({});
   }, [receipt]);
 
-  // ── PPN effect ─────────────────────────────────────────────────────────────
+  // ── PPN: aktifkan setelah baseAmount siap ─────────────────────────────────
+  useEffect(() => {
+    if (pendingPpn && baseAmount) {
+      setPpnEnabled(true);
+      setPendingPpn(false);
+    }
+  }, [pendingPpn, baseAmount]);
+
+  // ── PPN: hitung total saat ppnEnabled atau baseAmount berubah ─────────────
   useEffect(() => {
     if (!baseAmount) return;
     const base = parseFloat(baseAmount);
@@ -164,7 +181,8 @@ useEffect(() => { formRef.current = form; }, [form]); // ← dan ini
     };
     lookupPgr();
   }, []); // hanya saat mount
-  // ── Ctrl+S untuk simpan & tambah lagi ─────────────────────────────────────
+
+  // ── Ctrl+S ─────────────────────────────────────────────────────────────────
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
       if (e.ctrlKey && (e.key === "s" || e.key === "S")) {
@@ -173,10 +191,10 @@ useEffect(() => { formRef.current = form; }, [form]); // ← dan ini
         poInputRef.current?.focus();
       }
     };
-
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [amountRaw, form]);
+
   // ── Field handlers ─────────────────────────────────────────────────────────
   const handleInputChange =
     (field: keyof FormData) => (e: ChangeEvent<HTMLInputElement>) => {
@@ -184,9 +202,11 @@ useEffect(() => { formRef.current = form; }, [form]); // ← dan ini
 
       if (field === "po_number") {
         setPoFound(null);
+        setPoDuplicate(false);
         setAutoFilled(new Set());
         setBaseAmount("");
         setPpnEnabled(false);
+        setPendingPpn(false);
         setAmountRaw(0);
         setAmountDisplay("");
         setForm((prev) => ({
@@ -212,37 +232,33 @@ useEffect(() => { formRef.current = form; }, [form]); // ← dan ini
       setForm((prev) => ({ ...prev, [field]: value }));
       if (field === "stage_id") setSelectedStage(value);
     };
-    // ── Handler checklist PPN ──────────────────────────────────────────────────
 
-useEffect(() => { formRef.current = form; }, [form]);
+  // ── Handler checklist PPN ──────────────────────────────────────────────────
+  const handlePpnToggle = useCallback(async (checked: boolean) => {
+    if (!checked) {
+      setPpnEnabled(false);
+      return;
+    }
 
-const handlePpnToggle = useCallback(async (checked: boolean) => {
-  if (!checked) {
-    setPpnEnabled(false);
-    return;
-  }
+    const vendorId = parseInt(formRef.current.vendor_id, 10);
+    if (!vendorId || isNaN(vendorId)) {
+      window.alert("Pilih vendor terlebih dahulu.");
+      return;
+    }
 
-  const vendorId = parseInt(formRef.current.vendor_id, 10);
+    const confirmed = window.confirm(
+      "Apakah vendor ini berstatus PKP (Pengusaha Kena Pajak)?\n\nJika Ya, status PKP vendor akan disimpan ke database dan nilai akan ditambah PPN 11%.",
+    );
+    if (!confirmed) return;
 
-  if (!vendorId || isNaN(vendorId)) {
-    window.alert("Pilih vendor terlebih dahulu.");
-    return;
-  }
-
-  const confirmed = window.confirm(
-    "Apakah vendor ini berstatus PKP (Pengusaha Kena Pajak)?\n\nJika Ya, status PKP vendor akan disimpan ke database dan nilai akan ditambah PPN 11%."
-  );
-  if (!confirmed) return;
-
-  try {
-    await api.patch(`/vendors/${vendorId}/pkp`);
-// tidak perlu kirim body apapun
-    setForm((prev) => ({ ...prev, is_pkp: true }));
-    setPpnEnabled(true);
-  } catch {
-    window.alert("Gagal memperbarui status PKP vendor. Coba lagi.");
-  }
-}, []); // dependency kosong — baca dari ref
+    try {
+      await api.patch(`/vendors/${vendorId}/pkp`);
+      setForm((prev) => ({ ...prev, is_pkp: true }));
+      setPpnEnabled(true);
+    } catch {
+      window.alert("Gagal memperbarui status PKP vendor. Coba lagi.");
+    }
+  }, []);
 
   // ── PO Lookup ──────────────────────────────────────────────────────────────
   const handlePoBlur = useCallback(async () => {
@@ -251,8 +267,24 @@ const handlePpnToggle = useCallback(async (checked: boolean) => {
 
     setPoLooking(true);
     setPoFound(null);
+    setPoDuplicate(false);
 
     try {
+      // 1. Cek duplikat di receipts
+      const dupRes = await api.get(`/receipts`, {
+        params: { po_number: poNumber, per_page: 1 },
+      });
+      const dupData = dupRes.data?.data ?? dupRes.data ?? [];
+      const isDuplicate = Array.isArray(dupData)
+        ? dupData.length > 0
+        : (dupRes.data?.total ?? 0) > 0;
+
+      if (isDuplicate) {
+        setPoDuplicate(true);
+        onPoAlreadyExists?.(poNumber); // ← kasih tahu parent
+      }
+
+      // 2. Tetap lanjut lookup SAP
       const res = await api.get(`/sap/po-lookup`, {
         params: { po_number: poNumber },
       });
@@ -267,6 +299,7 @@ const handlePpnToggle = useCallback(async (checked: boolean) => {
           filled.add("vendor_id");
         }
         if (data.amount !== undefined) {
+          // baseAmount SELALU net value dari SAP — tidak pernah dari receipt tersimpan
           const amountStr = data.amount.toString();
           setBaseAmount(amountStr);
           setAmountDisplay(amountStr);
@@ -287,8 +320,10 @@ const handlePpnToggle = useCallback(async (checked: boolean) => {
         if (data.is_pkp !== undefined) {
           next.is_pkp = Boolean(data.is_pkp);
           filled.add("is_pkp");
-          // jika vendor sudah PKP → langsung enable PPN, tanpa tanya
-          if (data.is_pkp === true) setPpnEnabled(true);
+          if (data.is_pkp === true) {
+            // set pending — tunggu baseAmount ready via useEffect
+            setPendingPpn(true);
+          }
         }
 
         setForm(next);
@@ -300,7 +335,9 @@ const handlePpnToggle = useCallback(async (checked: boolean) => {
             });
             const baList = baRes.data?.data ?? baRes.data ?? [];
             const ba = Array.isArray(baList)
-              ? baList.find((b: any) => b.sap_id === data.sap_business_area_id)
+              ? baList.find(
+                  (b: any) => b.sap_id === data.sap_business_area_id,
+                )
               : null;
             if (ba?.company_id) {
               setForm((prev) => ({
@@ -362,11 +399,13 @@ const handlePpnToggle = useCallback(async (checked: boolean) => {
   const resetToNew = () => {
     setForm(makeInitialForm(null, selectedStage, selectedYear));
     setPoFound(null);
+    setPoDuplicate(false);
     setAutoFilled(new Set());
     setBaseAmount("");
     setAmountRaw(0);
     setAmountDisplay("");
     setPpnEnabled(false);
+    setPendingPpn(false);
     setErrors({});
   };
 
@@ -391,7 +430,9 @@ const handlePpnToggle = useCallback(async (checked: boolean) => {
         invoice_number: form.invoice_number || null,
         amount: amountRaw,
         business_area_code: form.business_area_code || null,
-        pgr_id: form.pgr_id ? form.pgr_id.split(" — ")[0].trim() || null : null,
+        pgr_id: form.pgr_id
+          ? form.pgr_id.split(" — ")[0].trim() || null
+          : null,
         is_pkp: form.is_pkp,
       };
 
@@ -460,10 +501,18 @@ const handlePpnToggle = useCallback(async (checked: boolean) => {
                   : "Isi lalu pindah fokus untuk auto-fill dari SAP"
           }
         />
-        {poFound && autoFilled.size > 0 && (
-          <span className={styles.sapBadge}>Data dari SAP</span>
-        )}
+        <div className={styles.poBadgeRow}>
+          {poFound && autoFilled.size > 0 && (
+            <span className={styles.sapBadge}>Data dari SAP</span>
+          )}
+          {poDuplicate && (
+            <span className={styles.dupBadge}>
+              ⚠ PO ini sudah pernah diinput
+            </span>
+          )}
+        </div>
       </div>
+
       <Input
         label="Tanggal Receipt"
         type="date"
@@ -490,6 +539,7 @@ const handlePpnToggle = useCallback(async (checked: boolean) => {
         onValueChange={(raw) => {
           setAmountRaw(raw);
           setAmountDisplay(String(raw));
+          setBaseAmount(String(raw)); // manual input → baseAmount ikut
           setForm((prev) => ({ ...prev, amount: String(raw) }));
         }}
         error={errors.amount}
@@ -497,45 +547,52 @@ const handlePpnToggle = useCallback(async (checked: boolean) => {
         hint={autoFilled.has("amount") ? "Dari SAP" : undefined}
       />
 
-      {/* PPN — tampil jika amount sudah ada (dari SAP atau input manual) */}
-{(autoFilled.has("amount") || amountRaw > 0) && (
-  <div className={`${styles.ppnWrapper} ${styles.fullWidth}`}>
-    <label className={styles.ppnToggleLabel}>
-      <input
-        type="checkbox"
-        checked={ppnEnabled}
-        onChange={(e) => handlePpnToggle(e.target.checked)}
-        className={styles.ppnCheckbox}
-        disabled={form.is_pkp === true} // sudah PKP → locked checked
-      />
-      <span>
-        Tambah PPN 11%
-        {form.is_pkp && (
-          <span className={styles.pkpBadge}>Vendor PKP</span>
-        )}
-      </span>
-    </label>
+      {/* PPN */}
+      {(autoFilled.has("amount") || amountRaw > 0) && (
+        <div className={`${styles.ppnWrapper} ${styles.fullWidth}`}>
+          <label className={styles.ppnToggleLabel}>
+            <input
+              type="checkbox"
+              checked={ppnEnabled}
+              onChange={(e) => handlePpnToggle(e.target.checked)}
+              className={styles.ppnCheckbox}
+              disabled={form.is_pkp === true}
+            />
+            <span>
+              Tambah PPN 11%
+              {form.is_pkp && (
+                <span className={styles.pkpBadge}>Vendor PKP</span>
+              )}
+            </span>
+          </label>
 
-    {ppnEnabled && baseAmount && (
-      <div className={styles.ppnBreakdown}>
-        <span className={styles.ppnBreakdownRow}>
-          <span>Net Value</span>
-          <span>Rp {parseFloat(baseAmount).toLocaleString("id-ID")}</span>
-        </span>
-        <span className={styles.ppnBreakdownRow}>
-          <span>PPN 11%</span>
-          <span>
-            Rp {((parseFloat(baseAmount) * PPN_RATE) / 100).toLocaleString("id-ID")}
-          </span>
-        </span>
-        <span className={`${styles.ppnBreakdownRow} ${styles.ppnTotal}`}>
-          <span>Total</span>
-          <span>Rp {amountRaw.toLocaleString("id-ID")}</span>
-        </span>
-      </div>
-    )}
-  </div>
-)}
+          {ppnEnabled && baseAmount && (
+            <div className={styles.ppnBreakdown}>
+              <span className={styles.ppnBreakdownRow}>
+                <span>Net Value</span>
+                <span>
+                  Rp {parseFloat(baseAmount).toLocaleString("id-ID")}
+                </span>
+              </span>
+              <span className={styles.ppnBreakdownRow}>
+                <span>PPN {PPN_RATE}%</span>
+                <span>
+                  Rp{" "}
+                  {((parseFloat(baseAmount) * PPN_RATE) / 100).toLocaleString(
+                    "id-ID",
+                  )}
+                </span>
+              </span>
+              <span
+                className={`${styles.ppnBreakdownRow} ${styles.ppnTotal}`}
+              >
+                <span>Total</span>
+                <span>Rp {amountRaw.toLocaleString("id-ID")}</span>
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
       <Select
         label="Vendor"
@@ -615,7 +672,6 @@ const handlePpnToggle = useCallback(async (checked: boolean) => {
         </p>
       )}
 
-      {/* Footer actions */}
       <div className={`${styles.formActions} ${styles.fullWidth}`}>
         <Button variant="ghost" onClick={onCancel} disabled={loading}>
           Batal
@@ -626,7 +682,7 @@ const handlePpnToggle = useCallback(async (checked: boolean) => {
             onClick={() => handleSave(true)}
             loading={loading}
           >
-            Simpan ( CTRL + S)
+            Simpan (Ctrl+S)
           </Button>
         )}
         <Button

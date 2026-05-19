@@ -6,38 +6,29 @@ interface CollapsibleProps {
   subtitle?: string;
   badge?: string;
   defaultOpen?: boolean;
+  open?: boolean;           // ← controlled mode (opsional)
   onToggle?: (isOpen: boolean) => void;
   children: ReactNode;
 }
 
-/**
- * Collapsible
- * Wrapper dengan header menyatu — tanpa garis pemisah antara header & content.
- *
- * Props:
- *   title        {string|ReactNode}  - judul header (wajib)
- *   subtitle     {string}            - teks kecil di bawah title (opsional)
- *   badge        {string}            - pill kecil di sebelah title (opsional)
- *   defaultOpen  {boolean}           - state awal, default true
- *   onToggle     {function}          - callback(isOpen) saat toggle (opsional)
- *   children     {ReactNode}
- *
- * Usage:
- *   <Collapsible title="Informasi Vendor" subtitle="PT. Maju Bersama">
- *     <VendorCard />
- *   </Collapsible>
- */
 export default function Collapsible({
   title,
   subtitle = undefined,
   badge = undefined,
   defaultOpen = true,
+  open: controlledOpen = undefined,
   onToggle = undefined,
   children,
 }: CollapsibleProps) {
-  const [open, setOpen] = useState(defaultOpen);
-  const [height, setHeight] = useState(defaultOpen ? "auto" : "0px");
-  const contentRef = useRef(null);
+  // kalau prop "open" dikirim dari luar → controlled mode
+  // kalau tidak → uncontrolled, pakai state internal
+  const isControlled = controlledOpen !== undefined;
+
+  const [internalOpen, setInternalOpen] = useState(defaultOpen);
+  const open = isControlled ? controlledOpen : internalOpen;
+
+  const [height, setHeight] = useState(open ? "auto" : "0px");
+  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!contentRef.current) return;
@@ -56,13 +47,12 @@ export default function Collapsible({
 
   const handleToggle = () => {
     const next = !open;
-    setOpen(next);
+    if (!isControlled) setInternalOpen(next);
     onToggle?.(next);
   };
 
   return (
     <div className={styles.collapsible}>
-      {/* Header — menyatu tanpa border-bottom */}
       <button
         className={styles.header}
         onClick={handleToggle}
@@ -97,7 +87,6 @@ export default function Collapsible({
         </span>
       </button>
 
-      {/* Content — animated */}
       <div
         ref={contentRef}
         className={styles.contentWrapper}
