@@ -210,6 +210,7 @@ export default function InvoiceReceiptManagement() {
         key: "receipt_date",
         label: "Tanggal Receipt",
         sortable: true,
+        collapsible: true,
         render: (row) => (
           <span className={styles.muted}>
             {row.receipt_date
@@ -222,6 +223,7 @@ export default function InvoiceReceiptManagement() {
         key: "vendor",
         label: "Vendor",
         sortable: false,
+        collapsible: true,collapseOrder: 4,
         render: (row) => (
           <span className={styles.muted}>{row.vendor?.name || "—"}</span>
         ),
@@ -230,6 +232,7 @@ export default function InvoiceReceiptManagement() {
         key: "company",
         label: "Perusahaan",
         sortable: false,
+        collapsible: true,collapseOrder: 3,
         render: (row) => (
           <span className={styles.muted}>{row.company?.name || "—"}</span>
         ),
@@ -238,6 +241,7 @@ export default function InvoiceReceiptManagement() {
         key: "stage",
         label: "Stage",
         sortable: false,
+        collapsible: true,collapseOrder: 2,
         render: (row) => (
           <span className={styles.muted}>{row.stage?.name || "—"}</span>
         ),
@@ -246,6 +250,7 @@ export default function InvoiceReceiptManagement() {
         key: "amount",
         label: "Jumlah",
         sortable: true,
+        collapsible: true,collapseOrder: 1,
         render: (row) => (
           <span className={styles.muted}>
             {row.amount

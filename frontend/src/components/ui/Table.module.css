@@ -2,6 +2,8 @@
    Table.module.css
    ============================================================ */
 
+/* (ResizeObserver dipasang langsung di .tableScroll — tidak perlu wrapper) */
+
 /* ── Wrapper card ──────────────────────────────────────────── */
 .wrapper {
   display: flex;
@@ -162,6 +164,11 @@
   background-color: rgba(84, 112, 239, 0.08);
 }
 
+/* Row yang sedang di-expand */
+.trExpanded {
+  background-color: var(--bg-surface-2);
+}
+
 .td {
   padding: var(--space-3) var(--space-4);
   color: var(--text-primary);
@@ -179,6 +186,263 @@
   height: 16px;
   accent-color: var(--color-primary-500);
   cursor: pointer;
+}
+
+/* ── Expand cell & button ──────────────────────────────────── */
+.expandCell {
+  width: 32px;
+  padding: var(--space-2) var(--space-2);
+  text-align: center;
+  vertical-align: middle;
+}
+
+.expandBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-default),
+              background-color var(--duration-fast) var(--ease-default),
+              transform var(--duration-fast) var(--ease-default);
+  transform: rotate(0deg);
+}
+
+.expandBtn:hover {
+  color: var(--text-primary);
+  background-color: var(--border-subtle);
+}
+
+/* Chevron berputar saat expanded */
+.expandBtnOpen {
+  transform: rotate(90deg);
+  color: var(--color-primary-500);
+}
+
+/* ── Expandable detail row ─────────────────────────────────── */
+.expandDetailRow {
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.expandDetailCell {
+  padding: 0;
+}
+
+.expandDetail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-6);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px dashed var(--border-subtle);
+  animation: expandIn var(--duration-fast) var(--ease-default);
+}
+
+@keyframes expandIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.expandDetailItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 120px;
+}
+
+.expandDetailLabel {
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+}
+
+.expandDetailValue {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+
+/* ── Column visibility toggle button ──────────────────────── */
+.colToggleWrapper {
+  position: relative;
+}
+
+.colToggleBtn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  position: relative;
+}
+
+/* Aktif (ada kolom tersembunyi) */
+.colToggleBtnActive {
+  border-color: var(--color-primary-400) !important;
+  color: var(--color-primary-600) !important;
+}
+
+:global(.dark) .colToggleBtnActive {
+  border-color: var(--color-primary-500) !important;
+  color: var(--color-primary-400) !important;
+}
+
+/* Badge angka jumlah kolom tersembunyi */
+.colToggleBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  background-color: var(--color-primary-500);
+  color: #fff;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: var(--font-semibold);
+  line-height: 1;
+}
+
+/* ── Column visibility panel (dropdown) ────────────────────── */
+.colPanel {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: 50;
+  min-width: 200px;
+  background-color: var(--bg-surface);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  animation: panelIn var(--duration-fast) var(--ease-default);
+}
+
+@keyframes panelIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.colPanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.colPanelTitle {
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+}
+
+.colPanelClose {
+  display: flex;
+  align-items: center;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 0;
+  transition: color var(--duration-fast) var(--ease-default);
+}
+
+.colPanelClose:hover { color: var(--text-primary); }
+
+.colPanelList {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-1);
+}
+
+.colPanelItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color var(--duration-fast) var(--ease-default);
+}
+
+.colPanelItem:hover {
+  background-color: var(--bg-surface-2);
+}
+
+/* Item yang sedang hidden */
+.colPanelItemHidden {
+  color: var(--text-tertiary);
+}
+
+.colPanelIcon {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+}
+
+.colPanelItem:not(.colPanelItemHidden) .colPanelIcon {
+  color: var(--color-primary-500);
+}
+
+/* Badge "auto" untuk kolom yang di-hide otomatis karena overflow */
+.colPanelAutoTag {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: var(--font-semibold);
+  color: var(--color-primary-500);
+  background-color: var(--color-primary-50);
+  padding: 1px 6px;
+  border-radius: 9999px;
+  border: 1px solid var(--color-primary-200);
+}
+
+:global(.dark) .colPanelAutoTag {
+  background-color: rgba(84, 112, 239, 0.1);
+  border-color: rgba(84, 112, 239, 0.3);
+}
+
+/* Badge "paksa" untuk kolom yang di-force-show walau auto-hidden */
+.colPanelForceTag {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: var(--font-semibold);
+  color: var(--color-warning, #d97706);
+  background-color: rgba(217, 119, 6, 0.08);
+  padding: 1px 6px;
+  border-radius: 9999px;
+  border: 1px solid rgba(217, 119, 6, 0.25);
+}
+
+/* ── Footer hidden info ─────────────────────────────────────── */
+.footerHiddenInfo {
+  color: var(--color-primary-500);
+  font-size: var(--text-xs);
+  margin-left: var(--space-1);
 }
 
 /* ── Empty state ───────────────────────────────────────────── */

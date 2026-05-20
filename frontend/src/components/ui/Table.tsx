@@ -8,6 +8,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useRef,
 } from "react";
 import { utils, writeFile } from "xlsx";
 import {
@@ -20,6 +21,10 @@ import {
   Filter,
   FileSpreadsheet,
   FileText,
+  ChevronRight,
+  Columns3,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useTableData } from "./useTableData";
 import Card from "./Card";
@@ -34,6 +39,172 @@ function useDebounce<T>(value: T, delay: number): T {
     return () => clearTimeout(handler);
   }, [value, delay]);
   return debouncedValue;
+}
+
+// ========== OVERFLOW-BASED AUTO COLLAPSE HOOK ==========
+/**
+ * Strategi stable (anti infinite-loop):
+ *
+ * COLLAPSE  — triggered saat scrollWidth > clientWidth.
+ *             Tambah kolom ke hidden satu per satu per rAF tick.
+ *             Berhenti begitu overflow hilang atau queue habis.
+ *
+ * RESTORE   — TIDAK pernah dilakukan satu-satu via setState loop.
+ *             Restore hanya terjadi saat container melebar, dan hanya
+ *             kalau kita bisa hitung secara synchronous bahwa kolom yg
+ *             akan di-restore TIDAK akan menyebabkan overflow lagi.
+ *             Caranya: simpan lebar tiap kolom (diukur dari DOM <th>)
+ *             di colWidthsRef, lalu simulasikan penambahan kolom ke
+ *             scrollWidth sebelum memutuskan restore.
+ *
+ * STABLE CONDITION — setelah satu run collapse/restore selesai,
+ *             observer hanya trigger lagi kalau container WIDTH berubah
+ *             (bukan karena konten berubah akibat setState kita sendiri).
+ *             Ini dicapai dengan guard: skip measure jika lebar container
+ *             sama dengan lebar saat measure terakhir.
+ */
+function useOverflowCollapse(
+  scrollRef: React.RefObject<HTMLElement | null>,
+  columns: Column[],
+  manualHidden: Set<string>
+): Set<string> {
+  const [autoHidden, setAutoHidden] = useState<Set<string>>(new Set());
+
+  // Ref untuk lebar tiap kolom (key → px), diisi dari <th> DOM nodes
+  const colWidthsRef = useRef<Map<string, number>>(new Map());
+
+  // Ref untuk clientWidth terakhir — mencegah re-run saat lebar tidak berubah
+  const lastClientWidthRef = useRef<number>(-1);
+
+  // Urutan collapse: collapsible, bukan manualHidden, sort by collapseOrder
+  const collapsibleQueue = useMemo(() => {
+    return columns
+      .map((col, index) => ({ col, index }))
+      .filter(({ col }) => col.collapsible && !manualHidden.has(col.key))
+      .sort((a, b) => {
+        const orderA = a.col.collapseOrder ?? (columns.length - a.index);
+        const orderB = b.col.collapseOrder ?? (columns.length - b.index);
+        return orderB - orderA; // besar duluan = kanan duluan
+      });
+  }, [columns, manualHidden]);
+
+  // Ref supaya measure() selalu lihat nilai terbaru tanpa re-subscribe observer
+  const collapsibleQueueRef = useRef(collapsibleQueue);
+  useEffect(() => { collapsibleQueueRef.current = collapsibleQueue; }, [collapsibleQueue]);
+
+  const autoHiddenRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    // Ukur lebar tiap <th> dari DOM — dipanggil setelah render settle
+    const measureColWidths = () => {
+      const ths = el.querySelectorAll<HTMLTableCellElement>("thead tr:first-child th");
+      ths.forEach((th) => {
+        const key = th.dataset.colkey;
+        if (key) colWidthsRef.current.set(key, th.getBoundingClientRect().width);
+      });
+    };
+
+    const run = () => {
+      const clientWidth = el.clientWidth;
+
+      // === STABLE GUARD ===
+      // Jika clientWidth tidak berubah dari run terakhir, skip.
+      // Ini memutus loop: setelah setState menyebabkan re-render + ResizeObserver fire,
+      // clientWidth tabel TIDAK berubah (yang berubah hanya jumlah kolom / scrollWidth),
+      // sehingga kita tidak melakukan setState lagi → tidak ada loop.
+      if (clientWidth === lastClientWidthRef.current) return;
+      lastClientWidthRef.current = clientWidth;
+
+      measureColWidths();
+
+      const queue = collapsibleQueueRef.current;
+      const currentHidden = new Set(autoHiddenRef.current);
+
+      const isOverflowing = () => el.scrollWidth > el.clientWidth + 1;
+
+      if (isOverflowing()) {
+        // === COLLAPSE ===
+        // Tambah kolom ke hidden sampai tidak overflow
+        const next = new Set(currentHidden);
+        for (const { col } of queue) {
+          if (next.has(col.key)) continue; // sudah hidden
+          next.add(col.key);
+          // Tidak bisa tahu pasti apakah overflow hilang tanpa render,
+          // tapi tambah satu dulu — observer akan fire lagi setelah render
+          // dan kita check lagi. Guard clientWidth memastikan tidak loop.
+          break;
+        }
+        if (next.size !== currentHidden.size) {
+          autoHiddenRef.current = next;
+          setAutoHidden(new Set(next));
+        }
+      } else {
+        // === RESTORE ===
+        // Coba restore kolom satu per satu dari yang terakhir di-hide,
+        // tapi hanya kalau kita yakin tidak akan overflow lagi.
+        // "Yakin" = selisih (clientWidth - scrollWidth) >= lebar kolom yg akan di-restore.
+        const slack = el.clientWidth - el.scrollWidth; // ruang kosong yang tersedia
+        if (slack <= 0 || currentHidden.size === 0) return;
+
+        // Kolom yang bisa di-restore: urutan terbalik dari collapse
+        const restoreQueue = [...queue]
+          .filter(({ col }) => currentHidden.has(col.key))
+          .reverse(); // yang terakhir collapse → restore duluan
+
+        const next = new Set(currentHidden);
+        let restored = false;
+        let accumulatedWidth = 0;
+
+        for (const { col } of restoreQueue) {
+          const colWidth = colWidthsRef.current.get(col.key) ?? 150; // fallback 150px
+          accumulatedWidth += colWidth;
+          if (accumulatedWidth <= slack - 2) { // 2px buffer
+            next.delete(col.key);
+            restored = true;
+            // Restore satu per satu per run — observer akan fire lagi untuk berikutnya
+            break;
+          } else {
+            break; // tidak cukup ruang, berhenti
+          }
+        }
+
+        if (restored) {
+          autoHiddenRef.current = next;
+          setAutoHidden(new Set(next));
+        }
+      }
+    };
+
+    const observer = new ResizeObserver(() => {
+      requestAnimationFrame(run);
+    });
+
+    observer.observe(el);
+    requestAnimationFrame(run);
+
+    return () => {
+      observer.disconnect();
+      lastClientWidthRef.current = -1;
+    };
+  }, [scrollRef]); // intentionally minimal deps — queue diakses via ref
+
+  // Reset saat columns atau manualHidden berubah
+  useEffect(() => {
+    lastClientWidthRef.current = -1; // paksa re-evaluate
+    // Bersihkan hidden yang bukan bagian dari queue baru
+    // (misalnya kolom yang collapseOrder-nya berubah atau manual override dicabut)
+    setAutoHidden((prev) => {
+      const validKeys = new Set(collapsibleQueue.map((c) => c.col.key));
+      const next = new Set([...prev].filter((k) => validKeys.has(k)));
+      autoHiddenRef.current = next;
+      return next;
+    });
+  }, [collapsibleQueue]);
+
+  return autoHidden;
 }
 
 // ========== EXPORT PDF ==========
@@ -61,45 +232,30 @@ function exportToPdf(
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-          font-size: 12px;
-          color: #111;
-          padding: 24px;
+          font-size: 12px; color: #111; padding: 24px;
         }
         h2 { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
         table { border-collapse: collapse; width: 100%; }
         thead tr { background: #f3f4f6; }
         th {
-          border: 1px solid #d1d5db;
-          padding: 6px 10px;
-          font-size: 11px;
-          font-weight: 600;
-          text-align: left;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          color: #6b7280;
-          white-space: nowrap;
+          border: 1px solid #d1d5db; padding: 6px 10px;
+          font-size: 11px; font-weight: 600; text-align: left;
+          text-transform: uppercase; letter-spacing: 0.05em;
+          color: #6b7280; white-space: nowrap;
         }
         td {
-          border: 1px solid #e5e7eb;
-          padding: 5px 10px;
-          font-size: 11px;
-          color: #374151;
-          vertical-align: middle;
+          border: 1px solid #e5e7eb; padding: 5px 10px;
+          font-size: 11px; color: #374151; vertical-align: middle;
         }
         tr:nth-child(even) td { background: #f9fafb; }
         .meta { margin-top: 16px; font-size: 10px; color: #9ca3af; }
-        @media print {
-          body { padding: 12px; }
-          @page { margin: 1cm; }
-        }
+        @media print { body { padding: 12px; } @page { margin: 1cm; } }
       </style>
     </head>
     <body>
       <h2>${exportName}</h2>
       <table>
-        <thead>
-          <tr>${colLabels.map((l) => `<th>${l}</th>`).join("")}</tr>
-        </thead>
+        <thead><tr>${colLabels.map((l) => `<th>${l}</th>`).join("")}</tr></thead>
         <tbody>${tableRows}</tbody>
       </table>
       <p class="meta">
@@ -136,7 +292,17 @@ interface Column {
   filterType?: "text" | "select";
   filterOptions?: Array<{ value: string; label: string }>;
   filterPlaceholder?: string;
-  exportable?: boolean; // set false untuk skip kolom ini saat export (misal kolom Aksi)
+  exportable?: boolean;
+  /**
+   * collapsible: true  → kolom ini boleh di-auto-hide saat tabel overflow
+   * collapsible: false → selalu tampil (default)
+   *
+   * collapseOrder: angka kecil = collapse duluan saat overflow.
+   *   Default: urutan dari kanan (kolom paling kanan collapse duluan).
+   *   Contoh: collapseOrder: 1 → collapse paling pertama.
+   */
+  collapsible?: boolean;
+  collapseOrder?: number;
 }
 
 interface TableProps {
@@ -155,7 +321,76 @@ interface TableProps {
   filterDebounceMs?: number;
 }
 
-// ========== KOMPONEN ==========
+// ========== COLUMN VISIBILITY PANEL ==========
+interface ColVisibilityPanelProps {
+  columns: Column[];
+  manualHidden: Set<string>;
+  autoHidden: Set<string>;
+  effectiveHidden: Set<string>;
+  onToggle: (key: string) => void;
+  onClose: () => void;
+}
+
+function ColVisibilityPanel({
+  columns,
+  manualHidden,
+  autoHidden,
+  effectiveHidden,
+  onToggle,
+  onClose,
+}: ColVisibilityPanelProps) {
+  const collapsibleCols = columns.filter((c) => c.collapsible);
+
+  return (
+    <div className={styles.colPanel}>
+      <div className={styles.colPanelHeader}>
+        <span className={styles.colPanelTitle}>Tampilkan Kolom</span>
+        <button className={styles.colPanelClose} onClick={onClose}>
+          <XCircle size={14} />
+        </button>
+      </div>
+      <div className={styles.colPanelList}>
+        {collapsibleCols.map((col) => {
+          const isHidden = effectiveHidden.has(col.key);
+          // "auto" = di-hide oleh overflow detector, bukan manual
+          const isAutoHidden = autoHidden.has(col.key) && !manualHidden.has(col.key);
+          // "force show" = auto-hidden tapi user paksa tampilkan (manual override)
+          const isForcedVisible = autoHidden.has(col.key) && manualHidden.has(col.key);
+
+          return (
+            <button
+              key={col.key}
+              className={`${styles.colPanelItem} ${isHidden ? styles.colPanelItemHidden : ""}`}
+              onClick={() => onToggle(col.key)}
+              title={
+                isAutoHidden
+                  ? "Disembunyikan otomatis karena tabel terlalu lebar"
+                  : isForcedVisible
+                  ? "Dipaksa tampil (tabel mungkin overflow)"
+                  : undefined
+              }
+            >
+              {isHidden ? (
+                <EyeOff size={13} className={styles.colPanelIcon} />
+              ) : (
+                <Eye size={13} className={styles.colPanelIcon} />
+              )}
+              <span>{col.label}</span>
+              {isAutoHidden && (
+                <span className={styles.colPanelAutoTag}>auto</span>
+              )}
+              {isForcedVisible && (
+                <span className={styles.colPanelForceTag}>paksa</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ========== KOMPONEN UTAMA ==========
 const Table = forwardRef<any, TableProps>((props, ref) => {
   const {
     url,
@@ -172,6 +407,76 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
     serverSideFiltering = false,
     filterDebounceMs = 300,
   } = props;
+
+  // ========== REFS ==========
+  // tableScrollRef → di-observe oleh useOverflowCollapse
+  const tableScrollRef = useRef<HTMLDivElement>(null);
+
+  // ========== MANUAL HIDDEN ==========
+  // Key yang user toggle manual via panel
+  const [manualHidden, setManualHidden] = useState<Set<string>>(new Set());
+  const [showColPanel, setShowColPanel] = useState(false);
+
+  // ========== AUTO HIDDEN (overflow-based) ==========
+  const autoHidden = useOverflowCollapse(tableScrollRef, columns, manualHidden);
+
+  /**
+   * Effective hidden = gabungan auto + manual dengan override logic:
+   * - auto-hidden + tidak di-manual → hidden ✓
+   * - auto-hidden + di-manual (force show) → tampil (override)
+   * - tidak auto-hidden + di-manual (force hide) → hidden
+   * - tidak auto-hidden + tidak di-manual → tampil ✓
+   */
+  const effectiveHidden = useMemo<Set<string>>(() => {
+    const result = new Set<string>();
+    autoHidden.forEach((key) => {
+      if (!manualHidden.has(key)) result.add(key); // auto, tidak di-override
+    });
+    manualHidden.forEach((key) => {
+      if (!autoHidden.has(key)) result.add(key); // manual force-hide
+      // jika autoHidden && manualHidden → force show → jangan add
+    });
+    return result;
+  }, [autoHidden, manualHidden]);
+
+  const toggleColVisibility = useCallback((key: string) => {
+    setManualHidden((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
+
+  const visibleColumns = useMemo(
+    () => columns.filter((c) => !effectiveHidden.has(c.key)),
+    [columns, effectiveHidden]
+  );
+
+  const hiddenColumns = useMemo(
+    () => columns.filter((c) => effectiveHidden.has(c.key)),
+    [columns, effectiveHidden]
+  );
+
+  const hasCollapsibleCols = columns.some((c) => c.collapsible);
+  const hiddenCount = effectiveHidden.size;
+
+  // ========== EXPANDED ROWS ==========
+  const [expandedRows, setExpandedRows] = useState<Set<any>>(new Set());
+
+  const toggleExpandRow = useCallback((rowId: any) => {
+    setExpandedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(rowId)) next.delete(rowId);
+      else next.add(rowId);
+      return next;
+    });
+  }, []);
+
+  // Tutup semua expanded rows saat kolom visibility berubah
+  useEffect(() => {
+    setExpandedRows(new Set());
+  }, [effectiveHidden]);
 
   // ========== STATE FILTER KOLOM ==========
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
@@ -215,7 +520,6 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
 
   const fallbackId = useId();
 
-  // Reset page saat filter kolom berubah
   useEffect(() => {
     if (serverSide) setPage(1);
   }, [columnFilters, serverSide, setPage]);
@@ -237,22 +541,12 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
     return count;
   }, [columnFilters, search]);
 
-  useEffect(() => {
-    if (serverSide && !serverSideFiltering && activeFilterCount > 0) {
-      console.warn(
-        "Filter pada serverSide=true hanya memfilter data cache. Untuk filter lengkap, set serverSide=false atau aktifkan serverSideFiltering."
-      );
-    }
-  }, [serverSide, serverSideFiltering, activeFilterCount]);
-
   // ========== FILTER & SORT CLIENT-SIDE ==========
   const shouldFilterClientSide = !serverSide || !serverSideFiltering;
 
   const filteredData = useMemo(() => {
     if (!shouldFilterClientSide) return [...allData];
-
     let result = [...allData];
-
     if (search.trim()) {
       const lowerSearch = search.toLowerCase();
       result = result.filter((row) =>
@@ -262,7 +556,6 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
         })
       );
     }
-
     Object.entries(columnFilters).forEach(([colKey, filterValue]) => {
       if (!filterValue || filterValue.trim() === "") return;
       const lowerFilter = filterValue.toLowerCase();
@@ -272,7 +565,6 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
         return String(cellValue).toLowerCase().includes(lowerFilter);
       });
     });
-
     return result;
   }, [allData, search, columnFilters, columns, shouldFilterClientSide]);
 
@@ -299,7 +591,6 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
   // ========== PAGINATION ==========
   const clientTotalRows = sortedData.length;
   const clientTotalPages = Math.ceil(clientTotalRows / pageSize);
-
   const effectiveTotalRows = serverSide ? serverTotalRows : clientTotalRows;
   const effectiveTotalPages = serverSide ? serverTotalPages : clientTotalPages;
 
@@ -310,7 +601,6 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
   }, [serverSide, hookData, sortedData, page, pageSize]);
 
   // ========== EXPORT ==========
-  // Kolom yang di-export: semua kecuali yang exportable=false
   const exportCols = useMemo(
     () => columns.filter((c) => c.exportable !== false),
     [columns]
@@ -322,41 +612,25 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
     async (format: "xlsx" | "pdf" = "xlsx") => {
       if (exporting) return;
       setExporting(true);
-
       try {
         let exportData: any[] = [];
-
         if (url && serverSide) {
-          // Fetch semua data dari server dengan filter aktif (per_page=9999)
           exportData = await fetchAll();
         } else {
-          // Client-side: pakai data yang sudah difilter & diurutkan
           exportData = sortedData;
         }
-
         if (exportData.length === 0) return;
-
-        // Build rows: gunakan raw value (bukan render) untuk setiap kolom
         const rows = exportData.map((row) =>
-          Object.fromEntries(
-            exportCols.map((col) => [col.label, row[col.key] ?? ""])
-          )
+          Object.fromEntries(exportCols.map((col) => [col.label, row[col.key] ?? ""]))
         );
-
         if (format === "xlsx") {
           const ws = utils.json_to_sheet(rows);
-
-          // Auto column width
           ws["!cols"] = exportCols.map((col) => ({
             wch: Math.min(
-              Math.max(
-                col.label.length,
-                ...exportData.map((row) => String(row[col.key] ?? "").length)
-              ) + 2,
+              Math.max(col.label.length, ...exportData.map((row) => String(row[col.key] ?? "").length)) + 2,
               50
             ),
           }));
-
           const wb = utils.book_new();
           utils.book_append_sheet(wb, ws, "Data");
           writeFile(wb, `${exportName}.xlsx`);
@@ -418,12 +692,15 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
     data: paginatedData,
     loading,
     clearAllFilters,
-    setSearch, // ← tambah ini
+    setSearch,
   }));
 
   const handleFilterChange = (colKey: string, value: string) => {
     setImmediateFilters((prev) => ({ ...prev, [colKey]: value }));
   };
+
+  const totalVisibleCols =
+    visibleColumns.length + (selectable ? 1 : 0) + (hiddenColumns.length > 0 ? 1 : 0);
 
   // ========== RENDER ==========
   return (
@@ -460,7 +737,35 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
               </Button>
             )}
 
-            {/* Export buttons */}
+            {/* Tombol toggle kolom — hanya muncul jika ada kolom collapsible */}
+            {hasCollapsibleCols && (
+              <div className={styles.colToggleWrapper}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowColPanel((v) => !v)}
+                  title="Atur kolom"
+                  className={`${styles.colToggleBtn} ${hiddenCount > 0 ? styles.colToggleBtnActive : ""}`}
+                >
+                  <Columns3 size={14} />
+                  {hiddenCount > 0 && (
+                    <span className={styles.colToggleBadge}>{hiddenCount}</span>
+                  )}
+                </Button>
+
+                {showColPanel && (
+                  <ColVisibilityPanel
+                    columns={columns}
+                    manualHidden={manualHidden}
+                    autoHidden={autoHidden}
+                    effectiveHidden={effectiveHidden}
+                    onToggle={toggleColVisibility}
+                    onClose={() => setShowColPanel(false)}
+                  />
+                )}
+              </div>
+            )}
+
             <div className={styles.exportGroup}>
               <Button
                 className={styles.exportBtn}
@@ -497,20 +802,15 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
           <Button
             onClick={refetch}
             variant="outline"
-            style={{
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              padding: 0,
-              marginLeft: "var(--space-1)",
-            }}
+            style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, marginLeft: "var(--space-1)" }}
           >
             Coba lagi
           </Button>
         </div>
       )}
 
-      <div className={styles.tableScroll}>
+      {/* tableScrollRef dipasang di sini — ini yang di-observe untuk overflow */}
+      <div className={styles.tableScroll} ref={tableScrollRef}>
         <table className={styles.table}>
           <thead className={styles.thead}>
             <tr>
@@ -520,24 +820,27 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
                     type="checkbox"
                     className={styles.checkbox}
                     checked={isAllSelected}
-                    ref={(el) => {
-                      if (el) el.indeterminate = isIndeterminate;
-                    }}
+                    ref={(el) => { if (el) el.indeterminate = isIndeterminate; }}
                     onChange={toggleAll}
                     aria-label="Pilih semua"
                   />
                 </th>
               )}
-              {columns.map((col) => (
+
+              {/* Expand col — hanya muncul jika ada kolom tersembunyi */}
+              {hiddenColumns.length > 0 && (
+                <th className={styles.expandCell} aria-label="Detail" />
+              )}
+
+              {visibleColumns.map((col) => (
                 <th
                   key={col.key}
+                  data-colkey={col.key}
                   className={`${styles.th} ${col.sortable ? styles.thSortable : ""}`}
                   onClick={() => col.sortable && handleSort(col.key)}
                   aria-sort={
                     sortKey === col.key
-                      ? sortDir === "asc"
-                        ? "ascending"
-                        : "descending"
+                      ? sortDir === "asc" ? "ascending" : "descending"
                       : undefined
                   }
                 >
@@ -554,26 +857,23 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
               ))}
             </tr>
 
-            {columns.some((col) => col.filterable) && (
+            {visibleColumns.some((col) => col.filterable) && (
               <tr className={styles.filterRow}>
                 {selectable && <td className={styles.filterCell} />}
-                {columns.map((col) => (
+                {hiddenColumns.length > 0 && <td className={styles.filterCell} />}
+                {visibleColumns.map((col) => (
                   <td key={`filter-${col.key}`} className={styles.filterCell}>
                     {col.filterable && (
                       <div className={styles.filterInputWrapper}>
                         {col.filterType === "select" ? (
                           <select
                             value={immediateFilters[col.key] || ""}
-                            onChange={(e) =>
-                              handleFilterChange(col.key, e.target.value)
-                            }
+                            onChange={(e) => handleFilterChange(col.key, e.target.value)}
                             className={styles.filterSelect}
                           >
                             <option value="">Semua</option>
                             {col.filterOptions?.map((opt) => (
-                              <option key={opt.value} value={opt.value}>
-                                {opt.label}
-                              </option>
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
                             ))}
                           </select>
                         ) : (
@@ -581,9 +881,7 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
                             type="text"
                             placeholder={col.filterPlaceholder || `Filter ${col.label}`}
                             value={immediateFilters[col.key] || ""}
-                            onChange={(e) =>
-                              handleFilterChange(col.key, e.target.value)
-                            }
+                            onChange={(e) => handleFilterChange(col.key, e.target.value)}
                             className={styles.filterInput}
                           />
                         )}
@@ -604,12 +902,10 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
                       <div className={styles.skeleton} style={{ width: 16, height: 16 }} />
                     </td>
                   )}
-                  {columns.map((col) => (
+                  {hiddenColumns.length > 0 && <td className={styles.expandCell} />}
+                  {visibleColumns.map((col) => (
                     <td key={col.key} className={styles.td}>
-                      <div
-                        className={styles.skeleton}
-                        style={{ width: `${60 + Math.random() * 30}%` }}
-                      />
+                      <div className={styles.skeleton} style={{ width: `${60 + Math.random() * 30}%` }} />
                     </td>
                   ))}
                 </tr>
@@ -617,11 +913,9 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
 
             {!loading && !error && paginatedData.length === 0 && (
               <tr>
-                <td colSpan={columns.length + (selectable ? 1 : 0)}>
+                <td colSpan={totalVisibleCols}>
                   <div className={styles.empty}>
-                    <div className={styles.emptyIcon}>
-                      <Inbox size={40} />
-                    </div>
+                    <div className={styles.emptyIcon}><Inbox size={40} /></div>
                     <p className={styles.emptyText}>
                       {activeFilterCount > 0
                         ? "Tidak ada data yang sesuai dengan filter"
@@ -630,12 +924,7 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
                         : "Belum ada data"}
                     </p>
                     {activeFilterCount > 0 && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={clearAllFilters}
-                        className={styles.clearFilterBtn}
-                      >
+                      <Button variant="outline" size="sm" onClick={clearAllFilters} className={styles.clearFilterBtn}>
                         <XCircle size={14} /> Hapus semua filter
                       </Button>
                     )}
@@ -647,33 +936,70 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
             {!loading &&
               paginatedData.map((row, index) => {
                 const rowId = row[rowIdKey];
+                const isExpanded = expandedRows.has(rowId ?? index);
+                const hasHiddenData = hiddenColumns.length > 0;
+
                 return (
-                  <tr
-                    key={rowId ?? `${fallbackId}-${index}`}
-                    className={`${styles.tr} ${
-                      selectable && isSelected(rowId) ? styles.trSelected : ""
-                    }`}
-                    onClick={() => selectable && toggleRow(rowId)}
-                  >
-                    {selectable && (
-                      <td className={styles.checkboxCell}>
-                        <input
-                          type="checkbox"
-                          className={styles.checkbox}
-                          checked={isSelected(rowId)}
-                          onChange={() => toggleRow(rowId)}
-                          onClick={(e) => e.stopPropagation()}
-                          aria-label={`Pilih baris ${rowId}`}
-                          disabled={rowId === undefined}
-                        />
-                      </td>
+                  <>
+                    <tr
+                      key={rowId ?? `${fallbackId}-${index}`}
+                      className={`${styles.tr} ${selectable && isSelected(rowId) ? styles.trSelected : ""} ${isExpanded ? styles.trExpanded : ""}`}
+                      onClick={() => selectable && toggleRow(rowId)}
+                    >
+                      {selectable && (
+                        <td className={styles.checkboxCell}>
+                          <input
+                            type="checkbox"
+                            className={styles.checkbox}
+                            checked={isSelected(rowId)}
+                            onChange={() => toggleRow(rowId)}
+                            onClick={(e) => e.stopPropagation()}
+                            aria-label={`Pilih baris ${rowId}`}
+                            disabled={rowId === undefined}
+                          />
+                        </td>
+                      )}
+
+                      {hasHiddenData && (
+                        <td className={styles.expandCell}>
+                          <button
+                            className={`${styles.expandBtn} ${isExpanded ? styles.expandBtnOpen : ""}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleExpandRow(rowId ?? index);
+                            }}
+                            aria-label={isExpanded ? "Tutup detail" : "Lihat detail"}
+                            aria-expanded={isExpanded}
+                          >
+                            <ChevronRight size={14} />
+                          </button>
+                        </td>
+                      )}
+
+                      {visibleColumns.map((col) => (
+                        <td key={col.key} className={styles.td}>
+                          {col.render ? col.render(row, refetch) : (row[col.key] ?? "—")}
+                        </td>
+                      ))}
+                    </tr>
+
+                    {hasHiddenData && isExpanded && (
+                      <tr key={`expand-${rowId ?? index}`} className={styles.expandDetailRow}>
+                        <td colSpan={totalVisibleCols} className={styles.expandDetailCell}>
+                          <div className={styles.expandDetail}>
+                            {hiddenColumns.map((col) => (
+                              <div key={col.key} className={styles.expandDetailItem}>
+                                <span className={styles.expandDetailLabel}>{col.label}</span>
+                                <span className={styles.expandDetailValue}>
+                                  {col.render ? col.render(row, refetch) : (row[col.key] ?? "—")}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
                     )}
-                    {columns.map((col) => (
-                      <td key={col.key} className={styles.td}>
-                        {col.render ? col.render(row, refetch) : (row[col.key] ?? "—")}
-                      </td>
-                    ))}
-                  </tr>
+                  </>
                 );
               })}
           </tbody>
@@ -685,54 +1011,34 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
           <span className={styles.footerInfo}>
             {selectable && selected.length > 0 && `${selected.length} dipilih · `}
             {effectiveTotalRows} data
+            {hiddenCount > 0 && (
+              <span className={styles.footerHiddenInfo}>
+                · {hiddenCount} kolom disembunyikan
+              </span>
+            )}
             {activeFilterCount > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearAllFilters}
-                className={styles.clearFilterFooter}
-              >
+              <Button variant="ghost" size="sm" onClick={clearAllFilters} className={styles.clearFilterFooter}>
                 <XCircle size={12} /> Reset semua filter ({activeFilterCount})
               </Button>
             )}
           </span>
           {effectiveTotalPages > 1 && (
             <div className={styles.pagination}>
-              <Button
-                className={styles.pageBtn}
-                onClick={goToPrevPage}
-                disabled={page === 1}
-              >
-                ‹
-              </Button>
+              <Button className={styles.pageBtn} onClick={goToPrevPage} disabled={page === 1}>‹</Button>
               {pageNumbers.map((p, i) =>
                 p === "..." ? (
-                  <span
-                    key={`dots-${i}`}
-                    className={styles.footerInfo}
-                    style={{ padding: "0 4px" }}
-                  >
-                    …
-                  </span>
+                  <span key={`dots-${i}`} className={styles.footerInfo} style={{ padding: "0 4px" }}>…</span>
                 ) : (
                   <button
                     key={p}
-                    className={`${styles.pageBtn} ${
-                      page === p ? styles.pageBtnActive : ""
-                    }`}
+                    className={`${styles.pageBtn} ${page === p ? styles.pageBtnActive : ""}`}
                     onClick={() => setPage(p as number)}
                   >
                     {p}
                   </button>
                 )
               )}
-              <Button
-                className={styles.pageBtn}
-                onClick={goToNextPage}
-                disabled={page === effectiveTotalPages}
-              >
-                ›
-              </Button>
+              <Button className={styles.pageBtn} onClick={goToNextPage} disabled={page === effectiveTotalPages}>›</Button>
             </div>
           )}
         </div>
