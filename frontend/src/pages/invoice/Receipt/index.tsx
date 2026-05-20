@@ -6,13 +6,14 @@ import Table from "../../../components/ui/Table";
 import Select from "../../../components/ui/Select";
 import Collapsible from "../../../components/ui/Collapsible";
 import { useToast } from "../../../components/ui/Toast";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Download, DatabaseBackupIcon } from "lucide-react";
 import styles from "./ReceiptManagement.module.css";
 import apiClient from "../../../api/axios";
 import { useFilterStore } from "../../../stores/filterReceipt";
 import { useInterval } from "../../../hooks/useInterval";
 import { getToken } from "../../../api/axios";
-
+import { downloadME2N, downloadMIR7 } from "../../../utils/sapShortcuts";
+import { useAuth } from "../../../hooks/useAuth";
 const IS_PROD = import.meta.env.PROD;
 
 export default function InvoiceReceiptManagement() {
@@ -35,9 +36,11 @@ export default function InvoiceReceiptManagement() {
   const tableRef = useRef(null);
   const { addToast } = useToast();
   // tambah state ini
+  const { user } = useAuth();
 
   // state
   const [tableOpen, setTableOpen] = useState(false);
+  const [FormEditing, setFormEditing] = useState(false);
   const [tableSearchPo, setTableSearchPo] = useState("");
 
   // handler dari ReceiptFormModal
@@ -151,16 +154,38 @@ export default function InvoiceReceiptManagement() {
     // formTarget tetap {}, form direset oleh ReceiptFormModal sendiri
   }, [addToast]);
 
-  const handleSAPMir7 = useCallback(() => {
-    alert("Fitur integrasi SAP MIR7 belum diimplementasikan.");
+  const handleSAPMir7 = useCallback(
+    (
+      poNumber: string,
+      vendorName: string,
+      sapCocd: string,
+      sapInvoiceDate: string,
+      sapInvoiceAmount: string,
+      sapBusArea: string,
+    ) => {
+      downloadMIR7(
+        poNumber,
+        user?.sap_user,
+        user?.sap_server_con,
+        sapCocd,
+        vendorName,
+        sapInvoiceDate,
+        sapInvoiceAmount,
+        sapBusArea,
+      );
+    },
+    [],
+  );
+
+  const handleSAPME2n = useCallback((poNumber: string) => {
+    downloadME2N(poNumber, user?.sap_user, user?.sap_server_con);
   }, []);
 
-  const handleSAPME2n = useCallback(() => {
-    alert("Fitur integrasi SAP ME2n belum diimplementasikan.");
-  }, []);
-
-  const handleSAPcekICA = useCallback(() => {
-    alert("Fitur cek PGR ID ICA belum diimplementasikan.");
+  const handleSAPcekICA = useCallback((poNumber: string) => {
+    window.open(
+      `https://icat.indoagri.co.id/User/Purchase/Details/${poNumber}`,
+      "_blank",
+    );
   }, []);
 
   const columns = useMemo(
@@ -240,16 +265,26 @@ export default function InvoiceReceiptManagement() {
               ? [
                   {
                     label: "ICAT Check",
-                    icon: <Trash2 size={13} />,
-                    onClick: () => handleSAPcekICA(),
+                    icon: <DatabaseBackupIcon size={13} />,
+                    onClick: () => handleSAPcekICA(row.po_number),
                   },
                 ]
               : pgr !== ""
                 ? [
                     {
                       label: "MIR7",
-                      icon: <Trash2 size={13} />,
-                      onClick: () => handleSAPMir7(),
+                      icon: <Download size={13} />,
+                      onClick: () =>
+                        handleSAPMir7(
+                          row.po_number,
+                          row.vendor?.name,
+                          row.company?.sap_id,
+                          new Date(row.receipt_date).toLocaleDateString(
+                            "de-DE",
+                          ),
+                          row.amount,
+                          row.business_area_code,
+                        ),
                     },
                   ]
                 : [];
@@ -260,7 +295,10 @@ export default function InvoiceReceiptManagement() {
                 label="Edit"
                 variant="outline"
                 size="sm"
-                onClick={() => setFormTarget(row)}
+                onClick={() => {
+                  setFormTarget(row);
+                  setFormEditing(true);
+                }}
                 options={[
                   {
                     label: "Hapus",
@@ -274,7 +312,7 @@ export default function InvoiceReceiptManagement() {
                 label="ME2N"
                 variant="outline"
                 size="sm"
-                onClick={() => handleSAPME2n()}
+                onClick={() => handleSAPME2n(row.po_number)}
                 options={sapOptions}
                 disabled={pgr === "" || deletingId === row.id}
               />
@@ -320,16 +358,27 @@ export default function InvoiceReceiptManagement() {
             ? `Invoice #${formTarget.invoice_number ?? "—"}`
             : "Isi data invoice receipt dengan lengkap"
         }
+        open={FormEditing}
         defaultOpen={true}
+        onToggle={(v) => {
+          setFormEditing(v);
+        }}
       >
         <ReceiptFormModal
           receipt={formTarget?.id ? formTarget : null}
-          onCancel={() => setFormTarget({})}
+          onCancel={() => {
+            setFormTarget({});
+            setFormEditing(false);
+          }}
           onSaved={() => {
             handleSaved();
             if (formTarget?.id) setFormTarget({});
+            setFormEditing(false);
           }}
-          onSavedAndNew={handleSavedAndNew}
+          onSavedAndNew={() => {
+            handleSavedAndNew();
+            setFormEditing(false);
+          }}
           onPoAlreadyExists={handlePoAlreadyExists} // ← tambah ini
         />
       </Collapsible>
