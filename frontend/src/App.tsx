@@ -18,6 +18,7 @@ import SapPoImportPage from "./pages/sap/SapPoImportPage";
 import Stages from "./pages/invoice/Stage";
 import Receipt from "./pages/invoice/Receipt";
 import BusinessArea from "./pages/invoice/BusArea";
+import PphImportPage from "./pages/sap/PphImportPage";
 
 const App: FC = (): ReactElement => {
   return (
@@ -42,6 +43,7 @@ const App: FC = (): ReactElement => {
                   path="/utility/import-po"
                   element={<SapPoImportPage />}
                 />
+                <Route path="/utility/import-pph" element={<PphImportPage />} />
                 <Route path="/invoice/receipts" element={<Receipt />} />
                 <Route path="/ref/stages" element={<Stages />} />
               </Route>

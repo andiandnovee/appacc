@@ -2,7 +2,6 @@
    Sidebar.module.css
    ============================================================ */
 
-/* ── Root ──────────────────────────────────────────────────── */
 .sidebar {
   background-color: var(--bg-surface);
   border-right: 1px solid var(--border-subtle);
@@ -14,12 +13,12 @@
   overflow: hidden;
 }
 
-.expanded  { width: var(--sidebar-width); }           /* 240px */
-.collapsed { width: var(--sidebar-collapsed-width); } /* 64px  */
+.expanded  { width: var(--sidebar-width); }
+.collapsed { width: var(--sidebar-collapsed-width); }
 
 /* ── Header ────────────────────────────────────────────────── */
 .header {
-  height: var(--topbar-height);   /* sejajar dengan Navbar */
+  height: var(--topbar-height);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -29,7 +28,6 @@
   overflow: hidden;
 }
 
-/* Kalau collapsed, konten header di-center */
 .headerCollapsed {
   justify-content: center;
 }
@@ -75,6 +73,7 @@
   flex-direction: column;
   gap: var(--space-1);
   flex: 1;
+  overflow-y: auto;
 }
 
 /* ── Nav link ──────────────────────────────────────────────── */
@@ -101,7 +100,6 @@
   text-decoration: none;
 }
 
-/* Active */
 .navLinkActive {
   background-color: var(--color-primary-100);
   color: var(--color-primary-700);
@@ -112,19 +110,18 @@
   color: var(--color-primary-300);
 }
 
-/* Collapsed: center icon */
 .navLinkCollapsed {
   justify-content: center;
   padding: var(--space-2);
 }
 
-/* ── Nav label (teks menu) ─────────────────────────────────── */
+/* ── Nav label ─────────────────────────────────────────────── */
 .navLabel {
   overflow: hidden;
   white-space: nowrap;
-  /* Fade out saat collapse */
-  transition: opacity var(--duration-fast) var(--ease-default),
-              width var(--duration-fast) var(--ease-default);
+  transition:
+    opacity var(--duration-fast) var(--ease-default),
+    width var(--duration-fast) var(--ease-default);
 }
 
 .navLabelVisible { opacity: 1; }
@@ -142,7 +139,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  /* Jarak antar grup */
   margin-top: var(--space-3);
 }
 
@@ -150,7 +146,6 @@
   margin-top: 0;
 }
 
-/* Header grup: garis pembatas + label */
 .groupHeader {
   display: flex;
   align-items: center;
@@ -160,7 +155,6 @@
   overflow: hidden;
 }
 
-/* Garis kiri tipis sebagai aksen */
 .groupHeader::before {
   content: "";
   display: block;
@@ -182,7 +176,6 @@
   overflow: hidden;
 }
 
-/* Saat collapsed: sembunyikan header grup */
 .groupHeaderCollapsed {
   opacity: 0;
   height: 0;
@@ -190,7 +183,7 @@
   padding: 0;
 }
 
-/* ── Badge role ─────────────────────────────────────────────── */
+/* ── Badge ──────────────────────────────────────────────────── */
 .badge {
   margin-left: auto;
   font-size: 10px;
@@ -225,4 +218,55 @@
 .badge_default {
   background-color: var(--bg-surface-2);
   color: var(--text-tertiary);
+}
+
+/* ── Mobile drawer ─────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: var(--sidebar-width) !important;
+    z-index: 50;
+    transform: translateX(-100%);
+    transition:
+      transform var(--duration-slow) var(--ease-default);
+  }
+
+  .sidebarMobileOpen {
+    transform: translateX(0);
+    box-shadow: var(--shadow-xl, 0 20px 60px rgba(0,0,0,0.3));
+  }
+
+  .toggleBtn {
+    display: none;
+  }
+
+  .closeBtn {
+    display: flex;
+  }
+}
+
+/* Close button — hanya muncul di mobile */
+.closeBtn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+  transition:
+    color var(--duration-fast) var(--ease-default),
+    background-color var(--duration-fast) var(--ease-default);
+}
+
+.closeBtn:hover {
+  color: var(--text-primary);
+  background-color: var(--bg-surface-2);
 }

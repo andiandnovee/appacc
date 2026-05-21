@@ -1,68 +1,45 @@
-import { FC, ReactNode, ReactElement, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   FileText,
-  FilePlus,
-  BarChart2,
   Percent,
   Car,
   Upload,
   Users,
   MapPin,
-  List,
-  Database,
   ShieldCheck,
   ChevronLeft,
   ChevronRight,
   Star,
+  X,
 } from "lucide-react";
 import styles from "./Sidebar.module.css";
 
 interface SidebarProps {
-  // Props here
+  isMobile?: boolean;
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
 }
 
-/* ── Struktur menu ─────────────────────────────────────────── */
-/*
-  Tiap grup punya:
-    label  : judul grup (string)
-    items  : array item
-
-  Tiap item punya:
-    to     : route path
-    icon   : lucide component
-    label  : teks menu
-    end    : exact match (opsional)
-    badge  : teks badge kecil (opsional) — e.g. "operator", "admin"
-    roles  : array role yg boleh lihat (opsional, untuk filtering nanti)
-*/
 const NAV_GROUPS = [
   {
-    label: null, // grup tanpa judul
+    label: null,
     items: [{ to: "/", icon: LayoutDashboard, label: "Dashboard", end: true }],
   },
   {
     label: "Penerimaan Invoice",
     items: [
       { to: "/invoice/receipts", icon: FileText, label: "Monitor Invoice" },
-      // {
-      //   to: "/invoice/input",
-      //   icon: FilePlus,
-      //   label: "Input Penerimaan",
-      //   badge: "operator",
-      // },
-      
       { to: "/invoice/pph", icon: Percent, label: "Rekap PPh" },
     ],
   },
-  
   {
     label: "Database",
     items: [
       { to: "/ref/vendors", icon: Users, label: "Vendor" },
       { to: "/ref/busa", icon: MapPin, label: "Business Area" },
-      { to: "/ref/stages", icon:Star, label: "Ref Stage" },
+      { to: "/ref/stages", icon: Star, label: "Ref Stage" },
     ],
   },
   {
@@ -73,6 +50,12 @@ const NAV_GROUPS = [
         to: "/utility/import-po",
         icon: Upload,
         label: "Import PO (SAP)",
+        badge: "operator",
+      },
+      {
+        to: "/utility/import-pph",
+        icon: Upload,
+        label: "Import PPh",
         badge: "operator",
       },
     ],
@@ -90,48 +73,88 @@ const NAV_GROUPS = [
   },
 ];
 
-/* ── Komponen ──────────────────────────────────────────────── */
-export default function Sidebar() {
+export default function Sidebar({
+  isMobile = false,
+  mobileOpen = false,
+  onMobileClose,
+}: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
+  // Desktop: auto-collapse saat layar medium
   useEffect(() => {
-    const handleResize = () => setIsCollapsed(window.innerWidth < 768);
+    if (isMobile) return;
+    const handleResize = () => setIsCollapsed(window.innerWidth < 1024);
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [isMobile]);
 
-  const isExpanded = !isCollapsed || isHovered;
+  // Mobile: tutup sidebar saat navigasi
+  const handleNavClick = () => {
+    if (isMobile) onMobileClose?.();
+  };
+
+  const isExpanded = isMobile ? true : !isCollapsed || isHovered;
 
   return (
     <aside
       className={[
         styles.sidebar,
-        isExpanded ? styles.expanded : styles.collapsed,
-      ].join(" ")}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+        isMobile
+          ? mobileOpen
+            ? styles.sidebarMobileOpen
+            : ""
+          : isExpanded
+            ? styles.expanded
+            : styles.collapsed,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      onMouseEnter={() => {
+        if (!isMobile) setIsHovered(true);
+      }}
+      onMouseLeave={() => {
+        if (!isMobile) setIsHovered(false);
+      }}
     >
       {/* Header */}
       <div
         className={`${styles.header} ${!isExpanded ? styles.headerCollapsed : ""}`}
       >
         {isExpanded && <h1 className={styles.brand}>APPACC</h1>}
-        <button
-          className={styles.toggleBtn}
-          onClick={() => setIsCollapsed((v) => !v)}
-          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {isExpanded ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
-        </button>
+
+        {/* Desktop: toggle collapse */}
+        {!isMobile && (
+          <button
+            className={styles.toggleBtn}
+            onClick={() => setIsCollapsed((v) => !v)}
+            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {isExpanded ? (
+              <ChevronLeft size={18} />
+            ) : (
+              <ChevronRight size={18} />
+            )}
+          </button>
+        )}
+
+        {/* Mobile: tombol close (X) */}
+        {isMobile && (
+          <button
+            className={styles.closeBtn}
+            onClick={onMobileClose}
+            aria-label="Tutup menu"
+          >
+            <X size={18} />
+          </button>
+        )}
       </div>
 
       {/* Nav */}
       <nav className={styles.nav}>
         {NAV_GROUPS.map((group, gi) => (
           <div key={gi} className={styles.group}>
-            {/* Divider + label grup */}
             {group.label && (
               <div
                 className={`${styles.groupHeader} ${!isExpanded ? styles.groupHeaderCollapsed : ""}`}
@@ -140,12 +163,12 @@ export default function Sidebar() {
               </div>
             )}
 
-            {/* Items */}
             {group.items.map(({ to, icon: Icon, label, end, badge }) => (
               <NavLink
                 key={to}
                 to={to}
                 end={end}
+                onClick={handleNavClick}
                 className={({ isActive }) =>
                   [
                     styles.navLink,
@@ -159,8 +182,6 @@ export default function Sidebar() {
                 <span className={styles.icon}>
                   <Icon size={18} />
                 </span>
-
-                {/* Label + badge — hanya saat expanded */}
                 <span
                   className={`${styles.navLabel} ${isExpanded ? styles.navLabelVisible : styles.navLabelHidden}`}
                 >

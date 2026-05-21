@@ -202,6 +202,8 @@ export default function InvoiceReceiptManagement() {
         key: "invoice_number",
         label: "Invoice Number",
         sortable: true,
+        collapsible: true,
+        collapseOrder: 0,
         render: (row) => (
           <span className={styles.code}>{row.invoice_number || "—"}</span>
         ),
@@ -223,7 +225,8 @@ export default function InvoiceReceiptManagement() {
         key: "vendor",
         label: "Vendor",
         sortable: false,
-        collapsible: true,collapseOrder: 4,
+        collapsible: true,
+        collapseOrder: 4,
         render: (row) => (
           <span className={styles.muted}>{row.vendor?.name || "—"}</span>
         ),
@@ -232,7 +235,8 @@ export default function InvoiceReceiptManagement() {
         key: "company",
         label: "Perusahaan",
         sortable: false,
-        collapsible: true,collapseOrder: 3,
+        collapsible: true,
+        collapseOrder: 3,
         render: (row) => (
           <span className={styles.muted}>{row.company?.name || "—"}</span>
         ),
@@ -241,7 +245,8 @@ export default function InvoiceReceiptManagement() {
         key: "stage",
         label: "Stage",
         sortable: false,
-        collapsible: true,collapseOrder: 2,
+        collapsible: true,
+        collapseOrder: 2,
         render: (row) => (
           <span className={styles.muted}>{row.stage?.name || "—"}</span>
         ),
@@ -250,7 +255,8 @@ export default function InvoiceReceiptManagement() {
         key: "amount",
         label: "Jumlah",
         sortable: true,
-        collapsible: true,collapseOrder: 1,
+        collapsible: true,
+        collapseOrder: 1,
         render: (row) => (
           <span className={styles.muted}>
             {row.amount

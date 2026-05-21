@@ -18,6 +18,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\Api\SapImportController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\PgrController;
+use App\Http\Controllers\Api\PphImportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -127,6 +128,12 @@ Route::middleware('auth:api')->group(function () {
         Route::post('sap/import-po', [SapImportController::class, 'importPo']);
         Route::get('sap/po-lookup', [SapImportController::class, 'poLookup']);
         Route::post('sap/import-po-chunk', [SapImportController::class, 'importPoChunk']);
+
+
+         Route::post('sap/import-pph-chunk',      [PphImportController::class, 'importChunk']);
+    Route::get('sap/import-pph-incomplete',  [PphImportController::class, 'incompleteBatches']);
+
+
 
         Route::patch('/vendors/{vendor}/pkp', [VendorController::class, 'updatePkp']);
 

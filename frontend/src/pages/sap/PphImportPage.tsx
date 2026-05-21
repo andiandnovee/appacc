@@ -1,17 +1,44 @@
 import { useState, useRef } from "react";
 import * as XLSX from "xlsx";
-import { Upload, CheckCircle, AlertTriangle, Download } from "lucide-react";
+import { Upload, CheckCircle, AlertTriangle } from "lucide-react";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Alert from "../../components/ui/Alert";
 import Badge from "../../components/ui/Badge";
 import styles from "./SapPoImportPage.module.css";
-import api from "../../api/axios"; // ← langsung pakai api
+import api from "../../api/axios";
 
 const CHUNK_SIZE = 500;
 
-export default function SapPoImportPage() {
+type UploadType = "main" | "vendor" | null;
+
+function detectUploadType(rows: any[]): UploadType {
+  if (!rows.length) return null;
+  const headers = Object.keys(rows[0]);
+  if (headers.includes("G/L Account")) return "main";
+  if (headers.includes("Vendor")) return "vendor";
+  return null;
+}
+
+const UPLOAD_TYPE_LABEL: Record<
+  string,
+  { label: string; variant: string; desc: string }
+> = {
+  main: {
+    label: "Import Utama",
+    variant: "info",
+    desc: "Posting Date, Document Number, Reference, Company Code, Amount in local currency, Text, G/L Account",
+  },
+  vendor: {
+    label: "Update Vendor",
+    variant: "warning",
+    desc: "Posting Date, Company Code, Document Number, Vendor, Purchasing Document",
+  },
+};
+
+export default function PphImportPage() {
   const [file, setFile] = useState<File | null>(null);
+  const [uploadType, setUploadType] = useState<UploadType>(null);
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [result, setResult] = useState<any>(null);
@@ -19,9 +46,30 @@ export default function SapPoImportPage() {
   const abortRef = useRef(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFile(e.target.files?.[0] ?? null);
+    const selected = e.target.files?.[0] ?? null;
+    setFile(selected);
     setResult(null);
     setError(null);
+    setUploadType(null);
+
+    if (selected) {
+      parseExcel(selected)
+        .then((rows) => {
+          const type = detectUploadType(rows);
+          if (!type) {
+            setError(
+              "Format file tidak dikenali. Pastikan kolom G/L atau Vendor tersedia.",
+            );
+            setFile(null);
+          } else {
+            setUploadType(type);
+          }
+        })
+        .catch(() => {
+          setError("Gagal membaca file Excel");
+          setFile(null);
+        });
+    }
   };
 
   const parseExcel = (file: File): Promise<any[]> => {
@@ -43,10 +91,7 @@ export default function SapPoImportPage() {
   };
 
   const handleImport = async () => {
-    if (!file) {
-      setError("Pilih file terlebih dahulu");
-      return;
-    }
+    if (!file || !uploadType) return;
 
     setImporting(true);
     setError(null);
@@ -54,101 +99,65 @@ export default function SapPoImportPage() {
     abortRef.current = false;
 
     try {
-      // Parse Excel
       const rows = await parseExcel(file);
 
-      if (!rows.length) {
-        throw new Error("File kosong atau tidak memiliki data");
-      }
-
-      const batchId = new Date().toISOString().slice(0, 7); // YYYY-MM
+      if (!rows.length) throw new Error("File kosong atau tidak memiliki data");
 
       // Split chunks
       const chunks: any[][] = [];
-
       for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
         chunks.push(rows.slice(i, i + CHUNK_SIZE));
       }
 
-      setProgress({
-        current: 0,
-        total: chunks.length,
-      });
+      setProgress({ current: 0, total: chunks.length });
 
-      // Aggregated result
+      // Aggregated
       let totalImported = 0;
+      let totalUpdated = 0;
       let totalDuplicates = 0;
-      let totalVendors = 0;
-      let totalGroups = 0;
-
       const allErrors: any[] = [];
 
-      // Upload per chunk
       for (let i = 0; i < chunks.length; i++) {
-        if (abortRef.current) {
-          console.warn("Import dibatalkan user");
-          break;
-        }
+        if (abortRef.current) break;
 
-        const { data } = await api.post("/sap/import-po-chunk", {
+        const { data } = await api.post("/sap/import-pph-chunk", {
           rows: chunks[i],
-          batch_id: batchId,
         });
 
         totalImported += data.imported ?? 0;
+        totalUpdated += data.updated ?? 0;
         totalDuplicates += data.duplicates ?? 0;
-        totalVendors += data.vendors_synced ?? 0;
-        totalGroups += data.groups_synced ?? 0;
 
-        if (Array.isArray(data.errors)) {
-          allErrors.push(...data.errors);
-        }
+        if (Array.isArray(data.errors)) allErrors.push(...data.errors);
 
-        setProgress({
-          current: i + 1,
-          total: chunks.length,
-        });
+        setProgress({ current: i + 1, total: chunks.length });
       }
 
-      // Final result
       setResult({
         success: !abortRef.current,
         aborted: abortRef.current,
-        batch_id: batchId,
+        uploadType,
         total_rows: rows.length,
         imported: totalImported,
+        updated: totalUpdated,
         duplicates: totalDuplicates,
-        vendors_synced: totalVendors,
-        groups_synced: totalGroups,
         errors: allErrors,
       });
 
-      // Reset file kalau sukses
-      if (!abortRef.current) {
-        setFile(null);
-      }
+      if (!abortRef.current) setFile(null);
     } catch (err: any) {
-      console.error("Import error:", err);
-
-      // Laravel validation
       if (err.response?.status === 422) {
         setError(err.response?.data?.message || "Validasi gagal");
-
         return;
       }
-
-      // Unauthorized
       if (err.response?.status === 401) {
         setError("Sesi login habis, silakan login kembali");
         return;
       }
-
-      // Forbidden
       if (err.response?.status === 403) {
         setError("Anda tidak memiliki akses");
         return;
       }
-
       setError(
         err.response?.data?.message || err.message || "Gagal mengimport data",
       );
@@ -161,13 +170,16 @@ export default function SapPoImportPage() {
     ? Math.round((progress.current / progress.total) * 100)
     : 0;
 
+  const typeInfo = uploadType ? UPLOAD_TYPE_LABEL[uploadType] : null;
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <div>
-          <h1 className={styles.title}>Import Data SAP PO</h1>
+          <h1 className={styles.title}>Import Data PPh</h1>
           <p className={styles.subtitle}>
-            Upload file Excel/CSV berisi data Purchase Order dari SAP
+            Upload file Excel data PPh — jenis upload terdeteksi otomatis dari
+            kolom
           </p>
         </div>
       </div>
@@ -183,10 +195,10 @@ export default function SapPoImportPage() {
                 accept=".xlsx,.xls,.csv"
                 onChange={handleFileChange}
                 disabled={importing}
-                id="po-file"
+                id="pph-file"
                 className={styles.fileInput}
               />
-              <label htmlFor="po-file" className={styles.fileLabel}>
+              <label htmlFor="pph-file" className={styles.fileLabel}>
                 {file ? file.name : "Pilih file Excel (.xlsx, .xls, .csv)"}
               </label>
               {file && (
@@ -195,6 +207,24 @@ export default function SapPoImportPage() {
                 </p>
               )}
             </div>
+
+            {/* Detected type badge */}
+            {typeInfo && !importing && (
+              <div style={{ marginBottom: "var(--space-4)" }}>
+                <Badge variant={typeInfo.variant as any}>
+                  Terdeteksi: {typeInfo.label}
+                </Badge>
+                <p
+                  style={{
+                    fontSize: "var(--text-xs)",
+                    color: "var(--text-secondary)",
+                    marginTop: "var(--space-1)",
+                  }}
+                >
+                  {typeInfo.desc}
+                </p>
+              </div>
+            )}
 
             {/* Progress */}
             {importing && (
@@ -236,60 +266,84 @@ export default function SapPoImportPage() {
               iconLeft={<Upload size={16} />}
               onClick={handleImport}
               loading={importing}
-              disabled={!file || importing}
+              disabled={!file || !uploadType || importing}
               fullWidth
             >
               {importing
                 ? `Mengimport chunk ${progress.current}/${progress.total}...`
-                : "Import Data"}
+                : `Import ${typeInfo?.label ?? "Data"}`}
             </Button>
           </Card.Footer>
         </Card>
 
-        {/* Instructions */}
+        {/* Panduan */}
         <Card variant="flat">
           <Card.Header title="Panduan Import" />
           <Card.Body>
             <div className={styles.instructions}>
-              <h4>Format Kolom Excel:</h4>
+              <h4>Upload Pertama — Import Utama:</h4>
               <ul>
                 <li>
-                  <strong>PO No</strong> — Nomor PO (wajib)
+                  <strong>Posting Date</strong> — Tanggal posting (wajib)
                 </li>
                 <li>
-                  <strong>Item No</strong> — Line item PO (wajib)
+                  <strong>Document Number</strong> — Nomor dokumen (wajib)
                 </li>
                 <li>
-                  <strong>PO UoM</strong> — Satuan
+                  <strong>Reference</strong> — Referensi
                 </li>
                 <li>
-                  <strong>PO Qty</strong> — Jumlah
+                  <strong>Company Code</strong> — Kode perusahaan (wajib)
                 </li>
                 <li>
-                  <strong>Net Value</strong> — Nilai PO (angka)
+                  <strong>Amount in local currency</strong> — Nilai (wajib)
                 </li>
                 <li>
-                  <strong>Plant</strong> — Kode Business Area
+                  <strong>Text</strong> — Keterangan
                 </li>
                 <li>
-                  <strong>Vendor</strong> — Kode vendor SAP
-                </li>
-                <li>
-                  <strong>Vendor Name</strong> — Nama vendor
-                </li>
-                <li>
-                  <strong>Purc. Grp</strong> — Purchasing Group
-                </li>
-                <li>
-                  <strong>Buyer Name</strong> — Nama buyer
+                  <strong>G/L</strong> — Akun GL / jenis PPh (wajib)
                 </li>
               </ul>
-              <h4 style={{ marginTop: "var(--spacing-4)" }}>Catatan:</h4>
+              <h4 style={{ marginTop: "var(--space-4)" }}>
+                Upload Kedua — Update Vendor:
+              </h4>
               <ul>
-                <li>Duplikat PO + Item No akan dilewati otomatis</li>
-                <li>Vendor baru otomatis disync ke master vendor</li>
-                <li>File besar diproses per 500 baris (chunked)</li>
-                <li>Import dapat dibatalkan di tengah proses</li>
+                <li>
+                  <strong>Posting Date</strong> — Tanggal posting (wajib)
+                </li>
+                <li>
+                  <strong>Document Number</strong> — Nomor dokumen (wajib)
+                </li>
+                <li>
+                  <strong>Company Code</strong> — Kode perusahaan (wajib)
+                </li>
+                <li>
+                  <strong>Vendor</strong> — Kode vendor (wajib)
+                </li>
+              </ul>
+              <h4 style={{ marginTop: "var(--space-4)" }}>
+                Jenis PPh dari G/L:
+              </h4>
+              <ul>
+                <li>
+                  <strong>21510001</strong> — PPh Ps. 21
+                </li>
+                <li>
+                  <strong>21520001</strong> — PPh Ps. 23
+                </li>
+                <li>
+                  <strong>21520002</strong> — PPh Ps. 4 (2)
+                </li>
+                <li>
+                  <strong>21520003</strong> — PPh Ps. 22
+                </li>
+                <li>
+                  <strong>21540001</strong> — PPh Ps. 26
+                </li>
+                <li>
+                  <strong>21580001</strong> — PPh Ps. 15
+                </li>
               </ul>
             </div>
           </Card.Body>
@@ -300,7 +354,7 @@ export default function SapPoImportPage() {
       {result && (
         <Card variant="outlined">
           <Card.Header
-            title={`Hasil Import — Batch ${result.batch_id}`}
+            title={`Hasil Import — ${UPLOAD_TYPE_LABEL[result.uploadType]?.label}`}
             action={
               <Badge
                 variant={result.aborted ? "warning" : "success"}
@@ -317,26 +371,26 @@ export default function SapPoImportPage() {
                 value={result.total_rows.toLocaleString("id-ID")}
                 variant="default"
               />
-              <StatCard
-                label="Berhasil Diimport"
-                value={result.imported.toLocaleString("id-ID")}
-                variant="success"
-              />
-              <StatCard
-                label="Duplikat Dilewati"
-                value={result.duplicates.toLocaleString("id-ID")}
-                variant="warning"
-              />
-              <StatCard
-                label="Vendor Baru"
-                value={result.vendors_synced.toLocaleString("id-ID")}
-                variant="info"
-              />
-              <StatCard
-                label="Purc. Group Baru"
-                value={result.groups_synced.toLocaleString("id-ID")}
-                variant="info"
-              />
+              {result.uploadType === "main" ? (
+                <>
+                  <StatCard
+                    label="Berhasil Diimport"
+                    value={result.imported.toLocaleString("id-ID")}
+                    variant="success"
+                  />
+                  <StatCard
+                    label="Duplikat Dilewati"
+                    value={result.duplicates.toLocaleString("id-ID")}
+                    variant="warning"
+                  />
+                </>
+              ) : (
+                <StatCard
+                  label="Vendor Diupdate"
+                  value={result.updated.toLocaleString("id-ID")}
+                  variant="success"
+                />
+              )}
               <StatCard
                 label="Error"
                 value={result.errors.length.toLocaleString("id-ID")}
@@ -348,7 +402,7 @@ export default function SapPoImportPage() {
               <div className={styles.errorSection}>
                 <Alert
                   variant="warning"
-                  title={`${result.errors.length} baris gagal diimport`}
+                  title={`${result.errors.length} baris gagal diproses`}
                   description="Periksa detail error di bawah"
                 />
                 <div className={styles.errorList}>

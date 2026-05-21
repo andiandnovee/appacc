@@ -1,25 +1,24 @@
-import { FC, ReactNode, ReactElement, useState, useEffect, useRef } from 'react';
-import { Search, Bell, ChevronDown } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Search, Bell, ChevronDown, Menu } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import ThemeToggle from "./Themetoggle";
 import styles from "./Navbar.module.css";
 
 interface NavbarProps {
-  // Props here
+  onMenuClick?: () => void;
 }
 
-
-export default function Navbar() {
+export default function Navbar({ onMenuClick }: NavbarProps) {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
+  const navigate         = useNavigate();
+  const [open, setOpen]  = useState(false);
   const [search, setSearch] = useState("");
-  const dropdownRef = useRef(null);
+  const dropdownRef      = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    function handleClickOutside(e) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setOpen(false);
       }
     }
@@ -33,23 +32,25 @@ export default function Navbar() {
     navigate("/login");
   };
 
-  // Avatar fallback: inisial nama
   const initials = user?.name
-    ? user.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
+    ? user.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
     : "?";
 
   return (
     <header className={styles.navbar}>
+
+      {/* Hamburger — mobile only */}
+      <button
+        className={styles.menuBtn}
+        onClick={onMenuClick}
+        aria-label="Toggle menu"
+      >
+        <Menu size={20} />
+      </button>
+
       {/* Search */}
       <div className={styles.search}>
-        <span className={styles.searchIcon}>
-          <Search size={16} />
-        </span>
+        <span className={styles.searchIcon}><Search size={16} /></span>
         <input
           type="text"
           placeholder="Search..."
@@ -59,7 +60,7 @@ export default function Navbar() {
         />
       </div>
 
-      {/* Right section */}
+      {/* Right */}
       <div className={styles.right}>
         <ThemeToggle />
 
@@ -77,11 +78,7 @@ export default function Navbar() {
             aria-haspopup="true"
           >
             {user?.avatar ? (
-              <img
-                src={user.avatar}
-                alt={user.name}
-                className={styles.avatar}
-              />
+              <img src={user.avatar} alt={user.name} className={styles.avatar} />
             ) : (
               <div className={styles.avatarFallback}>{initials}</div>
             )}
@@ -94,28 +91,13 @@ export default function Navbar() {
 
           {open && (
             <div className={styles.dropdown} role="menu">
-              {/* Info user */}
               <div className={styles.dropdownHeader}>
                 <p className={styles.dropdownName}>{user?.name}</p>
                 <p className={styles.dropdownEmail}>{user?.email}</p>
               </div>
               <div className={styles.dropdownDivider} />
-              <a
-                href="/profile"
-                className={styles.dropdownItem}
-                role="menuitem"
-                onClick={() => setOpen(false)}
-              >
-                Profile
-              </a>
-              <a
-                href="/settings"
-                className={styles.dropdownItem}
-                role="menuitem"
-                onClick={() => setOpen(false)}
-              >
-                Settings
-              </a>
+              <a href="/profile"  className={styles.dropdownItem} role="menuitem" onClick={() => setOpen(false)}>Profile</a>
+              <a href="/settings" className={styles.dropdownItem} role="menuitem" onClick={() => setOpen(false)}>Settings</a>
               <div className={styles.dropdownDivider} />
               <button
                 className={`${styles.dropdownItem} ${styles.dropdownLogout}`}
@@ -128,6 +110,7 @@ export default function Navbar() {
           )}
         </div>
       </div>
+
     </header>
   );
 }

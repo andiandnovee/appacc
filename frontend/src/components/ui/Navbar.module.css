@@ -2,19 +2,41 @@
    Navbar.module.css
    ============================================================ */
 
-/* ── Root ──────────────────────────────────────────────────── */
 .navbar {
-  height: var(--topbar-height);        /* 60px dari tokens */
+  height: var(--topbar-height);
   background-color: var(--bg-surface);
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--space-6);
+  gap: var(--space-3);
   flex-shrink: 0;
   position: sticky;
   top: 0;
   z-index: var(--z-sticky);
+}
+
+/* ── Hamburger — hidden di desktop ─────────────────────────── */
+.menuBtn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: var(--space-1);
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+  transition:
+    color var(--duration-fast) var(--ease-default),
+    background-color var(--duration-fast) var(--ease-default);
+}
+
+.menuBtn:hover {
+  color: var(--text-primary);
+  background-color: var(--bg-surface-2);
 }
 
 /* ── Search ────────────────────────────────────────────────── */
@@ -62,10 +84,11 @@
 .right {
   display: flex;
   align-items: center;
-  gap: var(--space-5);
+  gap: var(--space-3);
+  margin-left: auto;
 }
 
-/* ── Icon button (notif, dll) ──────────────────────────────── */
+/* ── Icon button ───────────────────────────────────────────── */
 .iconBtn {
   position: relative;
   display: flex;
@@ -77,8 +100,9 @@
   color: var(--text-secondary);
   padding: var(--space-1);
   border-radius: var(--radius-md);
-  transition: color var(--duration-fast) var(--ease-default),
-              background-color var(--duration-fast) var(--ease-default);
+  transition:
+    color var(--duration-fast) var(--ease-default),
+    background-color var(--duration-fast) var(--ease-default);
 }
 
 .iconBtn:hover {
@@ -86,7 +110,6 @@
   background-color: var(--bg-surface-2);
 }
 
-/* ── Notification badge ────────────────────────────────────── */
 .badge {
   position: absolute;
   top: -2px;
@@ -94,7 +117,7 @@
   background-color: var(--color-danger);
   color: #fff;
   font-family: var(--font-sans);
-  font-size: 0.625rem;   /* 10px */
+  font-size: 0.625rem;
   font-weight: var(--font-semibold);
   line-height: 1;
   padding: 2px 4px;
@@ -126,6 +149,19 @@
   border-radius: var(--radius-full);
   object-fit: cover;
   border: 1.5px solid var(--border-subtle);
+}
+
+.avatarFallback {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
 }
 
 .profileName {
@@ -160,65 +196,12 @@
   box-shadow: var(--shadow-lg);
   overflow: hidden;
   z-index: var(--z-dropdown);
-
-  /* Animasi masuk */
   animation: dropdownIn var(--duration-fast) var(--ease-out);
 }
 
 @keyframes dropdownIn {
   from { opacity: 0; transform: translateY(-6px); }
   to   { opacity: 1; transform: translateY(0); }
-}
-
-.dropdownItem {
-  display: block;
-  width: 100%;
-  padding: var(--space-2) var(--space-4);
-  font-family: var(--font-sans);
-  font-size: var(--text-sm);
-  font-weight: var(--font-normal);
-  color: var(--text-secondary);
-  text-decoration: none;
-  background: none;
-  border: none;
-  cursor: pointer;
-  text-align: left;
-  transition: background-color var(--duration-fast) var(--ease-default),
-              color var(--duration-fast) var(--ease-default);
-}
-
-.dropdownItem:hover {
-  background-color: var(--bg-surface-2);
-  color: var(--text-primary);
-}
-
-.dropdownItem:last-child {
-  color: var(--color-danger);
-}
-
-.dropdownItem:last-child:hover {
-  background-color: var(--color-danger-light);
-  color: var(--color-danger-dark);
-}
-
-/* ── Divider di dropdown ───────────────────────────────────── */
-.dropdownDivider {
-  height: 1px;
-  background-color: var(--border-subtle);
-  margin: var(--space-1) 0;
-}
-
-
-.avatarFallback {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--color-primary);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 600;
-  display: grid;
-  place-items: center;
 }
 
 .dropdownHeader {
@@ -236,8 +219,64 @@
   color: var(--color-text-muted);
 }
 
+.dropdownDivider {
+  height: 1px;
+  background-color: var(--border-subtle);
+  margin: var(--space-1) 0;
+}
+
+.dropdownItem {
+  display: block;
+  width: 100%;
+  padding: var(--space-2) var(--space-4);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--font-normal);
+  color: var(--text-secondary);
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background-color var(--duration-fast) var(--ease-default),
+    color var(--duration-fast) var(--ease-default);
+}
+
+.dropdownItem:hover {
+  background-color: var(--bg-surface-2);
+  color: var(--text-primary);
+}
+
 .dropdownLogout {
   color: var(--color-danger);
   width: 100%;
   text-align: left;
+}
+
+.dropdownLogout:hover {
+  background-color: var(--color-danger-light, #fee2e2);
+  color: var(--color-danger-dark, #b91c1c);
+}
+
+/* ── Mobile ────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 0 var(--space-4);
+  }
+
+  .menuBtn {
+    display: flex; /* tampilkan hamburger */
+  }
+
+  .search {
+    width: auto;
+    flex: 1;
+    max-width: 200px;
+  }
+
+  .profileName,
+  .chevron {
+    display: none; /* sembunyikan nama & chevron, avatar saja */
+  }
 }

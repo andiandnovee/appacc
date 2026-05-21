@@ -66,7 +66,7 @@ function useDebounce<T>(value: T, delay: number): T {
 function useOverflowCollapse(
   scrollRef: React.RefObject<HTMLElement | null>,
   columns: Column[],
-  manualHidden: Set<string>
+  manualHidden: Set<string>,
 ): Set<string> {
   const [autoHidden, setAutoHidden] = useState<Set<string>>(new Set());
 
@@ -82,15 +82,17 @@ function useOverflowCollapse(
       .map((col, index) => ({ col, index }))
       .filter(({ col }) => col.collapsible && !manualHidden.has(col.key))
       .sort((a, b) => {
-        const orderA = a.col.collapseOrder ?? (columns.length - a.index);
-        const orderB = b.col.collapseOrder ?? (columns.length - b.index);
+        const orderA = a.col.collapseOrder ?? columns.length - a.index;
+        const orderB = b.col.collapseOrder ?? columns.length - b.index;
         return orderB - orderA; // besar duluan = kanan duluan
       });
   }, [columns, manualHidden]);
 
   // Ref supaya measure() selalu lihat nilai terbaru tanpa re-subscribe observer
   const collapsibleQueueRef = useRef(collapsibleQueue);
-  useEffect(() => { collapsibleQueueRef.current = collapsibleQueue; }, [collapsibleQueue]);
+  useEffect(() => {
+    collapsibleQueueRef.current = collapsibleQueue;
+  }, [collapsibleQueue]);
 
   const autoHiddenRef = useRef<Set<string>>(new Set());
 
@@ -100,10 +102,13 @@ function useOverflowCollapse(
 
     // Ukur lebar tiap <th> dari DOM — dipanggil setelah render settle
     const measureColWidths = () => {
-      const ths = el.querySelectorAll<HTMLTableCellElement>("thead tr:first-child th");
+      const ths = el.querySelectorAll<HTMLTableCellElement>(
+        "thead tr:first-child th",
+      );
       ths.forEach((th) => {
         const key = th.dataset.colkey;
-        if (key) colWidthsRef.current.set(key, th.getBoundingClientRect().width);
+        if (key)
+          colWidthsRef.current.set(key, th.getBoundingClientRect().width);
       });
     };
 
@@ -161,7 +166,8 @@ function useOverflowCollapse(
         for (const { col } of restoreQueue) {
           const colWidth = colWidthsRef.current.get(col.key) ?? 150; // fallback 150px
           accumulatedWidth += colWidth;
-          if (accumulatedWidth <= slack - 2) { // 2px buffer
+          if (accumulatedWidth <= slack - 2) {
+            // 2px buffer
             next.delete(col.key);
             restored = true;
             // Restore satu per satu per run — observer akan fire lagi untuk berikutnya
@@ -211,14 +217,14 @@ function useOverflowCollapse(
 function exportToPdf(
   rows: Record<string, any>[],
   cols: { key: string; label: string }[],
-  exportName: string
+  exportName: string,
 ) {
   const colLabels = cols.map((c) => c.label);
 
   const tableRows = rows
     .map(
       (row) =>
-        `<tr>${colLabels.map((label) => `<td>${row[label] ?? ""}</td>`).join("")}</tr>`
+        `<tr>${colLabels.map((label) => `<td>${row[label] ?? ""}</td>`).join("")}</tr>`,
     )
     .join("");
 
@@ -353,9 +359,11 @@ function ColVisibilityPanel({
         {collapsibleCols.map((col) => {
           const isHidden = effectiveHidden.has(col.key);
           // "auto" = di-hide oleh overflow detector, bukan manual
-          const isAutoHidden = autoHidden.has(col.key) && !manualHidden.has(col.key);
+          const isAutoHidden =
+            autoHidden.has(col.key) && !manualHidden.has(col.key);
           // "force show" = auto-hidden tapi user paksa tampilkan (manual override)
-          const isForcedVisible = autoHidden.has(col.key) && manualHidden.has(col.key);
+          const isForcedVisible =
+            autoHidden.has(col.key) && manualHidden.has(col.key);
 
           return (
             <button
@@ -366,8 +374,8 @@ function ColVisibilityPanel({
                 isAutoHidden
                   ? "Disembunyikan otomatis karena tabel terlalu lebar"
                   : isForcedVisible
-                  ? "Dipaksa tampil (tabel mungkin overflow)"
-                  : undefined
+                    ? "Dipaksa tampil (tabel mungkin overflow)"
+                    : undefined
               }
             >
               {isHidden ? (
@@ -450,12 +458,12 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
 
   const visibleColumns = useMemo(
     () => columns.filter((c) => !effectiveHidden.has(c.key)),
-    [columns, effectiveHidden]
+    [columns, effectiveHidden],
   );
 
   const hiddenColumns = useMemo(
     () => columns.filter((c) => effectiveHidden.has(c.key)),
-    [columns, effectiveHidden]
+    [columns, effectiveHidden],
   );
 
   const hasCollapsibleCols = columns.some((c) => c.collapsible);
@@ -479,8 +487,12 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
   }, [effectiveHidden]);
 
   // ========== STATE FILTER KOLOM ==========
-  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
-  const [immediateFilters, setImmediateFilters] = useState<Record<string, string>>({});
+  const [columnFilters, setColumnFilters] = useState<Record<string, string>>(
+    {},
+  );
+  const [immediateFilters, setImmediateFilters] = useState<
+    Record<string, string>
+  >({});
   const debouncedFilters = useDebounce(immediateFilters, filterDebounceMs);
 
   useEffect(() => {
@@ -536,7 +548,9 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
   }, [clearColumnFilters, setSearch]);
 
   const activeFilterCount = useMemo(() => {
-    let count = Object.values(columnFilters).filter((v) => v && v.trim() !== "").length;
+    let count = Object.values(columnFilters).filter(
+      (v) => v && v.trim() !== "",
+    ).length;
     if (search.trim()) count++;
     return count;
   }, [columnFilters, search]);
@@ -552,8 +566,10 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
       result = result.filter((row) =>
         columns.some((col) => {
           const value = row[col.key];
-          return value != null && String(value).toLowerCase().includes(lowerSearch);
-        })
+          return (
+            value != null && String(value).toLowerCase().includes(lowerSearch)
+          );
+        }),
       );
     }
     Object.entries(columnFilters).forEach(([colKey, filterValue]) => {
@@ -603,7 +619,7 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
   // ========== EXPORT ==========
   const exportCols = useMemo(
     () => columns.filter((c) => c.exportable !== false),
-    [columns]
+    [columns],
   );
 
   const [exporting, setExporting] = useState(false);
@@ -621,14 +637,19 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
         }
         if (exportData.length === 0) return;
         const rows = exportData.map((row) =>
-          Object.fromEntries(exportCols.map((col) => [col.label, row[col.key] ?? ""]))
+          Object.fromEntries(
+            exportCols.map((col) => [col.label, row[col.key] ?? ""]),
+          ),
         );
         if (format === "xlsx") {
           const ws = utils.json_to_sheet(rows);
           ws["!cols"] = exportCols.map((col) => ({
             wch: Math.min(
-              Math.max(col.label.length, ...exportData.map((row) => String(row[col.key] ?? "").length)) + 2,
-              50
+              Math.max(
+                col.label.length,
+                ...exportData.map((row) => String(row[col.key] ?? "").length),
+              ) + 2,
+              50,
             ),
           }));
           const wb = utils.book_new();
@@ -644,7 +665,7 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
         setExporting(false);
       }
     },
-    [exporting, url, serverSide, fetchAll, sortedData, exportCols, exportName]
+    [exporting, url, serverSide, fetchAll, sortedData, exportCols, exportName],
   );
 
   // ========== SORT ICON ==========
@@ -652,9 +673,15 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
     if (sortKey !== colKey)
       return <ChevronsUpDown size={12} className={styles.sortIcon} />;
     return sortDir === "asc" ? (
-      <ChevronUp size={12} className={`${styles.sortIcon} ${styles.sortIconActive}`} />
+      <ChevronUp
+        size={12}
+        className={`${styles.sortIcon} ${styles.sortIconActive}`}
+      />
     ) : (
-      <ChevronDown size={12} className={`${styles.sortIcon} ${styles.sortIconActive}`} />
+      <ChevronDown
+        size={12}
+        className={`${styles.sortIcon} ${styles.sortIconActive}`}
+      />
     );
   };
 
@@ -685,7 +712,9 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
 
   const goToPrevPage = () => setPage((p) => Math.max(1, p - 1));
   const goToNextPage = () =>
-    setPage((p) => (effectiveTotalPages ? Math.min(effectiveTotalPages, p + 1) : p));
+    setPage((p) =>
+      effectiveTotalPages ? Math.min(effectiveTotalPages, p + 1) : p,
+    );
 
   useImperativeHandle(ref, () => ({
     refetch,
@@ -700,7 +729,9 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
   };
 
   const totalVisibleCols =
-    visibleColumns.length + (selectable ? 1 : 0) + (hiddenColumns.length > 0 ? 1 : 0);
+    visibleColumns.length +
+    (selectable ? 1 : 0) +
+    (hiddenColumns.length > 0 ? 1 : 0);
 
   // ========== RENDER ==========
   return (
@@ -802,7 +833,13 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
           <Button
             onClick={refetch}
             variant="outline"
-            style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, marginLeft: "var(--space-1)" }}
+            style={{
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              padding: 0,
+              marginLeft: "var(--space-1)",
+            }}
           >
             Coba lagi
           </Button>
@@ -820,7 +857,9 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
                     type="checkbox"
                     className={styles.checkbox}
                     checked={isAllSelected}
-                    ref={(el) => { if (el) el.indeterminate = isIndeterminate; }}
+                    ref={(el) => {
+                      if (el) el.indeterminate = isIndeterminate;
+                    }}
                     onChange={toggleAll}
                     aria-label="Pilih semua"
                   />
@@ -840,7 +879,9 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
                   onClick={() => col.sortable && handleSort(col.key)}
                   aria-sort={
                     sortKey === col.key
-                      ? sortDir === "asc" ? "ascending" : "descending"
+                      ? sortDir === "asc"
+                        ? "ascending"
+                        : "descending"
                       : undefined
                   }
                 >
@@ -860,7 +901,9 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
             {visibleColumns.some((col) => col.filterable) && (
               <tr className={styles.filterRow}>
                 {selectable && <td className={styles.filterCell} />}
-                {hiddenColumns.length > 0 && <td className={styles.filterCell} />}
+                {hiddenColumns.length > 0 && (
+                  <td className={styles.filterCell} />
+                )}
                 {visibleColumns.map((col) => (
                   <td key={`filter-${col.key}`} className={styles.filterCell}>
                     {col.filterable && (
@@ -868,20 +911,28 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
                         {col.filterType === "select" ? (
                           <select
                             value={immediateFilters[col.key] || ""}
-                            onChange={(e) => handleFilterChange(col.key, e.target.value)}
+                            onChange={(e) =>
+                              handleFilterChange(col.key, e.target.value)
+                            }
                             className={styles.filterSelect}
                           >
                             <option value="">Semua</option>
                             {col.filterOptions?.map((opt) => (
-                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                              <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </option>
                             ))}
                           </select>
                         ) : (
                           <input
                             type="text"
-                            placeholder={col.filterPlaceholder || `Filter ${col.label}`}
+                            placeholder={
+                              col.filterPlaceholder || `Filter ${col.label}`
+                            }
                             value={immediateFilters[col.key] || ""}
-                            onChange={(e) => handleFilterChange(col.key, e.target.value)}
+                            onChange={(e) =>
+                              handleFilterChange(col.key, e.target.value)
+                            }
                             className={styles.filterInput}
                           />
                         )}
@@ -899,13 +950,21 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
                 <tr key={`skeleton-${i}`} className={styles.tr}>
                   {selectable && (
                     <td className={styles.checkboxCell}>
-                      <div className={styles.skeleton} style={{ width: 16, height: 16 }} />
+                      <div
+                        className={styles.skeleton}
+                        style={{ width: 16, height: 16 }}
+                      />
                     </td>
                   )}
-                  {hiddenColumns.length > 0 && <td className={styles.expandCell} />}
+                  {hiddenColumns.length > 0 && (
+                    <td className={styles.expandCell} />
+                  )}
                   {visibleColumns.map((col) => (
                     <td key={col.key} className={styles.td}>
-                      <div className={styles.skeleton} style={{ width: `${60 + Math.random() * 30}%` }} />
+                      <div
+                        className={styles.skeleton}
+                        style={{ width: `${60 + Math.random() * 30}%` }}
+                      />
                     </td>
                   ))}
                 </tr>
@@ -915,16 +974,23 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
               <tr>
                 <td colSpan={totalVisibleCols}>
                   <div className={styles.empty}>
-                    <div className={styles.emptyIcon}><Inbox size={40} /></div>
+                    <div className={styles.emptyIcon}>
+                      <Inbox size={40} />
+                    </div>
                     <p className={styles.emptyText}>
                       {activeFilterCount > 0
                         ? "Tidak ada data yang sesuai dengan filter"
                         : search
-                        ? `Tidak ada hasil untuk "${search}"`
-                        : "Belum ada data"}
+                          ? `Tidak ada hasil untuk "${search}"`
+                          : "Belum ada data"}
                     </p>
                     {activeFilterCount > 0 && (
-                      <Button variant="outline" size="sm" onClick={clearAllFilters} className={styles.clearFilterBtn}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={clearAllFilters}
+                        className={styles.clearFilterBtn}
+                      >
                         <XCircle size={14} /> Hapus semua filter
                       </Button>
                     )}
@@ -968,7 +1034,9 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
                               e.stopPropagation();
                               toggleExpandRow(rowId ?? index);
                             }}
-                            aria-label={isExpanded ? "Tutup detail" : "Lihat detail"}
+                            aria-label={
+                              isExpanded ? "Tutup detail" : "Lihat detail"
+                            }
                             aria-expanded={isExpanded}
                           >
                             <ChevronRight size={14} />
@@ -978,20 +1046,35 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
 
                       {visibleColumns.map((col) => (
                         <td key={col.key} className={styles.td}>
-                          {col.render ? col.render(row, refetch) : (row[col.key] ?? "—")}
+                          {col.render
+                            ? col.render(row, refetch)
+                            : (row[col.key] ?? "—")}
                         </td>
                       ))}
                     </tr>
 
                     {hasHiddenData && isExpanded && (
-                      <tr key={`expand-${rowId ?? index}`} className={styles.expandDetailRow}>
-                        <td colSpan={totalVisibleCols} className={styles.expandDetailCell}>
+                      <tr
+                        key={`expand-${rowId ?? index}`}
+                        className={styles.expandDetailRow}
+                      >
+                        <td
+                          colSpan={totalVisibleCols}
+                          className={styles.expandDetailCell}
+                        >
                           <div className={styles.expandDetail}>
                             {hiddenColumns.map((col) => (
-                              <div key={col.key} className={styles.expandDetailItem}>
-                                <span className={styles.expandDetailLabel}>{col.label}</span>
+                              <div
+                                key={col.key}
+                                className={styles.expandDetailItem}
+                              >
+                                <span className={styles.expandDetailLabel}>
+                                  {col.label}
+                                </span>
                                 <span className={styles.expandDetailValue}>
-                                  {col.render ? col.render(row, refetch) : (row[col.key] ?? "—")}
+                                  {col.render
+                                    ? col.render(row, refetch)
+                                    : (row[col.key] ?? "—")}
                                 </span>
                               </div>
                             ))}
@@ -1009,7 +1092,9 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
       {!loading && !error && effectiveTotalRows !== undefined && (
         <div className={styles.footer}>
           <span className={styles.footerInfo}>
-            {selectable && selected.length > 0 && `${selected.length} dipilih · `}
+            {selectable &&
+              selected.length > 0 &&
+              `${selected.length} dipilih · `}
             {effectiveTotalRows} data
             {hiddenCount > 0 && (
               <span className={styles.footerHiddenInfo}>
@@ -1017,17 +1102,34 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
               </span>
             )}
             {activeFilterCount > 0 && (
-              <Button variant="ghost" size="sm" onClick={clearAllFilters} className={styles.clearFilterFooter}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearAllFilters}
+                className={styles.clearFilterFooter}
+              >
                 <XCircle size={12} /> Reset semua filter ({activeFilterCount})
               </Button>
             )}
           </span>
           {effectiveTotalPages > 1 && (
             <div className={styles.pagination}>
-              <Button className={styles.pageBtn} onClick={goToPrevPage} disabled={page === 1}>‹</Button>
+              <Button
+                className={styles.pageBtn}
+                onClick={goToPrevPage}
+                disabled={page === 1}
+              >
+                ‹
+              </Button>
               {pageNumbers.map((p, i) =>
                 p === "..." ? (
-                  <span key={`dots-${i}`} className={styles.footerInfo} style={{ padding: "0 4px" }}>…</span>
+                  <span
+                    key={`dots-${i}`}
+                    className={styles.footerInfo}
+                    style={{ padding: "0 4px" }}
+                  >
+                    …
+                  </span>
                 ) : (
                   <button
                     key={p}
@@ -1036,9 +1138,15 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
                   >
                     {p}
                   </button>
-                )
+                ),
               )}
-              <Button className={styles.pageBtn} onClick={goToNextPage} disabled={page === effectiveTotalPages}>›</Button>
+              <Button
+                className={styles.pageBtn}
+                onClick={goToNextPage}
+                disabled={page === effectiveTotalPages}
+              >
+                ›
+              </Button>
             </div>
           )}
         </div>
