@@ -38,14 +38,10 @@ Route::prefix('auth')->group(function () {
     Route::prefix('{provider}')->group(function () {
         Route::get('/redirect', [SocialAuthController::class, 'redirect']);
         Route::get('/callback', [SocialAuthController::class, 'callback']);
-       
     });
-
-
-
 });
 
- 
+
 
 // ── PROTECTED (JWT) ───────────────────────────────────────────────────────
 
@@ -63,7 +59,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/activity', [DashboardController::class, 'activity']);
     });
 
-        Route::patch('user/sap-profile', [UserController::class, 'updateSapProfile']);
+    Route::patch('user/sap-profile', [UserController::class, 'updateSapProfile']);
 
     // Users
     Route::prefix('users')->group(function () {
@@ -106,7 +102,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('stages',                     [StageController::class,        'index']);
         Route::get('stages/{stage}',             [StageController::class,        'show']);
         Route::apiResource('stages', \App\Http\Controllers\Api\StageController::class);
- 
+
         Route::get('business-areas',             [BusinessAreaController::class, 'index']);
         Route::get('business-areas/{businessArea}', [BusinessAreaController::class, 'show']);
 
@@ -119,7 +115,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('busa/search', [BusinessAreaController::class, 'search']);
         Route::apiResource('busa', BusinessAreaController::class)->parameters(['busa' => 'businessArea']);;
 
-        
+
         Route::get('invoice-receipts/{invoiceReceipt}/statuses',  [InvoiceReceiptController::class, 'statuses']);
         Route::post('invoice-receipts/{invoiceReceipt}/statuses', [InvoiceReceiptController::class, 'addStatus']);
 
@@ -129,14 +125,17 @@ Route::middleware('auth:api')->group(function () {
         Route::get('sap/po-lookup', [SapImportController::class, 'poLookup']);
         Route::post('sap/import-po-chunk', [SapImportController::class, 'importPoChunk']);
 
-
-         Route::post('sap/import-pph-chunk',      [PphImportController::class, 'importChunk']);
-    Route::get('sap/import-pph-incomplete',  [PphImportController::class, 'incompleteBatches']);
+        Route::get('pph-companies',      [PphImportController::class, 'companyList']);
+        Route::get('pph-data',           [PphImportController::class, 'getData']);
+        Route::get('pph-batches',        [PphImportController::class, 'batchList']);
+        Route::get('pph-report',         [PphImportController::class, 'report']);
+        Route::patch('vendor-gl-cost',   [PphImportController::class, 'updateVendorGlCost']);
+        Route::post('sap/import-pph-chunk',      [PphImportController::class, 'importChunk']);
+        Route::get('sap/import-pph-incomplete',  [PphImportController::class, 'incompleteBatches']);
 
 
 
         Route::patch('/vendors/{vendor}/pkp', [VendorController::class, 'updatePkp']);
-
     });
 
     // ── ROLE: super-admin ─────────────────────────────────────────────────
@@ -152,6 +151,3 @@ Route::middleware('auth:api')->group(function () {
         Route::delete('/roles/{role}', [RoleManagementController::class, 'destroy']);
     });
 });
-
-
-

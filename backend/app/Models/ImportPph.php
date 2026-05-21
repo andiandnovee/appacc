@@ -118,4 +118,18 @@ public static function isValidGl(string $glAccountCode): bool
             ->groupBy('batch_id', 'company_code', 'gl_account_code')
             ->orderBy('periode', 'desc');
     }
+
+
+// tambah di model ImportPph
+
+public function vendor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+{
+    return $this->belongsTo(Vendor::class, 'vendor_code', 'sap_id');
+}
+
+public function company(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+{
+    return $this->belongsTo(Company::class, 'company_code', 'sap_id');
+}
+    
 }

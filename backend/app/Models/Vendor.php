@@ -22,6 +22,7 @@ class Vendor extends Model
         'pph_type',
         'pph_rate',
         'is_pkp',
+        'gl_cost_account', // <-- new field untuk GL Cost Account
     ];
 
     protected $casts = [
