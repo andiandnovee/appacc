@@ -121,18 +121,19 @@ Route::middleware('auth:api')->group(function () {
 
 
         // SAP PO Import
-        Route::post('sap/import-po', [SapImportController::class, 'importPo']);
-        Route::get('sap/po-lookup', [SapImportController::class, 'poLookup']);
-        Route::post('sap/import-po-chunk', [SapImportController::class, 'importPoChunk']);
+       // SAP PO Import
+Route::post('sap/import-po',             [SapImportController::class, 'importPo']);
+Route::post('sap/import-po-chunk',       [SapImportController::class, 'importPoChunk']);
+Route::get('sap/po-lookup',              [SapImportController::class, 'poLookup']);
 
-        Route::get('pph-companies',      [PphImportController::class, 'companyList']);
-        Route::get('pph-data',           [PphImportController::class, 'getData']);
-        Route::get('pph-batches',        [PphImportController::class, 'batchList']);
-        Route::get('pph-report',         [PphImportController::class, 'report']);
-        Route::patch('vendor-gl-cost',   [PphImportController::class, 'updateVendorGlCost']);
-        Route::post('sap/import-pph-chunk',      [PphImportController::class, 'importChunk']);
-        Route::get('sap/import-pph-incomplete',  [PphImportController::class, 'incompleteBatches']);
-
+// PPh Import & Report
+Route::post('sap/import-pph-chunk',      [PphImportController::class, 'importChunk']);
+Route::get('sap/import-pph-incomplete',  [PphImportController::class, 'incompleteBatches']);
+Route::get('sap/pph-companies',          [PphImportController::class, 'companyList']);
+Route::get('sap/pph-batches',            [PphImportController::class, 'batchList']);
+Route::get('sap/pph-data',               [PphImportController::class, 'getData']);
+Route::get('sap/pph-report',             [PphImportController::class, 'report']);
+Route::patch('sap/vendor-gl-cost',       [PphImportController::class, 'updateVendorGlCost']);
 
 
         Route::patch('/vendors/{vendor}/pkp', [VendorController::class, 'updatePkp']);

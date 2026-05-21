@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { FileText, Printer } from "lucide-react";
+import { Printer } from "lucide-react";
 import Card from "../../../components/ui/Card";
 import Button from "../../../components/ui/Button";
 import Select from "../../../components/ui/Select";
@@ -8,6 +8,38 @@ import { useToast } from "../../../components/ui/Toast";
 import styles from "./ReceiptManagement.module.css";
 import api from "../../../api/axios";
 
+// ── Types ─────────────────────────────────────────────────────
+interface PphRow {
+  id: number;
+  no_bukti_potong: string | null;
+  gl_account: string;
+  gl_cost_account: string | null;
+  tgl_faktur: string;
+  no_faktur: string;
+  vendor_name: string;
+  vendor_sap_id: string;
+  npwp: string | null;
+  address: string | null;
+  service_type: string | null;
+  doc_number: string;
+  po_text: string | null;
+  bruto: number;
+  dpp: number;
+  tarif: number;
+  pph_dipotong: number;
+  pph_type: string;
+}
+
+interface PphReport {
+  company: { name: string; npwp: string | null; address: string | null };
+  periode: string;
+  pph_type: string;
+  total_pph: number;
+  total_bruto: number;
+  rows: PphRow[];
+}
+
+// ── Constants ─────────────────────────────────────────────────
 const PPH_OPTIONS = [
   { value: "21510001", label: "PPh Ps. 21" },
   { value: "21520001", label: "PPh Ps. 23" },
@@ -17,27 +49,53 @@ const PPH_OPTIONS = [
   { value: "21580001", label: "PPh Ps. 15" },
 ];
 
-function formatRp(val: number) {
+function formatRp(val: number): string {
   return val.toLocaleString("id-ID");
 }
 
+// ── Style helpers ─────────────────────────────────────────────
+const thStyle: React.CSSProperties = {
+  padding: "8px 10px",
+  borderBottom: "2px solid var(--border-default)",
+  fontWeight: 600,
+  fontSize: "var(--text-xs)",
+  color: "var(--text-secondary)",
+  whiteSpace: "nowrap",
+};
+
+const tdStyle: React.CSSProperties = {
+  padding: "6px 10px",
+  color: "var(--text-primary)",
+  verticalAlign: "top",
+};
+
+function inlineBtn(color: string): React.CSSProperties {
+  return {
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    color,
+    fontWeight: 700,
+    fontSize: 14,
+    padding: "0 2px",
+  };
+}
+
+// ── Component ─────────────────────────────────────────────────
 export default function PphReportPage() {
   const { addToast } = useToast();
 
-  // Filter state
   const [companyCode, setCompanyCode] = useState("");
   const [glAccount, setGlAccount] = useState("");
   const [month, setMonth] = useState("");
-
-  // Data state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [report, setReport] = useState<any>(null);
+  const [report, setReport] = useState<PphReport | null>(null);
 
-  // Inline edit state: { rowId: gl_cost_account value }
-  const [editing, setEditing] = useState<Record<number, string>>({});
+  // key: row.id (number) → edited value
+  const [editing, setEditing] = useState<Record<string, string>>({});
 
-  const canFetch = companyCode && glAccount && month;
+  const canFetch = Boolean(companyCode && glAccount && month);
 
   const fetchData = useCallback(async () => {
     if (!canFetch) return;
@@ -54,35 +112,39 @@ export default function PphReportPage() {
         },
       });
       if (data.success) {
-        setReport(data.data);
+        setReport(data.data as PphReport);
       } else {
-        setError(data.error || "Gagal memuat data");
+        setError((data.error as string) || "Gagal memuat data");
       }
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Gagal memuat data");
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message;
+      setError(msg ?? "Gagal memuat data");
     } finally {
       setLoading(false);
     }
   }, [companyCode, glAccount, month, canFetch]);
 
-  // Simpan gl_cost_account — tanya konfirmasi update vendor
+  const removeEditing = useCallback((id: number) => {
+    setEditing((prev) => {
+      const next = { ...prev };
+      delete next[String(id)];
+      return next;
+    });
+  }, []);
+
   const handleSaveGlCost = useCallback(
-    async (row: any) => {
-      const newVal = editing[row.id];
+    async (row: PphRow) => {
+      const newVal = editing[String(row.id)];
       if (newVal === undefined || newVal === row.gl_cost_account) {
-        setEditing((prev) => {
-          const n = { ...prev };
-          delete n[row.id];
-          return n;
-        });
+        removeEditing(row.id);
         return;
       }
 
-      const confirm = window.confirm(
+      const confirmed = window.confirm(
         `Update GL Cost Account "${newVal}" ke master vendor "${row.vendor_name}"?\n\nData vendor akan diperbarui sehingga import berikutnya otomatis terisi.`,
       );
-
-      if (!confirm) return;
+      if (!confirmed) return;
 
       try {
         await api.patch("/sap/vendor-gl-cost", {
@@ -90,22 +152,19 @@ export default function PphReportPage() {
           gl_cost_account: newVal,
         });
 
-        // Update local state
-        setReport((prev: any) => ({
-          ...prev,
-          rows: prev.rows.map((r: any) =>
-            r.vendor_sap_id === row.vendor_sap_id
-              ? { ...r, gl_cost_account: newVal }
-              : r,
-          ),
-        }));
-
-        setEditing((prev) => {
-          const n = { ...prev };
-          delete n[row.id];
-          return n;
+        setReport((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            rows: prev.rows.map((r) =>
+              r.vendor_sap_id === row.vendor_sap_id
+                ? { ...r, gl_cost_account: newVal }
+                : r,
+            ),
+          };
         });
 
+        removeEditing(row.id);
         addToast({
           variant: "success",
           title: "GL Cost Account vendor diperbarui.",
@@ -114,37 +173,35 @@ export default function PphReportPage() {
         addToast({ variant: "danger", title: "Gagal update GL Cost Account." });
       }
     },
-    [editing, addToast],
+    [editing, addToast, removeEditing],
   );
 
   const handleGenerateReport = useCallback(() => {
     if (!report) return;
 
-    const rows = report.rows as any[];
     const glLabel =
       PPH_OPTIONS.find((o) => o.value === glAccount)?.label ?? glAccount;
 
-    const rowsHtml = rows
+    const rowsHtml = report.rows
       .map(
         (row, i) => `
-            <tr>
-                <td>${i + 1}</td>
-                <td>${row.no_bukti_potong ?? ""}</td>
-                <td>${row.gl_cost_account ?? ""}</td>
-                <td>${row.tgl_faktur ?? ""}</td>
-                <td>${row.no_faktur ?? ""}</td>
-                <td>${row.vendor_name ?? ""}</td>
-                <td>${row.npwp ?? ""}</td>
-                <td>${row.address ?? ""}</td>
-                <td>${row.service_type ?? ""}</td>
-                <td class="num">${formatRp(row.bruto)}</td>
-                <td class="num">${formatRp(row.dpp)}</td>
-                <td class="num">${row.tarif}%</td>
-                <td class="num">${formatRp(row.pph_dipotong)}</td>
-                <td>${row.doc_number ?? ""}</td>
-                <td>${row.po_text ?? ""}</td>
-            </tr>
-        `,
+        <tr>
+          <td>${i + 1}</td>
+          <td>${row.no_bukti_potong ?? ""}</td>
+          <td>${row.gl_cost_account ?? ""}</td>
+          <td>${row.tgl_faktur}</td>
+          <td>${row.no_faktur}</td>
+          <td>${row.vendor_name}</td>
+          <td>${row.npwp ?? ""}</td>
+          <td>${row.address ?? ""}</td>
+          <td>${row.service_type ?? ""}</td>
+          <td class="num">${formatRp(row.bruto)}</td>
+          <td class="num">${formatRp(row.dpp)}</td>
+          <td class="num">${row.tarif}%</td>
+          <td class="num">${formatRp(row.pph_dipotong)}</td>
+          <td>${row.doc_number}</td>
+          <td>${row.po_text ?? ""}</td>
+        </tr>`,
       )
       .join("");
 
@@ -158,16 +215,13 @@ export default function PphReportPage() {
   body { font-family: Arial, sans-serif; font-size: 9pt; color: #000; padding: 16px; }
   .header { text-align: center; margin-bottom: 16px; }
   .header h2 { font-size: 11pt; font-weight: bold; }
-  .header p  { font-size: 9pt; }
+  .header p { font-size: 9pt; }
   table { width: 100%; border-collapse: collapse; margin-top: 12px; }
   th, td { border: 1px solid #000; padding: 3px 5px; vertical-align: top; }
   th { background: #d9d9d9; text-align: center; font-size: 8pt; }
   td.num { text-align: right; white-space: nowrap; }
   tfoot td { font-weight: bold; background: #f0f0f0; }
-  @media print {
-    body { padding: 0; }
-    button { display: none; }
-  }
+  @media print { body { padding: 0; } button { display: none; } }
 </style>
 </head>
 <body>
@@ -177,29 +231,17 @@ export default function PphReportPage() {
     <p><strong>Daftar Pemotongan ${glLabel}</strong></p>
     <p>Masa Pajak Bulan ${report.periode}</p>
   </div>
-
-  <div style="text-align:right; margin-bottom:8px;">
+  <div style="text-align:right;margin-bottom:8px;">
     <button onclick="window.print()">🖨️ Print / Save PDF</button>
   </div>
-
   <table>
     <thead>
       <tr>
-        <th>No</th>
-        <th>No Bukti Potong</th>
-        <th>GL Account</th>
-        <th>Tgl Faktur</th>
-        <th>No Faktur</th>
-        <th>Nama Rekanan</th>
-        <th>NPWP</th>
-        <th>Alamat</th>
-        <th>Jenis Pekerjaan</th>
-        <th>Bruto (Rp)</th>
-        <th>DPP (Rp)</th>
-        <th>Tarif</th>
-        <th>PPh Dipotong (Rp)</th>
-        <th>Doc Number</th>
-        <th>PO Text</th>
+        <th>No</th><th>No Bukti Potong</th><th>GL Account</th>
+        <th>Tgl Faktur</th><th>No Faktur</th><th>Nama Rekanan</th>
+        <th>NPWP</th><th>Alamat</th><th>Jenis Pekerjaan</th>
+        <th>Bruto (Rp)</th><th>DPP (Rp)</th><th>Tarif</th>
+        <th>PPh Dipotong (Rp)</th><th>Doc Number</th><th>PO Text</th>
       </tr>
     </thead>
     <tbody>${rowsHtml}</tbody>
@@ -323,57 +365,52 @@ export default function PphReportPage() {
                       textAlign: "left",
                     }}
                   >
-                    <th style={th}>No</th>
-                    <th style={th}>Tgl Faktur</th>
-                    <th style={th}>No Faktur</th>
-                    <th style={th}>Nama Vendor</th>
-                    <th style={th}>NPWP</th>
-                    <th style={th}>Jenis Pekerjaan</th>
-                    <th style={th}>GL Cost Account</th>
-                    <th style={th}>Bruto</th>
-                    <th style={th}>Tarif</th>
-                    <th style={th}>PPh Dipotong</th>
-                    <th style={th}>Doc Number</th>
+                    <th style={thStyle}>No</th>
+                    <th style={thStyle}>Tgl Faktur</th>
+                    <th style={thStyle}>No Faktur</th>
+                    <th style={thStyle}>Nama Vendor</th>
+                    <th style={thStyle}>NPWP</th>
+                    <th style={thStyle}>Jenis Pekerjaan</th>
+                    <th style={thStyle}>GL Cost Account</th>
+                    <th style={thStyle}>Bruto</th>
+                    <th style={thStyle}>Tarif</th>
+                    <th style={thStyle}>PPh Dipotong</th>
+                    <th style={thStyle}>Doc Number</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {report.rows.map((row: any, i: number) => (
+                  {report.rows.map((row, i) => (
                     <tr
                       key={row.id}
                       style={{ borderBottom: "1px solid var(--border-subtle)" }}
                     >
-                      <td style={td}>{i + 1}</td>
-                      <td style={td}>{row.tgl_faktur}</td>
-                      <td style={td}>
+                      <td style={tdStyle}>{i + 1}</td>
+                      <td style={tdStyle}>{row.tgl_faktur}</td>
+                      <td style={tdStyle}>
                         <span className={styles.code}>{row.no_faktur}</span>
                       </td>
-                      <td style={td}>{row.vendor_name}</td>
-                      <td style={td}>
+                      <td style={tdStyle}>{row.vendor_name}</td>
+                      <td style={tdStyle}>
                         <span className={styles.code}>{row.npwp}</span>
                       </td>
-                      <td style={td}>{row.service_type}</td>
+                      <td style={tdStyle}>{row.service_type}</td>
 
                       {/* Inline edit GL Cost Account */}
-                      <td style={td}>
-                        {editing[row.id] !== undefined ? (
+                      <td style={tdStyle}>
+                        {editing[String(row.id)] !== undefined ? (
                           <div style={{ display: "flex", gap: 4 }}>
                             <input
                               autoFocus
-                              value={editing[row.id]}
+                              value={editing[String(row.id)]}
                               onChange={(e) =>
                                 setEditing((prev) => ({
                                   ...prev,
-                                  [row.id]: e.target.value,
+                                  [String(row.id)]: e.target.value,
                                 }))
                               }
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") handleSaveGlCost(row);
-                                if (e.key === "Escape")
-                                  setEditing((prev) => {
-                                    const n = { ...prev };
-                                    delete n[row.id];
-                                    return n;
-                                  });
+                                if (e.key === "Escape") removeEditing(row.id);
                               }}
                               style={{
                                 width: 120,
@@ -391,13 +428,7 @@ export default function PphReportPage() {
                               ✓
                             </button>
                             <button
-                              onClick={() =>
-                                setEditing((prev) => {
-                                  const n = { ...prev };
-                                  delete n[row.id];
-                                  return n;
-                                })
-                              }
+                              onClick={() => removeEditing(row.id)}
                               style={inlineBtn("#ef4444")}
                             >
                               ✕
@@ -408,7 +439,7 @@ export default function PphReportPage() {
                             onClick={() =>
                               setEditing((prev) => ({
                                 ...prev,
-                                [row.id]: row.gl_cost_account ?? "",
+                                [String(row.id)]: row.gl_cost_account ?? "",
                               }))
                             }
                             style={{
@@ -437,16 +468,16 @@ export default function PphReportPage() {
                         )}
                       </td>
 
-                      <td style={{ ...td, textAlign: "right" }}>
+                      <td style={{ ...tdStyle, textAlign: "right" }}>
                         Rp {formatRp(row.bruto)}
                       </td>
-                      <td style={{ ...td, textAlign: "right" }}>
+                      <td style={{ ...tdStyle, textAlign: "right" }}>
                         {row.tarif}%
                       </td>
-                      <td style={{ ...td, textAlign: "right" }}>
+                      <td style={{ ...tdStyle, textAlign: "right" }}>
                         Rp {formatRp(row.pph_dipotong)}
                       </td>
-                      <td style={td}>
+                      <td style={tdStyle}>
                         <span className={styles.code}>{row.doc_number}</span>
                       </td>
                     </tr>
@@ -459,17 +490,17 @@ export default function PphReportPage() {
                       fontWeight: 600,
                     }}
                   >
-                    <td colSpan={7} style={{ ...td, textAlign: "right" }}>
+                    <td colSpan={7} style={{ ...tdStyle, textAlign: "right" }}>
                       TOTAL
                     </td>
-                    <td style={{ ...td, textAlign: "right" }}>
+                    <td style={{ ...tdStyle, textAlign: "right" }}>
                       Rp {formatRp(report.total_bruto)}
                     </td>
-                    <td style={td}></td>
-                    <td style={{ ...td, textAlign: "right" }}>
+                    <td style={tdStyle}></td>
+                    <td style={{ ...tdStyle, textAlign: "right" }}>
                       Rp {formatRp(report.total_pph)}
                     </td>
-                    <td style={td}></td>
+                    <td style={tdStyle}></td>
                   </tr>
                 </tfoot>
               </table>
@@ -480,29 +511,3 @@ export default function PphReportPage() {
     </div>
   );
 }
-
-// ── Style helpers ─────────────────────────────────────────────
-const th: React.CSSProperties = {
-  padding: "8px 10px",
-  borderBottom: "2px solid var(--border-default)",
-  fontWeight: 600,
-  fontSize: "var(--text-xs)",
-  color: "var(--text-secondary)",
-  whiteSpace: "nowrap",
-};
-
-const td: React.CSSProperties = {
-  padding: "6px 10px",
-  color: "var(--text-primary)",
-  verticalAlign: "top",
-};
-
-const inlineBtn = (color: string): React.CSSProperties => ({
-  background: "none",
-  border: "none",
-  cursor: "pointer",
-  color,
-  fontWeight: 700,
-  fontSize: 14,
-  padding: "0 2px",
-});
