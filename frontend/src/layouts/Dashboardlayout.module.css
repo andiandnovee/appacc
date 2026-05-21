@@ -36,8 +36,15 @@
   to   { opacity: 1; }
 }
 
+
+
 @media (max-width: 768px) {
+  .content {
+    width: 100%;          /* ← ambil full width */
+    margin-left: 0;       /* ← pastikan ga ada offset */
+  }
+
   .main {
-    padding: var(--space-4);
+    padding: var(--space-2);
   }
 }

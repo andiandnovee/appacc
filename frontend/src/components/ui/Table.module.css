@@ -618,3 +618,61 @@
 .clearFilterFooter:hover {
   color: var(--color-danger);
 }
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background-color: var(--bg-surface);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  width: 240px;
+  transition: border-color var(--duration-normal) var(--ease-default),
+              box-shadow var(--duration-normal) var(--ease-default);
+}
+
+/* tambah ini */
+@media (max-width: 768px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .toolbarLeft,
+  .toolbarRight {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .search {
+    width: 100%;   /* full width di mobile */
+  }
+}
+
+@media (max-width: 768px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .toolbarLeft,
+  .toolbarRight {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .toolbarRight {
+    flex-direction: column;  /* ← stack vertikal */
+  }
+
+  .search {
+    width: 100%;
+    max-width: 100%;         /* ← override apapun */
+    box-sizing: border-box;
+  }
+
+  .exportGroup {
+    justify-content: flex-end;
+  }
+}

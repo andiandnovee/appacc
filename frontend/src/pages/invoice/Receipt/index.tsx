@@ -431,7 +431,7 @@ export default function InvoiceReceiptManagement() {
           <div className={styles.filterGroup}>
             <label>Tahun Stage</label>
             <input
-              type="number"
+              type="text"
               value={selectedYear}
               onChange={(e) => setSelectedYear(e.target.value)}
               className={styles.yearInput}
