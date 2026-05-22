@@ -9,10 +9,10 @@ interface ProtectedRouteProps {
 
 
 export default function ProtectedRoute() {
-  const { user, loading } = useAuth();
+  const auth = useAuth();
 
-  if (loading) return <div>Loading...</div>; // cek token dulu
-  if (!user) return <Navigate to="/login" replace />; // belum login → redirect
+  if (!auth || auth.loading) return <div>Loading...</div>;
+  if (!auth.user) return <Navigate to="/login" replace />;
 
-  return <Outlet />; // sudah login → lanjut ke halaman
+  return <Outlet />;
 }

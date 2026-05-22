@@ -82,7 +82,9 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
     try {
       await api.post("/auth/logout");
     } catch {
-      console.warn("hooks: Logout request failed, clearing local auth state anyway");
+      console.warn(
+        "hooks: Logout request failed, clearing local auth state anyway",
+      );
     } finally {
       clearToken();
       setUser(null);
@@ -102,4 +104,8 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
 };
 
 // ─── Hook ────────────────────────────────────────────────────────
-export const useAuth = (): AuthContextType | null => useContext(AuthContext);
+export const useAuth = (): AuthContextType => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  return ctx;
+};
