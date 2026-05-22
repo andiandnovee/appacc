@@ -185,16 +185,34 @@ class PphImportService
 
     // ── Helpers ──────────────────────────────────────────────
 
-    private function parseDate($value): ?string
-    {
-        if (!$value) return null;
+   private function parseDate($value): ?string
+{
+    if ($value === null || $value === '') return null;
 
-        try {
-            return \Carbon\Carbon::parse($value)->toDateString();
-        } catch (\Exception $e) {
-            return null;
+    try {
+        // Excel numeric date serial (misal: 45669)
+        if (is_numeric($value)) {
+            // Excel epoch: 1 Jan 1900 = serial 1
+            // PHP: tambah (serial - 2) hari ke 1 Jan 1900
+            // (-2 karena Excel salah hitung 1900 sebagai leap year)
+            $date = \Carbon\Carbon::createFromDate(1900, 1, 1)
+                ->addDays((int)$value - 2);
+            return $date->toDateString();
         }
+
+        // Format SAP Indonesia: dd/MM/yyyy
+        if (preg_match('/^\d{2}\/\d{2}\/\d{4}$/', trim($value))) {
+            return \Carbon\Carbon::createFromFormat('d/m/Y', trim($value))->toDateString();
+        }
+
+        // Format lain — fallback
+        return \Carbon\Carbon::parse($value)->toDateString();
+
+    } catch (\Exception $e) {
+        Log::warning('parseDate failed', ['value' => $value]);
+        return null;
     }
+}
 
     private function parseAmount($value): float
     {

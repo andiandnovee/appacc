@@ -56,3 +56,32 @@ export function downloadMIR7(po, sapUser, sapServer, sapCocd, sapVendorName, sap
   const filename = `${sapBusArea}  MIR7  ${po}.sap`;
   createSapFile(filename, content);
 }
+
+
+/**
+ * Spesifik: ME2N - Purchasing Documents per Document Number
+ * @param {string} doc number        - nomor doc number
+ * @param {string} sapUser   - dari auth/me -> sap_user
+ * @param {string} sapServer - dari auth/me -> sap_server_con
+ */
+export function downloadFBV0(doc, sapUser, sapServer) {
+  const content = [
+    '[System]',
+    'Name=P08',
+    `Description=${sapServer}`,
+    'Client=800',
+    '[User]',
+    `Name=${sapUser}`,
+    'Language=EN',
+    '[Function]',
+    'Title=P08(1)800 Purchasing Documents per Document Number',
+    `Command=/n*ME2N EN_EBELN-LOW=${po}; LISTU=ALV;`,
+    'Type=SystemCommand',
+    '[Configuration]',
+    '[Options]',
+    'Reuse=1',
+  ].join('\n');
+
+  const filename = `FBV0 ${doc}.sap`;
+  createSapFile(filename, content);
+}

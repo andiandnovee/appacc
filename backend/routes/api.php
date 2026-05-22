@@ -97,11 +97,16 @@ Route::middleware('auth:api')->group(function () {
         Route::apiResource('vendors', VendorController::class);
 
         // Master data — read only
+
+        Route::get('/companies/select-options', [CompanyController::class, 'selectOptions']);
         Route::get('companies',                  [CompanyController::class,      'index']);
         Route::get('companies/{company}',        [CompanyController::class,      'show']);
         Route::get('stages',                     [StageController::class,        'index']);
         Route::get('stages/{stage}',             [StageController::class,        'show']);
         Route::apiResource('stages', \App\Http\Controllers\Api\StageController::class);
+
+        
+
 
         Route::get('business-areas',             [BusinessAreaController::class, 'index']);
         Route::get('business-areas/{businessArea}', [BusinessAreaController::class, 'show']);
