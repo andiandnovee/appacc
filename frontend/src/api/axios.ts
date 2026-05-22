@@ -6,12 +6,10 @@ import axios, {
 } from "axios";
 
 // ─── Environment Detection ────────────────────────────────────────────────────
-// IS_PROD = true  → production : token di HttpOnly Cookie (browser)
-// IS_PROD = false → local/dev  : token di localStorage   (mobile-style)
 const IS_PROD = import.meta.env.PROD;
 const CLIENT_TYPE = IS_PROD ? "browser" : "mobile";
 
-// ─── Storage Helpers (hanya dipakai di local/dev) ────────────────────────────
+// ─── Storage Helpers ──────────────────────────────────────────────────────────
 const TOKEN_KEY = "appacc_token";
 
 export const getToken = (): string | null =>
@@ -20,11 +18,8 @@ export const getToken = (): string | null =>
 export const setToken = (token: string): void => {
   if (sessionStorage.getItem(TOKEN_KEY)) {
     sessionStorage.setItem(TOKEN_KEY, token);
-    console.log("axios :Token stored in sessionStorage (remember=false)");  
   } else {
     localStorage.setItem(TOKEN_KEY, token);
-
-    console.log("axios :Token stored in localStorage (remember=true)");
   }
 };
 
@@ -40,25 +35,18 @@ const api: AxiosInstance = axios.create({
     "Content-Type": "application/json",
     Accept: "application/json",
     "X-Client-Type": CLIENT_TYPE,
-    // production → backend return token di cookie
-    // local      → backend return token di body (mobile mode)
   },
   withCredentials: IS_PROD,
-  // production : true  → browser kirim HttpOnly cookie otomatis
-  // local      : false → tidak butuh cookie, pakai localStorage
 });
 
 // ─── Request Interceptor ──────────────────────────────────────────────────────
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (!IS_PROD) {
-    // Local: inject token dari localStorage ke Authorization header
     const token = getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
   }
-  // Production: browser otomatis kirim HttpOnly cookie, tidak perlu inject
-    //console.log("axios :Request Interceptor - IS_PROD =", IS_PROD, ", config:", config);  
   return config;
 });
 
@@ -78,14 +66,10 @@ const processQueue = (error: unknown, token: string | null = null): void => {
 };
 
 const forceLogout = (): void => {
-  if (!IS_PROD) {
-    clearToken(); // local: bersihkan localStorage
-  }
-  // production: cookie akan dihapus oleh backend saat /auth/logout
+  if (!IS_PROD) clearToken();
   window.location.href = "/login";
 };
 
-// ─── Response Interceptor ─────────────────────────────────────────────────────
 // ─── Response Interceptor ─────────────────────────────────────────────────────
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
@@ -95,31 +79,34 @@ api.interceptors.response.use(
       _retry?: boolean;
     };
 
-    // Bukan 401, atau sudah pernah retry → lempar error langsung
-    if (error.response?.status !== 401 || originalRequest._retry) {
-      console.warn(
-        "axios :Response Interceptor - Non-401 error or already retried, rejecting:",
-        error.response?.status,
-        error.response?.data,
-      );
+    // Bukan 401 → lempar langsung
+    if (error.response?.status !== 401) {
       return Promise.reject(error);
     }
 
-   // axios.ts — ganti bagian skipRefreshUrls
+    // ── /auth/refresh gagal → paksa logout, jangan loop ──────────────────────
+    if (originalRequest.url?.includes("/auth/refresh")) {
+      processQueue(error, null);
+      isRefreshing = false;
+      forceLogout();
+      return Promise.reject(error);
+    }
 
-const skipRefreshUrls = ["/auth/login", "/auth/exchange"];
-//   ↑ hapus /auth/refresh, /auth/me dari sini — mereka butuh handling berbeda
+    // ── /auth/login & /auth/exchange → jangan retry, biarkan komponen handle ─
+    const skipRetryUrls = ["/auth/login", "/auth/exchange"];
+    if (skipRetryUrls.some((url) => originalRequest.url?.includes(url))) {
+      return Promise.reject(error);
+    }
 
-if (skipRefreshUrls.some(url => originalRequest.url?.includes(url))) {
-  return Promise.reject(error);
-}
-
-// /auth/refresh gagal → memang harus logout, sudah benar
-// /auth/me gagal → JANGAN langsung logout, biarkan jatuh ke refresh flow normal
+    // ── Sudah pernah retry → jangan loop ─────────────────────────────────────
+    if (originalRequest._retry) {
+      forceLogout();
+      return Promise.reject(error);
+    }
 
     originalRequest._retry = true;
 
-    // Ada request lain yang sedang refresh → masuk antrian
+    // ── Ada request lain sedang refresh → antri ───────────────────────────────
     if (isRefreshing) {
       return new Promise<string | null>((resolve, reject) => {
         failedQueue.push({ resolve, reject });
@@ -127,12 +114,10 @@ if (skipRefreshUrls.some(url => originalRequest.url?.includes(url))) {
         if (!IS_PROD && token) {
           originalRequest.headers.Authorization = `Bearer ${token}`;
         }
-        console.log("axios :Processed queued request with new token");
         return api(originalRequest);
       });
     }
 
-    console.log("axios :Response Interceptor - Starting token refresh");
     isRefreshing = true;
 
     try {
@@ -146,21 +131,18 @@ if (skipRefreshUrls.some(url => originalRequest.url?.includes(url))) {
         processQueue(null, newToken);
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
       } else {
-        console.log("axios :Response Interceptor - Using new HttpOnly cookie");
         processQueue(null, null);
       }
 
       return api(originalRequest);
-
     } catch (refreshError) {
-      console.error("axios :Response Interceptor - Token refresh failed:", refreshError);
       processQueue(refreshError, null);
       forceLogout();
       return Promise.reject(refreshError);
-
     } finally {
       isRefreshing = false;
     }
   }
 );
+
 export default api;
