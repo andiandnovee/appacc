@@ -65,10 +65,16 @@ const processQueue = (error: unknown, token: string | null = null): void => {
   failedQueue = [];
 };
 
+// tambahkan di atas interceptor response, sejajar dengan isRefreshing
+let isLoggingOut = false;
+
 const forceLogout = (): void => {
+  if (isLoggingOut) return; // ← guard ini yang penting
+  isLoggingOut = true;
   if (!IS_PROD) clearToken();
   window.location.href = "/login";
 };
+
 
 // ─── Response Interceptor ─────────────────────────────────────────────────────
 api.interceptors.response.use(
@@ -144,5 +150,8 @@ api.interceptors.response.use(
     }
   }
 );
+
+
+
 
 export default api;

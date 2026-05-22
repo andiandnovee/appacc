@@ -6,7 +6,7 @@ import {
   FC,
   ReactNode,
 } from "react";
-import api, { getToken, setToken, clearToken } from "../api/axios";
+import api, { getToken, clearToken } from "../api/axios";
 
 // ─── Types ───────────────────────────────────────────────────────
 interface User {
@@ -38,6 +38,12 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
 
   // Boot: cek token di storage, validasi ke /auth/me
   useEffect(() => {
+    // Kalau sudah di /login, skip — jangan trigger /auth/me
+    if (window.location.pathname === "/login") {
+      setLoading(false);
+      return;
+    }
+
     const IS_PROD = import.meta.env.PROD;
     const token = getToken();
 
