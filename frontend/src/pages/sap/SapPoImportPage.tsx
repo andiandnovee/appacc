@@ -7,21 +7,42 @@ import Alert from "../../components/ui/Alert";
 import Badge from "../../components/ui/Badge";
 import styles from "./SapPoImportPage.module.css";
 import api from "../../api/axios"; // ← langsung pakai api
+import FileUpload from "../../components/ui/FileUpload";
 
 const CHUNK_SIZE = 500;
 
 export default function SapPoImportPage() {
   const [file, setFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
+  // const [uploadType, setUploadType] = useState<UploadType>(null);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef(false);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFile(e.target.files?.[0] ?? null);
+  const handleFileChange = (files: File[]) => {
+    const selected = files[0] ?? null;
+    setFile(selected);
     setResult(null);
     setError(null);
+    //setUploadType(null);
+
+    if (selected) {
+      parseExcel(selected)
+        .then((rows) => {
+          // const type = detectUploadType(rows);
+          // if (!type) {
+          //   setError("Format file tidak dikenali. Pastikan kolom G/L atau Vendor tersedia.");
+          //   setFile(null);
+          // } else {
+          //   setUploadType(type);
+          // }
+        })
+        .catch(() => {
+          setError("Gagal membaca file Excel");
+          setFile(null);
+        });
+    }
   };
 
   const parseExcel = (file: File): Promise<any[]> => {
@@ -177,24 +198,17 @@ export default function SapPoImportPage() {
         <Card variant="outlined">
           <Card.Header title="Upload File" />
           <Card.Body>
-            <div className={styles.uploadArea}>
-              <input
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                onChange={handleFileChange}
-                disabled={importing}
-                id="po-file"
-                className={styles.fileInput}
-              />
-              <label htmlFor="po-file" className={styles.fileLabel}>
-                {file ? file.name : "Pilih file Excel (.xlsx, .xls, .csv)"}
-              </label>
-              {file && (
-                <p className={styles.fileInfo}>
-                  {(file.size / 1024 / 1024).toFixed(2)} MB
-                </p>
-              )}
-            </div>
+            <FileUpload
+              accept=".xlsx,.xls,.csv"
+              multiple={false}
+              maxSize={20 * 1024 * 1024}
+              maxFiles={1}
+              label="File Excel"
+              hint="Format: .xlsx, .xls, atau .csv"
+              //error={uploadType === null && file === null ? undefined : undefined}
+              disabled={importing}
+              onFilesChange={handleFileChange}
+            />
 
             {/* Progress */}
             {importing && (

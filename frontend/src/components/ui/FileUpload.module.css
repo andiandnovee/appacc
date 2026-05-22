@@ -1,6 +1,7 @@
 /* FileUpload.module.css */
 
-.wrapper { display: flex; flex-direction: column; gap: var(--space-2); }
+.wrapper { display: flex; flex-direction: column; gap: var(--space-2);
+ height: 100%; /* tambah ini */ }
 
 .label {
   font-family: var(--font-sans);
@@ -24,6 +25,8 @@
   text-align: center;
   transition: border-color var(--duration-fast) var(--ease-default),
               background-color var(--duration-fast) var(--ease-default);
+               flex: 1;          /* tambah ini — stretch sisa ruang */
+  min-height: 120px; /* safety floor */
 }
 
 .dropzone:hover, .dropzoneDragging {
@@ -153,3 +156,4 @@
 .message { font-family: var(--font-sans); font-size: var(--text-xs); margin: 0; }
 .messageHint  { color: var(--text-tertiary); }
 .messageError { color: var(--color-danger); }
+
