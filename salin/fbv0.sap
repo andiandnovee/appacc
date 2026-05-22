@@ -1,0 +1,14 @@
+[System]
+Name=P08
+Description=1. SAP Production (S/4 HANA)
+Client=800
+[User]
+Name=Z012AC1001
+Language=EN
+[Function]
+Title=P08(1)/800 Post Parked Document: Initial Screen
+Command=FBV0 RF05V-BUKRS=3500;RF05V-BELNR=9300002000
+[Configuration]
+WorkDir=D:\Files\02_Document\SAP\SAP GUI
+[Options]
+Reuse=1
