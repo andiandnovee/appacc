@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Printer, Download } from "lucide-react";
+import { Printer, Download,Trash2 } from "lucide-react";
 import Card from "../../../components/ui/Card";
 import Button from "../../../components/ui/Button";
 import Select from "../../../components/ui/Select";
@@ -126,6 +126,43 @@ export default function PphReportPage() {
       setLoading(false);
     }
   }, [companyCode, glAccount, month, canFetch]);
+
+
+  const [deleting, setDeleting] = useState(false);
+
+const handleDeleteData = useCallback(async () => {
+  if (!canFetch) return;
+
+  const glLabel =
+    PPH_OPTIONS.find((o) => o.value === glAccount)?.label ?? glAccount;
+
+  const confirmed = window.confirm(
+    `Hapus semua data ${glLabel} untuk bulan ${month}?\n\nData yang sudah diimpor akan dihapus permanen dari database.`,
+  );
+  if (!confirmed) return;
+
+  setDeleting(true);
+  try {
+    await api.delete("/sap/pph-data", {
+      params: {
+        company_code:    companyCode,
+        gl_account_code: glAccount,
+        month,
+      },
+    });
+    setReport(null);
+    setEditing({});
+    addToast({ variant: "success", title: "Data berhasil dihapus." });
+  } catch (err: unknown) {
+    const msg = (err as { response?: { data?: { message?: string } } })
+      ?.response?.data?.message;
+    addToast({ variant: "danger", title: msg ?? "Gagal menghapus data." });
+  } finally {
+    setDeleting(false);
+  }
+}, [canFetch, companyCode, glAccount, month, addToast]);
+
+
 
   const removeEditing = useCallback((id: number) => {
     setEditing((prev) => {
@@ -771,6 +808,15 @@ export default function PphReportPage() {
               >
                 Tampilkan Data
               </Button>
+               <Button
+    variant="danger"
+    iconLeft={<Trash2 size={15} />}
+    onClick={handleDeleteData}
+    loading={deleting}
+    disabled={!canFetch || loading || deleting}
+  >
+    Hapus Data
+  </Button>
             </div>
           </div>
         </Card.Body>

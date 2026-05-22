@@ -20,6 +20,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\PgrController;
 use App\Http\Controllers\Api\PphImportController;
 
+
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -133,14 +135,14 @@ Route::get('sap/po-lookup',              [SapImportController::class, 'poLookup'
 
 // PPh Import & Report
 Route::post('sap/import-pph-chunk',      [PphImportController::class, 'importChunk']);
-Route::get('sap/import-pph-incomplete',  [PphImportController::class, 'incompleteBatches']);
-Route::get('sap/pph-companies',          [PphImportController::class, 'companyList']);
-Route::get('sap/pph-batches',            [PphImportController::class, 'batchList']);
-Route::get('sap/pph-data',               [PphImportController::class, 'getData']);
-Route::get('sap/pph-report',             [PphImportController::class, 'report']);
-Route::patch('sap/vendor-gl-cost',       [PphImportController::class, 'updateVendorGlCost']);
-
-
+        Route::get('sap/import-pph-incomplete',  [PphImportController::class, 'incompleteBatches']);
+        Route::get('sap/pph-companies',          [PphImportController::class, 'companyList']);
+        Route::get('sap/pph-batches',            [PphImportController::class, 'batchList']);
+        Route::get('sap/pph-data',               [PphImportController::class, 'getData']);
+        Route::get('sap/pph-report',             [PphImportController::class, 'report']);
+        Route::patch('sap/vendor-gl-cost',       [PphImportController::class, 'updateVendorGlCost']);
+        // routes/api.php
+Route::delete('/sap/pph-data', [PphImportController::class, 'destroy']);
         Route::patch('/vendors/{vendor}/pkp', [VendorController::class, 'updatePkp']);
     });
 

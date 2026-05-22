@@ -7,7 +7,7 @@ use App\Services\PphImportService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Models\ImportPph;
-use App\Models\Company;
+//use App\Models\Company;
 class PphImportController extends Controller
 {
     public function __construct(private PphImportService $service) {}
@@ -254,7 +254,42 @@ class PphImportController extends Controller
 
         return response()->json(['success' => true]);
     }
+    /**
+ * Hapus data PPh berdasar company_code + gl_account_code + bulan
+ * DELETE /sap/pph-data?company_code=3800&gl_account_code=21510001&month=2025-12
+ */
+public function destroy(Request $request): JsonResponse
+{
+    $request->validate([
+        'company_code'    => 'required|string',
+        'gl_account_code' => 'required|string',
+        'month'           => 'required|string|date_format:Y-m',
+    ]);
 
+    $companyCode   = $request->input('company_code');
+    $glAccountCode = $request->input('gl_account_code');
+    $month         = $request->input('month');
+
+    $startDate = \Carbon\Carbon::createFromFormat('Y-m', $month)->startOfMonth()->toDateString();
+    $endDate   = \Carbon\Carbon::createFromFormat('Y-m', $month)->endOfMonth()->toDateString();
+
+    $deleted = ImportPph::where('company_code', $companyCode)
+        ->where('gl_account_code', $glAccountCode)
+        ->whereBetween('posting_date', [$startDate, $endDate])
+        ->delete();
+
+    if ($deleted === 0) {
+        return response()->json([
+            'success' => false,
+            'error'   => 'Tidak ada data yang ditemukan untuk kriteria tersebut.',
+        ], 404);
+    }
+
+    return response()->json([
+        'success' => true,
+        'message' => "{$deleted} baris data berhasil dihapus.",
+    ]);
+}
     /**
      * List company codes yang ada di importpphs
      * GET /sap/pph-companies
