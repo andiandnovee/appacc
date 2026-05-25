@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useMemo, useEffect } from "react";
 import ReceiptFormModal from "./ReceiptFormModal";
 import Button from "../../../components/ui/Button";
-import { SplitButton } from "../../../components/ui/Button";
+import { SplitButton, SplitButtonOption } from "../../../components/ui/Button";
 import Table from "../../../components/ui/Table";
 import Select from "../../../components/ui/Select";
 import Collapsible from "../../../components/ui/Collapsible";
@@ -279,34 +279,44 @@ export default function InvoiceReceiptManagement() {
         exportable: false,
         render: (row) => {
           const pgr = row.pgr_id ?? "";
-          const sapOptions =
-            pgr === "ICA"
-              ? [
-                  {
-                    label: "ICAT Check",
-                    icon: <DatabaseBackupIcon size={13} />,
-                    onClick: () => handleSAPcekICA(row.po_number),
-                  },
-                ]
-              : pgr !== ""
-                ? [
-                    {
-                      label: "MIR7",
-                      icon: <Download size={13} />,
-                      onClick: () =>
-                        handleSAPMir7(
-                          row.po_number,
-                          row.vendor?.name,
-                          row.company?.sap_id,
-                          new Date(row.receipt_date).toLocaleDateString(
-                            "de-DE",
-                          ),
-                          row.amount,
-                          row.business_area_code,
-                        ),
-                    },
-                  ]
-                : [];
+
+          // ── Tentukan aksi SAP utama & secondary ──────────────────
+          let sapMain: { label: string; onClick: () => void } | null = null;
+          let sapSecondary: SplitButtonOption[] = [];
+
+          if (pgr === "ICA") {
+            sapMain = {
+              label: "ICAT",
+              onClick: () => handleSAPcekICA(row.po_number),
+            };
+            sapSecondary = [
+              {
+                label: "ME2N",
+                icon: <Download size={13} />,
+                onClick: () => handleSAPME2n(row.po_number),
+              },
+            ];
+          } else if (pgr !== "") {
+            sapMain = {
+              label: "MIR7",
+              onClick: () =>
+                handleSAPMir7(
+                  row.po_number,
+                  row.vendor?.name,
+                  row.company?.sap_id,
+                  new Date(row.receipt_date).toLocaleDateString("de-DE"),
+                  row.amount,
+                  row.business_area_code,
+                ),
+            };
+            sapSecondary = [
+              {
+                label: "ME2N",
+                icon: <Download size={13} />,
+                onClick: () => handleSAPME2n(row.po_number),
+              },
+            ];
+          }
 
           return (
             <div style={{ display: "flex", gap: "var(--space-2)" }}>
@@ -328,12 +338,12 @@ export default function InvoiceReceiptManagement() {
                 disabled={deletingId === row.id}
               />
               <SplitButton
-                label="ME2N"
+                label={sapMain?.label ?? "SAP"}
                 variant="outline"
                 size="sm"
-                onClick={() => handleSAPME2n(row.po_number)}
-                options={sapOptions}
-                disabled={pgr === "" || deletingId === row.id}
+                onClick={sapMain?.onClick ?? (() => {})}
+                options={sapSecondary}
+                disabled={!sapMain || deletingId === row.id}
               />
             </div>
           );
