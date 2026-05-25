@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Printer, Download,Trash2 } from "lucide-react";
+import { Printer, Download, Trash2 } from "lucide-react";
 import Card from "../../../components/ui/Card";
 import Button from "../../../components/ui/Button";
 import Select from "../../../components/ui/Select";
@@ -9,6 +9,8 @@ import styles from "./ReceiptManagement.module.css";
 import api from "../../../api/axios";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
+import { downloadFBV0 } from "../../../utils/sapShortcuts";
+import { useAuth } from "../../../hooks/useAuth";
 
 // ── Types ─────────────────────────────────────────────────────
 interface PphRow {
@@ -51,6 +53,7 @@ const PPH_OPTIONS = [
   { value: "21580001", label: "PPh Ps. 15" },
 ];
 
+// ── Helpers ───────────────────────────────────────────────────
 function formatRp(val: number): string {
   return val.toLocaleString("id-ID");
 }
@@ -86,19 +89,22 @@ function inlineBtn(color: string): React.CSSProperties {
 // ── Component ─────────────────────────────────────────────────
 export default function PphReportPage() {
   const { addToast } = useToast();
+  const { user } = useAuth();
 
   const [companyCode, setCompanyCode] = useState("");
   const [glAccount, setGlAccount] = useState("");
   const [month, setMonth] = useState("");
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState<PphReport | null>(null);
 
-  // key: row.id (number) → edited value
+  // key: row.id → edited gl_cost_account value
   const [editing, setEditing] = useState<Record<string, string>>({});
 
   const canFetch = Boolean(companyCode && glAccount && month);
 
+  // ── Fetch ─────────────────────────────────────────────────
   const fetchData = useCallback(async () => {
     if (!canFetch) return;
     setLoading(true);
@@ -127,43 +133,39 @@ export default function PphReportPage() {
     }
   }, [companyCode, glAccount, month, canFetch]);
 
+  // ── Delete ────────────────────────────────────────────────
+  const handleDeleteData = useCallback(async () => {
+    if (!canFetch) return;
 
-  const [deleting, setDeleting] = useState(false);
+    const glLabel =
+      PPH_OPTIONS.find((o) => o.value === glAccount)?.label ?? glAccount;
+    const confirmed = window.confirm(
+      `Hapus semua data ${glLabel} untuk bulan ${month}?\n\nData yang sudah diimpor akan dihapus permanen dari database.`,
+    );
+    if (!confirmed) return;
 
-const handleDeleteData = useCallback(async () => {
-  if (!canFetch) return;
+    setDeleting(true);
+    try {
+      await api.delete("/sap/pph-data", {
+        params: {
+          company_code: companyCode,
+          gl_account_code: glAccount,
+          month,
+        },
+      });
+      setReport(null);
+      setEditing({});
+      addToast({ variant: "success", title: "Data berhasil dihapus." });
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message;
+      addToast({ variant: "danger", title: msg ?? "Gagal menghapus data." });
+    } finally {
+      setDeleting(false);
+    }
+  }, [canFetch, companyCode, glAccount, month, addToast]);
 
-  const glLabel =
-    PPH_OPTIONS.find((o) => o.value === glAccount)?.label ?? glAccount;
-
-  const confirmed = window.confirm(
-    `Hapus semua data ${glLabel} untuk bulan ${month}?\n\nData yang sudah diimpor akan dihapus permanen dari database.`,
-  );
-  if (!confirmed) return;
-
-  setDeleting(true);
-  try {
-    await api.delete("/sap/pph-data", {
-      params: {
-        company_code:    companyCode,
-        gl_account_code: glAccount,
-        month,
-      },
-    });
-    setReport(null);
-    setEditing({});
-    addToast({ variant: "success", title: "Data berhasil dihapus." });
-  } catch (err: unknown) {
-    const msg = (err as { response?: { data?: { message?: string } } })
-      ?.response?.data?.message;
-    addToast({ variant: "danger", title: msg ?? "Gagal menghapus data." });
-  } finally {
-    setDeleting(false);
-  }
-}, [canFetch, companyCode, glAccount, month, addToast]);
-
-
-
+  // ── GL Cost Account inline edit ───────────────────────────
   const removeEditing = useCallback((id: number) => {
     setEditing((prev) => {
       const next = { ...prev };
@@ -215,21 +217,22 @@ const handleDeleteData = useCallback(async () => {
     [editing, addToast, removeEditing],
   );
 
+  // ── Generate HTML Report (print/PDF) ─────────────────────
+  // Tombol FBV0 TIDAK ada di sini — FBV0 butuh createObjectURL
+  // yang hanya bisa jalan di context browser yang sama (tabel preview).
   const handleGenerateReport = useCallback(() => {
     if (!report) return;
 
     const glLabel =
       PPH_OPTIONS.find((o) => o.value === glAccount)?.label ?? glAccount;
 
-    // ── Group rows per vendor ─────────────────────────────────
+    // Group rows per vendor
     const grouped = new Map<string, PphRow[]>();
     for (const row of report.rows) {
-      const key = row.vendor_sap_id;
-      if (!grouped.has(key)) grouped.set(key, []);
-      grouped.get(key)!.push(row);
+      if (!grouped.has(row.vendor_sap_id)) grouped.set(row.vendor_sap_id, []);
+      grouped.get(row.vendor_sap_id)!.push(row);
     }
 
-    // ── Build tbody HTML ──────────────────────────────────────
     let no = 1;
     let bodyHtml = "";
 
@@ -255,13 +258,11 @@ const handleDeleteData = useCallback(async () => {
       <td class="num">${formatRp(row.dpp)}</td>
       <td class="num">${row.tarif}%</td>
       <td class="num">${formatRp(row.pph_dipotong)}</td>
-      
       <td>${row.doc_number}</td>
       <td>${row.po_text ?? ""}</td>
     </tr>`;
       });
 
-      // Baris subtotal per vendor
       bodyHtml += `
   <tr class="subtotal">
     <td colspan="5"></td>
@@ -274,7 +275,6 @@ const handleDeleteData = useCallback(async () => {
   </tr>`;
     }
 
-    // ── Full HTML ─────────────────────────────────────────────
     const html = `<!DOCTYPE html>
 <html lang="id">
 <head>
@@ -283,53 +283,17 @@ const handleDeleteData = useCallback(async () => {
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: Arial, sans-serif; font-size: 8.5pt; color: #000; padding: 12px; }
-
   .header { text-align: center; margin-bottom: 12px; line-height: 1.5; }
   .header h2 { font-size: 11pt; font-weight: bold; }
-
-  .print-btn {
-    text-align: right; margin-bottom: 8px;
-  }
-  .print-btn button {
-    padding: 4px 12px; font-size: 9pt; cursor: pointer;
-    background: #1d4ed8; color: #fff; border: none; border-radius: 4px;
-  }
-
-  table { width: 100%; border-collapse: collapse; font-size: 7.5pt;table-layout: fixed;  }
-
-  /* Header tabel — dua baris seperti template Excel */
-  thead tr th {
-    background: #d9d9d9;
-    border: 1px solid #000;
-    padding: 3px 4px;
-    text-align: center;
-    vertical-align: middle;
-    font-size: 7.5pt;
-  }
-
-  tbody td {
-    border: 1px solid #000;
-    padding: 2px 4px;
-    vertical-align: top;
-  }
+  .print-btn { text-align: right; margin-bottom: 8px; }
+  .print-btn button { padding: 4px 12px; font-size: 9pt; cursor: pointer; background: #1d4ed8; color: #fff; border: none; border-radius: 4px; }
+  table { width: 100%; border-collapse: collapse; font-size: 7.5pt; table-layout: fixed; }
+  thead tr th { background: #d9d9d9; border: 1px solid #000; padding: 3px 4px; text-align: center; vertical-align: middle; font-size: 7.5pt; }
+  tbody td { border: 1px solid #000; padding: 2px 4px; vertical-align: top; }
   td.num { text-align: right; white-space: nowrap; }
   td.addr { font-size: 6.5pt; max-width: 120px; word-break: break-word; }
-
-  /* Baris subtotal per vendor */
-  tr.subtotal td {
-    background: #fffbe6;
-    border: 1px solid #000;
-    padding: 2px 4px;
-    font-size: 7pt;
-  }
-
-  tfoot td {
-    border: 1px solid #000;
-    padding: 3px 4px;
-    font-weight: bold;
-    background: #f0f0f0;
-  }
-
+  tr.subtotal td { background: #fffbe6; border: 1px solid #000; padding: 2px 4px; font-size: 7pt; }
+  tfoot td { border: 1px solid #000; padding: 3px 4px; font-weight: bold; background: #f0f0f0; }
   @media print {
     body { padding: 0; font-size: 7.5pt; }
     .print-btn { display: none; }
@@ -345,36 +309,29 @@ const handleDeleteData = useCallback(async () => {
     <p><strong>Daftar Pemotongan ${glLabel}</strong></p>
     <p>Masa Pajak Bulan ${report.periode}</p>
   </div>
-
   <div class="print-btn">
     <button onclick="window.print()">🖨️ Print / Save PDF</button>
   </div>
-
   <table>
-  
+    <colgroup>
+      <col style="width:3%">
+      <col style="width:7%">
+      <col style="width:5%">
+      <col style="width:6%">
+      <col style="width:9%">
+      <col style="width:9%">
+      <col style="width:8%">
+      <col style="width:10%">
+      <col style="width:7%">
+      <col style="width:6%">
+      <col style="width:6%">
+      <col style="width:6%">
+      <col style="width:4%">
+      <col style="width:6%">
+      <col style="width:6%">
+      <col style="width:6%">
+    </colgroup>
     <thead>
-    
-    
-<colgroup>
-  <col style="width:3%">   <!-- No -->
-  <col style="width:7%">   <!-- No Bukti Potong -->
-  <col style="width:5%">   <!-- GL Account -->
-  <col style="width:6%">   <!-- Tgl Faktur -->
-  <col style="width:9%">   <!-- No Faktur -->
-  <col style="width:9%">   <!-- Nama -->
-  <col style="width:8%">   <!-- NPWP -->
-  <col style="width:10%">  <!-- Alamat -->
-  <col style="width:7%">   <!-- Jenis Pekerjaan -->
-  <col style="width:6%">   <!-- Tanggal -->
-  <col style="width:6%">   <!-- Bruto -->
-  <col style="width:6%">   <!-- DPP -->
-  <col style="width:4%">   <!-- Tarif -->
-  <col style="width:6%">   <!-- PPh Dipotong -->
-  <col style="width:6%">   <!-- Total PPh -->
-  <col style="width:6%">   <!-- Doc Number -->
-  <col style="width:6%">   <!-- PO Text -->
-</colgroup>
-      <!-- Baris header 1 -->
       <tr>
         <th rowspan="3">No</th>
         <th rowspan="3">No Bukti<br>Potong</th>
@@ -383,11 +340,9 @@ const handleDeleteData = useCallback(async () => {
         <th rowspan="3">No. Faktur<br>Pajak/Invoice</th>
         <th colspan="4">Identitas Rekanan</th>
         <th colspan="5">Dokumen Tagihan</th>
-    
         <th rowspan="3">Doc Number<br>(SAP)</th>
         <th rowspan="3">PO Text</th>
       </tr>
-      <!-- Baris header 2 -->
       <tr>
         <th rowspan="2">Nama</th>
         <th rowspan="2">NPWP</th>
@@ -399,7 +354,6 @@ const handleDeleteData = useCallback(async () => {
         <th rowspan="2">Tarif<br>PPh (%)</th>
         <th rowspan="2">PPh yang<br>Dipotong (Rp)</th>
       </tr>
-      <!-- Baris header 3 — kosong karena semua rowspan -->
       <tr></tr>
     </thead>
     <tbody>${bodyHtml}</tbody>
@@ -423,25 +377,22 @@ const handleDeleteData = useCallback(async () => {
     win?.document.close();
   }, [report, glAccount]);
 
+  // ── Export Excel ──────────────────────────────────────────
   const handleExportExcel = useCallback(async () => {
     if (!report) return;
 
     const glLabel =
       PPH_OPTIONS.find((o) => o.value === glAccount)?.label ?? glAccount;
-
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet("Laporan PPh");
-
     const COLS = 17; // A–Q
 
-    // ── Helper styles ─────────────────────────────────────────
     const borderAll: Partial<ExcelJS.Borders> = {
       top: { style: "thin" },
       bottom: { style: "thin" },
       left: { style: "thin" },
       right: { style: "thin" },
     };
-
     const fillGrey: ExcelJS.Fill = {
       type: "pattern",
       pattern: "solid",
@@ -476,7 +427,6 @@ const handleDeleteData = useCallback(async () => {
     const fmtNumber = "#,##0";
     const fmtPct = '0.00"%"';
 
-    // ── Helper: merge + set value + style ────────────────────
     const mergeCenter = (
       rowNum: number,
       value: string,
@@ -486,59 +436,39 @@ const handleDeleteData = useCallback(async () => {
       ws.mergeCells(rowNum, 1, rowNum, COLS);
       const cell = ws.getCell(rowNum, 1);
       cell.value = value;
-      //cell.alignment = a;
       cell.font = { bold, size: fontSize };
     };
 
-    const applyRowStyle = (
-      row: ExcelJS.Row,
-      fill: ExcelJS.Fill,
-      bold = false,
-      colCount = COLS,
-    ) => {
-      for (let c = 1; c <= colCount; c++) {
-        const cell = row.getCell(c);
-        cell.fill = fill;
-        cell.border = borderAll;
-        cell.font = { bold, size: 8 };
-      }
-    };
-
-    // ── Set column widths ─────────────────────────────────────
     ws.columns = [
-      { width: 4 }, // A  No
-      { width: 14 }, // B  No Bukti Potong
-      { width: 10 }, // C  GL Account
-      { width: 12 }, // D  Tgl Faktur
-      { width: 22 }, // E  No Faktur
-      { width: 28 }, // F  Nama
-      { width: 20 }, // G  NPWP
-      { width: 36 }, // H  Alamat
-      { width: 18 }, // I  Jenis Pekerjaan
-      { width: 12 }, // J  Tanggal
-      { width: 14 }, // K  Bruto
-      { width: 14 }, // L  DPP
-      { width: 8 }, // M  Tarif
-      { width: 16 }, // N  PPh Dipotong
-      { width: 16 }, // O  Total PPh
-      { width: 14 }, // P  Doc Number
-      { width: 30 }, // Q  PO Text
+      { width: 4 },
+      { width: 14 },
+      { width: 10 },
+      { width: 12 },
+      { width: 22 },
+      { width: 28 },
+      { width: 20 },
+      { width: 36 },
+      { width: 18 },
+      { width: 12 },
+      { width: 14 },
+      { width: 14 },
+      { width: 8 },
+      { width: 16 },
+      { width: 16 },
+      { width: 14 },
+      { width: 30 },
     ];
 
-    // ── Baris 1–4: Header perusahaan ─────────────────────────
+    // Header perusahaan
     mergeCenter(1, report.company.name, true, 12);
     mergeCenter(2, report.company.npwp ?? "", false, 10);
     mergeCenter(3, `Daftar Pemotongan ${glLabel}`, true, 11);
     mergeCenter(4, `Masa Pajak Bulan ${report.periode}`, false, 10);
-
     ws.addRow([]); // baris 5 kosong
 
-    // ── Baris 6–8: Header kolom (3 baris merge) ──────────────
-    // Baris 6
-    const h1 = ws.getRow(6);
-    h1.height = 28;
+    // Header kolom — baris 6
+    ws.getRow(6).height = 28;
 
-    // Kolom yang rowspan=3 (merge baris 6–8)
     const spanCols: [number, string][] = [
       [1, "No"],
       [2, "No Bukti\nPotong"],
@@ -558,7 +488,6 @@ const handleDeleteData = useCallback(async () => {
       cell.font = { bold: true, size: 8 };
     });
 
-    // Grup "Identitas Rekanan" (F–I = col 6–9), merge baris 6
     ws.mergeCells(6, 6, 6, 9);
     const idRek = ws.getCell(6, 6);
     idRek.value = "Identitas Rekanan";
@@ -567,7 +496,6 @@ const handleDeleteData = useCallback(async () => {
     idRek.border = borderAll;
     idRek.font = { bold: true, size: 8 };
 
-    // Grup "Dokumen Tagihan" (J–O = col 10–15), merge baris 6
     ws.mergeCells(6, 10, 6, 15);
     const dokTag = ws.getCell(6, 10);
     dokTag.value = "Dokumen Tagihan";
@@ -576,9 +504,8 @@ const handleDeleteData = useCallback(async () => {
     dokTag.border = borderAll;
     dokTag.font = { bold: true, size: 8 };
 
-    // Baris 7 — sub-header Identitas Rekanan + Dokumen Tagihan
-    const h2 = ws.getRow(7);
-    h2.height = 28;
+    // Header kolom — baris 7
+    ws.getRow(7).height = 28;
 
     const identitasCols: [number, string][] = [
       [6, "Nama"],
@@ -587,7 +514,7 @@ const handleDeleteData = useCallback(async () => {
       [9, "Jenis Pekerjaan\nYang Dilakukan"],
     ];
     identitasCols.forEach(([c, label]) => {
-      ws.mergeCells(7, c, 8, c); // rowspan 2
+      ws.mergeCells(7, c, 8, c);
       const cell = ws.getCell(7, c);
       cell.value = label;
       cell.alignment = alignCenter;
@@ -605,7 +532,7 @@ const handleDeleteData = useCallback(async () => {
       [15, "Total PPh\nDipotong (Rp)"],
     ];
     dokumenCols.forEach(([c, label]) => {
-      ws.mergeCells(7, c, 8, c); // rowspan 2
+      ws.mergeCells(7, c, 8, c);
       const cell = ws.getCell(7, c);
       cell.value = label;
       cell.alignment = alignCenter;
@@ -614,10 +541,9 @@ const handleDeleteData = useCallback(async () => {
       cell.font = { bold: true, size: 8 };
     });
 
-    // Baris 8 — kosong (sudah di-merge semua)
     ws.getRow(8).height = 5;
 
-    // ── Data rows ─────────────────────────────────────────────
+    // Data rows
     const grouped = new Map<string, PphRow[]>();
     for (const row of report.rows) {
       if (!grouped.has(row.vendor_sap_id)) grouped.set(row.vendor_sap_id, []);
@@ -625,7 +551,6 @@ const handleDeleteData = useCallback(async () => {
     }
 
     let no = 1;
-
     for (const [, rows] of grouped) {
       const first = rows[0];
       const subtotalPph = rows.reduce((s, r) => s + r.pph_dipotong, 0);
@@ -647,7 +572,7 @@ const handleDeleteData = useCallback(async () => {
           row.dpp,
           row.tarif,
           row.pph_dipotong,
-          "", // Total PPh — kosong di baris data
+          "", // Total PPh — kosong di baris data, diisi di subtotal
           row.doc_number,
           row.po_text ?? "",
         ]);
@@ -658,13 +583,10 @@ const handleDeleteData = useCallback(async () => {
           cell.border = borderAll;
           cell.font = { size: 8 };
           cell.alignment = alignLeft;
-
-          // Kolom angka
           if ([11, 12, 14].includes(c)) {
             cell.numFmt = fmtNumber;
             cell.alignment = alignRight;
           }
-          // Kolom tarif
           if (c === 13) {
             cell.numFmt = fmtPct;
             cell.alignment = alignRight;
@@ -672,7 +594,7 @@ const handleDeleteData = useCallback(async () => {
         }
       });
 
-      // Baris subtotal per vendor
+      // Subtotal per vendor
       const sub = ws.addRow([
         "",
         "",
@@ -706,7 +628,7 @@ const handleDeleteData = useCallback(async () => {
       }
     }
 
-    // ── Baris TOTAL footer ────────────────────────────────────
+    // Footer TOTAL
     const tot = ws.addRow([
       "T O T A L",
       "",
@@ -738,10 +660,8 @@ const handleDeleteData = useCallback(async () => {
         cell.alignment = alignRight;
       }
     }
-    // Merge "T O T A L" label (A–J)
     ws.mergeCells(tot.number, 1, tot.number, 10);
 
-    // ── Save ──────────────────────────────────────────────────
     const buf = await wb.xlsx.writeBuffer();
     const fileName = `Laporan_${glLabel.replace(/\s/g, "_")}_${report.company.name.replace(/\s/g, "_")}_${report.periode.replace(/\s/g, "_")}.xlsx`;
     saveAs(
@@ -752,6 +672,7 @@ const handleDeleteData = useCallback(async () => {
     );
   }, [report, glAccount]);
 
+  // ── Render ────────────────────────────────────────────────
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
@@ -808,15 +729,15 @@ const handleDeleteData = useCallback(async () => {
               >
                 Tampilkan Data
               </Button>
-               <Button
-    variant="danger"
-    iconLeft={<Trash2 size={15} />}
-    onClick={handleDeleteData}
-    loading={deleting}
-    disabled={!canFetch || loading || deleting}
-  >
-    Hapus Data
-  </Button>
+              <Button
+                variant="danger"
+                iconLeft={<Trash2 size={15} />}
+                onClick={handleDeleteData}
+                loading={deleting}
+                disabled={!canFetch || loading || deleting}
+              >
+                Hapus Data
+              </Button>
             </div>
           </div>
         </Card.Body>
@@ -882,6 +803,7 @@ const handleDeleteData = useCallback(async () => {
                     <th style={thStyle}>Tarif</th>
                     <th style={thStyle}>PPh Dipotong</th>
                     <th style={thStyle}>Doc Number</th>
+                    <th style={thStyle}>FBV0</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -984,7 +906,20 @@ const handleDeleteData = useCallback(async () => {
                         Rp {formatRp(row.pph_dipotong)}
                       </td>
                       <td style={tdStyle}>
-                        <span className={styles.code}>{row.doc_number}</span>
+                        <button
+                          onClick={() =>
+                            downloadFBV0(
+                              row.doc_number,
+                              companyCode,
+                              user?.sap_user,
+                              user?.sap_server_con,
+                            )
+                          }
+                          style={inlineBtn("var(--color-primary)")}
+                          title={`Download FBV0 ${row.doc_number}`}
+                        >
+                          {row.doc_number}
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -1006,6 +941,7 @@ const handleDeleteData = useCallback(async () => {
                     <td style={{ ...tdStyle, textAlign: "right" }}>
                       Rp {formatRp(report.total_pph)}
                     </td>
+                    <td style={tdStyle}></td>
                     <td style={tdStyle}></td>
                   </tr>
                 </tfoot>

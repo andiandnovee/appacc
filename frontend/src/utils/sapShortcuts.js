@@ -59,12 +59,12 @@ export function downloadMIR7(po, sapUser, sapServer, sapCocd, sapVendorName, sap
 
 
 /**
- * Spesifik: ME2N - Purchasing Documents per Document Number
+ * Spesifik: FBV0 - Financial Accounting Documents per Document Number
  * @param {string} doc number        - nomor doc number
  * @param {string} sapUser   - dari auth/me -> sap_user
  * @param {string} sapServer - dari auth/me -> sap_server_con
  */
-export function downloadFBV0(doc, sapUser, sapServer) {
+export function downloadFBV0(doc, cocd, sapUser, sapServer) {
   const content = [
     '[System]',
     'Name=P08',
@@ -75,13 +75,13 @@ export function downloadFBV0(doc, sapUser, sapServer) {
     'Language=EN',
     '[Function]',
     'Title=P08(1)800 Purchasing Documents per Document Number',
-    `Command=/n*ME2N EN_EBELN-LOW=${po}; LISTU=ALV;`,
+    `Command=/n*FBV0 RF05V-BUKRS=${cocd};RF05V-BELNR=${doc}; `,
     'Type=SystemCommand',
     '[Configuration]',
     '[Options]',
     'Reuse=1',
   ].join('\n');
 
-  const filename = `FBV0 ${doc}.sap`;
+  const filename = `FBV0 ${doc} - ${cocd}.sap`;
   createSapFile(filename, content);
 }
