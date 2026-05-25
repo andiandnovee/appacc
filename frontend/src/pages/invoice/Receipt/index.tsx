@@ -39,9 +39,9 @@ export default function InvoiceReceiptManagement() {
   const { user } = useAuth();
 
   // state
-  const [tableOpen, setTableOpen] = useState(false);
-  const [FormEditing, setFormEditing] = useState(false);
-  const [tableSearchPo, setTableSearchPo] = useState("");
+  const [tableOpen, setTableOpen] = useState(true);
+const [FormEditing, setFormEditing] = useState(false);
+  //const [tableSearchPo, setTableSearchPo] = useState("");
 
   // handler dari ReceiptFormModal
   const handlePoAlreadyExists = useCallback((poNumber: string) => {
@@ -224,7 +224,7 @@ export default function InvoiceReceiptManagement() {
       {
         key: "vendor",
         label: "Vendor",
-        sortable: false,
+        sortable: true,
         collapsible: true,
         collapseOrder: 4,
         render: (row) => (
