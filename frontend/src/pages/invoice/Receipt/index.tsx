@@ -40,7 +40,7 @@ export default function InvoiceReceiptManagement() {
 
   // state
   const [tableOpen, setTableOpen] = useState(true);
-const [FormEditing, setFormEditing] = useState(false);
+  const [FormEditing, setFormEditing] = useState(false);
   //const [tableSearchPo, setTableSearchPo] = useState("");
 
   // handler dari ReceiptFormModal
@@ -213,6 +213,10 @@ const [FormEditing, setFormEditing] = useState(false);
         label: "Tanggal Receipt",
         sortable: true,
         collapsible: true,
+        exportValue: (row) =>
+          row.receipt_date
+            ? new Date(row.receipt_date).toLocaleDateString("id-ID")
+            : "",
         render: (row) => (
           <span className={styles.muted}>
             {row.receipt_date
@@ -227,6 +231,7 @@ const [FormEditing, setFormEditing] = useState(false);
         sortable: true,
         collapsible: true,
         collapseOrder: 4,
+        exportValue: (row) => row.vendor?.name ?? "",
         render: (row) => (
           <span className={styles.muted}>{row.vendor?.name || "—"}</span>
         ),
@@ -237,6 +242,7 @@ const [FormEditing, setFormEditing] = useState(false);
         sortable: false,
         collapsible: true,
         collapseOrder: 3,
+        exportValue: (row) => row.company?.name ?? "",
         render: (row) => (
           <span className={styles.muted}>{row.company?.name || "—"}</span>
         ),
@@ -247,6 +253,7 @@ const [FormEditing, setFormEditing] = useState(false);
         sortable: false,
         collapsible: true,
         collapseOrder: 2,
+        exportValue: (row) => row.stage?.name ?? "",
         render: (row) => (
           <span className={styles.muted}>{row.stage?.name || "—"}</span>
         ),
@@ -257,11 +264,11 @@ const [FormEditing, setFormEditing] = useState(false);
         sortable: true,
         collapsible: true,
         collapseOrder: 1,
+        exportValue: (row) =>
+          row.amount ? parseFloat(row.amount).toLocaleString("id-ID") : "",
         render: (row) => (
           <span className={styles.muted}>
-            {row.amount
-              ? `Rp ${parseFloat(row.amount).toLocaleString("id-ID")}`
-              : "—"}
+            {row.amount ? parseFloat(row.amount).toLocaleString("id-ID") : "—"}
           </span>
         ),
       },
@@ -269,6 +276,7 @@ const [FormEditing, setFormEditing] = useState(false);
         key: "actions",
         label: "Aksi",
         sortable: false,
+        exportable: false,
         render: (row) => {
           const pgr = row.pgr_id ?? "";
           const sapOptions =

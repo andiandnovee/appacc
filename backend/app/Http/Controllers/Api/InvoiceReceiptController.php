@@ -86,13 +86,29 @@ class InvoiceReceiptController extends Controller
     }
 
     // ========== SORTING ==========
-    $sortBy = $request->get('sort_by');
-    $sortDir = $request->get('sort_dir', 'asc');
-    if ($sortBy && in_array($sortBy, ['po_number', 'invoice_number', 'receipt_date', 'amount','stage_id'])) {
-        $query->orderBy($sortBy, $sortDir === 'asc' ? 'asc' : 'desc');
-    } else {
-        $query->orderByDesc('id');
-    }
+    // ========== SORTING ==========
+$sortBy  = $request->get('sort_by');
+$sortDir = $request->get('sort_dir', 'asc') === 'asc' ? 'asc' : 'desc';
+
+$directColumns = ['po_number', 'invoice_number', 'receipt_date', 'amount'];
+
+if ($sortBy === 'vendor') {
+    $query->leftJoin('vendors', 'vendors.id', '=', 'invoice_receipts.vendor_id')
+          ->orderBy('vendors.name', $sortDir)
+          ->select('invoice_receipts.*'); // hindari ambiguous column
+} elseif ($sortBy === 'company') {
+    $query->leftJoin('companies', 'companies.id', '=', 'invoice_receipts.company_id')
+          ->orderBy('companies.name', $sortDir)
+          ->select('invoice_receipts.*');
+} elseif ($sortBy === 'stage') {
+    $query->leftJoin('stages', 'stages.id', '=', 'invoice_receipts.stage_id')
+          ->orderBy('stages.name', $sortDir)
+          ->select('invoice_receipts.*');
+} elseif ($sortBy && in_array($sortBy, $directColumns)) {
+    $query->orderBy($sortBy, $sortDir);
+} else {
+    $query->orderByDesc('invoice_receipts.id');
+}    
 
     // ========== PAGINATION ==========
     $perPage = $request->get('per_page', 25);

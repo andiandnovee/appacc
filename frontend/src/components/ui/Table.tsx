@@ -307,6 +307,8 @@ interface Column {
    *   Default: urutan dari kanan (kolom paling kanan collapse duluan).
    *   Contoh: collapseOrder: 1 → collapse paling pertama.
    */
+  exportValue?: (row: any) => string | number | null; // ← TAMBAH
+
   collapsible?: boolean;
   collapseOrder?: number;
 }
@@ -588,8 +590,9 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
     if (!sortKey) return filteredData;
     const sorted = [...filteredData];
     sorted.sort((a, b) => {
-      let aVal = a[sortKey];
-      let bVal = b[sortKey];
+      const col = columns.find((c) => c.key === sortKey); // ← TAMBAH
+    let aVal = col?.exportValue ? col.exportValue(a) : a[sortKey]; // ← UBAH
+    let bVal = col?.exportValue ? col.exportValue(b) : b[sortKey]; // ← UBAH
       if (aVal == null && bVal == null) return 0;
       if (aVal == null) return 1;
       if (bVal == null) return -1;
@@ -602,7 +605,7 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
       return 0;
     });
     return sorted;
-  }, [filteredData, sortKey, sortDir]);
+  }, [filteredData, sortKey, sortDir,columns]);
 
   // ========== PAGINATION ==========
   const clientTotalRows = sortedData.length;
@@ -637,10 +640,15 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
         }
         if (exportData.length === 0) return;
         const rows = exportData.map((row) =>
-          Object.fromEntries(
-            exportCols.map((col) => [col.label, row[col.key] ?? ""]),
-          ),
-        );
+  Object.fromEntries(
+    exportCols.map((col) => {
+      const val = col.exportValue
+        ? (col.exportValue(row) ?? "")
+        : (row[col.key] ?? "");
+      return [col.label, val];
+    }),
+  ),
+);
         if (format === "xlsx") {
           const ws = utils.json_to_sheet(rows);
           ws["!cols"] = exportCols.map((col) => ({
