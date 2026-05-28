@@ -18,7 +18,7 @@ class StoreVendorRequest extends FormRequest
             'name'         => 'required|string|max:255',
             'npwp'         => 'nullable|string|max:20|unique:vendors,npwp',
             'address'      => 'nullable|string|max:500',
-            'service_type' => 'nullable|in:HF9,HT4,OTHER', // Sesuaikan dengan enum yang ada
+            'service_type' => 'nullable|string|max:100', // Sesuaikan dengan enum yang ada
             'pph_type'     => 'nullable|in:21,23,26', // PPh jenis (21=salary, 23=service, 26=div)
             'pph_rate'     => 'nullable|numeric|min:0|max:100',
         ];
@@ -31,7 +31,7 @@ class StoreVendorRequest extends FormRequest
             'name.required'       => 'Nama vendor wajib diisi.',
             'npwp.unique'         => 'NPWP sudah terdaftar.',
             'npwp.required'       => 'NPWP wajib diisi.',
-            'service_type.in'     => 'Tipe layanan harus salah satu: HF9, HT4, atau OTHER.',
+            'service_type.string' => 'Tipe layanan harus berupa string.',
             'pph_type.in'         => 'Tipe PPh tidak valid.',
             'pph_rate.required'   => 'Tarif PPh wajib diisi.',
             'pph_rate.numeric'    => 'Tarif PPh harus berupa angka.',

@@ -553,6 +553,7 @@ export default function PphReportPage() {
     let no = 1;
     for (const [, rows] of grouped) {
       const first = rows[0];
+      
       const subtotalPph = rows.reduce((s, r) => s + r.pph_dipotong, 0);
 
       rows.forEach((row, idx) => {
