@@ -242,6 +242,8 @@ export default function PphReportPage() {
 
       rows.forEach((row, idx) => {
         const isFirst = idx === 0;
+        const pph21 = row.gl_account === "21510001";
+
         bodyHtml += `
     <tr>
       <td>${no++}</td>
@@ -255,7 +257,8 @@ export default function PphReportPage() {
       <td>${isFirst ? (row.service_type ?? "") : ""}</td>
       <td>${row.tgl_faktur}</td>
       <td class="num">${formatRp(row.bruto)}</td>
-      <td class="num">${formatRp(row.dpp)}</td>
+      <td class="num">${pph21 ? formatRp(Number(row.dpp) / 2) : formatRp(row.dpp)}</td>
+      }</td>
       <td class="num">${row.tarif}%</td>
       <td class="num">${formatRp(row.pph_dipotong)}</td>
       <td>${row.doc_number}</td>
@@ -386,7 +389,7 @@ export default function PphReportPage() {
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet("Laporan PPh");
     const COLS = 17; // A–Q
-  
+
     const borderAll: Partial<ExcelJS.Borders> = {
       top: { style: "thin" },
       bottom: { style: "thin" },
@@ -553,7 +556,7 @@ export default function PphReportPage() {
     let no = 1;
     for (const [, rows] of grouped) {
       const first = rows[0];
-      
+
       const subtotalPph = rows.reduce((s, r) => s + r.pph_dipotong, 0);
 
       rows.forEach((row, idx) => {
