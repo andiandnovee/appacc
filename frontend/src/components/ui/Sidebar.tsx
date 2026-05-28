@@ -58,8 +58,15 @@ const NAV_GROUPS = [
         label: "Import PPh",
         badge: "operator",
       },
+       {                                    // ✅ masuk sini
+      to: "/utility/import-f53",
+      icon: Upload,
+      label: "Import F53",
+      badge: "operator",
+    },
     ],
   },
+
   {
     label: "Admin",
     items: [

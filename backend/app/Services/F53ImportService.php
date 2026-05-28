@@ -36,7 +36,7 @@ class F53ImportService
 
                 if (!$docDate || !$assignment || !$businessArea || !$vendor
                     || $amountRaw === null || $amountRaw === ''
-                    || !$text || !$docNumber || !$reference
+                    || !$text || !$docNumber 
                 ) {
                     $errors[] = [
                         'row'   => $rowNumber,

@@ -20,6 +20,7 @@ import Receipt from "./pages/invoice/Receipt";
 import BusinessArea from "./pages/invoice/BusArea";
 import PphImportPage from "./pages/sap/PphImportPage";
 import PphReportPage from "./pages/invoice/PphReportPage";
+import F53ImportPage from "./pages/sap/F53ImportPage";
 
 const App: FC = (): ReactElement => {
   return (
@@ -46,7 +47,7 @@ const App: FC = (): ReactElement => {
                 />
                 <Route path="/utility/import-pph" element={<PphImportPage />} />
                 <Route path="/invoice/pph" element={<PphReportPage />} />
-
+                <Route path="/utility/import-f53" element={<F53ImportPage />} />
                 <Route path="/invoice/receipts" element={<Receipt />} />
                 <Route path="/ref/stages" element={<Stages />} />
               </Route>

@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\SapImportController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\PgrController;
 use App\Http\Controllers\Api\PphImportController;
+use App\Http\Controllers\Api\F53ImportController;
 
 
 
@@ -132,6 +133,12 @@ Route::middleware('auth:api')->group(function () {
 Route::post('sap/import-po',             [SapImportController::class, 'importPo']);
 Route::post('sap/import-po-chunk',       [SapImportController::class, 'importPoChunk']);
 Route::get('sap/po-lookup',              [SapImportController::class, 'poLookup']);
+Route::prefix('sap')->group(function () {
+    Route::post('f53-import', [F53ImportController::class, 'importChunk']);
+    Route::get('f53-data',    [F53ImportController::class, 'getData']);
+    Route::delete('f53-data', [F53ImportController::class, 'destroy']);
+});
+
 
 // PPh Import & Report
 Route::post('sap/import-pph-chunk',      [PphImportController::class, 'importChunk']);
@@ -145,6 +152,9 @@ Route::post('sap/import-pph-chunk',      [PphImportController::class, 'importChu
 Route::delete('/sap/pph-data', [PphImportController::class, 'destroy']);
         Route::patch('/vendors/{vendor}/pkp', [VendorController::class, 'updatePkp']);
     });
+
+
+
 
     // ── ROLE: super-admin ─────────────────────────────────────────────────
     Route::middleware('role:super-admin')->prefix('admin')->name('admin.')->group(function () {
