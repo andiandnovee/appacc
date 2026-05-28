@@ -18,6 +18,7 @@ class Company extends Model
         'name',
         'npwp',
         'address',
+        'accbank',
     ];
 
     protected $casts = [

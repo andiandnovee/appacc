@@ -20,6 +20,8 @@ class BusinessAreaController extends Controller
             $query->where('company_id', $request->company_id);
         }
 
+        
+
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', "%{$request->search}%")

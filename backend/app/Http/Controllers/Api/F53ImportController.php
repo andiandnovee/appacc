@@ -60,11 +60,18 @@ class F53ImportController extends Controller
     {
         $request->validate([
             'stage_sap_id' => 'required|integer',
+            'company_sap_id'=> 'required|integer',
+            'business_area' => 'required|integer',
+            
         ]);
 
-        $stageSapId = (int) $request->input('stage_sap_id');
+        $stageSapId = (int) $request->input('stage_id');
+        $companySapId = (int) $request->input('company_id');
+        $businessArea = (int) $request->input('business_area');
 
         $records = SapF53Upload::where('stage_sap_id', $stageSapId)
+            ->where('company_sap_id', $companySapId)
+            ->where('business_area', $businessArea)
             ->orderBy('doc_date')
             ->get();
 

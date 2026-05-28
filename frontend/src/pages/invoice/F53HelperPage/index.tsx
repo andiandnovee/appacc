@@ -42,10 +42,10 @@ import styles from "./F53HelperPage.module.css";
 // TYPES
 // ─────────────────────────────────────────────
 interface Company {
-  id: number;
-  company_code: string; // misal "4000"
+  id: number; 
+  sap_id: string; // misal "4000"
   name: string;
-  bank_account: string; // RF05A-KONTO, misal "11122329"
+  accbank: string; // RF05A-KONTO, misal "11122329"
 }
 
 interface Stage {
@@ -168,7 +168,7 @@ export default function F53HelperPage() {
   // Load ref data
   // ─────────────────────────────────────────────
   useEffect(() => {
-    api.get("/companies").then((r) => {
+    api.get("/companies/select-options").then((r) => {
       const data = r.data?.data ?? r.data ?? [];
       setCompanies(data);
     });
@@ -204,7 +204,7 @@ export default function F53HelperPage() {
     setError(null);
     setChecked({});
     try {
-      const res = await api.get("/sap/f53", {
+      const res = await api.get("/sap/f53-data", {
         params: {
           company_id: selectedCompany,
           stage_id: selectedStage,
@@ -286,9 +286,9 @@ export default function F53HelperPage() {
   const handleGenerate = async () => {
     if (!validate()) return;
     if (selectedRows.length === 0) return;
-    if (!activeCompany?.bank_account) {
+    if (!activeCompany?.accbank) {
       alert(
-        "Bank account company tidak ditemukan. Pastikan data company sudah lengkap (field bank_account).",
+        "Bank account company tidak ditemukan. Pastikan data company sudah lengkap (field accbank).",
       );
       return;
     }
@@ -298,9 +298,9 @@ export default function F53HelperPage() {
       downloadF53Batch(vendorGroups, {
         sapUser: user?.sap_user ?? "",
         sapServer: user?.sap_server_con ?? "",
-        companyCode: activeCompany.company_code,
+        companyCode: activeCompany.sap_id,
         businessArea: activeBusArea?.sap_id ?? selectedBusArea,
-        bankAccount: activeCompany.bank_account,
+        bankAccount: activeCompany.accbank,
         postingDate,
         headerText,
         stageText,
@@ -314,8 +314,8 @@ export default function F53HelperPage() {
   // Options untuk Select
   // ─────────────────────────────────────────────
   const companyOptions = companies.map((c) => ({
-    value: String(c.id),
-    label: `${c.company_code} — ${c.name}`,
+    value: (c.id),
+    label: `${c.sap_id} — ${c.name}`,
   }));
 
   const stageOptions = stages.map((s) => ({
@@ -392,7 +392,7 @@ export default function F53HelperPage() {
               {activeCompany && (
                 <span className={styles.chip}>
                   <Building2 size={12} />
-                  {activeCompany.company_code} — {activeCompany.name}
+                  {activeCompany.id} — {activeCompany.name}
                 </span>
               )}
               {activeStage && (
@@ -467,7 +467,7 @@ export default function F53HelperPage() {
                 <SapField label="BKPF-BKTXT" value={headerText || "—"} />
                 <SapField
                   label="BKPF-BUKRS"
-                  value={activeCompany?.company_code ?? "—"}
+                  value={activeCompany?.sap_id ?? "—"}
                 />
                 <SapField
                   label="BSEG-GSBER"
@@ -475,8 +475,8 @@ export default function F53HelperPage() {
                 />
                 <SapField
                   label="RF05A-KONTO"
-                  value={activeCompany?.bank_account ?? "—"}
-                  warn={!activeCompany?.bank_account}
+                  value={activeCompany?.accbank ?? "—"}
+                  warn={!activeCompany?.accbank}
                 />
                 <SapField
                   label="RF05A-AUGTX"
