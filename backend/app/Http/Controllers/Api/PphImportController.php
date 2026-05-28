@@ -191,7 +191,7 @@ class PphImportController extends Controller
             $pph     = abs($item->amount_in_local_currency);
             if  ($item->gl_account_code == '21510001')
                 {
-                $bruto   = $pphRate > 0 ? round(($pph/2) / ($pphRate / 100)) : 0;
+                $bruto   = $pphRate > 0 ? round(($pph/0.025) / ($pphRate / 100)) : 0;
                 }
              else
             {   
