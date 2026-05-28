@@ -41,17 +41,17 @@ interface VendorFormModalProps {
 const SERVICE_TYPES = [
   { value: "", label: "— Pilih Jenis Layanan —" },
   { value: "Jasa Service", label: "Jasa Service" },
+  { value: "Jasa transport", label: "Jasa transport" },
   { value: "Jasa Kalibrasi", label: "Jasa Kalibrasi" },
-  { value: "HF9", label: "HF9 - Barang/Jasa Umum" },
-  { value: "HT4", label: "HT4 - Layanan Khusus" },
   { value: "Barang/Jasa Umum", label: "Barang/Jasa Umum" },
-  { value: "OTHER", label: "Lainnya" },
+  { value: "Jasa Lainnya", label: "Lainnya" },
 ];
 
 const PPH_TYPES = [
   { value: "21", label: "PPh 21 - Gaji/Upah" },
   { value: "23", label: "PPh 23 - Jasa" },
   { value: "26", label: "PPh 26 - Dividen" },
+  { value: "4 (2)", label: "PPh 4 (2) - PPH Final" },
 ];
 
 const VendorFormModal: FC<VendorFormModalProps> = ({
@@ -213,7 +213,9 @@ const VendorFormModal: FC<VendorFormModalProps> = ({
               <Toggle
                 value={form.is_pkp}
                 onChange={(e) => setForm({ ...form, is_pkp: e.target.checked })}
-                label={form.is_pkp ? "Vendor PKP/Faktur pajak" : "Vendor Bukan PKP"}
+                label={
+                  form.is_pkp ? "Vendor PKP/Faktur pajak" : "Vendor Bukan PKP"
+                }
                 variant={form.is_pkp ? "success" : "danger"}
               />
             </div>

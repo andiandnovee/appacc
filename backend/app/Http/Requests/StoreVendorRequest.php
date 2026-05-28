@@ -18,8 +18,8 @@ class StoreVendorRequest extends FormRequest
             'name'         => 'required|string|max:255',
             'npwp'         => 'nullable|string|max:20|unique:vendors,npwp',
             'address'      => 'nullable|string|max:500',
-            'service_type' => 'nullable|string|max:100', // Sesuaikan dengan enum yang ada
-            'pph_type'     => 'nullable|in:21,23,26', // PPh jenis (21=salary, 23=service, 26=div)
+            'service_type' => 'nullable|in:Jasa Service,Jasa transport,Jasa Kalibrasi,Barang/Jasa Umum,Jasa Lainnya', // Sesuaikan dengan enum yang ada
+            'pph_type'     => 'nullable|in:21,23,26,4 (2)', // PPh jenis (21=salary, 23=service, 26=div, 4 (2)=final)
             'pph_rate'     => 'nullable|numeric|min:0|max:100',
         ];
     }
