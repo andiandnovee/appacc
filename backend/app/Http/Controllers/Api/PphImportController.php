@@ -192,10 +192,12 @@ class PphImportController extends Controller
             if  ($item->gl_account_code == '21510001')
                 {
                 $bruto   = $pphRate > 0 ? round(($pph/0.25) / ($pphRate / 100))/2 : 0;
+                $dpp     = $bruto/2; // PPh 21: DPP = Bruto / 2
                 }
              else
             {   
             $bruto   = $pphRate > 0 ? round($pph / ($pphRate / 100)) : 0;
+            $dpp     = $bruto;
             }
             return [
                 'id'              => $item->id,
@@ -212,7 +214,7 @@ class PphImportController extends Controller
                 'doc_number'      => $item->document_number,
                 'po_text'         => $item->po_number,
                 'bruto'           => $bruto,
-                'dpp'             => $bruto,
+                'dpp'             => $dpp,
                 'tarif'           => $pphRate,
                 'pph_dipotong'    => $pph,
                 'pph_type'        => ImportPph::getPphType($item->gl_account_code),

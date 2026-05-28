@@ -242,7 +242,7 @@ export default function PphReportPage() {
 
       rows.forEach((row, idx) => {
         const isFirst = idx === 0;
-        const pph21 = row.gl_account === "21510001";
+        const pph21 = row.gl_account == "21510001";
 
         bodyHtml += `
     <tr>
