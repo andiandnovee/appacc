@@ -21,6 +21,7 @@ import BusinessArea from "./pages/invoice/BusArea";
 import PphImportPage from "./pages/sap/PphImportPage";
 import PphReportPage from "./pages/invoice/PphReportPage";
 import F53ImportPage from "./pages/sap/F53ImportPage";
+import F53HelperPage from "./pages/invoice/F53HelperPage";
 
 const App: FC = (): ReactElement => {
   return (
@@ -38,6 +39,8 @@ const App: FC = (): ReactElement => {
                 <Route path="/" element={<Home />} />
                 <Route path="/users" element={<Users />} />
                 <Route path="/settings" element={<Settings />} />
+                
+                <Route path="/invoice/f53-helper" element={<F53HelperPage />} />
                 <Route path="/admin/users" element={<UserManagement />} />
                 <Route path="/ref/vendors" element={<VendorManagement />} />
                 <Route path="/ref/busa" element={<BusinessArea />} />
@@ -48,7 +51,8 @@ const App: FC = (): ReactElement => {
                 <Route path="/utility/import-pph" element={<PphImportPage />} />
                 <Route path="/invoice/pph" element={<PphReportPage />} />
                 <Route path="/utility/import-f53" element={<F53ImportPage />} />
-                <Route path="/invoice/receipts" element={<Receipt />} />
+                <Route path="/invoice/import InvoiceReceiptManagement from './pages/invoice/Receipt/index';
+receipts" element={<Receipt />} />
                 <Route path="/ref/stages" element={<Stages />} />
               </Route>
             </Route>

@@ -32,6 +32,7 @@ const NAV_GROUPS = [
     items: [
       { to: "/invoice/receipts", icon: FileText, label: "Monitor Invoice" },
       { to: "/invoice/pph", icon: Percent, label: "Rekap PPh" },
+      { to: "/invoice/f53-helper", icon: Star, label: "F53 Helper" },
     ],
   },
   {
