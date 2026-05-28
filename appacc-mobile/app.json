@@ -23,23 +23,24 @@
         "android.permission.RECORD_AUDIO"
       ]
     },
+    "ios": {
+      "bundleIdentifier": "com.appacc.mobile"
+    },
     "plugins": [
-      "expo-secure-store",
-      "@react-native-google-signin/google-signin",
+      "expo-camera",
       [
-        "expo-camera",
+        "react-native-vision-camera",
         {
-          "cameraPermission": "APPACC butuh akses kamera untuk scan nomor PO dari dokumen invoice."
+          "cameraPermissionText": "APPACC butuh akses kamera untuk scan nomor PO",
+          "enableMicrophonePermission": false
         }
-      ]
+      ],
+      
     ],
     "extra": {
       "eas": {
         "projectId": "95185d8a-0ee1-4deb-83ec-c266d49009ff"
       }
-    },
-    "ios": {
-      "bundleIdentifier": "com.appacc.mobile"
     }
   }
 }

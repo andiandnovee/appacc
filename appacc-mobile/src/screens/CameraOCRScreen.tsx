@@ -1,42 +1,29 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  ActivityIndicator,
-  Alert,
-  Dimensions,
-  ScrollView,
-  TextInput,
-  Modal,
-  FlatList,
-} from "react-native";
-import { CameraView, useCameraPermissions } from "expo-camera";
-import { useNavigation } from "@react-navigation/native";
-import TextRecognition from "@react-native-ml-kit/text-recognition";
-import { searchPo } from "../api/po";
-import { getCompanies, getVendors, Vendor } from "../api/receipt";
-import { PoResult, Company } from "../types";
+  View, Text, TouchableOpacity, StyleSheet, SafeAreaView,
+  ActivityIndicator, Alert, Dimensions, ScrollView, TextInput,
+  Modal, FlatList,
+} from 'react-native';
+import {
+  Camera,
+  useCameraDevice,
+  useCameraPermission,
+} from 'react-native-vision-camera';
+import { useNavigation } from '@react-navigation/native';
+import TextRecognition from '@react-native-ml-kit/text-recognition';
+import { searchPo } from '../api/po';
+import { getCompanies, getVendors, Vendor } from '../api/receipt';
+import { PoResult, Company } from '../types';
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SCAN_BOX_SIZE = SCREEN_WIDTH * 0.75;
+const SCAN_INTERVAL_MS = 1500;
 
-// Jeda autofocus sebelum capture (ms)
-const AUTOFOCUS_DELAY_MS = 600;
+const normalizeDigits = (s: string) => s.replace(/\D/g, '');
 
-const normalizeDigits = (s: string) => s.replace(/\D/g, "");
-
-function parseOcrText(raw: string): {
-  poCandidates: string[];
-  tokens: string[];
-} {
-  const tokens = raw
-    .split(/\s+/)
-    .map((t) => t.trim())
-    .filter(Boolean);
-  const poSet = new Set<string>();
+function parseOcrText(raw: string): { poCandidates: string[]; tokens: string[] } {
+  const tokens = raw.split(/\s+/).map(t => t.trim()).filter(Boolean);
+  const poSet  = new Set<string>();
 
   for (const token of tokens) {
     const digits = normalizeDigits(token);
@@ -53,12 +40,11 @@ function parseOcrText(raw: string): {
 }
 
 const formatCurrency = (text: string) => {
-  const clean = text.replace(/\D/g, "");
-  return clean.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  const clean = text.replace(/\D/g, '');
+  return clean.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 };
 
-type Mode = "camera" | "manual";
-type ScanState = "idle" | "focusing" | "capturing" | "processing" | "searching";
+type Mode = 'camera' | 'manual';
 
 interface ManualState {
   tokens: string[];
@@ -71,211 +57,194 @@ interface ManualState {
   vendorName: string;
 }
 
-const SCAN_STATE_LABEL: Record<ScanState, string> = {
-  idle: "Tap tombol untuk scan",
-  focusing: "Fokus...",
-  capturing: "Mengambil gambar...",
-  processing: "Membaca teks...",
-  searching: "Mencari PO di database...",
-};
-
 export default function CameraOCRScreen() {
   const navigation = useNavigation<any>();
-  const [permission, requestPermission] = useCameraPermissions();
-  const cameraRef = useRef<CameraView>(null);
 
-  const [mode, setMode] = useState<Mode>("camera");
-  const [scanState, setScanState] = useState<ScanState>("idle");
-  const [flashOn, setFlashOn] = useState(false);
+  // Vision Camera v5
+  const { hasPermission, requestPermission } = useCameraPermission();
+  const device = useCameraDevice('back');
+  const cameraRef = useRef<Camera>(null);
+
+  const [mode, setMode]             = useState<Mode>('camera');
+  const [searching, setSearching]   = useState(false);
+  const [flashOn, setFlashOn]       = useState(false);
+  const [scanStatus, setScanStatus] = useState('Mengarahkan kamera...');
+  const [isActive, setIsActive]     = useState(true);
+
+  const isProcessing  = useRef(false);
+  const lastPoScanned = useRef<string | null>(null);
+  const scanTimer     = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [manual, setManual] = useState<ManualState>({
-    tokens: [],
-    invoiceNo: "",
-    poNo: "",
-    amount: "",
-    companyId: null,
-    companyName: "",
-    vendorId: null,
-    vendorName: "",
+    tokens: [], invoiceNo: '', poNo: '', amount: '',
+    companyId: null, companyName: '',
+    vendorId: null, vendorName: '',
   });
 
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [vendors, setVendors] = useState<Vendor[]>([]);
-  const [loadingCompanies, setLoadingCompanies] = useState(false);
-  const [loadingVendors, setLoadingVendors] = useState(false);
+  const [companies, setCompanies]                 = useState<Company[]>([]);
+  const [vendors, setVendors]                     = useState<Vendor[]>([]);
+  const [loadingCompanies, setLoadingCompanies]   = useState(false);
+  const [loadingVendors, setLoadingVendors]       = useState(false);
   const [showCompanyPicker, setShowCompanyPicker] = useState(false);
-  const [showVendorPicker, setShowVendorPicker] = useState(false);
+  const [showVendorPicker, setShowVendorPicker]   = useState(false);
 
   useEffect(() => {
-    if (!permission?.granted) requestPermission();
+    if (!hasPermission) requestPermission();
   }, []);
 
-  // Fetch companies + vendors saat masuk manual mode
   useEffect(() => {
-    if (mode !== "manual") return;
+    if (mode === 'camera' && hasPermission) {
+      setIsActive(true);
+      startScanLoop();
+    } else {
+      setIsActive(false);
+      stopScanLoop();
+    }
+    return () => stopScanLoop();
+  }, [mode, hasPermission]);
+
+  useEffect(() => {
+    if (mode !== 'manual') return;
     if (companies.length === 0) {
       setLoadingCompanies(true);
       getCompanies()
         .then(setCompanies)
-        .catch(() => Alert.alert("Error", "Gagal memuat perusahaan"))
+        .catch(() => Alert.alert('Error', 'Gagal memuat perusahaan'))
         .finally(() => setLoadingCompanies(false));
     }
     if (vendors.length === 0) {
       setLoadingVendors(true);
       getVendors()
         .then(setVendors)
-        .catch(() => Alert.alert("Error", "Gagal memuat vendor"))
+        .catch(() => Alert.alert('Error', 'Gagal memuat vendor'))
         .finally(() => setLoadingVendors(false));
     }
   }, [mode]);
 
-  // ── Tap-to-scan ────────────────────────────────────────────────────────────
+  // ── Scan loop ──────────────────────────────────────────────────────────────
 
-  const handleScan = async () => {
-    if (scanState !== "idle" || !cameraRef.current) return;
+  const startScanLoop = () => {
+    stopScanLoop();
+    scanTimer.current = setInterval(runOcrFrame, SCAN_INTERVAL_MS);
+  };
+
+  const stopScanLoop = () => {
+    if (scanTimer.current) {
+      clearInterval(scanTimer.current);
+      scanTimer.current = null;
+    }
+  };
+
+  const runOcrFrame = useCallback(async () => {
+    if (!cameraRef.current || isProcessing.current) return;
+    isProcessing.current = true;
 
     try {
-      // 1. Beri waktu autofocus settle
-      setScanState("focusing");
-      await new Promise((res) => setTimeout(res, AUTOFOCUS_DELAY_MS));
-
-      // 2. Capture dengan kualitas penuh
-      setScanState("capturing");
-      const photo = await cameraRef.current.takePictureAsync({
-        quality: 1.0,
-        base64: false,
+      // takeSnapshot — SILENT, tidak trigger shutter Samsung
+      const snapshot = await cameraRef.current.takeSnapshot({
+        quality: 60,       // 0-100, lebih rendah = lebih cepat
+        skipMetadata: true,
       });
 
-      if (!photo?.uri) {
-        Alert.alert("Gagal", "Tidak dapat mengambil gambar");
-        return;
-      }
+      const uri = snapshot.path.startsWith('file://')
+        ? snapshot.path
+        : `file://${snapshot.path}`;
 
-      // 3. OCR
-      setScanState("processing");
-      const result = await TextRecognition.recognize(photo.uri);
-      const rawText = result.text ?? "";
+      const result  = await TextRecognition.recognize(uri);
+      const rawText = result.text ?? '';
 
       if (!rawText.trim()) {
-        Alert.alert(
-          "Tidak ada teks",
-          "Pastikan dokumen terbaca jelas dan pencahayaan cukup"
-        );
+        setScanStatus('Tidak ada teks — arahkan ke dokumen');
         return;
       }
 
       const { poCandidates, tokens } = parseOcrText(rawText);
 
-      // Simpan tokens untuk manual mode
-      setManual((prev) => ({ ...prev, tokens }));
-
       if (poCandidates.length === 0) {
-        // Teks ada tapi tidak ada PO candidate — tawarkan manual
-        Alert.alert(
-          "PO Tidak Ditemukan",
-          "Teks terdeteksi tapi nomor PO (format 4xxxxxxxxx) tidak ditemukan. Lanjut ke entry manual?",
-          [
-            { text: "Scan Ulang", style: "cancel" },
-            { text: "Entry Manual", onPress: () => setMode("manual") },
-          ]
-        );
+        setScanStatus('Teks terdeteksi — PO belum ditemukan');
+        setManual(prev => ({ ...prev, tokens }));
         return;
       }
 
-      // 4. Cari PO di database
-      setScanState("searching");
       const poNumber = poCandidates[0];
+      if (poNumber === lastPoScanned.current) return;
+      lastPoScanned.current = poNumber;
+
+      setScanStatus(`PO terdeteksi: ${poNumber}`);
+      stopScanLoop();
+      setIsActive(false);
+      setSearching(true);
+
       const data = await searchPo(poNumber);
 
       if (!data || !data.found) {
-        // PO tidak di DB — manual mode, pre-fill poNo
-        setManual((prev) => ({ ...prev, poNo: poNumber }));
-        setMode("manual");
+        setManual(prev => ({ ...prev, poNo: poNumber }));
+        setMode('manual');
+        lastPoScanned.current = null;
         return;
       }
 
-      // PO ditemukan — ke ScanPOScreen
-      navigation.navigate("ScanPO", { detectedPo: poNumber });
-    } catch (err) {
-      Alert.alert("Error", "Terjadi kesalahan saat scan. Coba lagi.");
-    } finally {
-      setScanState("idle");
-    }
-  };
+      navigation.navigate('ScanPO', { detectedPo: poNumber });
 
-  // ── Manual mode helpers ────────────────────────────────────────────────────
+    } catch {
+      // silent fail
+    } finally {
+      isProcessing.current = false;
+      setSearching(false);
+    }
+  }, [navigation]);
+
+  // ── Manual helpers ─────────────────────────────────────────────────────────
 
   const enterManualMode = () => {
-    setManual((prev) => ({
+    stopScanLoop();
+    setIsActive(false);
+    setManual(prev => ({
       ...prev,
-      invoiceNo: "",
-      poNo: "",
-      amount: "",
-      companyId: null,
-      companyName: "",
-      vendorId: null,
-      vendorName: "",
+      invoiceNo: '', poNo: '', amount: '',
+      companyId: null, companyName: '',
+      vendorId: null, vendorName: '',
     }));
-    setMode("manual");
+    setMode('manual');
   };
 
-  const selectToken = (field: "invoiceNo" | "poNo", value: string) => {
-    setManual((prev) => ({ ...prev, [field]: value }));
+  const selectToken = (field: 'invoiceNo' | 'poNo', value: string) => {
+    setManual(prev => ({ ...prev, [field]: value }));
   };
 
   const submitManual = () => {
     const { invoiceNo, poNo, amount, companyId, companyName, vendorId, vendorName } = manual;
-
-    if (!vendorId) {
-      Alert.alert("Wajib", "Vendor harus dipilih");
-      return;
-    }
-    if (!companyId) {
-      Alert.alert("Wajib", "Perusahaan harus dipilih");
-      return;
-    }
-    const amountNum = parseFloat(amount.replace(/\./g, "").replace(",", "."));
-    if (!amountNum || amountNum <= 0) {
-      Alert.alert("Wajib", "Masukkan nilai yang valid");
-      return;
-    }
+    if (!vendorId)  { Alert.alert('Wajib', 'Vendor harus dipilih'); return; }
+    if (!companyId) { Alert.alert('Wajib', 'Perusahaan harus dipilih'); return; }
+    const amountNum = parseFloat(amount.replace(/\./g, '').replace(',', '.'));
+    if (!amountNum || amountNum <= 0) { Alert.alert('Wajib', 'Masukkan nilai yang valid'); return; }
 
     const partialPo: PoResult = {
-      found: false,
-      po_number: poNo,
-      invoice_number: invoiceNo,
-      sap_vendor_id: "",
-      vendor_id: vendorId,
-      vendor_name: vendorName,
-      is_pkp: vendors.find((v) => v.id === vendorId)?.is_pkp ?? false,
-      sap_business_area_id: "",
-      business_area_code: "",
-      buyer_name: "",
-      purc_grp: "",
-      dpp: amountNum,
-      ppn: 0,
-      amount: amountNum,
-      company_id: companyId,
-      company_name: companyName,
-      items: [],
+      found:                false,
+      po_number:            poNo,
+      invoice_number:       invoiceNo,
+      sap_vendor_id:        '',
+      vendor_id:            vendorId,
+      vendor_name:          vendorName,
+      is_pkp:               vendors.find(v => v.id === vendorId)?.is_pkp ?? false,
+      sap_business_area_id: '',
+      business_area_code:   '',
+      buyer_name:           '',
+      purc_grp:             '',
+      dpp:                  amountNum,
+      ppn:                  0,
+      amount:               amountNum,
+      company_id:           companyId,
+      company_name:         companyName,
+      items:                [],
     };
 
-    navigation.replace("ReceiptForm", { po: partialPo });
+    navigation.replace('ReceiptForm', { po: partialPo });
   };
 
   // ── Render: permission ─────────────────────────────────────────────────────
 
-  if (!permission) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.centerBox}>
-          <ActivityIndicator size="large" color="#6366f1" />
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (!permission.granted) {
+  if (!hasPermission) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centerBox}>
@@ -292,14 +261,28 @@ export default function CameraOCRScreen() {
     );
   }
 
+  if (!device) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.centerBox}>
+          <ActivityIndicator size="large" color="#6366f1" />
+          <Text style={styles.permissionDesc}>Memuat kamera...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   // ── Render: manual entry ───────────────────────────────────────────────────
 
-  if (mode === "manual") {
+  if (mode === 'manual') {
     return (
       <SafeAreaView style={[styles.container, styles.manualContainer]}>
         <View style={styles.manualHeader}>
           <TouchableOpacity
-            onPress={() => setMode("camera")}
+            onPress={() => {
+              lastPoScanned.current = null;
+              setMode('camera');
+            }}
             style={styles.topBtn}
           >
             <Text style={styles.manualBackText}>← Scan Ulang</Text>
@@ -325,10 +308,10 @@ export default function CameraOCRScreen() {
                     key={i}
                     style={styles.chip}
                     onPress={() =>
-                      Alert.alert(token, "Gunakan sebagai:", [
-                        { text: "No. Invoice", onPress: () => selectToken("invoiceNo", token) },
-                        { text: "No. PO", onPress: () => selectToken("poNo", token) },
-                        { text: "Batal", style: "cancel" },
+                      Alert.alert(token, 'Gunakan sebagai:', [
+                        { text: 'No. Invoice', onPress: () => selectToken('invoiceNo', token) },
+                        { text: 'No. PO',      onPress: () => selectToken('poNo', token) },
+                        { text: 'Batal', style: 'cancel' },
                       ])
                     }
                   >
@@ -345,7 +328,7 @@ export default function CameraOCRScreen() {
             <TextInput
               style={styles.input}
               value={manual.invoiceNo}
-              onChangeText={(v) => setManual((p) => ({ ...p, invoiceNo: v }))}
+              onChangeText={v => setManual(p => ({ ...p, invoiceNo: v }))}
               placeholder="Pilih dari chip atau ketik manual"
               placeholderTextColor="#9ca3af"
             />
@@ -357,7 +340,7 @@ export default function CameraOCRScreen() {
             <TextInput
               style={styles.input}
               value={manual.poNo}
-              onChangeText={(v) => setManual((p) => ({ ...p, poNo: v }))}
+              onChangeText={v => setManual(p => ({ ...p, poNo: v }))}
               placeholder="Pilih dari chip atau ketik manual"
               placeholderTextColor="#9ca3af"
               keyboardType="numeric"
@@ -375,7 +358,7 @@ export default function CameraOCRScreen() {
                 onPress={() => setShowVendorPicker(true)}
               >
                 <Text style={manual.vendorId ? styles.inputText : styles.inputPlaceholder}>
-                  {manual.vendorName || "Pilih vendor..."}
+                  {manual.vendorName || 'Pilih vendor...'}
                 </Text>
                 <Text style={styles.selectArrow}>▼</Text>
               </TouchableOpacity>
@@ -393,7 +376,7 @@ export default function CameraOCRScreen() {
                 onPress={() => setShowCompanyPicker(true)}
               >
                 <Text style={manual.companyId ? styles.inputText : styles.inputPlaceholder}>
-                  {manual.companyName || "Pilih perusahaan..."}
+                  {manual.companyName || 'Pilih perusahaan...'}
                 </Text>
                 <Text style={styles.selectArrow}>▼</Text>
               </TouchableOpacity>
@@ -408,15 +391,13 @@ export default function CameraOCRScreen() {
               <TextInput
                 style={styles.inputWithPrefix}
                 value={manual.amount}
-                onChangeText={(v) => setManual((p) => ({ ...p, amount: formatCurrency(v) }))}
+                onChangeText={v => setManual(p => ({ ...p, amount: formatCurrency(v) }))}
                 placeholder="0"
                 placeholderTextColor="#9ca3af"
                 keyboardType="numeric"
               />
             </View>
-            <Text style={styles.fieldHint}>
-              Nilai aktual yang ditagih — bisa diubah di form berikutnya
-            </Text>
+            <Text style={styles.fieldHint}>Nilai aktual yang ditagih — bisa diubah di form berikutnya</Text>
           </View>
 
           <TouchableOpacity style={styles.submitBtn} onPress={submitManual}>
@@ -424,7 +405,7 @@ export default function CameraOCRScreen() {
           </TouchableOpacity>
         </ScrollView>
 
-        {/* Modal vendor picker */}
+        {/* Modal vendor */}
         <Modal
           visible={showVendorPicker}
           animationType="slide"
@@ -440,20 +421,18 @@ export default function CameraOCRScreen() {
             </View>
             <FlatList
               data={vendors}
-              keyExtractor={(item) => String(item.id)}
+              keyExtractor={item => String(item.id)}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={styles.modalItem}
                   onPress={() => {
-                    setManual((p) => ({ ...p, vendorId: item.id, vendorName: item.name }));
+                    setManual(p => ({ ...p, vendorId: item.id, vendorName: item.name }));
                     setShowVendorPicker(false);
                   }}
                 >
                   <View style={{ flex: 1 }}>
                     <Text style={styles.modalItemText}>{item.name}</Text>
-                    {item.npwp ? (
-                      <Text style={styles.modalItemSub}>{item.npwp}</Text>
-                    ) : null}
+                    {item.npwp ? <Text style={styles.modalItemSub}>{item.npwp}</Text> : null}
                   </View>
                   {manual.vendorId === item.id && (
                     <Text style={styles.modalItemCheck}>✓</Text>
@@ -465,7 +444,7 @@ export default function CameraOCRScreen() {
           </SafeAreaView>
         </Modal>
 
-        {/* Modal company picker */}
+        {/* Modal company */}
         <Modal
           visible={showCompanyPicker}
           animationType="slide"
@@ -481,12 +460,12 @@ export default function CameraOCRScreen() {
             </View>
             <FlatList
               data={companies}
-              keyExtractor={(item) => String(item.id)}
+              keyExtractor={item => String(item.id)}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={styles.modalItem}
                   onPress={() => {
-                    setManual((p) => ({ ...p, companyId: item.id, companyName: item.name }));
+                    setManual(p => ({ ...p, companyId: item.id, companyName: item.name }));
                     setShowCompanyPicker(false);
                   }}
                 >
@@ -504,80 +483,57 @@ export default function CameraOCRScreen() {
     );
   }
 
-  // ── Render: camera (tap-to-scan) ───────────────────────────────────────────
-
-  const isBusy = scanState !== "idle";
+  // ── Render: camera (auto-scan, silent) ────────────────────────────────────
 
   return (
     <View style={styles.container}>
-      <CameraView
+      <Camera
         ref={cameraRef}
         style={StyleSheet.absoluteFillObject}
-        facing="back"
-        enableTorch={flashOn}
-        autofocus="on"
+        device={device}
+        isActive={isActive}
+        torch={flashOn ? 'on' : 'off'}
+        photo={true}
       />
 
       <View style={styles.overlay}>
         <SafeAreaView>
           <View style={styles.topBar}>
-            <TouchableOpacity
-              onPress={() => navigation.goBack()}
-              style={styles.topBtn}
-              disabled={isBusy}
-            >
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.topBtn}>
               <Text style={styles.topBtnText}>✕ Tutup</Text>
             </TouchableOpacity>
             <Text style={styles.topTitle}>Scan Nomor PO</Text>
-            <TouchableOpacity
-              onPress={() => setFlashOn(!flashOn)}
-              style={styles.topBtn}
-              disabled={isBusy}
-            >
-              <Text style={styles.topBtnText}>{flashOn ? "⚡ ON" : "⚡ OFF"}</Text>
+            <TouchableOpacity onPress={() => setFlashOn(!flashOn)} style={styles.topBtn}>
+              <Text style={styles.topBtnText}>{flashOn ? '⚡ ON' : '⚡ OFF'}</Text>
             </TouchableOpacity>
           </View>
         </SafeAreaView>
 
-        {/* Scan box */}
         <View style={styles.scanArea}>
           <View style={styles.scanBox}>
             <View style={[styles.corner, styles.cornerTL]} />
             <View style={[styles.corner, styles.cornerTR]} />
             <View style={[styles.corner, styles.cornerBL]} />
             <View style={[styles.corner, styles.cornerBR]} />
-            {isBusy && <ActivityIndicator size="large" color="#6366f1" />}
           </View>
           <Text style={styles.scanHint}>Arahkan nomor PO ke dalam kotak</Text>
-          <Text style={styles.scanStatus}>{SCAN_STATE_LABEL[scanState]}</Text>
+          <Text style={styles.scanStatus}>{scanStatus}</Text>
+          {searching && (
+            <View style={styles.searchingBadge}>
+              <ActivityIndicator size="small" color="#ffffff" />
+              <Text style={styles.searchingBadgeText}>Mencari PO di database...</Text>
+            </View>
+          )}
         </View>
 
-        {/* Bottom bar */}
         <View style={styles.bottomBar}>
-          <TouchableOpacity
-            style={styles.manualBtn}
-            onPress={enterManualMode}
-            disabled={isBusy}
-          >
-            <Text style={[styles.manualBtnText, isBusy && styles.disabledText]}>
-              Input{"\n"}Manual
-            </Text>
+          <TouchableOpacity style={styles.manualBtn} onPress={enterManualMode}>
+            <Text style={styles.manualBtnText}>Input{'\n'}Manual</Text>
           </TouchableOpacity>
-
-          {/* Tombol scan utama */}
-          <TouchableOpacity
-            style={[styles.scanBtn, isBusy && styles.scanBtnBusy]}
-            onPress={handleScan}
-            disabled={isBusy}
-            activeOpacity={0.8}
-          >
-            {isBusy ? (
-              <ActivityIndicator size="small" color="#ffffff" />
-            ) : (
-              <Text style={styles.scanBtnIcon}>📷</Text>
-            )}
-          </TouchableOpacity>
-
+          <View style={styles.scanIndicator}>
+            <ActivityIndicator size="small" color="#6366f1" />
+            <Text style={styles.scanIndicatorText}>Auto scan</Text>
+          </View>
           <View style={{ width: 80 }} />
         </View>
       </View>
@@ -585,248 +541,125 @@ export default function CameraOCRScreen() {
   );
 }
 
-// ── Styles ─────────────────────────────────────────────────────────────────────
+// ── Styles ────────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#000" },
-  centerBox: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 32,
-  },
-  overlay: { flex: 1, justifyContent: "space-between" },
+  container:       { flex: 1, backgroundColor: '#000' },
+  centerBox:       { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
+  overlay:         { flex: 1, justifyContent: 'space-between' },
 
-  permissionIcon: { fontSize: 48, marginBottom: 16, textAlign: "center" },
-  permissionTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#1e1b4b",
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  permissionDesc: {
-    fontSize: 14,
-    color: "#6b7280",
-    textAlign: "center",
-    lineHeight: 22,
-    marginBottom: 24,
-  },
-  permissionBtn: {
-    backgroundColor: "#6366f1",
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 12,
-  },
-  permissionBtnText: { color: "#ffffff", fontSize: 15, fontWeight: "600" },
+  permissionIcon:    { fontSize: 48, marginBottom: 16, textAlign: 'center' },
+  permissionTitle:   { fontSize: 20, fontWeight: '700', color: '#1e1b4b', textAlign: 'center', marginBottom: 8 },
+  permissionDesc:    { fontSize: 14, color: '#6b7280', textAlign: 'center', lineHeight: 22, marginBottom: 24 },
+  permissionBtn:     { backgroundColor: '#6366f1', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 12 },
+  permissionBtnText: { color: '#ffffff', fontSize: 15, fontWeight: '600' },
 
   topBar: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: 16, paddingVertical: 12, backgroundColor: 'rgba(0,0,0,0.5)',
   },
-  topBtn: { paddingHorizontal: 12, paddingVertical: 8 },
-  topBtnText: { color: "#ffffff", fontSize: 14, fontWeight: "600" },
-  topTitle: { color: "#ffffff", fontSize: 16, fontWeight: "700" },
+  topBtn:     { paddingHorizontal: 12, paddingVertical: 8 },
+  topBtnText: { color: '#ffffff', fontSize: 14, fontWeight: '600' },
+  topTitle:   { color: '#ffffff', fontSize: 16, fontWeight: '700' },
 
-  scanArea: { flex: 1, justifyContent: "center", alignItems: "center" },
+  scanArea:  { flex: 1, justifyContent: 'center', alignItems: 'center' },
   scanBox: {
-    width: SCAN_BOX_SIZE,
-    height: SCAN_BOX_SIZE * 0.5,
-    position: "relative",
-    justifyContent: "center",
-    alignItems: "center",
+    width: SCAN_BOX_SIZE, height: SCAN_BOX_SIZE * 0.5,
+    position: 'relative', justifyContent: 'center', alignItems: 'center',
   },
-  corner: {
-    position: "absolute",
-    width: 24,
-    height: 24,
-    borderColor: "#6366f1",
-    borderWidth: 3,
-  },
-  cornerTL: { top: 0, left: 0, borderRightWidth: 0, borderBottomWidth: 0 },
-  cornerTR: { top: 0, right: 0, borderLeftWidth: 0, borderBottomWidth: 0 },
-  cornerBL: { bottom: 0, left: 0, borderRightWidth: 0, borderTopWidth: 0 },
-  cornerBR: { bottom: 0, right: 0, borderLeftWidth: 0, borderTopWidth: 0 },
+  corner:    { position: 'absolute', width: 24, height: 24, borderColor: '#6366f1', borderWidth: 3 },
+  cornerTL:  { top: 0, left: 0, borderRightWidth: 0, borderBottomWidth: 0 },
+  cornerTR:  { top: 0, right: 0, borderLeftWidth: 0, borderBottomWidth: 0 },
+  cornerBL:  { bottom: 0, left: 0, borderRightWidth: 0, borderTopWidth: 0 },
+  cornerBR:  { bottom: 0, right: 0, borderLeftWidth: 0, borderTopWidth: 0 },
 
-  scanHint: {
-    color: "#ffffff",
-    fontSize: 13,
-    marginTop: 16,
-    textAlign: "center",
-    opacity: 0.8,
+  scanHint:   { color: '#ffffff', fontSize: 13, marginTop: 16, textAlign: 'center', opacity: 0.8 },
+  scanStatus: { color: '#a5b4fc', fontSize: 12, marginTop: 6, textAlign: 'center' },
+  searchingBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: 'rgba(99,102,241,0.8)', borderRadius: 20,
+    paddingHorizontal: 16, paddingVertical: 8, marginTop: 12,
   },
-  scanStatus: {
-    color: "#a5b4fc",
-    fontSize: 12,
-    marginTop: 6,
-    textAlign: "center",
-  },
+  searchingBadgeText: { color: '#ffffff', fontSize: 13, fontWeight: '600' },
 
   bottomBar: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 24,
-    paddingBottom: 48,
-    paddingTop: 24,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: 24, paddingBottom: 48, paddingTop: 24,
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
-  manualBtn: { width: 80, alignItems: "center" },
-  manualBtnText: {
-    color: "#ffffff",
-    fontSize: 12,
-    textAlign: "center",
-    opacity: 0.8,
-  },
-  disabledText: { opacity: 0.3 },
+  manualBtn:         { width: 80, alignItems: 'center' },
+  manualBtnText:     { color: '#ffffff', fontSize: 12, textAlign: 'center', opacity: 0.8 },
+  scanIndicator:     { alignItems: 'center', gap: 6 },
+  scanIndicatorText: { color: '#6366f1', fontSize: 11, fontWeight: '600' },
 
-  // Tombol scan utama
-  scanBtn: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: "#6366f1",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#6366f1",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  scanBtnBusy: {
-    backgroundColor: "#4338ca",
-    opacity: 0.8,
-  },
-  scanBtnIcon: { fontSize: 28 },
-
-  // Manual mode
-  manualContainer: { backgroundColor: "#f9fafb" },
+  manualContainer: { backgroundColor: '#f9fafb' },
   manualHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    backgroundColor: "#ffffff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: 16, paddingVertical: 14,
+    backgroundColor: '#ffffff', borderBottomWidth: 1, borderBottomColor: '#e5e7eb',
   },
-  manualBackText: { color: "#6366f1", fontSize: 14, fontWeight: "600" },
-  manualTitle: { fontSize: 16, fontWeight: "700", color: "#111827" },
-  manualScroll: { flex: 1 },
-  manualContent: { padding: 16, paddingBottom: 48 },
+  manualBackText: { color: '#6366f1', fontSize: 14, fontWeight: '600' },
+  manualTitle:    { fontSize: 16, fontWeight: '700', color: '#111827' },
+  manualScroll:   { flex: 1 },
+  manualContent:  { padding: 16, paddingBottom: 48 },
 
-  section: { marginBottom: 20 },
-  sectionLabel: {
-    fontSize: 12,
-    color: "#6b7280",
-    marginBottom: 8,
-    fontWeight: "500",
-  },
-  fieldLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#374151",
-    marginBottom: 6,
-  },
-  fieldHint: { fontSize: 11, color: "#9ca3af", marginTop: 4 },
+  section:      { marginBottom: 20 },
+  sectionLabel: { fontSize: 12, color: '#6b7280', marginBottom: 8, fontWeight: '500' },
+  fieldLabel:   { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 6 },
+  fieldHint:    { fontSize: 11, color: '#9ca3af', marginTop: 4 },
 
   input: {
-    backgroundColor: "#ffffff",
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: "#111827",
-    minHeight: 48,
-    justifyContent: "center",
+    backgroundColor: '#ffffff', borderWidth: 1, borderColor: '#d1d5db',
+    borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12,
+    fontSize: 15, color: '#111827', minHeight: 48, justifyContent: 'center',
   },
-  selectRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  selectArrow: { fontSize: 12, color: "#6b7280", marginLeft: 8 },
-  inputText: { fontSize: 15, color: "#111827", flex: 1 },
-  inputPlaceholder: { fontSize: 15, color: "#9ca3af", flex: 1 },
+  selectRow:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  selectArrow:      { fontSize: 12, color: '#6b7280', marginLeft: 8 },
+  inputText:        { fontSize: 15, color: '#111827', flex: 1 },
+  inputPlaceholder: { fontSize: 15, color: '#9ca3af', flex: 1 },
 
   inputPrefix: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#ffffff",
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 10,
-    overflow: "hidden",
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#ffffff', borderWidth: 1, borderColor: '#d1d5db',
+    borderRadius: 10, overflow: 'hidden',
   },
   prefixText: {
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: "#6b7280",
-    fontWeight: "600",
-    borderRightWidth: 1,
-    borderRightColor: "#d1d5db",
+    paddingHorizontal: 14, paddingVertical: 12,
+    fontSize: 15, color: '#6b7280', fontWeight: '600',
+    borderRightWidth: 1, borderRightColor: '#d1d5db',
   },
   inputWithPrefix: {
-    flex: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: "#111827",
+    flex: 1, paddingHorizontal: 14, paddingVertical: 12,
+    fontSize: 15, color: '#111827',
   },
 
-  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
-    backgroundColor: "#ede9fe",
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    backgroundColor: '#ede9fe', borderRadius: 8,
+    paddingHorizontal: 10, paddingVertical: 6,
   },
-  chipText: { fontSize: 13, color: "#4c1d95", fontWeight: "500" },
+  chipText: { fontSize: 13, color: '#4c1d95', fontWeight: '500' },
 
   submitBtn: {
-    backgroundColor: "#6366f1",
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: "center",
-    marginTop: 8,
+    backgroundColor: '#6366f1', borderRadius: 12,
+    paddingVertical: 16, alignItems: 'center', marginTop: 8,
   },
-  submitBtnText: { color: "#ffffff", fontSize: 16, fontWeight: "700" },
+  submitBtnText: { color: '#ffffff', fontSize: 16, fontWeight: '700' },
 
-  // Modal
-  modalContainer: { flex: 1, backgroundColor: "#ffffff" },
+  modalContainer: { flex: 1, backgroundColor: '#ffffff' },
   modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: 20, paddingVertical: 16,
+    borderBottomWidth: 1, borderBottomColor: '#e5e7eb',
   },
-  modalTitle: { fontSize: 16, fontWeight: "700", color: "#111827" },
-  modalClose: { fontSize: 15, color: "#6366f1", fontWeight: "600" },
+  modalTitle:     { fontSize: 16, fontWeight: '700', color: '#111827' },
+  modalClose:     { fontSize: 15, color: '#6366f1', fontWeight: '600' },
   modalItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: 20, paddingVertical: 14,
   },
-  modalItemText: { fontSize: 15, color: "#111827" },
-  modalItemSub: { fontSize: 12, color: "#9ca3af", marginTop: 2 },
-  modalItemCheck: { fontSize: 16, color: "#6366f1", fontWeight: "700" },
-  modalSeparator: {
-    height: 1,
-    backgroundColor: "#f3f4f6",
-    marginHorizontal: 20,
-  },
+  modalItemText:  { fontSize: 15, color: '#111827' },
+  modalItemSub:   { fontSize: 12, color: '#9ca3af', marginTop: 2 },
+  modalItemCheck: { fontSize: 16, color: '#6366f1', fontWeight: '700' },
+  modalSeparator: { height: 1, backgroundColor: '#f3f4f6', marginHorizontal: 20 },
 });
