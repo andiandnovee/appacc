@@ -386,7 +386,7 @@ export default function PphReportPage() {
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet("Laporan PPh");
     const COLS = 17; // A–Q
-
+  
     const borderAll: Partial<ExcelJS.Borders> = {
       top: { style: "thin" },
       bottom: { style: "thin" },

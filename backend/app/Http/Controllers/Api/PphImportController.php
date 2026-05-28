@@ -189,8 +189,14 @@ class PphImportController extends Controller
             $vendor  = $item->vendor;
             $pphRate = $vendor?->pph_rate ?? 0;
             $pph     = abs($item->amount_in_local_currency);
+            if  ($item->gl_account_code == '21510001')
+                {
+                $bruto   = $pphRate > 0 ? round(($pph/2) / ($pphRate / 100)) : 0;
+                }
+             else
+            {   
             $bruto   = $pphRate > 0 ? round($pph / ($pphRate / 100)) : 0;
-
+            }
             return [
                 'id'              => $item->id,
                 'no_bukti_potong' => null,
