@@ -26,6 +26,7 @@ interface PphRow {
   address: string | null;
   service_type: string | null;
   doc_number: string;
+  po_number: string | null;
   po_text: string | null;
   bruto: number;
   dpp: number;

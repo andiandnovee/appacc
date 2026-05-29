@@ -19,7 +19,7 @@ class ImportPph extends Model
         'gl_account_code',
         'batch_id',
         'po_number', 
-        'po_text', // <-- new field untuk text PO
+        'text', // <-- new field untuk text PO
     ];
 
     protected $casts = [
