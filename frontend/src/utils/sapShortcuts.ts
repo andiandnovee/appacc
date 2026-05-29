@@ -3,14 +3,26 @@ import { createSapFile } from "./sapFile";
 /**
  * Spesifik: ME2N - Purchasing Documents per Document Number
  */
-export function downloadME2N(po: string, sapUser: string, sapServer: string): void {
+export function downloadME2N(
+  po: string,
+  sapUser: string,
+  sapServer: string,
+): void {
   const content = [
-    "[System]", "Name=P08", `Description=${sapServer}`, "Client=800",
-    "[User]", `Name=${sapUser}`, "Language=EN",
+    "[System]",
+    "Name=P08",
+    `Description=${sapServer}`,
+    "Client=800",
+    "[User]",
+    `Name=${sapUser}`,
+    "Language=EN",
     "[Function]",
     "Title=P08(1)800 Purchasing Documents per Document Number",
     `Command=/n*ME2N EN_EBELN-LOW=${po}; LISTU=ALV;`,
-    "Type=SystemCommand", "[Configuration]", "[Options]", "Reuse=1",
+    "Type=SystemCommand",
+    "[Configuration]",
+    "[Options]",
+    "Reuse=1",
   ].join("\n");
   createSapFile(`ME2N ${po}.sap`, content);
 }
@@ -19,17 +31,30 @@ export function downloadME2N(po: string, sapUser: string, sapServer: string): vo
  * Spesifik: MIR7 - Create Invoice
  */
 export function downloadMIR7(
-  po: string, sapUser: string, sapServer: string,
-  sapCocd: string, sapVendorName: string, sapInvoiceDate: string,
-  sapInvoiceAmount: string, sapBusArea: string,
+  po: string,
+  sapUser: string,
+  sapServer: string,
+  sapCocd: string,
+  sapVendorName: string,
+  sapInvoiceDate: string,
+  sapInvoiceAmount: string,
+  sapBusArea: string,
 ): void {
   const content = [
-    "[System]", "Name=P08", `Description=${sapServer}`, "Client=800",
-    "[User]", `Name=${sapUser}`, "Language=EN",
+    "[System]",
+    "Name=P08",
+    `Description=${sapServer}`,
+    "Client=800",
+    "[User]",
+    `Name=${sapUser}`,
+    "Language=EN",
     "[Function]",
     `Title=${sapBusArea} P08(1)800 Purchasing Create Invoice`,
     `Command=/n*MIR7  BKPF-BUKRS=${sapCocd} ;INVFO-MWSKZ=i0; INVFO-BLDAT=${sapInvoiceDate};INVFO-SGTXT=${po}-${sapVendorName}, PT ;INVFO-WRBTR=${sapInvoiceAmount}; RM08M-EBELN=${po};INVFO-XMWST=;INVFO-XBLNR=;DYNP_OKCODE=HEADER_FI  \n`,
-    "Type=SystemCommand", "[Configuration]", "[Options]", "Reuse=1",
+    "Type=SystemCommand",
+    "[Configuration]",
+    "[Options]",
+    "Reuse=1",
   ].join("\n");
   createSapFile(`${sapBusArea}  MIR7  ${po}.sap`, content);
 }
@@ -37,14 +62,27 @@ export function downloadMIR7(
 /**
  * Spesifik: FBV0
  */
-export function downloadFBV0(doc: string, cocd: string, sapUser: string, sapServer: string): void {
+export function downloadFBV0(
+  doc: string,
+  cocd: string,
+  sapUser: string,
+  sapServer: string,
+): void {
   const content = [
-    "[System]", "Name=P08", `Description=${sapServer}`, "Client=800",
-    "[User]", `Name=${sapUser}`, "Language=EN",
+    "[System]",
+    "Name=P08",
+    `Description=${sapServer}`,
+    "Client=800",
+    "[User]",
+    `Name=${sapUser}`,
+    "Language=EN",
     "[Function]",
     "Title=P08(1)800 Purchasing Documents per Document Number",
     `Command=/n*FBV0 RF05V-BUKRS=${cocd};RF05V-BELNR=${doc}; `,
-    "Type=SystemCommand", "[Configuration]", "[Options]", "Reuse=1",
+    "Type=SystemCommand",
+    "[Configuration]",
+    "[Options]",
+    "Reuse=1",
   ].join("\n");
   createSapFile(`FBV0 ${doc} - ${cocd}.sap`, content);
 }
@@ -113,8 +151,12 @@ interface F53Params {
   docDate: string | Date | number;
   postingDate: string | Date;
   headerText: string;
-  stageText: string;
+  stageText?: string;
   totalAmount: number;
+  // Override untuk mode perdin (SAKU/MKN)
+  augtxOverride?: string;
+  sgtxtOverride?: string;
+  xblnrOverride?: string;
 }
 
 /**
@@ -140,16 +182,29 @@ interface F53Params {
  *   RF05A-XAUTS = X
  */
 export function downloadF53({
-  sapUser, sapServer, companyCode, businessArea, bankAccount,
-  vendorName, vendorSapId, docDate, postingDate,
-  headerText, stageText, totalAmount,
+  sapUser,
+  sapServer,
+  companyCode,
+  businessArea,
+  bankAccount,
+  vendorName,
+  vendorSapId,
+  docDate,
+  postingDate,
+  headerText,
+  stageText,
+  totalAmount,
+  augtxOverride,
+  sgtxtOverride,
+  xblnrOverride,
 }: F53Params): void {
-  const sapDocDate  = toSapDate(docDate);
+  const sapDocDate = toSapDate(docDate);
   const sapPostDate = toSapDate(postingDate);
-  const sapAmount   = toSapAmount(totalAmount);
+  const sapAmount = toSapAmount(totalAmount);
 
-  const augtx = `TAG ${stageText}/${vendorName}`;
-  const sgtxt = `BYR TAG ${stageText}/${vendorName}`;
+  const augtx = augtxOverride ?? `TAG ${stageText}/${vendorName}`;
+  const sgtxt = sgtxtOverride ?? `BYR TAG ${stageText}/${vendorName}`;
+  const xblnr = xblnrOverride ?? vendorName;
 
   // Command: /n*F-53 diikuti field SAP dipisah ";"
   // Tidak ada spasi ekstra setelah /n*F-53 — langsung semicolon pertama
@@ -159,7 +214,7 @@ export function downloadF53({
     `BKPF-BLART=KZ`,
     `BKPF-BUKRS=${companyCode}`,
     `BKPF-BUDAT=${sapPostDate}`,
-    `BKPF-XBLNR=${vendorName}`,
+    `BKPF-XBLNR=${xblnr}`,
     `BKPF-BKTXT=${headerText}`,
     `RF05A-KONTO=${bankAccount}`,
     `BSEG-GSBER=${businessArea}`,
@@ -173,7 +228,7 @@ export function downloadF53({
     `RF05A-XAUTS=X`,
   ].join(";");
 
-  const command = `/n*F-53 ${fields};`;
+  const command = `/n*F-53; ${fields};`;
 
   const content = [
     "[System]",
@@ -193,7 +248,7 @@ export function downloadF53({
   ].join("\n");
 
   const safeName = vendorName.replace(/[\\/:*?"<>|]/g, "_").slice(0, 30);
-  const dateStr  = toSapDate(postingDate).replace(/\./g, "");
+  const dateStr = toSapDate(postingDate).replace(/\./g, "");
   createSapFile(`F53 ${businessArea} ${safeName} ${dateStr}.sap`, content);
 }
 
@@ -216,7 +271,7 @@ interface BatchCommonParams {
   bankAccount: string;
   postingDate: string | Date;
   headerText: string;
-  stageText: string;
+  stageText?: string;
 }
 
 export function downloadF53Batch(
@@ -226,11 +281,10 @@ export function downloadF53Batch(
   vendorGroups.forEach((group) => {
     downloadF53({
       ...commonParams,
-      vendorName:  group.vendorName,
+      vendorName: group.vendorName,
       vendorSapId: group.vendorSapId,
-      docDate:     group.docDate,
+      docDate: group.docDate,
       totalAmount: group.totalAmount,
     });
   });
 }
-
