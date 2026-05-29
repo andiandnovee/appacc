@@ -18,7 +18,8 @@ class ImportPph extends Model
         'vendor_code',
         'gl_account_code',
         'batch_id',
-        'po_number', // <-- new field untuk nomor PO
+        'po_number', 
+        'po_text', // <-- new field untuk text PO
     ];
 
     protected $casts = [
