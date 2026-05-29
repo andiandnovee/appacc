@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateVendorRequest;
 use App\Http\Resources\VendorResource;
 use App\Models\Vendor;
 use Illuminate\Http\Request;
+use App\Models\SapF53Upload; // 
 
 class VendorController extends Controller
 {
@@ -159,4 +160,49 @@ class VendorController extends Controller
             'message' => 'Vendor berhasil dihapus permanen.',
         ], 200);
     }
+
+           
+
+/**
+ * Vendor options untuk F53Helper.
+ * Query distinct vendor_sap_id dari sap_f53_uploads
+ * yang sudah difilter company + stage + business_area.
+ */
+public function selectOptions(Request $request)
+{
+    $query = SapF53Upload::query()
+        ->whereNull('deleted_at')
+        ->select('vendor_sap_id')
+        ->distinct();
+
+    if ($request->filled('company_sap_id')) {
+        $query->where('company_sap_id', $request->company_sap_id);
+    }
+    if ($request->filled('stage_sap_id')) {
+        $query->where('stage_sap_id', $request->stage_sap_id);
+    }
+    if ($request->filled('business_area')) {
+        $query->where('business_area', $request->business_area);
+    }
+
+    $vendorSapIds = $query->pluck('vendor_sap_id');
+
+    $vendorQuery = \App\Models\Vendor::whereIn('sap_id', $vendorSapIds)
+        ->orderBy('name')
+       ->select('sap_id as id', 'sap_id', 'name');
+
+    // Search by name — untuk AsyncSelect
+    if ($request->filled('search')) {
+        $vendorQuery->where('name', 'like', '%' . $request->search . '%');
+    }
+
+    // Pagination — limit/offset dari AsyncSelect
+    $limit  = (int) $request->get('limit', 10);
+    $offset = (int) $request->get('offset', 0);
+    $vendors = $vendorQuery->limit($limit)->offset($offset)->get();
+
+    return response()->json(['data' => $vendors]);
+}
+
+
 }

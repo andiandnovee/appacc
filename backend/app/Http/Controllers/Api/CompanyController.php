@@ -41,15 +41,15 @@ public function selectOptions(Request $request): JsonResponse
         $query->where('name', 'like', '%' . $request->search . '%');
     }
     
-    $companies = $query->get(['sap_id', 'name'])
-        ->map(fn($c) => [
-            'id'   =>  (string) $c->sap_id,
-
-            'name' => $c->name,
-            'npwp' => $c->npwp,
-            'address' => $c->address,
-     //       'accbank' => $c->accbank,
-        ]);
+    $companies = $query->get(['id', 'sap_id', 'name', 'npwp', 'address', 'accbank'])
+    ->map(fn($c) => [
+        'id'         => (string) $c->sap_id,
+        'company_id' => (string) $c->id,
+        'name'       => $c->name,
+        'npwp'       => $c->npwp,
+        'address'    => $c->address,
+        'accbank'    => $c->accbank,
+    ]);
 
     return response()->json(['data' => $companies]);
 }

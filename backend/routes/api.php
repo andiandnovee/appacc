@@ -95,11 +95,12 @@ Route::middleware('auth:api')->group(function () {
     Route::middleware('role:accounting')->group(function () {
 
         // Vendors — search harus sebelum apiResource
-        Route::delete('vendors/{vendor}/force-delete', [VendorController::class, 'forceDelete']);
-        Route::get('vendors/search', [VendorController::class, 'search']);
-        Route::post('vendors/{vendor}/restore', [VendorController::class, 'restore']);
-        Route::apiResource('vendors', VendorController::class);
-
+      // Vendors — static routes HARUS sebelum apiResource
+Route::delete('vendors/{vendor}/force-delete', [VendorController::class, 'forceDelete']);
+Route::post('vendors/{vendor}/restore',        [VendorController::class, 'restore']);
+Route::get('vendors/select-options',           [VendorController::class, 'selectOptions']); // ← tambah ini
+Route::get('vendors/search',                   [VendorController::class, 'search']);
+Route::apiResource('vendors', VendorController::class);
 
         // Master data — read only
 

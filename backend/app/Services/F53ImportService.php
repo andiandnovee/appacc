@@ -56,11 +56,14 @@ class F53ImportService
                 }
 
                 // --- Company auto-detect via business area ---
-                if (!isset($baCache[$businessArea])) {
-                    $ba = BusinessArea::where('sap_id', $businessArea)->first();
-                    $baCache[$businessArea] = $ba?->company_id;
-                }
-                $companySapId = $baCache[$businessArea];
+               if (!isset($baCache[$businessArea])) {
+    $ba = BusinessArea::where('business_areas.sap_id', $businessArea)
+    ->join('companies', 'companies.id', '=', 'business_areas.company_id')
+    ->select('companies.sap_id as company_sap_id')
+    ->first();
+    $baCache[$businessArea] = $ba?->company_sap_id;
+}
+$companySapId = $baCache[$businessArea];
 
                 // --- Parse PO number dari Text ---
                 // Jika 10 digit pertama diawali '45', ambil sebagai po_number
@@ -77,7 +80,7 @@ class F53ImportService
                     SapF53Upload::create([
                         'company_sap_id' => $companySapId,
                         'stage_sap_id'   => $stageSapId,
-                        'doc_date'       => $docDate,
+                       'doc_date' => $this->excelDateToSql($docDate),
                         'assignment'     => $assignment,
                         'business_area'  => (int) $businessArea,
                         'vendor_sap_id'  => (int) $vendor,
@@ -130,6 +133,14 @@ class F53ImportService
         }
     }
 
+    private function excelDateToSql(string $value): ?string
+{
+    if (!$value || !is_numeric($value)) return null;
+    // Excel epoch = 30 Des 1899
+    $date = \Carbon\Carbon::createFromDate(1899, 12, 30)
+        ->addDays((int) $value);
+    return $date->format('Y-m-d');
+}
     /**
      * Flip tanda amount.
      * Negatif → positif, positif → negatif.
