@@ -44,15 +44,11 @@ const App: FC = (): ReactElement => {
                 <Route path="/admin/users" element={<UserManagement />} />
                 <Route path="/ref/vendors" element={<VendorManagement />} />
                 <Route path="/ref/busa" element={<BusinessArea />} />
-                <Route
-                  path="/utility/import-po"
-                  element={<SapPoImportPage />}
-                />
+                <Route path="/utility/import-po" element={<SapPoImportPage />}                />
                 <Route path="/utility/import-pph" element={<PphImportPage />} />
                 <Route path="/invoice/pph" element={<PphReportPage />} />
                 <Route path="/utility/import-f53" element={<F53ImportPage />} />
-                <Route path="/invoice/import InvoiceReceiptManagement from './pages/invoice/Receipt/index';
-receipts" element={<Receipt />} />
+                <Route path="/invoice/receipts" element={<Receipt />} />
                 <Route path="/ref/stages" element={<Stages />} />
               </Route>
             </Route>

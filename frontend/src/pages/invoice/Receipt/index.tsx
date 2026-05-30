@@ -3,10 +3,11 @@ import ReceiptFormModal from "./ReceiptFormModal";
 import Button from "../../../components/ui/Button";
 import { SplitButton, SplitButtonOption } from "../../../components/ui/Button";
 import Table from "../../../components/ui/Table";
+import type { Column } from "../../../components/ui/Table";
 import Select from "../../../components/ui/Select";
 import Collapsible from "../../../components/ui/Collapsible";
 import { useToast } from "../../../components/ui/Toast";
-import { Plus, Trash2, Download, DatabaseBackupIcon } from "lucide-react";
+import { Trash2, Download } from "lucide-react";
 import styles from "./ReceiptManagement.module.css";
 import apiClient from "../../../api/axios";
 import { useFilterStore } from "../../../stores/filterReceipt";
@@ -14,8 +15,26 @@ import { useInterval } from "../../../hooks/useInterval";
 import { getToken } from "../../../api/axios";
 import { downloadME2N, downloadMIR7 } from "../../../utils/sapShortcuts";
 import { useAuth } from "../../../hooks/useAuth";
+
 const IS_PROD = import.meta.env.PROD;
 
+// ── Interfaces ────────────────────────────────────────────────
+interface TableHandle {
+  refetch: () => void;
+  setSearch: (value: string) => void;
+  data: any[];
+  loading: boolean;
+  clearAllFilters: () => void;
+}
+
+interface Receipt {
+  id: number;
+  invoice_number?: string;
+  po_number?: string;
+  [key: string]: any;
+}
+
+// ── Komponen ──────────────────────────────────────────────────
 export default function InvoiceReceiptManagement() {
   const {
     selectedCompany,
@@ -27,36 +46,30 @@ export default function InvoiceReceiptManagement() {
     setSelectedVendor,
     setSelectedYear,
     setSelectedStage,
-    setSelectedIsPkp,
     resetFilters,
   } = useFilterStore();
 
   const [formTarget, setFormTarget] = useState<any>({});
-  const [deletingId, setDeletingId] = useState(null);
-  const tableRef = useRef(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const tableRef = useRef<TableHandle | null>(null);
   const { addToast } = useToast();
-  // tambah state ini
   const { user } = useAuth();
 
-  // state
   const [tableOpen, setTableOpen] = useState(true);
   const [FormEditing, setFormEditing] = useState(false);
-  //const [tableSearchPo, setTableSearchPo] = useState("");
 
-  // handler dari ReceiptFormModal
+  // ── Handler: PO sudah ada → buka tabel & set search ──────────
   const handlePoAlreadyExists = useCallback((poNumber: string) => {
-    setTableOpen(true); // buka collapsible tabel
-    // set search setelah collapsible terbuka (tunggu render)
+    setTableOpen(true);
     setTimeout(() => {
       tableRef.current?.setSearch(poNumber);
     }, 50);
   }, []);
 
+  // ── Stage options ─────────────────────────────────────────────
   const [loadingStages, setLoadingStages] = useState(false);
-  // ✅ benar
-  const [stageOptions, setStageOptions] = useState<
-    { value: string; label: string }[]
-  >([]);
+ const [stageOptions, setStageOptions] = useState< { value: string; label: string }[]
+>([]);
 
   useEffect(() => {
     if (!selectedYear) {
@@ -83,9 +96,9 @@ export default function InvoiceReceiptManagement() {
     fetchStages();
   }, [selectedYear]);
 
+  // ── Polling ───────────────────────────────────────────────────
   const POLL_INTERVAL_MS = 1 * 60 * 1000;
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  //const isModalOpen = formTarget !== null;
 
   useInterval(
     useCallback(() => {
@@ -93,13 +106,14 @@ export default function InvoiceReceiptManagement() {
       tableRef.current?.refetch();
       setLastUpdated(new Date());
     }, []),
-    POLL_INTERVAL_MS, // ← polling jalan terus, form sudah tidak modal
+    POLL_INTERVAL_MS,
   );
 
   useEffect(() => {
     setLastUpdated(new Date());
   }, []);
 
+  // ── Filter params ─────────────────────────────────────────────
   const filterParams = useMemo<Record<string, any>>(() => {
     const params: Record<string, any> = {};
     if (selectedCompany) params.company_id = selectedCompany;
@@ -109,8 +123,9 @@ export default function InvoiceReceiptManagement() {
     return params;
   }, [selectedCompany, selectedVendor, selectedStage, selectedIsPkp]);
 
+  // ── Handlers ──────────────────────────────────────────────────
   const handleDelete = useCallback(
-    async (receipt, refetch) => {
+    async (receipt: Receipt, refetch: () => void) => {
       if (
         !confirm(
           `Hapus invoice receipt "${receipt.invoice_number || receipt.po_number || `ID ${receipt.id}`}"? Tindakan ini tidak dapat dibatalkan.`,
@@ -151,7 +166,6 @@ export default function InvoiceReceiptManagement() {
       title: "Receipt disimpan. Form siap untuk data baru.",
     });
     tableRef.current?.refetch();
-    // formTarget tetap {}, form direset oleh ReceiptFormModal sendiri
   }, [addToast]);
 
   const handleSAPMir7 = useCallback(
@@ -174,12 +188,15 @@ export default function InvoiceReceiptManagement() {
         sapBusArea,
       );
     },
-    [],
+    [user],
   );
 
-  const handleSAPME2n = useCallback((poNumber: string) => {
-    downloadME2N(poNumber, user?.sap_user, user?.sap_server_con);
-  }, []);
+  const handleSAPME2n = useCallback(
+    (poNumber: string) => {
+      downloadME2N(poNumber, user?.sap_user, user?.sap_server_con);
+    },
+    [user],
+  );
 
   const handleSAPcekICA = useCallback((poNumber: string) => {
     window.open(
@@ -188,13 +205,14 @@ export default function InvoiceReceiptManagement() {
     );
   }, []);
 
-  const columns = useMemo(
+  // ── Columns ───────────────────────────────────────────────────
+  const columns = useMemo<Column[]>(
     () => [
       {
         key: "po_number",
         label: "PO Number",
         sortable: true,
-        render: (row) => (
+        render: (row: any) => (
           <span className={styles.code}>{row.po_number || "—"}</span>
         ),
       },
@@ -204,7 +222,7 @@ export default function InvoiceReceiptManagement() {
         sortable: true,
         collapsible: true,
         collapseOrder: 0,
-        render: (row) => (
+        render: (row: any) => (
           <span className={styles.code}>{row.invoice_number || "—"}</span>
         ),
       },
@@ -213,11 +231,11 @@ export default function InvoiceReceiptManagement() {
         label: "Tanggal Receipt",
         sortable: true,
         collapsible: true,
-        exportValue: (row) =>
+        exportValue: (row: any) =>
           row.receipt_date
             ? new Date(row.receipt_date).toLocaleDateString("id-ID")
             : "",
-        render: (row) => (
+        render: (row: any) => (
           <span className={styles.muted}>
             {row.receipt_date
               ? new Date(row.receipt_date).toLocaleDateString("id-ID")
@@ -231,8 +249,8 @@ export default function InvoiceReceiptManagement() {
         sortable: true,
         collapsible: true,
         collapseOrder: 4,
-        exportValue: (row) => row.vendor?.name ?? "",
-        render: (row) => (
+        exportValue: (row: any) => row.vendor?.name ?? "",
+        render: (row: any) => (
           <span className={styles.muted}>{row.vendor?.name || "—"}</span>
         ),
       },
@@ -242,8 +260,8 @@ export default function InvoiceReceiptManagement() {
         sortable: false,
         collapsible: true,
         collapseOrder: 3,
-        exportValue: (row) => row.company?.name ?? "",
-        render: (row) => (
+        exportValue: (row: any) => row.company?.name ?? "",
+        render: (row: any) => (
           <span className={styles.muted}>{row.company?.name || "—"}</span>
         ),
       },
@@ -253,8 +271,8 @@ export default function InvoiceReceiptManagement() {
         sortable: false,
         collapsible: true,
         collapseOrder: 2,
-        exportValue: (row) => row.stage?.name ?? "",
-        render: (row) => (
+        exportValue: (row: any) => row.stage?.name ?? "",
+        render: (row: any) => (
           <span className={styles.muted}>{row.stage?.name || "—"}</span>
         ),
       },
@@ -264,9 +282,9 @@ export default function InvoiceReceiptManagement() {
         sortable: true,
         collapsible: true,
         collapseOrder: 1,
-        exportValue: (row) =>
+        exportValue: (row: any) =>
           row.amount ? parseFloat(row.amount).toLocaleString("id-ID") : "",
-        render: (row) => (
+        render: (row: any) => (
           <span className={styles.muted}>
             {row.amount ? parseFloat(row.amount).toLocaleString("id-ID") : "—"}
           </span>
@@ -277,10 +295,9 @@ export default function InvoiceReceiptManagement() {
         label: "Aksi",
         sortable: false,
         exportable: false,
-        render: (row) => {
+        render: (row: any) => {
           const pgr = row.pgr_id ?? "";
 
-          // ── Tentukan aksi SAP utama & secondary ──────────────────
           let sapMain: { label: string; onClick: () => void } | null = null;
           let sapSecondary: SplitButtonOption[] = [];
 
@@ -332,7 +349,11 @@ export default function InvoiceReceiptManagement() {
                   {
                     label: "Hapus",
                     icon: <Trash2 size={13} />,
-                    onClick: () => handleDelete(row, tableRef.current?.refetch),
+                    onClick: () =>
+                      handleDelete(
+                        row,
+                        tableRef.current?.refetch ?? (() => {}),
+                      ),
                   },
                 ]}
                 disabled={deletingId === row.id}
@@ -350,12 +371,12 @@ export default function InvoiceReceiptManagement() {
         },
       },
     ],
-    [handleDelete, deletingId],
+    [handleDelete, handleSAPMir7, handleSAPME2n, handleSAPcekICA, deletingId],
   );
 
+  // ── Render ────────────────────────────────────────────────────
   return (
     <div className={styles.page}>
-      {/* ── Page header ── */}
       <div className={styles.pageHeader}>
         <div>
           <h1 className={styles.pageTitle}>Manajemen Invoice Receipt</h1>
@@ -389,9 +410,7 @@ export default function InvoiceReceiptManagement() {
         }
         open={FormEditing}
         defaultOpen={true}
-        onToggle={(v) => {
-          setFormEditing(v);
-        }}
+        onToggle={(v) => setFormEditing(v)}
       >
         <ReceiptFormModal
           receipt={formTarget?.id ? formTarget : null}
@@ -408,11 +427,11 @@ export default function InvoiceReceiptManagement() {
             handleSavedAndNew();
             setFormEditing(false);
           }}
-          onPoAlreadyExists={handlePoAlreadyExists} // ← tambah ini
+          onPoAlreadyExists={handlePoAlreadyExists}
         />
       </Collapsible>
 
-      {/* ── Filter bar ── */}
+      {/* ── Filter + Tabel ── */}
       <Collapsible
         title="Daftar Invoice Receipt"
         defaultOpen={false}
@@ -473,8 +492,6 @@ export default function InvoiceReceiptManagement() {
             </Button>
           </div>
         </div>
-
-        {/* ── Tabel ── */}
 
         <Table
           ref={tableRef}
