@@ -16,19 +16,19 @@ import {
   Loader2,
   RefreshCw,
   User,
+  Trash2,
 } from "lucide-react";
 
 import api from "../../../api/axios";
 import { useAuth } from "../../../hooks/useAuth";
 import { useFilterF53Store } from "../../../stores/filterF53";
-import { downloadF53, downloadF53Batch } from "../../../utils/sapShortcuts";
+import { downloadF53 } from "../../../utils/sapShortcuts";
 
 import Card from "../../../components/ui/Card";
 import Button from "../../../components/ui/Button";
 import Input from "../../../components/ui/Input";
 import Select from "../../../components/ui/Select";
 import Badge from "../../../components/ui/Badge";
-import Collapsible from "../../../components/ui/Collapsible";
 
 import styles from "./F53HelperPage.module.css";
 
@@ -36,10 +36,10 @@ import styles from "./F53HelperPage.module.css";
 // TYPES
 // ─────────────────────────────────────────────
 interface Company {
-  id: string; // SAP code, misal "3500"
+  id: string;
   name: string;
   accbank: string;
-  company_id: string; // surrogate id, misal "2"
+  company_id: string;
 }
 
 interface Stage {
@@ -92,21 +92,14 @@ function formatDate(iso: string): string {
   });
 }
 
-/** Deteksi row perjalanan dinas — po_text mengandung SAKU atau MKN */
 function isSakuMkn(poText: string | null): boolean {
   if (!poText) return false;
   const upper = poText.toUpperCase();
   return upper.includes("SAKU") || upper.includes("MKN");
 }
 
-/**
- * Group rows terpilih untuk generate F53.
- * - Normal : group by vendor_sap_id → 1 file per vendor
- * - Perdin : group by reference     → 1 file per pejalan dinas
- */
 function groupRows(rows: F53Row[], checked: CheckedMap) {
   const selected = rows.filter((r) => checked[r.id]);
-
   const map = new Map<
     string,
     {
@@ -146,7 +139,6 @@ function groupRows(rows: F53Row[], checked: CheckedMap) {
   return Array.from(map.values());
 }
 
-/** Copy text ke clipboard, fallback ke execCommand kalau bukan secure context */
 async function copyToClipboard(text: string): Promise<void> {
   if (navigator.clipboard && window.isSecureContext) {
     try {
@@ -173,57 +165,33 @@ async function copyToClipboard(text: string): Promise<void> {
 export default function F53HelperPage() {
   const { user } = useAuth();
 
-  // ── Zustand filter store ──────────────────────
   const {
-    selectedCompany,
-    selectedStage,
-    selectedBusArea,
-    selectedVendor,
-    postingDate,
-    setSelectedCompany,
-    setSelectedStage,
-    setSelectedBusArea,
-    setSelectedVendor,
-    setPostingDate,
-    setHeaderSuffix,
-    getHeaderSuffix,
+    selectedCompany, selectedStage, selectedBusArea, selectedVendor, postingDate,
+    screenSkip, docSkip,
+    setSelectedCompany, setSelectedStage, setSelectedBusArea, setSelectedVendor,
+    setPostingDate, setScreenSkip, setDocSkip,
+    setHeaderSuffix, getHeaderSuffix, incrementHeaderSuffix,
   } = useFilterF53Store();
 
-  // headerSuffix per busArea
   const headerSuffix = getHeaderSuffix(selectedBusArea);
   const handleHeaderSuffixChange = (val: string) => {
     if (selectedBusArea) setHeaderSuffix(selectedBusArea, val);
   };
 
-  // ── Ref data ─────────────────────────────────
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [stages, setStages] = useState<Stage[]>([]);
-  const [busAreas, setBusAreas] = useState<BusArea[]>([]);
-
-  // ── selectedVendorName: disimpan terpisah karena AsyncSelect
-  // hanya expose value (sap_id), bukan object lengkap
+  const [companies, setCompanies]               = useState<Company[]>([]);
+  const [stages, setStages]                     = useState<Stage[]>([]);
+  const [busAreas, setBusAreas]                 = useState<BusArea[]>([]);
   const [selectedVendorName, setSelectedVendorName] = useState<string>("");
+  const [rows, setRows]                         = useState<F53Row[]>([]);
+  const [loading, setLoading]                   = useState(false);
+  const [error, setError]                       = useState<string | null>(null);
+  const [formErrors, setFormErrors]             = useState<Record<string, string>>({});
+  const [checked, setChecked]                   = useState<CheckedMap>({});
+  const [generating, setGenerating]             = useState(false);
+  const [deleting, setDeleting]                 = useState(false);
+  const [poTextSearch, setPoTextSearch]         = useState("");
 
-  // ── Table data ───────────────────────────────
-  const [rows, setRows] = useState<F53Row[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // ── Form errors ───────────────────────────────
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-
-  // ── Checklist ────────────────────────────────
-  const [checked, setChecked] = useState<CheckedMap>({});
-
-  // ── Generating ────────────────────────────────
-  const [generating, setGenerating] = useState(false);
-
-  // ── Search po_text — client-side filter di tabel
-  const [poTextSearch, setPoTextSearch] = useState("");
-
-  // ─────────────────────────────────────────────
-  // Derived values — SEBELUM fetchRows
-  // ─────────────────────────────────────────────
+  // ── Derived ──────────────────────────────────
   const activeCompany = useMemo(
     () => companies.find((c) => String(c.id) === String(selectedCompany)),
     [companies, selectedCompany],
@@ -237,44 +205,22 @@ export default function F53HelperPage() {
     [busAreas, selectedBusArea],
   );
 
-  // canFetch: vendor cukup ada nilai (sap_id string)
-  const canFetch = Boolean(selectedCompany && selectedStage && selectedBusArea);
-
-  // canFetchRows: butuh vendor juga
+  const canFetch    = Boolean(selectedCompany && selectedStage && selectedBusArea);
   const canFetchRows = Boolean(canFetch && selectedVendor);
 
-  // ─────────────────────────────────────────────
-  // Load ref data
-  // ─────────────────────────────────────────────
+  // ── Load ref data ─────────────────────────────
   useEffect(() => {
-    api.get("/companies/select-options").then((r) => {
-      setCompanies(r.data?.data ?? r.data ?? []);
-    });
-    api.get("/stages").then((r) => {
-      setStages(r.data?.data ?? r.data ?? []);
-    });
+    api.get("/companies/select-options").then((r) => setCompanies(r.data?.data ?? r.data ?? []));
+    api.get("/stages").then((r) => setStages(r.data?.data ?? r.data ?? []));
   }, []);
 
-  // Load busAreas saat company berubah
   useEffect(() => {
-    if (!selectedCompany || companies.length === 0) {
-      setBusAreas([]);
-      return;
-    }
-    const active = companies.find(
-      (c) => String(c.id) === String(selectedCompany),
-    );
-    api
-      .get("/busa", {
-        params: {
-          company_id: active?.company_id ?? selectedCompany,
-          per_page: 999,
-        },
-      })
+    if (!selectedCompany || companies.length === 0) { setBusAreas([]); return; }
+    const active = companies.find((c) => String(c.id) === String(selectedCompany));
+    api.get("/busa", { params: { company_id: active?.company_id ?? selectedCompany, per_page: 999 } })
       .then((r) => setBusAreas(r.data?.data ?? r.data ?? []));
   }, [selectedCompany, companies]);
 
-  // Reset vendor + rows saat busArea berubah
   useEffect(() => {
     setSelectedVendor("");
     setSelectedVendorName("");
@@ -283,25 +229,20 @@ export default function F53HelperPage() {
     setPoTextSearch("");
   }, [selectedBusArea]);
 
-  // ─────────────────────────────────────────────
-  // Load F53 rows — trigger saat vendor dipilih
-  // ─────────────────────────────────────────────
+  // ── Fetch rows ────────────────────────────────
   const fetchRows = useCallback(async () => {
-    if (!canFetchRows || !activeCompany || !activeBusArea) {
-      setRows([]);
-      return;
-    }
+    if (!canFetchRows || !activeCompany || !activeBusArea) { setRows([]); return; }
     setLoading(true);
     setError(null);
     setChecked({});
     try {
       const res = await api.get("/sap/f53-data", {
         params: {
-          company_id: activeCompany.id, // SAP code "3500"
-          stage_id: selectedStage, // surrogate id stages
-          business_area: activeBusArea.sap_id, // SAP int "3522"
-          vendor_sap_id: selectedVendor, // SAP id vendor "102768"
-          per_page: 999,
+          company_id:    activeCompany.id,
+          stage_id:      selectedStage,
+          business_area: activeBusArea.sap_id,
+          vendor_sap_id: selectedVendor,
+          per_page:      999,
         },
       });
       setRows(res.data?.data ?? res.data ?? []);
@@ -310,79 +251,41 @@ export default function F53HelperPage() {
     } finally {
       setLoading(false);
     }
-  }, [
-    canFetchRows,
-    activeCompany,
-    activeBusArea,
-    selectedStage,
-    selectedVendor,
-  ]);
+  }, [canFetchRows, activeCompany, activeBusArea, selectedStage, selectedVendor]);
 
-  useEffect(() => {
-    fetchRows();
-  }, [fetchRows]);
+  useEffect(() => { fetchRows(); }, [fetchRows]);
 
-  // ─────────────────────────────────────────────
-  // Computed
-  // ─────────────────────────────────────────────
-  const headerText = activeBusArea
-    ? `${activeBusArea.sap_id}-${headerSuffix}`
-    : headerSuffix;
+  // ── Computed ──────────────────────────────────
+  const headerText = activeBusArea ? `${activeBusArea.sap_id}-${headerSuffix}` : headerSuffix;
 
-  // Filter rows by po_text search (client-side)
   const filteredRows = poTextSearch.trim()
-    ? rows.filter(
-        (r) =>
-          (r.po_text ?? "")
-            .toLowerCase()
-            .includes(poTextSearch.toLowerCase()) ||
-          (r.reference ?? "")
-            .toLowerCase()
-            .includes(poTextSearch.toLowerCase()),
+    ? rows.filter((r) =>
+        (r.po_text ?? "").toLowerCase().includes(poTextSearch.toLowerCase()) ||
+        (r.reference ?? "").toLowerCase().includes(poTextSearch.toLowerCase()),
       )
     : rows;
 
-  const selectedRows = filteredRows.filter((r) => checked[r.id]);
-  const vendorGroups = useMemo(
-    () => groupRows(filteredRows, checked),
-    [rows, checked],
-  );
-  const grandTotal = selectedRows.reduce((s, r) => s + Number(r.amount), 0);
-
-  // Ambil dari assignment baris terpilih — berisi nilai asli SAP "II MEI'26"
-  // fallback ke nama stage kalau belum ada rows tercentang
-  const stageText =
-    selectedRows[0]?.assignment ??
-    activeStage?.stage_text ??
-    activeStage?.name ??
-    "";
-
-  const allChecked =
-    filteredRows.length > 0 && filteredRows.every((r) => checked[r.id]);
-  const someChecked = filteredRows.some((r) => checked[r.id]);
-
-  // canGenerate — dideklarasi sebelum useCallback supaya bisa masuk dependency
-  const canGenerate =
-    selectedRows.length > 0 && Boolean(postingDate) && Boolean(headerSuffix);
+  const selectedRows  = filteredRows.filter((r) => checked[r.id]);
+  const vendorGroups  = useMemo(() => groupRows(filteredRows, checked), [filteredRows, checked]);
+  const grandTotal    = selectedRows.reduce((s, r) => s + Number(r.amount), 0);
+  const stageText     = selectedRows[0]?.assignment ?? activeStage?.stage_text ?? activeStage?.name ?? "";
+  const allChecked    = filteredRows.length > 0 && filteredRows.every((r) => checked[r.id]);
+  const someChecked   = filteredRows.some((r) => checked[r.id]);
+  const canGenerate   = selectedRows.length > 0 && Boolean(postingDate) && Boolean(headerSuffix);
 
   const toggleAll = useCallback(() => {
     if (allChecked) {
       setChecked({});
     } else {
       const next: CheckedMap = {};
-      filteredRows.forEach((r) => {
-        next[r.id] = true;
-      });
+      filteredRows.forEach((r) => { next[r.id] = true; });
       setChecked(next);
     }
   }, [allChecked, filteredRows]);
 
-  const toggleRow = (id: number) =>
-    setChecked((prev) => ({ ...prev, [id]: !prev[id] }));
+  const toggleRow = (id: number) => setChecked((prev) => ({ ...prev, [id]: !prev[id] }));
 
-  // ─────────────────────────────────────────────
-  // Validate & Generate
-  // ─────────────────────────────────────────────
+  // ── Validate ──────────────────────────────────
   const validate = useCallback((): boolean => {
     const errs: Record<string, string> = {};
     if (!postingDate) errs.postingDate = "Tanggal posting wajib diisi";
@@ -391,74 +294,93 @@ export default function F53HelperPage() {
     return Object.keys(errs).length === 0;
   }, [postingDate, headerSuffix]);
 
+  // ── Generate ──────────────────────────────────
   const handleGenerate = useCallback(async () => {
     if (!validate()) return;
     if (selectedRows.length === 0) return;
     if (!activeCompany?.accbank) {
-      alert(
-        "Bank account company tidak ditemukan. Pastikan data company sudah lengkap (field accbank).",
-      );
+      alert("Bank account company tidak ditemukan.");
       return;
     }
-
     setGenerating(true);
     try {
       vendorGroups.forEach((group) => {
-        const augtx = group.isPerdin
-          ? `U.SAKU/MKN ${group.xblnr}`
-          : `TAG ${stageText}/${group.vendorName}`;
-        const sgtxt = group.isPerdin
-          ? `U.SAKU/MKN ${group.xblnr}`
-          : `BYR TAG ${stageText}/${group.vendorName}`;
+        const augtx = group.isPerdin ? `U.SAKU/MKN ${group.xblnr}` : `TAG ${stageText}/${group.vendorName}`;
+        const sgtxt = group.isPerdin ? `U.SAKU/MKN ${group.xblnr}` : `BYR TAG ${stageText}/${group.vendorName}`;
         const xblnr = group.isPerdin ? group.xblnr : group.vendorName;
 
         downloadF53({
-          sapUser: user?.sap_user ?? "",
-          sapServer: user?.sap_server_con ?? "",
-          companyCode: activeCompany!.id,
-          businessArea: activeBusArea?.sap_id ?? selectedBusArea,
-          bankAccount: activeCompany!.accbank,
-          postingDate,
-          headerText,
-          stageText,
-          vendorName: group.vendorName,
-          vendorSapId: group.vendorSapId,
-          docDate: group.docDate,
-          totalAmount: group.totalAmount,
+          sapUser:       user?.sap_user ?? "",
+          sapServer:     user?.sap_server_con ?? "",
+          companyCode:   activeCompany!.id,
+          businessArea:  activeBusArea?.sap_id ?? selectedBusArea,
+          bankAccount:   activeCompany!.accbank,
+          postingDate,   headerText,   stageText,
+          vendorName:    group.vendorName,
+          vendorSapId:   group.vendorSapId,
+          docDate:       group.docDate,
+          totalAmount:   group.totalAmount,
           augtxOverride: augtx,
           sgtxtOverride: sgtxt,
           xblnrOverride: xblnr,
+          skipScreen:    screenSkip,
+          skipDoc:       docSkip,
         });
       });
+
+      // Auto-increment header suffix untuk generate berikutnya
+      if (selectedBusArea) incrementHeaderSuffix(selectedBusArea);
 
       const docNumbers = selectedRows.map((r) => r.doc_number).join("\n");
       await copyToClipboard(docNumbers);
     } finally {
       setGenerating(false);
     }
-  }, [
-    validate,
-    selectedRows,
-    activeCompany,
-    activeBusArea,
-    selectedBusArea,
-    vendorGroups,
-    user,
-    postingDate,
-    headerText,
-    stageText,
-  ]);
+  }, [validate, selectedRows, activeCompany, activeBusArea, selectedBusArea,
+      vendorGroups, user, postingDate, headerText, stageText,
+      screenSkip, docSkip, incrementHeaderSuffix]);
+
+  // ── Delete data ───────────────────────────────
+  const handleDeleteData = useCallback(async () => {
+    const confirmed = window.confirm(
+      `Hapus semua data F53 untuk:\n` +
+      `Company  : ${activeCompany?.id} — ${activeCompany?.name}\n` +
+      `Stage    : ${activeStage?.name}\n` +
+      `Bus Area : ${activeBusArea?.sap_id} — ${activeBusArea?.name}\n\n` +
+      `Lanjutkan?`,
+    );
+    if (!confirmed) return;
+    setDeleting(true);
+    try {
+      await api.delete("/sap/f53-data", {
+        params: {
+          company_id:    activeCompany!.id,
+          stage_id:      selectedStage,
+          business_area: activeBusArea!.sap_id,
+        },
+      });
+      setRows([]);
+      setChecked({});
+      setSelectedVendor("");
+      setSelectedVendorName("");
+      setPoTextSearch("");
+    } catch (e: any) {
+      alert(e?.response?.data?.error ?? "Gagal menghapus data");
+    } finally {
+      setDeleting(false);
+    }
+  }, [activeCompany, activeStage, activeBusArea, selectedStage]);
 
   // ── Keyboard shortcuts ────────────────────────
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement).tagName;
       if (["INPUT", "TEXTAREA", "SELECT"].includes(tag)) return;
-      if ((e.ctrlKey && e.key === "g") || (e.ctrlKey && e.key === "G")) {
+      if (e.ctrlKey && (e.key === "g" || e.key === "G")) {
         e.preventDefault();
         if (canGenerate && !generating) handleGenerate();
       }
-      if ((e.ctrlKey && e.key === "a") || (e.ctrlKey && e.key === "A")) {
+      if (e.ctrlKey && (e.key === "a" || e.key === "A")) {
         e.preventDefault();
         toggleAll();
       }
@@ -467,34 +389,19 @@ export default function F53HelperPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [canGenerate, generating, handleGenerate, toggleAll]);
 
-  // ─────────────────────────────────────────────
-  // Select options
-  // ─────────────────────────────────────────────
-  const companyOptions = companies.map((c) => ({
-    value: c.id,
-    label: `${c.id} — ${c.name}`,
-  }));
+  // ── Select options ────────────────────────────
+  const companyOptions = companies.map((c) => ({ value: c.id, label: `${c.id} — ${c.name}` }));
+  const stageOptions   = stages.map((s) => ({ value: String(s.id), label: s.name }));
+  const busAreaOptions = busAreas.map((b) => ({ value: String(b.id), label: `${b.sap_id} — ${b.name}` }));
 
-  const stageOptions = stages.map((s) => ({
-    value: String(s.id),
-    label: s.name,
-  }));
-
-  const busAreaOptions = busAreas.map((b) => ({
-    value: String(b.id),
-    label: `${b.sap_id} — ${b.name}`,
-  }));
-
-  // fetchOptions untuk AsyncSelect vendor
-  // value yang disimpan = sap_id (karena backend return sap_id as id)
   const vendorFetchOptions = canFetch
     ? {
         endpoint: "/vendors/select-options",
         searchParam: "search",
         filters: {
-          company_sap_id: activeCompany?.id, // "3500"
-          stage_sap_id: activeStage?.id, // "160"
-          business_area: activeBusArea?.sap_id, // "3522"
+          company_sap_id: activeCompany?.id,
+          stage_sap_id:   activeStage?.id,
+          business_area:  activeBusArea?.sap_id,
         },
         limit: 10,
       }
@@ -505,17 +412,14 @@ export default function F53HelperPage() {
   // ─────────────────────────────────────────────
   return (
     <div className={styles.page}>
+
       {/* PAGE HEADER */}
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
-          <div className={styles.pageIcon}>
-            <FileDown size={20} />
-          </div>
+          <div className={styles.pageIcon}><FileDown size={20} /></div>
           <div>
             <h1 className={styles.pageTitle}>F-53 Helper</h1>
-            <p className={styles.pageSubtitle}>
-              Generate SAP shortcut untuk TCode F-53 (Manual Outgoing Payment)
-            </p>
+            <p className={styles.pageSubtitle}>Generate SAP shortcut untuk TCode F-53 (Manual Outgoing Payment)</p>
           </div>
         </div>
       </div>
@@ -525,6 +429,20 @@ export default function F53HelperPage() {
         <Card.Header
           title="1. Pilih Filter Data"
           subtitle="Pilih company, stage, dan business area"
+          action={
+            canFetch ? (
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={handleDeleteData}
+                disabled={deleting}
+                loading={deleting}
+              >
+                <Trash2 size={14} />
+                {deleting ? "Menghapus..." : "Hapus Data"}
+              </Button>
+            ) : undefined
+          }
         />
         <Card.Body>
           <div className={styles.filterGrid}>
@@ -544,11 +462,7 @@ export default function F53HelperPage() {
             />
             <Select
               label="Business Area"
-              placeholder={
-                selectedCompany
-                  ? "Pilih business area..."
-                  : "Pilih company dulu"
-              }
+              placeholder={selectedCompany ? "Pilih business area..." : "Pilih company dulu"}
               value={selectedBusArea}
               onChange={(e) => setSelectedBusArea(e.target.value)}
               disabled={!selectedCompany || busAreas.length === 0}
@@ -556,7 +470,6 @@ export default function F53HelperPage() {
             />
           </div>
 
-          {/* Filter chips */}
           {canFetch && (
             <div className={styles.filterChips}>
               {activeCompany && (
@@ -570,10 +483,7 @@ export default function F53HelperPage() {
                   <Layers size={12} />
                   {activeStage.name}
                   {activeStage.stage_text && (
-                    <span className={styles.chipSub}>
-                      {" "}
-                      · {activeStage.stage_text}
-                    </span>
+                    <span className={styles.chipSub}> · {activeStage.stage_text}</span>
                   )}
                 </span>
               )}
@@ -604,70 +514,75 @@ export default function F53HelperPage() {
               error={formErrors.postingDate}
               hint="Default hari ini · BKPF-BUDAT & BSEG-VALUT"
             />
-
-            <div>
-              
-              <Input
-  label="Nomor Header (BKPF-BKTXT)"
-  placeholder="025677"
-  value={headerSuffix}
-  onChange={(e) => handleHeaderSuffixChange(e.target.value)}
-  error={formErrors.headerSuffix}
-  hint={`Hasil: ${headerText || "(belum diisi)"} · tersimpan per Business Area`}
-  maxLength={10}
-  disabled={!selectedBusArea}
-  iconLeft={
-    activeBusArea?.sap_id
-      ? <span style={{ fontSize: "var(--text-xs)", fontWeight: "var(--font-medium)", color: "var(--text-secondary)", whiteSpace: "nowrap" }}>{activeBusArea.sap_id} -</span>
-      : undefined
-  }
-/>
-            </div>
+            <Input
+              label="Nomor Header (BKPF-BKTXT)"
+              placeholder="025677"
+              value={headerSuffix}
+              onChange={(e) => handleHeaderSuffixChange(e.target.value)}
+              error={formErrors.headerSuffix}
+              hint={`Hasil: ${headerText || "(belum diisi)"} · tersimpan per Business Area`}
+              maxLength={10}
+              disabled={!selectedBusArea}
+              iconLeft={
+                activeBusArea?.sap_id
+                  ? (
+                    <span style={{
+                      fontSize: "var(--text-xs)",
+                      fontWeight: "var(--font-medium)",
+                      color: "var(--text-secondary)",
+                      whiteSpace: "nowrap",
+                    }}>
+                      {activeBusArea.sap_id} -
+                    </span>
+                  )
+                  : undefined
+              }
+            />
           </div>
 
-          {/* SAP field preview */}
+          {/* Toggle skipScreen & skipDoc */}
+          <div className={styles.skipToggles}>
+            <label className={styles.skipToggleLabel}>
+              <input
+                type="checkbox"
+                checked={screenSkip}
+                onChange={(e) => setScreenSkip(e.target.checked)}
+              />
+              <span>Skip Screen <small>(eksekusi langsung /n*F-53)</small></span>
+            </label>
+            <label className={styles.skipToggleLabel}>
+              <input
+                type="checkbox"
+                checked={docSkip}
+                onChange={(e) => setDocSkip(e.target.checked)}
+              />
+              <span>Skip Doc Number <small>(RF05A-XPOS1=X)</small></span>
+            </label>
+          </div>
+
           {(postingDate || headerSuffix) && (
-            <Collapsible
-            title="Preview field SAP"
-            defaultOpen={false}
-            >
             <div className={styles.sapPreview}>
-              
+              <div className={styles.sapPreviewTitle}>
+                <Info size={13} /> Preview field SAP
+              </div>
               <div className={styles.sapPreviewGrid}>
                 <SapField label="BKPF-BKTXT" value={headerText || "—"} />
                 <SapField label="BKPF-BUKRS" value={activeCompany?.id ?? "—"} />
-                <SapField
-                  label="BSEG-GSBER"
-                  value={activeBusArea?.sap_id ?? "—"}
-                />
-                <SapField
-                  label="RF05A-KONTO"
-                  value={activeCompany?.accbank ?? "—"}
-                  warn={Boolean(activeCompany && !activeCompany.accbank)}
-                />
+                <SapField label="BSEG-GSBER" value={activeBusArea?.sap_id ?? "—"} />
+                <SapField label="RF05A-KONTO" value={activeCompany?.accbank ?? "—"} warn={Boolean(activeCompany && !activeCompany.accbank)} />
                 <SapField label="RF05A-AGKON" value={selectedVendor || "—"} />
                 <SapField
                   label="RF05A-AUGTX"
-                  value={
-                    stageText && selectedVendorName
-                      ? `TAG ${stageText}/${selectedVendorName}`
-                      : "—"
-                  }
+                  value={stageText && selectedVendorName ? `TAG ${stageText}/${selectedVendorName}` : "—"}
                 />
-                <SapField
-                  label="BSEG-WRBTR"
-                  value={grandTotal > 0 ? formatRupiah(grandTotal) : "—"}
-                  note="total checklist"
-                />
+                <SapField label="BSEG-WRBTR" value={grandTotal > 0 ? formatRupiah(grandTotal) : "—"} note="total checklist" />
               </div>
             </div>
-            </Collapsible>
-          )
-          }
+          )}
         </Card.Body>
       </Card>
 
-      {/* ── STEP 3: PILIH VENDOR + TABEL DATA ─────── */}
+      {/* ── STEP 3: VENDOR + TABEL ───────────────── */}
       <Card variant="outlined">
         <Card.Header
           title="3. Pilih Transaksi"
@@ -677,21 +592,11 @@ export default function F53HelperPage() {
                 {rows.length > 0 && (
                   <Button variant="outline" size="sm" onClick={toggleAll}>
                     <CheckSquare size={14} />
-                    {allChecked
-                      ? "Uncheck All (Ctrl + A)"
-                      : "Check All (Ctrl+ A)"}
+                    {allChecked ? "Uncheck All (Ctrl+A)" : "Check All (Ctrl+A)"}
                   </Button>
                 )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={fetchRows}
-                  disabled={loading}
-                >
-                  <RefreshCw
-                    size={14}
-                    className={loading ? styles.spinning : ""}
-                  />
+                <Button variant="outline" size="sm" onClick={fetchRows} disabled={loading}>
+                  <RefreshCw size={14} className={loading ? styles.spinning : ""} />
                   Refresh
                 </Button>
                 <Button
@@ -704,7 +609,7 @@ export default function F53HelperPage() {
                   <Download size={14} />
                   {generating
                     ? "Generating..."
-                    : `Generate${vendorGroups.length > 1 ? ` (${vendorGroups.length} file) (Ctrl+G)` : " (Ctrl+G) "}`}
+                    : `Generate${vendorGroups.length > 1 ? ` (${vendorGroups.length} file)` : ""} (Ctrl+G)`}
                 </Button>
               </div>
             ) : undefined
@@ -712,53 +617,34 @@ export default function F53HelperPage() {
         />
 
         <Card.Body>
-          {/* Vendor select — di dalam card tabel */}
           <div className={styles.vendorSelectRow}>
             <Select
               label="Vendor"
-              placeholder={
-                canFetch ? "Ketik nama vendor..." : "Lengkapi filter dulu"
-              }
+              placeholder={canFetch ? "Ketik nama vendor..." : "Lengkapi filter dulu"}
               value={selectedVendor}
-              onChange={(e) => {
-                setSelectedVendor(e.target.value);
-              }}
+              onChange={(e) => setSelectedVendor(e.target.value)}
               disabled={!canFetch}
               fetchOptions={vendorFetchOptions}
             />
-            {selectedVendor && selectedVendorName && (
-              <span className={styles.chip}>
-                <User size={12} />
-                {selectedVendor} · {selectedVendorName}
-              </span>
-            )}
           </div>
 
-          {/* Search po_text — muncul kalau sudah ada rows */}
           {rows.length > 0 && (
             <div className={styles.poTextSearchRow}>
               <Input
                 placeholder="Cari po_text / nama pejalan dinas..."
                 value={poTextSearch}
                 onChange={(e) => setPoTextSearch(e.target.value)}
-                hint={
-                  poTextSearch
-                    ? `${filteredRows.length} dari ${rows.length} baris`
-                    : undefined
-                }
+                hint={poTextSearch ? `${filteredRows.length} dari ${rows.length} baris` : undefined}
               />
             </div>
           )}
         </Card.Body>
 
-        {/* Summary bar */}
         {someChecked && (
           <div className={styles.summaryBar}>
             <div className={styles.summaryLeft}>
               <CheckSquare size={16} />
-              <span>
-                <strong>{selectedRows.length}</strong> transaksi dipilih
-              </span>
+              <span><strong>{selectedRows.length}</strong> transaksi dipilih</span>
             </div>
             <div className={styles.summaryRight}>
               Total: <strong>{formatRupiah(grandTotal)}</strong>
@@ -766,7 +652,6 @@ export default function F53HelperPage() {
           </div>
         )}
 
-        {/* State: belum pilih filter */}
         {!canFetch && (
           <div className={styles.emptyState}>
             <Layers size={36} className={styles.emptyIcon} />
@@ -774,7 +659,6 @@ export default function F53HelperPage() {
           </div>
         )}
 
-        {/* State: filter ok tapi vendor belum dipilih */}
         {canFetch && !selectedVendor && (
           <div className={styles.emptyState}>
             <User size={36} className={styles.emptyIcon} />
@@ -782,7 +666,6 @@ export default function F53HelperPage() {
           </div>
         )}
 
-        {/* State: loading */}
         {canFetchRows && loading && (
           <div className={styles.loadingState}>
             <Loader2 size={24} className={styles.spinning} />
@@ -790,18 +673,14 @@ export default function F53HelperPage() {
           </div>
         )}
 
-        {/* State: error */}
         {canFetchRows && !loading && error && (
           <div className={styles.errorState}>
             <AlertCircle size={18} />
             <span>{error}</span>
-            <Button variant="outline" size="sm" onClick={fetchRows}>
-              Coba lagi
-            </Button>
+            <Button variant="outline" size="sm" onClick={fetchRows}>Coba lagi</Button>
           </div>
         )}
 
-        {/* Empty */}
         {canFetchRows && !loading && !error && rows.length === 0 && (
           <div className={styles.emptyState}>
             <Info size={36} className={styles.emptyIcon} />
@@ -809,7 +688,6 @@ export default function F53HelperPage() {
           </div>
         )}
 
-        {/* Tabel */}
         {canFetchRows && !loading && !error && rows.length > 0 && (
           <div className={styles.tableScroll}>
             <table className={styles.table}>
@@ -820,9 +698,7 @@ export default function F53HelperPage() {
                       type="checkbox"
                       className={styles.checkbox}
                       checked={allChecked}
-                      ref={(el) => {
-                        if (el) el.indeterminate = !allChecked && someChecked;
-                      }}
+                      ref={(el) => { if (el) el.indeterminate = !allChecked && someChecked; }}
                       onChange={toggleAll}
                       title="Pilih semua"
                     />
@@ -843,10 +719,7 @@ export default function F53HelperPage() {
                     className={`${styles.tr} ${checked[row.id] ? styles.trSelected : ""} ${isSakuMkn(row.po_text) ? styles.trPerdin : ""}`}
                     onClick={() => toggleRow(row.id)}
                   >
-                    <td
-                      className={styles.tdCheck}
-                      onClick={(e) => e.stopPropagation()}
-                    >
+                    <td className={styles.tdCheck} onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         className={styles.checkbox}
@@ -857,28 +730,14 @@ export default function F53HelperPage() {
                     <td className={styles.tdMono}>{row.doc_number}</td>
                     <td>{formatDate(row.doc_date)}</td>
                     <td className={styles.tdPoText}>
-                      {isSakuMkn(row.po_text) && (
-                        <Badge variant="warning" size="sm">
-                          perdin
-                        </Badge>
-                      )}
+                      {isSakuMkn(row.po_text) && <Badge variant="warning" size="sm">perdin</Badge>}
                       {row.po_text || "—"}
                     </td>
                     <td className={styles.tdMono}>{row.reference || "—"}</td>
-                    <td>
-                      <Badge variant="default" size="sm">
-                        {row.business_area}
-                      </Badge>
-                    </td>
+                    <td><Badge variant="default" size="sm">{row.business_area}</Badge></td>
                     <td className={styles.tdMono}>{row.po_number || "—"}</td>
                     <td className={styles.tdRight}>
-                      <span
-                        className={
-                          checked[row.id]
-                            ? styles.amountSelected
-                            : styles.amount
-                        }
-                      >
+                      <span className={checked[row.id] ? styles.amountSelected : styles.amount}>
                         {formatRupiah(Number(row.amount))}
                       </span>
                     </td>
@@ -909,24 +768,19 @@ export default function F53HelperPage() {
           <Card.Body>
             <div className={styles.hintList}>
               {!postingDate && (
-                <div className={styles.hint}>
-                  <AlertCircle size={13} /> Isi Tanggal Posting
-                </div>
+                <div className={styles.hint}><AlertCircle size={13} /> Isi Tanggal Posting</div>
               )}
               {!headerSuffix && (
-                <div className={styles.hint}>
-                  <AlertCircle size={13} /> Isi Nomor Header (BKPF-BKTXT)
-                </div>
+                <div className={styles.hint}><AlertCircle size={13} /> Isi Nomor Header (BKPF-BKTXT)</div>
               )}
               {postingDate && headerSuffix && selectedRows.length === 0 && (
-                <div className={styles.hint}>
-                  <AlertCircle size={13} /> Centang minimal 1 transaksi di tabel
-                </div>
+                <div className={styles.hint}><AlertCircle size={13} /> Centang minimal 1 transaksi di tabel</div>
               )}
             </div>
           </Card.Body>
         </Card>
       )}
+
     </div>
   );
 }
@@ -935,15 +789,9 @@ export default function F53HelperPage() {
 // Sub-component
 // ─────────────────────────────────────────────
 function SapField({
-  label,
-  value,
-  note,
-  warn,
+  label, value, note, warn,
 }: {
-  label: string;
-  value: string;
-  note?: string;
-  warn?: boolean;
+  label: string; value: string; note?: string; warn?: boolean;
 }) {
   return (
     <div className={`${styles.sapField} ${warn ? styles.sapFieldWarn : ""}`}>

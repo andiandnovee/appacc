@@ -30,8 +30,12 @@ class F53ImportController extends Controller
 
         $headers  = array_keys($rows[0] ?? []);
         $required = [
-            'Document Date', 'Assignment', 'Business Area',
-            'Vendor', 'Amount in local currency', 'Text',
+            'Document Date',
+            'Assignment',
+            'Business Area',
+            'Vendor',
+            'Amount in local currency',
+            'Text',
             'Document Number',
         ];
 
@@ -122,20 +126,27 @@ class F53ImportController extends Controller
      * Hapus data F53 by stage
      * DELETE /sap/f53-data?stage_sap_id=xxx
      */
+    /**
+     * Hapus data F53 by company + stage + business_area
+     * DELETE /sap/f53-data
+     */
     public function destroy(Request $request): JsonResponse
     {
         $request->validate([
-            'stage_sap_id' => 'required|integer',
+            'company_id'    => 'required|integer',
+            'stage_id'      => 'required|integer',
+            // 'business_area' => 'required|integer',
         ]);
 
-        $stageSapId = (int) $request->input('stage_sap_id');
-
-        $deleted = SapF53Upload::where('stage_sap_id', $stageSapId)->delete();
+        $deleted = SapF53Upload::where('company_sap_id', (int) $request->input('company_id'))
+            ->where('stage_sap_id',  (int) $request->input('stage_id'))
+            // ->where('business_area', (int) $request->input('business_area'))
+            ->delete();
 
         if ($deleted === 0) {
             return response()->json([
                 'success' => false,
-                'error'   => 'Tidak ada data untuk stage tersebut.',
+                'error'   => 'Tidak ada data untuk filter tersebut.',
             ], 404);
         }
 

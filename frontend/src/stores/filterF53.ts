@@ -1,9 +1,5 @@
 /**
  * stores/filterF53.ts
- *
- * Zustand store untuk filter state di F53HelperPage.
- * headerSuffix disimpan per busArea ID supaya saat user ganti busArea
- * lalu kembali, nilai terakhir muncul kembali.
  */
 
 import { create } from "zustand";
@@ -15,12 +11,8 @@ interface FilterF53State {
   selectedBusArea: string;
   selectedVendor: string;
   postingDate: string;
-incrementHeaderSuffix: (busAreaId: string) => void;
-  /**
-   * headerSuffix disimpan per busArea ID.
-   * key  : busArea ID (string)
-   * value: suffix terakhir yang diisi user
-   */
+  screenSkip: boolean; // skip confirmation screen di SAP (/n*F-53)
+  docSkip: boolean; // skip doc number field (RF05A-XPOS1=X)
   headerSuffixMap: Record<string, string>;
 
   setSelectedCompany: (value: string) => void;
@@ -28,13 +20,11 @@ incrementHeaderSuffix: (busAreaId: string) => void;
   setSelectedBusArea: (value: string) => void;
   setSelectedVendor: (value: string) => void;
   setPostingDate: (value: string) => void;
-
-  /** Simpan suffix untuk busArea tertentu */
+  setScreenSkip: (value: boolean) => void;
+  setDocSkip: (value: boolean) => void;
   setHeaderSuffix: (busAreaId: string, suffix: string) => void;
-
-  /** Ambil suffix untuk busArea tertentu (default "") */
   getHeaderSuffix: (busAreaId: string) => string;
-
+  incrementHeaderSuffix: (busAreaId: string) => void;
   resetFilters: () => void;
 }
 
@@ -50,6 +40,8 @@ export const useFilterF53Store = create<FilterF53State>()(
       selectedBusArea: "",
       selectedVendor: "",
       postingDate: todayIso(),
+      screenSkip: false,
+      docSkip: false,
       headerSuffixMap: {},
 
       setSelectedCompany: (value) =>
@@ -58,22 +50,22 @@ export const useFilterF53Store = create<FilterF53State>()(
           selectedBusArea: "",
           selectedVendor: "",
         }),
-
       setSelectedStage: (value) => set({ selectedStage: value }),
-
       setSelectedBusArea: (value) =>
         set({ selectedBusArea: value, selectedVendor: "" }),
-
       setSelectedVendor: (value) => set({ selectedVendor: value }),
-
       setPostingDate: (value) => set({ postingDate: value }),
+      setScreenSkip: (value) => set({ screenSkip: value }),
+      setDocSkip: (value) => set({ docSkip: value }),
 
       setHeaderSuffix: (busAreaId, suffix) =>
         set((state) => ({
           headerSuffixMap: { ...state.headerSuffixMap, [busAreaId]: suffix },
         })),
-      /** Increment suffix untuk busArea tertentu, zero-pad 6 digit */
-      incrementHeaderSuffix: (busAreaId: string) =>
+
+      getHeaderSuffix: (busAreaId) => get().headerSuffixMap[busAreaId] ?? "",
+
+      incrementHeaderSuffix: (busAreaId) =>
         set((state) => {
           const current = state.headerSuffixMap[busAreaId] ?? "000000";
           const next = (parseInt(current, 10) + 1).toString().padStart(6, "0");
@@ -81,7 +73,6 @@ export const useFilterF53Store = create<FilterF53State>()(
             headerSuffixMap: { ...state.headerSuffixMap, [busAreaId]: next },
           };
         }),
-      getHeaderSuffix: (busAreaId) => get().headerSuffixMap[busAreaId] ?? "",
 
       resetFilters: () =>
         set({
@@ -90,12 +81,9 @@ export const useFilterF53Store = create<FilterF53State>()(
           selectedBusArea: "",
           selectedVendor: "",
           postingDate: todayIso(),
-          // headerSuffixMap sengaja TIDAK direset — biar nilai per-busArea tetap tersimpan
+          // headerSuffixMap, screenSkip, docSkip TIDAK direset — preferensi user
         }),
     }),
-    {
-      name: "f53-filters",
-      // headerSuffixMap ikut persist supaya nilai tersimpan antar session
-    },
+    { name: "f53-filters" },
   ),
 );
