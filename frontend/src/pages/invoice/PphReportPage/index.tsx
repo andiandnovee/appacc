@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Printer, Download, Trash2 } from "lucide-react";
+import { Printer, Download, Trash2, Upload } from "lucide-react";
 import Card from "../../../components/ui/Card";
 import Button from "../../../components/ui/Button";
 import Select from "../../../components/ui/Select";
@@ -11,6 +11,8 @@ import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { downloadFBV0 } from "../../../utils/sapShortcuts";
 import { useAuth } from "../../../hooks/useAuth";
+import Drawer from "../../../components/ui/Drawer";
+import PphImportForm from "./PphImportForm";
 
 // ── Types ─────────────────────────────────────────────────────
 interface PphRow {
@@ -99,8 +101,7 @@ export default function PphReportPage() {
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState<PphReport | null>(null);
-
-  // key: row.id → edited gl_cost_account value
+  const [importOpen, setImportOpen] = useState(false);
   const [editing, setEditing] = useState<Record<string, string>>({});
 
   const canFetch = Boolean(companyCode && glAccount && month);
@@ -137,14 +138,12 @@ export default function PphReportPage() {
   // ── Delete ────────────────────────────────────────────────
   const handleDeleteData = useCallback(async () => {
     if (!canFetch) return;
-
     const glLabel =
       PPH_OPTIONS.find((o) => o.value === glAccount)?.label ?? glAccount;
     const confirmed = window.confirm(
       `Hapus semua data ${glLabel} untuk bulan ${month}?\n\nData yang sudah diimpor akan dihapus permanen dari database.`,
     );
     if (!confirmed) return;
-
     setDeleting(true);
     try {
       await api.delete("/sap/pph-data", {
@@ -182,18 +181,15 @@ export default function PphReportPage() {
         removeEditing(row.id);
         return;
       }
-
       const confirmed = window.confirm(
         `Update GL Cost Account "${newVal}" ke master vendor "${row.vendor_name}"?\n\nData vendor akan diperbarui sehingga import berikutnya otomatis terisi.`,
       );
       if (!confirmed) return;
-
       try {
         await api.patch("/sap/vendor-gl-cost", {
           vendor_sap_id: row.vendor_sap_id,
           gl_cost_account: newVal,
         });
-
         setReport((prev) => {
           if (!prev) return prev;
           return {
@@ -205,7 +201,6 @@ export default function PphReportPage() {
             ),
           };
         });
-
         removeEditing(row.id);
         addToast({
           variant: "success",
@@ -218,33 +213,24 @@ export default function PphReportPage() {
     [editing, addToast, removeEditing],
   );
 
-  // ── Generate HTML Report (print/PDF) ─────────────────────
-  // Tombol FBV0 TIDAK ada di sini — FBV0 butuh createObjectURL
-  // yang hanya bisa jalan di context browser yang sama (tabel preview).
+  // ── Generate HTML Report ──────────────────────────────────
   const handleGenerateReport = useCallback(() => {
     if (!report) return;
-
     const glLabel =
       PPH_OPTIONS.find((o) => o.value === glAccount)?.label ?? glAccount;
-
-    // Group rows per vendor
     const grouped = new Map<string, PphRow[]>();
     for (const row of report.rows) {
       if (!grouped.has(row.vendor_sap_id)) grouped.set(row.vendor_sap_id, []);
       grouped.get(row.vendor_sap_id)!.push(row);
     }
-
     let no = 1;
     let bodyHtml = "";
-
     for (const [, rows] of grouped) {
       const first = rows[0];
       const subtotalPph = rows.reduce((s, r) => s + r.pph_dipotong, 0);
-
       rows.forEach((row, idx) => {
         const isFirst = idx === 0;
         const pph21 = row.gl_account == "21510001";
-
         bodyHtml += `
     <tr>
       <td>${no++}</td>
@@ -259,14 +245,12 @@ export default function PphReportPage() {
       <td>${row.tgl_faktur}</td>
       <td class="num">${formatRp(row.bruto)}</td>
       <td class="num">${pph21 ? formatRp(Number(row.dpp) / 2) : formatRp(row.dpp)}</td>
-      }</td>
       <td class="num">${row.tarif}%</td>
       <td class="num">${formatRp(row.pph_dipotong)}</td>
       <td>${row.doc_number}</td>
       <td>${row.po_text ?? ""}</td>
     </tr>`;
       });
-
       bodyHtml += `
   <tr class="subtotal">
     <td colspan="5"></td>
@@ -278,7 +262,6 @@ export default function PphReportPage() {
     <td colspan="2"></td>
   </tr>`;
     }
-
     const html = `<!DOCTYPE html>
 <html lang="id">
 <head>
@@ -298,12 +281,7 @@ export default function PphReportPage() {
   td.addr { font-size: 6.5pt; max-width: 120px; word-break: break-word; }
   tr.subtotal td { background: #fffbe6; border: 1px solid #000; padding: 2px 4px; font-size: 7pt; }
   tfoot td { border: 1px solid #000; padding: 3px 4px; font-weight: bold; background: #f0f0f0; }
-  @media print {
-    body { padding: 0; font-size: 7.5pt; }
-    .print-btn { display: none; }
-    table { page-break-inside: auto; }
-    tr { page-break-inside: avoid; }
-  }
+  @media print { body { padding: 0; } .print-btn { display: none; } }
 </style>
 </head>
 <body>
@@ -313,50 +291,20 @@ export default function PphReportPage() {
     <p><strong>Daftar Pemotongan ${glLabel}</strong></p>
     <p>Masa Pajak Bulan ${report.periode}</p>
   </div>
-  <div class="print-btn">
-    <button onclick="window.print()">🖨️ Print / Save PDF</button>
-  </div>
+  <div class="print-btn"><button onclick="window.print()">🖨️ Print / Save PDF</button></div>
   <table>
-    <colgroup>
-      <col style="width:3%">
-      <col style="width:7%">
-      <col style="width:5%">
-      <col style="width:6%">
-      <col style="width:9%">
-      <col style="width:9%">
-      <col style="width:8%">
-      <col style="width:10%">
-      <col style="width:7%">
-      <col style="width:6%">
-      <col style="width:6%">
-      <col style="width:6%">
-      <col style="width:4%">
-      <col style="width:6%">
-      <col style="width:6%">
-      <col style="width:6%">
-    </colgroup>
     <thead>
       <tr>
-        <th rowspan="3">No</th>
-        <th rowspan="3">No Bukti<br>Potong</th>
-        <th rowspan="3">GL<br>Account</th>
-        <th rowspan="3">Tgl Faktur<br>Pajak/Invoice</th>
-        <th rowspan="3">No. Faktur<br>Pajak/Invoice</th>
-        <th colspan="4">Identitas Rekanan</th>
-        <th colspan="5">Dokumen Tagihan</th>
-        <th rowspan="3">Doc Number<br>(SAP)</th>
-        <th rowspan="3">PO Text</th>
+        <th rowspan="3">No</th><th rowspan="3">No Bukti Potong</th><th rowspan="3">GL Account</th>
+        <th rowspan="3">Tgl Faktur</th><th rowspan="3">No. Faktur</th>
+        <th colspan="4">Identitas Rekanan</th><th colspan="5">Dokumen Tagihan</th>
+        <th rowspan="3">Doc Number</th><th rowspan="3">PO Text</th>
       </tr>
       <tr>
-        <th rowspan="2">Nama</th>
-        <th rowspan="2">NPWP</th>
-        <th rowspan="2">Alamat</th>
-        <th rowspan="2">Jenis Pekerjaan<br>Yang Dilakukan</th>
-        <th rowspan="2">Tanggal</th>
-        <th rowspan="2">Bruto (Rp)</th>
-        <th rowspan="2">DPP (Rp)</th>
-        <th rowspan="2">Tarif<br>PPh (%)</th>
-        <th rowspan="2">PPh yang<br>Dipotong (Rp)</th>
+        <th rowspan="2">Nama</th><th rowspan="2">NPWP</th><th rowspan="2">Alamat</th>
+        <th rowspan="2">Jenis Pekerjaan</th><th rowspan="2">Tanggal</th>
+        <th rowspan="2">Bruto (Rp)</th><th rowspan="2">DPP (Rp)</th>
+        <th rowspan="2">Tarif PPh (%)</th><th rowspan="2">PPh Dipotong (Rp)</th>
       </tr>
       <tr></tr>
     </thead>
@@ -375,7 +323,6 @@ export default function PphReportPage() {
   </table>
 </body>
 </html>`;
-
     const win = window.open("", "_blank");
     win?.document.write(html);
     win?.document.close();
@@ -384,13 +331,11 @@ export default function PphReportPage() {
   // ── Export Excel ──────────────────────────────────────────
   const handleExportExcel = useCallback(async () => {
     if (!report) return;
-
     const glLabel =
       PPH_OPTIONS.find((o) => o.value === glAccount)?.label ?? glAccount;
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet("Laporan PPh");
-    const COLS = 17; // A–Q
-
+    const COLS = 17;
     const borderAll: Partial<ExcelJS.Borders> = {
       top: { style: "thin" },
       bottom: { style: "thin" },
@@ -412,7 +357,6 @@ export default function PphReportPage() {
       pattern: "solid",
       fgColor: { argb: "FFF0F0F0" },
     };
-
     const alignCenter: Partial<ExcelJS.Alignment> = {
       horizontal: "center",
       vertical: "middle",
@@ -427,7 +371,6 @@ export default function PphReportPage() {
       vertical: "middle",
       wrapText: false,
     };
-
     const fmtNumber = "#,##0";
     const fmtPct = '0.00"%"';
 
@@ -463,14 +406,11 @@ export default function PphReportPage() {
       { width: 30 },
     ];
 
-    // Header perusahaan
     mergeCenter(1, report.company.name, true, 12);
     mergeCenter(2, report.company.npwp ?? "", false, 10);
     mergeCenter(3, `Daftar Pemotongan ${glLabel}`, true, 11);
     mergeCenter(4, `Masa Pajak Bulan ${report.periode}`, false, 10);
-    ws.addRow([]); // baris 5 kosong
-
-    // Header kolom — baris 6
+    ws.addRow([]);
     ws.getRow(6).height = 28;
 
     const spanCols: [number, string][] = [
@@ -508,9 +448,7 @@ export default function PphReportPage() {
     dokTag.border = borderAll;
     dokTag.font = { bold: true, size: 8 };
 
-    // Header kolom — baris 7
     ws.getRow(7).height = 28;
-
     const identitasCols: [number, string][] = [
       [6, "Nama"],
       [7, "NPWP"],
@@ -547,7 +485,6 @@ export default function PphReportPage() {
 
     ws.getRow(8).height = 5;
 
-    // Data rows
     const grouped = new Map<string, PphRow[]>();
     for (const row of report.rows) {
       if (!grouped.has(row.vendor_sap_id)) grouped.set(row.vendor_sap_id, []);
@@ -557,9 +494,7 @@ export default function PphReportPage() {
     let no = 1;
     for (const [, rows] of grouped) {
       const first = rows[0];
-
       const subtotalPph = rows.reduce((s, r) => s + r.pph_dipotong, 0);
-
       rows.forEach((row, idx) => {
         const isFirst = idx === 0;
         const r = ws.addRow([
@@ -577,12 +512,11 @@ export default function PphReportPage() {
           row.dpp,
           row.tarif,
           row.pph_dipotong,
-          "", // Total PPh — kosong di baris data, diisi di subtotal
+          "",
           row.doc_number,
           row.po_text ?? "",
         ]);
         r.height = 18;
-
         for (let c = 1; c <= COLS; c++) {
           const cell = r.getCell(c);
           cell.border = borderAll;
@@ -598,8 +532,6 @@ export default function PphReportPage() {
           }
         }
       });
-
-      // Subtotal per vendor
       const sub = ws.addRow([
         "",
         "",
@@ -633,7 +565,6 @@ export default function PphReportPage() {
       }
     }
 
-    // Footer TOTAL
     const tot = ws.addRow([
       "T O T A L",
       "",
@@ -687,7 +618,26 @@ export default function PphReportPage() {
             Filter data, lengkapi GL Cost Account, lalu generate laporan
           </p>
         </div>
+        <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+          <Upload size={14} />
+          Import Data
+        </Button>
       </div>
+
+      <Drawer
+        isOpen={importOpen}
+        onClose={() => setImportOpen(false)}
+        size="md"
+      >
+        <Drawer.Header
+          title="Import Data PPh"
+          subtitle="Upload file Excel — jenis terdeteksi otomatis"
+          onClose={() => setImportOpen(false)}
+        />
+        <Drawer.Body>
+          <PphImportForm onSuccess={() => fetchData()} />
+        </Drawer.Body>
+      </Drawer>
 
       {/* Filter */}
       <Card variant="outlined">
@@ -827,8 +777,6 @@ export default function PphReportPage() {
                         <span className={styles.code}>{row.npwp}</span>
                       </td>
                       <td style={tdStyle}>{row.service_type}</td>
-
-                      {/* Inline edit GL Cost Account */}
                       <td style={tdStyle}>
                         {editing[String(row.id)] !== undefined ? (
                           <div style={{ display: "flex", gap: 4 }}>
@@ -900,7 +848,6 @@ export default function PphReportPage() {
                           </span>
                         )}
                       </td>
-
                       <td style={{ ...tdStyle, textAlign: "right" }}>
                         Rp {formatRp(row.bruto)}
                       </td>

@@ -1,6 +1,6 @@
 /**
  * F53HelperPage.tsx
- * Path: frontend/src/pages/sap/F53HelperPage.tsx
+ * P0ath: frontend/src/pages/sap/F53HelperPage.tsx
  */
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -17,19 +17,21 @@ import {
   RefreshCw,
   User,
   Trash2,
+  Upload,
 } from "lucide-react";
 
 import api from "../../../api/axios";
 import { useAuth } from "../../../hooks/useAuth";
 import { useFilterF53Store } from "../../../stores/filterF53";
 import { downloadF53 } from "../../../utils/sapShortcuts";
+import F53ImportForm from "./F53ImportForm";
 
 import Card from "../../../components/ui/Card";
 import Button from "../../../components/ui/Button";
 import Input from "../../../components/ui/Input";
 import Select from "../../../components/ui/Select";
 import Badge from "../../../components/ui/Badge";
-
+import Drawer from "../../../components/ui/Drawer";
 import styles from "./F53HelperPage.module.css";
 
 // ─────────────────────────────────────────────
@@ -166,11 +168,23 @@ export default function F53HelperPage() {
   const { user } = useAuth();
 
   const {
-    selectedCompany, selectedStage, selectedBusArea, selectedVendor, postingDate,
-    screenSkip, docSkip,
-    setSelectedCompany, setSelectedStage, setSelectedBusArea, setSelectedVendor,
-    setPostingDate, setScreenSkip, setDocSkip,
-    setHeaderSuffix, getHeaderSuffix, incrementHeaderSuffix,
+    selectedCompany,
+    selectedStage,
+    selectedBusArea,
+    selectedVendor,
+    postingDate,
+    screenSkip,
+    docSkip,
+    setSelectedCompany,
+    setSelectedStage,
+    setSelectedBusArea,
+    setSelectedVendor,
+    setPostingDate,
+    setScreenSkip,
+    setDocSkip,
+    setHeaderSuffix,
+    getHeaderSuffix,
+    incrementHeaderSuffix,
   } = useFilterF53Store();
 
   const headerSuffix = getHeaderSuffix(selectedBusArea);
@@ -178,19 +192,19 @@ export default function F53HelperPage() {
     if (selectedBusArea) setHeaderSuffix(selectedBusArea, val);
   };
 
-  const [companies, setCompanies]               = useState<Company[]>([]);
-  const [stages, setStages]                     = useState<Stage[]>([]);
-  const [busAreas, setBusAreas]                 = useState<BusArea[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [stages, setStages] = useState<Stage[]>([]);
+  const [busAreas, setBusAreas] = useState<BusArea[]>([]);
   const [selectedVendorName, setSelectedVendorName] = useState<string>("");
-  const [rows, setRows]                         = useState<F53Row[]>([]);
-  const [loading, setLoading]                   = useState(false);
-  const [error, setError]                       = useState<string | null>(null);
-  const [formErrors, setFormErrors]             = useState<Record<string, string>>({});
-  const [checked, setChecked]                   = useState<CheckedMap>({});
-  const [generating, setGenerating]             = useState(false);
-  const [deleting, setDeleting]                 = useState(false);
-  const [poTextSearch, setPoTextSearch]         = useState("");
-
+  const [rows, setRows] = useState<F53Row[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [checked, setChecked] = useState<CheckedMap>({});
+  const [generating, setGenerating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [poTextSearch, setPoTextSearch] = useState("");
+  const [importOpen, setImportOpen] = useState(false);
   // ── Derived ──────────────────────────────────
   const activeCompany = useMemo(
     () => companies.find((c) => String(c.id) === String(selectedCompany)),
@@ -205,19 +219,32 @@ export default function F53HelperPage() {
     [busAreas, selectedBusArea],
   );
 
-  const canFetch    = Boolean(selectedCompany && selectedStage && selectedBusArea);
+  const canFetch = Boolean(selectedCompany && selectedStage && selectedBusArea);
   const canFetchRows = Boolean(canFetch && selectedVendor);
 
   // ── Load ref data ─────────────────────────────
   useEffect(() => {
-    api.get("/companies/select-options").then((r) => setCompanies(r.data?.data ?? r.data ?? []));
+    api
+      .get("/companies/select-options")
+      .then((r) => setCompanies(r.data?.data ?? r.data ?? []));
     api.get("/stages").then((r) => setStages(r.data?.data ?? r.data ?? []));
   }, []);
 
   useEffect(() => {
-    if (!selectedCompany || companies.length === 0) { setBusAreas([]); return; }
-    const active = companies.find((c) => String(c.id) === String(selectedCompany));
-    api.get("/busa", { params: { company_id: active?.company_id ?? selectedCompany, per_page: 999 } })
+    if (!selectedCompany || companies.length === 0) {
+      setBusAreas([]);
+      return;
+    }
+    const active = companies.find(
+      (c) => String(c.id) === String(selectedCompany),
+    );
+    api
+      .get("/busa", {
+        params: {
+          company_id: active?.company_id ?? selectedCompany,
+          per_page: 999,
+        },
+      })
       .then((r) => setBusAreas(r.data?.data ?? r.data ?? []));
   }, [selectedCompany, companies]);
 
@@ -231,18 +258,21 @@ export default function F53HelperPage() {
 
   // ── Fetch rows ────────────────────────────────
   const fetchRows = useCallback(async () => {
-    if (!canFetchRows || !activeCompany || !activeBusArea) { setRows([]); return; }
+    if (!canFetchRows || !activeCompany || !activeBusArea) {
+      setRows([]);
+      return;
+    }
     setLoading(true);
     setError(null);
     setChecked({});
     try {
       const res = await api.get("/sap/f53-data", {
         params: {
-          company_id:    activeCompany.id,
-          stage_id:      selectedStage,
+          company_id: activeCompany.id,
+          stage_id: selectedStage,
           business_area: activeBusArea.sap_id,
           vendor_sap_id: selectedVendor,
-          per_page:      999,
+          per_page: 999,
         },
       });
       setRows(res.data?.data ?? res.data ?? []);
@@ -251,39 +281,66 @@ export default function F53HelperPage() {
     } finally {
       setLoading(false);
     }
-  }, [canFetchRows, activeCompany, activeBusArea, selectedStage, selectedVendor]);
+  }, [
+    canFetchRows,
+    activeCompany,
+    activeBusArea,
+    selectedStage,
+    selectedVendor,
+  ]);
 
-  useEffect(() => { fetchRows(); }, [fetchRows]);
+  useEffect(() => {
+    fetchRows();
+  }, [fetchRows]);
 
   // ── Computed ──────────────────────────────────
-  const headerText = activeBusArea ? `${activeBusArea.sap_id}-${headerSuffix}` : headerSuffix;
+  const headerText = activeBusArea
+    ? `${activeBusArea.sap_id}-${headerSuffix}`
+    : headerSuffix;
 
   const filteredRows = poTextSearch.trim()
-    ? rows.filter((r) =>
-        (r.po_text ?? "").toLowerCase().includes(poTextSearch.toLowerCase()) ||
-        (r.reference ?? "").toLowerCase().includes(poTextSearch.toLowerCase()),
+    ? rows.filter(
+        (r) =>
+          (r.po_text ?? "")
+            .toLowerCase()
+            .includes(poTextSearch.toLowerCase()) ||
+          (r.reference ?? "")
+            .toLowerCase()
+            .includes(poTextSearch.toLowerCase()),
       )
     : rows;
 
-  const selectedRows  = filteredRows.filter((r) => checked[r.id]);
-  const vendorGroups  = useMemo(() => groupRows(filteredRows, checked), [filteredRows, checked]);
-  const grandTotal    = selectedRows.reduce((s, r) => s + Number(r.amount), 0);
-  const stageText     = selectedRows[0]?.assignment ?? activeStage?.stage_text ?? activeStage?.name ?? "";
-  const allChecked    = filteredRows.length > 0 && filteredRows.every((r) => checked[r.id]);
-  const someChecked   = filteredRows.some((r) => checked[r.id]);
-  const canGenerate   = selectedRows.length > 0 && Boolean(postingDate) && Boolean(headerSuffix);
+  const selectedRows = filteredRows.filter((r) => checked[r.id]);
+  const vendorGroups = useMemo(
+    () => groupRows(filteredRows, checked),
+    [filteredRows, checked],
+  );
+  const grandTotal = selectedRows.reduce((s, r) => s + Number(r.amount), 0);
+  const stageText =
+    selectedRows[0]?.assignment ??
+    activeStage?.stage_text ??
+    activeStage?.name ??
+    "";
+  const allChecked =
+    filteredRows.length > 0 && filteredRows.every((r) => checked[r.id]);
+  const someChecked = filteredRows.some((r) => checked[r.id]);
+  const canGenerate =
+    selectedRows.length > 0 && Boolean(postingDate) && Boolean(headerSuffix);
 
   const toggleAll = useCallback(() => {
     if (allChecked) {
       setChecked({});
     } else {
       const next: CheckedMap = {};
-      filteredRows.forEach((r) => { next[r.id] = true; });
+      filteredRows.forEach((r) => {
+        next[r.id] = true;
+      });
       setChecked(next);
     }
   }, [allChecked, filteredRows]);
 
-  const toggleRow = (id: number) => setChecked((prev) => ({ ...prev, [id]: !prev[id] }));
+  const toggleRow = (id: number) =>
+    setChecked((prev) => ({ ...prev, [id]: !prev[id] }));
 
   // ── Validate ──────────────────────────────────
   const validate = useCallback((): boolean => {
@@ -305,26 +362,32 @@ export default function F53HelperPage() {
     setGenerating(true);
     try {
       vendorGroups.forEach((group) => {
-        const augtx = group.isPerdin ? `U.SAKU/MKN ${group.xblnr}` : `TAG ${stageText}/${group.vendorName}`;
-        const sgtxt = group.isPerdin ? `U.SAKU/MKN ${group.xblnr}` : `BYR TAG ${stageText}/${group.vendorName}`;
+        const augtx = group.isPerdin
+          ? `U.SAKU/MKN ${group.xblnr}`
+          : `TAG ${stageText}/${group.vendorName}`;
+        const sgtxt = group.isPerdin
+          ? `U.SAKU/MKN ${group.xblnr}`
+          : `BYR TAG ${stageText}/${group.vendorName}`;
         const xblnr = group.isPerdin ? group.xblnr : group.vendorName;
 
         downloadF53({
-          sapUser:       user?.sap_user ?? "",
-          sapServer:     user?.sap_server_con ?? "",
-          companyCode:   activeCompany!.id,
-          businessArea:  activeBusArea?.sap_id ?? selectedBusArea,
-          bankAccount:   activeCompany!.accbank,
-          postingDate,   headerText,   stageText,
-          vendorName:    group.vendorName,
-          vendorSapId:   group.vendorSapId,
-          docDate:       group.docDate,
-          totalAmount:   group.totalAmount,
+          sapUser: user?.sap_user ?? "",
+          sapServer: user?.sap_server_con ?? "",
+          companyCode: activeCompany!.id,
+          businessArea: activeBusArea?.sap_id ?? selectedBusArea,
+          bankAccount: activeCompany!.accbank,
+          postingDate,
+          headerText,
+          stageText,
+          vendorName: group.vendorName,
+          vendorSapId: group.vendorSapId,
+          docDate: group.docDate,
+          totalAmount: group.totalAmount,
           augtxOverride: augtx,
           sgtxtOverride: sgtxt,
           xblnrOverride: xblnr,
-          skipScreen:    screenSkip,
-          skipDoc:       docSkip,
+          skipScreen: screenSkip,
+          skipDoc: docSkip,
         });
       });
 
@@ -336,26 +399,38 @@ export default function F53HelperPage() {
     } finally {
       setGenerating(false);
     }
-  }, [validate, selectedRows, activeCompany, activeBusArea, selectedBusArea,
-      vendorGroups, user, postingDate, headerText, stageText,
-      screenSkip, docSkip, incrementHeaderSuffix]);
+  }, [
+    validate,
+    selectedRows,
+    activeCompany,
+    activeBusArea,
+    selectedBusArea,
+    vendorGroups,
+    user,
+    postingDate,
+    headerText,
+    stageText,
+    screenSkip,
+    docSkip,
+    incrementHeaderSuffix,
+  ]);
 
   // ── Delete data ───────────────────────────────
   const handleDeleteData = useCallback(async () => {
     const confirmed = window.confirm(
       `Hapus semua data F53 untuk:\n` +
-      `Company  : ${activeCompany?.id} — ${activeCompany?.name}\n` +
-      `Stage    : ${activeStage?.name}\n` +
-      `Bus Area : ${activeBusArea?.sap_id} — ${activeBusArea?.name}\n\n` +
-      `Lanjutkan?`,
+        `Company  : ${activeCompany?.id} — ${activeCompany?.name}\n` +
+        `Stage    : ${activeStage?.name}\n` +
+        `Bus Area : ${activeBusArea?.sap_id} — ${activeBusArea?.name}\n\n` +
+        `Lanjutkan?`,
     );
     if (!confirmed) return;
     setDeleting(true);
     try {
       await api.delete("/sap/f53-data", {
         params: {
-          company_id:    activeCompany!.id,
-          stage_id:      selectedStage,
+          company_id: activeCompany!.id,
+          stage_id: selectedStage,
           business_area: activeBusArea!.sap_id,
         },
       });
@@ -390,9 +465,18 @@ export default function F53HelperPage() {
   }, [canGenerate, generating, handleGenerate, toggleAll]);
 
   // ── Select options ────────────────────────────
-  const companyOptions = companies.map((c) => ({ value: c.id, label: `${c.id} — ${c.name}` }));
-  const stageOptions   = stages.map((s) => ({ value: String(s.id), label: s.name }));
-  const busAreaOptions = busAreas.map((b) => ({ value: String(b.id), label: `${b.sap_id} — ${b.name}` }));
+  const companyOptions = companies.map((c) => ({
+    value: c.id,
+    label: `${c.id} — ${c.name}`,
+  }));
+  const stageOptions = stages.map((s) => ({
+    value: String(s.id),
+    label: s.name,
+  }));
+  const busAreaOptions = busAreas.map((b) => ({
+    value: String(b.id),
+    label: `${b.sap_id} — ${b.name}`,
+  }));
 
   const vendorFetchOptions = canFetch
     ? {
@@ -400,8 +484,8 @@ export default function F53HelperPage() {
         searchParam: "search",
         filters: {
           company_sap_id: activeCompany?.id,
-          stage_sap_id:   activeStage?.id,
-          business_area:  activeBusArea?.sap_id,
+          stage_sap_id: activeStage?.id,
+          business_area: activeBusArea?.sap_id,
         },
         limit: 10,
       }
@@ -412,20 +496,39 @@ export default function F53HelperPage() {
   // ─────────────────────────────────────────────
   return (
     <div className={styles.page}>
-
       {/* PAGE HEADER */}
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
-          <div className={styles.pageIcon}><FileDown size={20} /></div>
+          <div className={styles.pageIcon}>
+            <FileDown size={20} />
+          </div>
           <div>
             <h1 className={styles.pageTitle}>F-53 Helper</h1>
-            <p className={styles.pageSubtitle}>Generate SAP shortcut untuk TCode F-53 (Manual Outgoing Payment)</p>
+            <p className={styles.pageSubtitle}>
+              Generate SAP shortcut untuk TCode F-53 (Manual Outgoing Payment)
+            </p>
           </div>
         </div>
+        <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+          <Upload size={14} />
+          Import Data
+        </Button>
       </div>
+
+      <Drawer isOpen={importOpen} onClose={() => setImportOpen(false)} size="md">
+  <Drawer.Header
+    title="Import Data F53"
+    subtitle="Upload file Excel hasil ekspor SAP"
+    onClose={() => setImportOpen(false)}
+  />
+  <Drawer.Body>
+    <F53ImportForm onSuccess={() => fetchRows()} />
+  </Drawer.Body>
+</Drawer>
 
       {/* ── STEP 1: FILTER ─────────────────────── */}
       <Card variant="outlined">
+        {/* ... sisanya tidak berubah */}
         <Card.Header
           title="1. Pilih Filter Data"
           subtitle="Pilih company, stage, dan business area"
@@ -462,7 +565,11 @@ export default function F53HelperPage() {
             />
             <Select
               label="Business Area"
-              placeholder={selectedCompany ? "Pilih business area..." : "Pilih company dulu"}
+              placeholder={
+                selectedCompany
+                  ? "Pilih business area..."
+                  : "Pilih company dulu"
+              }
               value={selectedBusArea}
               onChange={(e) => setSelectedBusArea(e.target.value)}
               disabled={!selectedCompany || busAreas.length === 0}
@@ -483,7 +590,10 @@ export default function F53HelperPage() {
                   <Layers size={12} />
                   {activeStage.name}
                   {activeStage.stage_text && (
-                    <span className={styles.chipSub}> · {activeStage.stage_text}</span>
+                    <span className={styles.chipSub}>
+                      {" "}
+                      · {activeStage.stage_text}
+                    </span>
                   )}
                 </span>
               )}
@@ -524,18 +634,18 @@ export default function F53HelperPage() {
               maxLength={10}
               disabled={!selectedBusArea}
               iconLeft={
-                activeBusArea?.sap_id
-                  ? (
-                    <span style={{
+                activeBusArea?.sap_id ? (
+                  <span
+                    style={{
                       fontSize: "var(--text-xs)",
                       fontWeight: "var(--font-medium)",
                       color: "var(--text-secondary)",
                       whiteSpace: "nowrap",
-                    }}>
-                      {activeBusArea.sap_id} -
-                    </span>
-                  )
-                  : undefined
+                    }}
+                  >
+                    {activeBusArea.sap_id} -
+                  </span>
+                ) : undefined
               }
             />
           </div>
@@ -548,7 +658,9 @@ export default function F53HelperPage() {
                 checked={screenSkip}
                 onChange={(e) => setScreenSkip(e.target.checked)}
               />
-              <span>Skip Screen <small>(eksekusi langsung /n*F-53)</small></span>
+              <span>
+                Skip Screen <small>(eksekusi langsung /n*F-53)</small>
+              </span>
             </label>
             <label className={styles.skipToggleLabel}>
               <input
@@ -556,7 +668,9 @@ export default function F53HelperPage() {
                 checked={docSkip}
                 onChange={(e) => setDocSkip(e.target.checked)}
               />
-              <span>Skip Doc Number <small>(RF05A-XPOS1=X)</small></span>
+              <span>
+                Skip Doc Number <small>(RF05A-XPOS1=X)</small>
+              </span>
             </label>
           </div>
 
@@ -568,14 +682,29 @@ export default function F53HelperPage() {
               <div className={styles.sapPreviewGrid}>
                 <SapField label="BKPF-BKTXT" value={headerText || "—"} />
                 <SapField label="BKPF-BUKRS" value={activeCompany?.id ?? "—"} />
-                <SapField label="BSEG-GSBER" value={activeBusArea?.sap_id ?? "—"} />
-                <SapField label="RF05A-KONTO" value={activeCompany?.accbank ?? "—"} warn={Boolean(activeCompany && !activeCompany.accbank)} />
+                <SapField
+                  label="BSEG-GSBER"
+                  value={activeBusArea?.sap_id ?? "—"}
+                />
+                <SapField
+                  label="RF05A-KONTO"
+                  value={activeCompany?.accbank ?? "—"}
+                  warn={Boolean(activeCompany && !activeCompany.accbank)}
+                />
                 <SapField label="RF05A-AGKON" value={selectedVendor || "—"} />
                 <SapField
                   label="RF05A-AUGTX"
-                  value={stageText && selectedVendorName ? `TAG ${stageText}/${selectedVendorName}` : "—"}
+                  value={
+                    stageText && selectedVendorName
+                      ? `TAG ${stageText}/${selectedVendorName}`
+                      : "—"
+                  }
                 />
-                <SapField label="BSEG-WRBTR" value={grandTotal > 0 ? formatRupiah(grandTotal) : "—"} note="total checklist" />
+                <SapField
+                  label="BSEG-WRBTR"
+                  value={grandTotal > 0 ? formatRupiah(grandTotal) : "—"}
+                  note="total checklist"
+                />
               </div>
             </div>
           )}
@@ -595,8 +724,16 @@ export default function F53HelperPage() {
                     {allChecked ? "Uncheck All (Ctrl+A)" : "Check All (Ctrl+A)"}
                   </Button>
                 )}
-                <Button variant="outline" size="sm" onClick={fetchRows} disabled={loading}>
-                  <RefreshCw size={14} className={loading ? styles.spinning : ""} />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={fetchRows}
+                  disabled={loading}
+                >
+                  <RefreshCw
+                    size={14}
+                    className={loading ? styles.spinning : ""}
+                  />
                   Refresh
                 </Button>
                 <Button
@@ -620,7 +757,9 @@ export default function F53HelperPage() {
           <div className={styles.vendorSelectRow}>
             <Select
               label="Vendor"
-              placeholder={canFetch ? "Ketik nama vendor..." : "Lengkapi filter dulu"}
+              placeholder={
+                canFetch ? "Ketik nama vendor..." : "Lengkapi filter dulu"
+              }
               value={selectedVendor}
               onChange={(e) => setSelectedVendor(e.target.value)}
               disabled={!canFetch}
@@ -634,7 +773,11 @@ export default function F53HelperPage() {
                 placeholder="Cari po_text / nama pejalan dinas..."
                 value={poTextSearch}
                 onChange={(e) => setPoTextSearch(e.target.value)}
-                hint={poTextSearch ? `${filteredRows.length} dari ${rows.length} baris` : undefined}
+                hint={
+                  poTextSearch
+                    ? `${filteredRows.length} dari ${rows.length} baris`
+                    : undefined
+                }
               />
             </div>
           )}
@@ -644,7 +787,9 @@ export default function F53HelperPage() {
           <div className={styles.summaryBar}>
             <div className={styles.summaryLeft}>
               <CheckSquare size={16} />
-              <span><strong>{selectedRows.length}</strong> transaksi dipilih</span>
+              <span>
+                <strong>{selectedRows.length}</strong> transaksi dipilih
+              </span>
             </div>
             <div className={styles.summaryRight}>
               Total: <strong>{formatRupiah(grandTotal)}</strong>
@@ -677,7 +822,9 @@ export default function F53HelperPage() {
           <div className={styles.errorState}>
             <AlertCircle size={18} />
             <span>{error}</span>
-            <Button variant="outline" size="sm" onClick={fetchRows}>Coba lagi</Button>
+            <Button variant="outline" size="sm" onClick={fetchRows}>
+              Coba lagi
+            </Button>
           </div>
         )}
 
@@ -698,7 +845,9 @@ export default function F53HelperPage() {
                       type="checkbox"
                       className={styles.checkbox}
                       checked={allChecked}
-                      ref={(el) => { if (el) el.indeterminate = !allChecked && someChecked; }}
+                      ref={(el) => {
+                        if (el) el.indeterminate = !allChecked && someChecked;
+                      }}
                       onChange={toggleAll}
                       title="Pilih semua"
                     />
@@ -719,7 +868,10 @@ export default function F53HelperPage() {
                     className={`${styles.tr} ${checked[row.id] ? styles.trSelected : ""} ${isSakuMkn(row.po_text) ? styles.trPerdin : ""}`}
                     onClick={() => toggleRow(row.id)}
                   >
-                    <td className={styles.tdCheck} onClick={(e) => e.stopPropagation()}>
+                    <td
+                      className={styles.tdCheck}
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <input
                         type="checkbox"
                         className={styles.checkbox}
@@ -730,14 +882,28 @@ export default function F53HelperPage() {
                     <td className={styles.tdMono}>{row.doc_number}</td>
                     <td>{formatDate(row.doc_date)}</td>
                     <td className={styles.tdPoText}>
-                      {isSakuMkn(row.po_text) && <Badge variant="warning" size="sm">perdin</Badge>}
+                      {isSakuMkn(row.po_text) && (
+                        <Badge variant="warning" size="sm">
+                          perdin
+                        </Badge>
+                      )}
                       {row.po_text || "—"}
                     </td>
                     <td className={styles.tdMono}>{row.reference || "—"}</td>
-                    <td><Badge variant="default" size="sm">{row.business_area}</Badge></td>
+                    <td>
+                      <Badge variant="default" size="sm">
+                        {row.business_area}
+                      </Badge>
+                    </td>
                     <td className={styles.tdMono}>{row.po_number || "—"}</td>
                     <td className={styles.tdRight}>
-                      <span className={checked[row.id] ? styles.amountSelected : styles.amount}>
+                      <span
+                        className={
+                          checked[row.id]
+                            ? styles.amountSelected
+                            : styles.amount
+                        }
+                      >
                         {formatRupiah(Number(row.amount))}
                       </span>
                     </td>
@@ -768,19 +934,24 @@ export default function F53HelperPage() {
           <Card.Body>
             <div className={styles.hintList}>
               {!postingDate && (
-                <div className={styles.hint}><AlertCircle size={13} /> Isi Tanggal Posting</div>
+                <div className={styles.hint}>
+                  <AlertCircle size={13} /> Isi Tanggal Posting
+                </div>
               )}
               {!headerSuffix && (
-                <div className={styles.hint}><AlertCircle size={13} /> Isi Nomor Header (BKPF-BKTXT)</div>
+                <div className={styles.hint}>
+                  <AlertCircle size={13} /> Isi Nomor Header (BKPF-BKTXT)
+                </div>
               )}
               {postingDate && headerSuffix && selectedRows.length === 0 && (
-                <div className={styles.hint}><AlertCircle size={13} /> Centang minimal 1 transaksi di tabel</div>
+                <div className={styles.hint}>
+                  <AlertCircle size={13} /> Centang minimal 1 transaksi di tabel
+                </div>
               )}
             </div>
           </Card.Body>
         </Card>
       )}
-
     </div>
   );
 }
@@ -789,9 +960,15 @@ export default function F53HelperPage() {
 // Sub-component
 // ─────────────────────────────────────────────
 function SapField({
-  label, value, note, warn,
+  label,
+  value,
+  note,
+  warn,
 }: {
-  label: string; value: string; note?: string; warn?: boolean;
+  label: string;
+  value: string;
+  note?: string;
+  warn?: boolean;
 }) {
   return (
     <div className={`${styles.sapField} ${warn ? styles.sapFieldWarn : ""}`}>

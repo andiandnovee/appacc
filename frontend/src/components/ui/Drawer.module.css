@@ -1,0 +1,222 @@
+/* ============================================================
+   Drawer.module.css
+   Desktop  : panel dari kanan (slide-in dari kanan)
+   Mobile   : bottom sheet (slide-up dari bawah) — ≤768px
+   Semua nilai merujuk ke CSS variables dari tokens.css
+   ============================================================ */
+
+/* ── Backdrop ──────────────────────────────────────────────── */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: var(--bg-overlay);
+  z-index: var(--z-modal);
+  display: flex;
+  justify-content: flex-end; /* panel nempel kanan */
+
+  animation: backdropIn var(--duration-normal) var(--ease-out);
+}
+
+@keyframes backdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Panel ─────────────────────────────────────────────────── */
+.panel {
+  background-color: var(--bg-surface);
+  border-left: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+
+  animation: slideInRight var(--duration-normal) var(--ease-out);
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ── Sizes (lebar panel di desktop) ────────────────────────── */
+.sm { width: 100%; max-width: 400px; }
+.md { width: 100%; max-width: 520px; }
+.lg { width: 100%; max-width: 680px; }
+
+/* ── Header ────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  font-family: var(--font-sans);
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  line-height: var(--leading-tight);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.subtitle {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: var(--leading-normal);
+}
+
+/* ── Header actions ────────────────────────────────────────── */
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+/* ── Tombol Close ──────────────────────────────────────────── */
+.closeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  transition:
+    background-color var(--duration-fast) var(--ease-default),
+    color var(--duration-fast) var(--ease-default);
+}
+
+.closeBtn:hover {
+  background-color: var(--bg-surface-2);
+  color: var(--text-primary);
+}
+
+.closeBtn:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
+}
+
+/* ── Body (scrollable) ─────────────────────────────────────── */
+.body {
+  flex: 1;
+  padding: var(--space-6);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-default) transparent;
+}
+
+.body::-webkit-scrollbar       { width: 5px; }
+.body::-webkit-scrollbar-track { background: transparent; }
+.body::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: var(--radius-full);
+}
+
+/* ── Footer ────────────────────────────────────────────────── */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.footerLeft    { justify-content: flex-start; }
+.footerBetween { justify-content: space-between; }
+
+/* ══════════════════════════════════════════════════════════
+   MOBILE — Bottom Sheet (≤768px)
+   ══════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* Backdrop: rata bawah */
+  .backdrop {
+    align-items: flex-end;
+    justify-content: stretch;
+  }
+
+  /* Panel: full-width, tinggi maks 85vh, rounded atas */
+  .panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto;
+    max-height: 85vh;
+    border-left: none;
+    border-top: 1px solid var(--border-subtle);
+    border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+
+    animation: slideInUp var(--duration-normal) var(--ease-out);
+  }
+
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(40px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Drag handle visual di atas header */
+  .panel::before {
+    content: "";
+    display: block;
+    width: 40px;
+    height: 4px;
+    background-color: var(--border-default);
+    border-radius: var(--radius-full);
+    margin: var(--space-3) auto var(--space-1);
+    flex-shrink: 0;
+  }
+
+  /* Header sedikit lebih compact di mobile */
+  .header {
+    padding: var(--space-3) var(--space-4) var(--space-4);
+  }
+
+  .body {
+    padding: var(--space-4);
+  }
+
+  .footer {
+    padding: var(--space-3) var(--space-4);
+    /* Extra padding untuk safe area (notch/home indicator iOS) */
+    padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+  }
+}
