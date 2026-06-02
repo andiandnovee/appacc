@@ -450,7 +450,7 @@ export default function F53HelperPage() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement).tagName;
-      if (["INPUT", "TEXTAREA", "SELECT"].includes(tag)) return;
+      //if (["INPUT", "TEXTAREA", "SELECT"].includes(tag)) return;
       if (e.ctrlKey && (e.key === "g" || e.key === "G")) {
         e.preventDefault();
         if (canGenerate && !generating) handleGenerate();
