@@ -68,8 +68,9 @@ export default function InvoiceReceiptManagement() {
 
   // ── Stage options ─────────────────────────────────────────────
   const [loadingStages, setLoadingStages] = useState(false);
- const [stageOptions, setStageOptions] = useState< { value: string; label: string }[]
->([]);
+  const [stageOptions, setStageOptions] = useState<
+    { value: string; label: string }[]
+  >([]);
 
   useEffect(() => {
     if (!selectedYear) {
@@ -416,16 +417,16 @@ export default function InvoiceReceiptManagement() {
           receipt={formTarget?.id ? formTarget : null}
           onCancel={() => {
             setFormTarget({});
-           // setFormEditing(false);
+            // setFormEditing(false);
           }}
           onSaved={() => {
             handleSaved();
             if (formTarget?.id) setFormTarget({});
-           // setFormEditing(false);
+            // setFormEditing(false);
           }}
           onSavedAndNew={() => {
             handleSavedAndNew();
-           // setFormEditing(false);
+            // setFormEditing(false);
           }}
           onPoAlreadyExists={handlePoAlreadyExists}
         />

@@ -20,6 +20,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\PgrController;
 use App\Http\Controllers\Api\PphImportController;
 use App\Http\Controllers\Api\F53ImportController;
+use App\Http\Controllers\Api\VehicleLogbookController;
+use App\Http\Controllers\Api\VehicleCostImportController;
+use App\Http\Controllers\Api\VehicleSelectController;
+
 
 
 
@@ -141,6 +145,26 @@ Route::prefix('sap')->group(function () {
     Route::get('f53-data',    [F53ImportController::class, 'getData']);
     Route::delete('f53-data', [F53ImportController::class, 'destroy']);
 });
+
+
+Route::prefix('vehicles')->group(function () {
+ 
+    // Dropdown kendaraan — dipakai di VehicleLogbookPage filter
+    Route::get('select-options', [VehicleSelectController::class, 'selectOptions']);
+ 
+    // Cost center lookup + import biaya SAP
+    Route::post('cost-center-lookup', [VehicleCostImportController::class, 'lookup']);
+    Route::post('cost-import',        [VehicleCostImportController::class, 'import']);
+ 
+    // Logbook
+    Route::get('logbook',                         [VehicleLogbookController::class, 'index']);
+    Route::post('logbook/detail',                 [VehicleLogbookController::class, 'storeDetail']);
+    Route::put('logbook/detail/{detail}',         [VehicleLogbookController::class, 'updateDetail']);
+    Route::delete('logbook/detail/{detail}',      [VehicleLogbookController::class, 'destroyDetail']);
+    Route::post('logbook/{headerId}/recalculate', [VehicleLogbookController::class, 'recalculate_endpoint']);
+    Route::post('logbook/{headerId}/carryover',   [VehicleLogbookController::class, 'carryover']);
+});
+ 
 
 
 // PPh Import & Report
