@@ -289,7 +289,7 @@ function exportToPdf(
 }
 
 // ========== INTERFACES ==========
-interface Column {
+export interface Column {
   key: string;
   label: string;
   sortable?: boolean;

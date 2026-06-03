@@ -410,7 +410,7 @@ export default function InvoiceReceiptManagement() {
         }
         open={FormEditing}
         defaultOpen={true}
-        onToggle={(v) => setFormEditing(v)}
+        //onToggle={(v) => setFormEditing(v)}
       >
         <ReceiptFormModal
           receipt={formTarget?.id ? formTarget : null}
