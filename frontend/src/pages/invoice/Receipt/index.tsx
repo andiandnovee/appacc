@@ -216,6 +216,7 @@ export default function InvoiceReceiptManagement() {
         render: (row: any) => (
           <span className={styles.code}>{row.po_number || "—"}</span>
         ),
+        cardRole:"title"
       },
       {
         key: "invoice_number",
@@ -254,6 +255,7 @@ export default function InvoiceReceiptManagement() {
         render: (row: any) => (
           <span className={styles.muted}>{row.vendor?.name || "—"}</span>
         ),
+        cardRole: "badge",
       },
       {
         key: "company",
@@ -265,6 +267,7 @@ export default function InvoiceReceiptManagement() {
         render: (row: any) => (
           <span className={styles.muted}>{row.company?.name || "—"}</span>
         ),
+        cardRole: "subtitle",
       },
       {
         key: "stage",

@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Star,
   X,
+  BookOpen,
 } from "lucide-react";
 import styles from "./Sidebar.module.css";
 
@@ -36,6 +37,13 @@ const NAV_GROUPS = [
     ],
   },
   {
+    label: "Kendaraan",
+    items: [
+      { to: "/vehicles/logbook", icon: BookOpen, label: "Logbook & Biaya" },
+      { to: "/utility/kendaraan", icon: Car, label: "Master Kendaraan" },
+    ],
+  },
+  {
     label: "Database",
     items: [
       { to: "/ref/vendors", icon: Users, label: "Vendor" },
@@ -46,28 +54,14 @@ const NAV_GROUPS = [
   {
     label: "Tools & Utility",
     items: [
-      { to: "/utility/kendaraan", icon: Car, label: "Kendaraan & STNK" },
       {
         to: "/utility/import-po",
         icon: Upload,
         label: "Import PO (SAP)",
         badge: "operator",
       },
-    //   {
-    //     to: "/utility/import-pph",
-    //     icon: Upload,
-    //     label: "Import PPh",
-    //     badge: "operator",
-    //   },
-    //    {                                    // ✅ masuk sini
-    //   to: "/utility/import-f53",
-    //   icon: Upload,
-    //   label: "Import F53",
-    //   badge: "operator",
-    // },
     ],
   },
-
   {
     label: "Admin",
     items: [
@@ -89,7 +83,6 @@ export default function Sidebar({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  // Desktop: auto-collapse saat layar medium
   useEffect(() => {
     if (isMobile) return;
     const handleResize = () => setIsCollapsed(window.innerWidth < 1024);
@@ -98,7 +91,6 @@ export default function Sidebar({
     return () => window.removeEventListener("resize", handleResize);
   }, [isMobile]);
 
-  // Mobile: tutup sidebar saat navigasi
   const handleNavClick = () => {
     if (isMobile) onMobileClose?.();
   };
@@ -119,41 +111,25 @@ export default function Sidebar({
       ]
         .filter(Boolean)
         .join(" ")}
-      onMouseEnter={() => {
-        if (!isMobile) setIsHovered(true);
-      }}
-      onMouseLeave={() => {
-        if (!isMobile) setIsHovered(false);
-      }}
+      onMouseEnter={() => { if (!isMobile) setIsHovered(true); }}
+      onMouseLeave={() => { if (!isMobile) setIsHovered(false); }}
     >
       {/* Header */}
-      <div
-        className={`${styles.header} ${!isExpanded ? styles.headerCollapsed : ""}`}
-      >
+      <div className={`${styles.header} ${!isExpanded ? styles.headerCollapsed : ""}`}>
         {isExpanded && <h1 className={styles.brand}>APPACC</h1>}
 
-        {/* Desktop: toggle collapse */}
         {!isMobile && (
           <button
             className={styles.toggleBtn}
             onClick={() => setIsCollapsed((v) => !v)}
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            {isExpanded ? (
-              <ChevronLeft size={18} />
-            ) : (
-              <ChevronRight size={18} />
-            )}
+            {isExpanded ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
           </button>
         )}
 
-        {/* Mobile: tombol close (X) */}
         {isMobile && (
-          <button
-            className={styles.closeBtn}
-            onClick={onMobileClose}
-            aria-label="Tutup menu"
-          >
+          <button className={styles.closeBtn} onClick={onMobileClose} aria-label="Tutup menu">
             <X size={18} />
           </button>
         )}
@@ -164,14 +140,12 @@ export default function Sidebar({
         {NAV_GROUPS.map((group, gi) => (
           <div key={gi} className={styles.group}>
             {group.label && (
-              <div
-                className={`${styles.groupHeader} ${!isExpanded ? styles.groupHeaderCollapsed : ""}`}
-              >
+              <div className={`${styles.groupHeader} ${!isExpanded ? styles.groupHeaderCollapsed : ""}`}>
                 <span className={styles.groupLabel}>{group.label}</span>
               </div>
             )}
 
-            {group.items.map(({ to, icon: Icon, label, end, badge }) => (
+            {group.items.map(({ to, icon: Icon, label, end, badge }: any) => (
               <NavLink
                 key={to}
                 to={to}
@@ -187,18 +161,12 @@ export default function Sidebar({
                     .join(" ")
                 }
               >
-                <span className={styles.icon}>
-                  <Icon size={18} />
-                </span>
-                <span
-                  className={`${styles.navLabel} ${isExpanded ? styles.navLabelVisible : styles.navLabelHidden}`}
-                >
+                <span className={styles.icon}><Icon size={18} /></span>
+                <span className={`${styles.navLabel} ${isExpanded ? styles.navLabelVisible : styles.navLabelHidden}`}>
                   {label}
                 </span>
                 {badge && isExpanded && (
-                  <span
-                    className={`${styles.badge} ${styles[`badge_${badge}`] ?? styles.badge_default}`}
-                  >
+                  <span className={`${styles.badge} ${styles[`badge_${badge}`] ?? styles.badge_default}`}>
                     {badge}
                   </span>
                 )}
