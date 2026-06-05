@@ -903,8 +903,38 @@
   max-width: 100%;
 }
 
-/* Trigger state — tanda bahwa teks bisa diklik untuk lihat full */
+/* Wrapper relatif — dipakai saat isTruncated=true, menampung measure + trigger */
+.truncatedWrapper {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Span measurement — selalu di-mount agar ResizeObserver tidak stale.
+   Invisible tapi tetap ambil layout space (visibility:hidden bukan display:none) */
+.truncatedMeasure {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  visibility: hidden;
+  pointer-events: none;
+  user-select: none;
+  /* height 0 supaya tidak dobel tinggi — tinggi diambil dari trigger absolute */
+  height: 0;
+  opacity: 0;
+}
+
+/* Trigger state — absolute fill, klik membuka popover */
 .truncatedTrigger {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   cursor: pointer;
   text-decoration-line: underline;
   text-decoration-style: dotted;
@@ -912,6 +942,9 @@
   text-underline-offset: 3px;
   transition: text-decoration-color var(--duration-fast) var(--ease-default),
               color var(--duration-fast) var(--ease-default);
+  /* Inherit font dari parent (dataCardTitle / dataCardSubtitle) */
+  font: inherit;
+  color: inherit;
 }
 
 .truncatedTrigger:hover {
