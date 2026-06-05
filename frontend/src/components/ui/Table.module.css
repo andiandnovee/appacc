@@ -888,3 +888,52 @@
     gap: var(--space-2) var(--space-4);
   }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   TRUNCATED WITH POPOVER
+   ══════════════════════════════════════════════════════════════ */
+
+/* Container teks — overflow ellipsis, block penuh */
+.truncatedText {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Trigger state — tanda bahwa teks bisa diklik untuk lihat full */
+.truncatedTrigger {
+  cursor: pointer;
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--text-tertiary);
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--duration-fast) var(--ease-default),
+              color var(--duration-fast) var(--ease-default);
+}
+
+.truncatedTrigger:hover {
+  text-decoration-color: var(--color-primary-400);
+  color: var(--color-primary-600);
+}
+
+:global(.dark) .truncatedTrigger:hover {
+  color: var(--color-primary-400);
+}
+
+/* Konten di dalam popover — full text, boleh wrap */
+.truncatedPopoverContent {
+  display: block;
+  white-space: normal;
+  word-break: break-word;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  line-height: var(--leading-normal);
+}
+
+/* Badge item di dataCardBadges — max-width supaya ikut truncate */
+.dataCardBadgeItem {
+  max-width: 120px;
+}

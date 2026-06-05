@@ -32,6 +32,7 @@ import {
 import { useTableData } from "./useTableData";
 import Card from "./Card";
 import Button from "./Button";
+import { Popover } from "./Popover";
 import styles from "./Table.module.css";
 
 // ========== DEBOUNCE ==========
@@ -97,7 +98,8 @@ function useOverflowCollapse(
       );
       ths.forEach((th) => {
         const key = th.dataset.colkey;
-        if (key) colWidthsRef.current.set(key, th.getBoundingClientRect().width);
+        if (key)
+          colWidthsRef.current.set(key, th.getBoundingClientRect().width);
       });
     };
 
@@ -211,7 +213,10 @@ function exportToPdf(
     </body></html>
   `;
   const win = window.open("", "_blank");
-  if (!win) { alert("Pop-up diblokir browser. Izinkan pop-up untuk export PDF."); return; }
+  if (!win) {
+    alert("Pop-up diblokir browser. Izinkan pop-up untuk export PDF.");
+    return;
+  }
   win.document.write(html);
   win.document.close();
 }
@@ -275,39 +280,147 @@ interface ColVisibilityPanelProps {
 }
 
 function ColVisibilityPanel({
-  columns, manualHidden, autoHidden, effectiveHidden, onToggle, onClose,
+  columns,
+  manualHidden,
+  autoHidden,
+  effectiveHidden,
+  onToggle,
+  onClose,
 }: ColVisibilityPanelProps) {
   const collapsibleCols = columns.filter((c) => c.collapsible);
   return (
     <div className={styles.colPanel}>
       <div className={styles.colPanelHeader}>
         <span className={styles.colPanelTitle}>Tampilkan Kolom</span>
-        <button className={styles.colPanelClose} onClick={onClose}><XCircle size={14} /></button>
+        <button className={styles.colPanelClose} onClick={onClose}>
+          <XCircle size={14} />
+        </button>
       </div>
       <div className={styles.colPanelList}>
         {collapsibleCols.map((col) => {
           const isHidden = effectiveHidden.has(col.key);
-          const isAutoHidden = autoHidden.has(col.key) && !manualHidden.has(col.key);
-          const isForcedVisible = autoHidden.has(col.key) && manualHidden.has(col.key);
+          const isAutoHidden =
+            autoHidden.has(col.key) && !manualHidden.has(col.key);
+          const isForcedVisible =
+            autoHidden.has(col.key) && manualHidden.has(col.key);
           return (
             <button
               key={col.key}
               className={`${styles.colPanelItem} ${isHidden ? styles.colPanelItemHidden : ""}`}
               onClick={() => onToggle(col.key)}
               title={
-                isAutoHidden ? "Disembunyikan otomatis karena tabel terlalu lebar"
-                  : isForcedVisible ? "Dipaksa tampil (tabel mungkin overflow)" : undefined
+                isAutoHidden
+                  ? "Disembunyikan otomatis karena tabel terlalu lebar"
+                  : isForcedVisible
+                    ? "Dipaksa tampil (tabel mungkin overflow)"
+                    : undefined
               }
             >
-              {isHidden ? <EyeOff size={13} className={styles.colPanelIcon} /> : <Eye size={13} className={styles.colPanelIcon} />}
+              {isHidden ? (
+                <EyeOff size={13} className={styles.colPanelIcon} />
+              ) : (
+                <Eye size={13} className={styles.colPanelIcon} />
+              )}
               <span>{col.label}</span>
-              {isAutoHidden && <span className={styles.colPanelAutoTag}>auto</span>}
-              {isForcedVisible && <span className={styles.colPanelForceTag}>paksa</span>}
+              {isAutoHidden && (
+                <span className={styles.colPanelAutoTag}>auto</span>
+              )}
+              {isForcedVisible && (
+                <span className={styles.colPanelForceTag}>paksa</span>
+              )}
             </button>
           );
         })}
       </div>
     </div>
+  );
+}
+
+// ========== TRUNCATED WITH POPOVER ==========
+/**
+ * Render children dalam container ellipsis.
+ * Kalau text benar-benar terpotong (scrollWidth > offsetWidth),
+ * wrap trigger dengan Popover yang menampilkan full content.
+ * Kalau tidak terpotong → render biasa tanpa Popover overhead.
+ *
+ * Catatan: hanya bekerja untuk konten text (string/number).
+ * Untuk ReactNode non-text (Badge, dll) → selalu tampil apa adanya.
+ */
+interface TruncatedProps {
+  children: ReactNode;
+  className?: string;
+  popoverTitle?: string;
+  /** Position popover. Default: 'bottomStart' */
+  position?:
+    | "top"
+    | "bottom"
+    | "left"
+    | "right"
+    | "bottomStart"
+    | "bottomEnd"
+    | "topStart"
+    | "topEnd";
+}
+
+function TruncatedWithPopover({
+  children,
+  className,
+  popoverTitle,
+  position = "bottomStart",
+}: TruncatedProps) {
+  const spanRef = useRef<HTMLSpanElement>(null);
+  const [isTruncated, setIsTruncated] = useState(false);
+
+  // Check truncation — re-run saat resize container
+  useEffect(() => {
+    const el = spanRef.current;
+    if (!el) return;
+
+    const check = () => {
+      setIsTruncated(el.scrollWidth > el.offsetWidth + 1);
+    };
+
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [children]);
+
+  // Hanya aktifkan Popover untuk text content — ReactNode non-string tidak bisa di-truncate
+  const isTextContent =
+    typeof children === "string" || typeof children === "number";
+
+  // Path: tidak perlu popover — render span dengan ref untuk observing
+  const truncatedSpan = (
+    <span
+      ref={spanRef}
+      className={[styles.truncatedText, className].filter(Boolean).join(" ")}
+    >
+      {children}
+    </span>
+  );
+
+  if (!isTextContent || !isTruncated) return truncatedSpan;
+
+  // Path: terpotong — trigger adalah span baru (tanpa ref, sudah diukur)
+  return (
+    <Popover
+      trigger={
+        <span
+          className={[styles.truncatedText, styles.truncatedTrigger, className]
+            .filter(Boolean)
+            .join(" ")}
+          title={String(children)}
+        >
+          {children}
+        </span>
+      }
+      title={popoverTitle}
+      position={position as any}
+      showClose={false}
+    >
+      <span className={styles.truncatedPopoverContent}>{children}</span>
+    </Popover>
   );
 }
 
@@ -323,11 +436,20 @@ interface DataCardProps {
   rowIdKey?: string;
 }
 
-function DataCard({ row, columns, refetch, view, selectable, isSelected, onToggle, rowIdKey = "id" }: DataCardProps) {
-  const titleCol   = columns.find((c) => c.cardRole === "title");
+function DataCard({
+  row,
+  columns,
+  refetch,
+  view,
+  selectable,
+  isSelected,
+  onToggle,
+  rowIdKey = "id",
+}: DataCardProps) {
+  const titleCol = columns.find((c) => c.cardRole === "title");
   const subtitleCol = columns.find((c) => c.cardRole === "subtitle");
-  const badgeCols  = columns.filter((c) => c.cardRole === "badge");
-  const fieldCols  = columns.filter(
+  const badgeCols = columns.filter((c) => c.cardRole === "badge");
+  const fieldCols = columns.filter(
     (c) => !c.cardRole || c.cardRole === "field",
   );
 
@@ -341,11 +463,15 @@ function DataCard({ row, columns, refetch, view, selectable, isSelected, onToggl
         view === "list" ? styles.dataCardList : styles.dataCardGrid,
         selectable && isSelected ? styles.dataCardSelected : "",
         selectable ? styles.dataCardSelectable : "",
-      ].filter(Boolean).join(" ")}
+      ]
+        .filter(Boolean)
+        .join(" ")}
       onClick={() => selectable && onToggle?.()}
       role={selectable ? "button" : undefined}
       tabIndex={selectable ? 0 : undefined}
-      onKeyDown={selectable ? (e) => e.key === "Enter" && onToggle?.() : undefined}
+      onKeyDown={
+        selectable ? (e) => e.key === "Enter" && onToggle?.() : undefined
+      }
     >
       {/* ── Card Header ── */}
       <div className={styles.dataCardHeader}>
@@ -362,10 +488,27 @@ function DataCard({ row, columns, refetch, view, selectable, isSelected, onToggl
           )}
           <div className={styles.dataCardTitles}>
             {titleCol && (
-              <span className={styles.dataCardTitle}>{renderCell(titleCol)}</span>
+              <TruncatedWithPopover
+                className={styles.dataCardTitle}
+                popoverTitle={titleCol.label}
+                position="bottomStart"
+              >
+                {/* renderCell bisa return ReactNode — cast ke string kalau text */}
+                {titleCol.render
+                  ? titleCol.render(row, refetch)
+                  : String(row[titleCol.key] ?? "—")}
+              </TruncatedWithPopover>
             )}
             {subtitleCol && (
-              <span className={styles.dataCardSubtitle}>{renderCell(subtitleCol)}</span>
+              <TruncatedWithPopover
+                className={styles.dataCardSubtitle}
+                popoverTitle={subtitleCol.label}
+                position="bottomStart"
+              >
+                {subtitleCol.render
+                  ? subtitleCol.render(row, refetch)
+                  : String(row[subtitleCol.key] ?? "—")}
+              </TruncatedWithPopover>
             )}
           </div>
         </div>
@@ -373,7 +516,16 @@ function DataCard({ row, columns, refetch, view, selectable, isSelected, onToggl
         {badgeCols.length > 0 && (
           <div className={styles.dataCardBadges}>
             {badgeCols.map((col) => (
-              <span key={col.key}>{renderCell(col)}</span>
+              <TruncatedWithPopover
+                key={col.key}
+                className={styles.dataCardBadgeItem}
+                popoverTitle={col.label}
+                position="bottomEnd"
+              >
+                {col.render
+                  ? col.render(row, refetch)
+                  : String(row[col.key] ?? "—")}
+              </TruncatedWithPopover>
             ))}
           </div>
         )}
@@ -381,14 +533,20 @@ function DataCard({ row, columns, refetch, view, selectable, isSelected, onToggl
 
       {/* ── Card Fields ── */}
       {fieldCols.length > 0 && (
-        <div className={[
-          styles.dataCardFields,
-          view === "list" ? styles.dataCardFieldsList : styles.dataCardFieldsGrid,
-        ].join(" ")}>
+        <div
+          className={[
+            styles.dataCardFields,
+            view === "list"
+              ? styles.dataCardFieldsList
+              : styles.dataCardFieldsGrid,
+          ].join(" ")}
+        >
           {fieldCols.map((col) => (
             <div key={col.key} className={styles.dataCardField}>
               <span className={styles.dataCardFieldLabel}>{col.label}</span>
-              <span className={styles.dataCardFieldValue}>{renderCell(col)}</span>
+              <span className={styles.dataCardFieldValue}>
+                {renderCell(col)}
+              </span>
             </div>
           ))}
         </div>
@@ -406,8 +564,8 @@ interface ViewToggleProps {
 function ViewToggle({ view, onChange }: ViewToggleProps) {
   const options: { value: ViewMode; icon: ReactNode; label: string }[] = [
     { value: "table", icon: <Table2 size={14} />, label: "Tabel" },
-    { value: "grid",  icon: <LayoutGrid size={14} />, label: "Grid" },
-    { value: "list",  icon: <LayoutList size={14} />, label: "List" },
+    { value: "grid", icon: <LayoutGrid size={14} />, label: "Grid" },
+    { value: "list", icon: <LayoutList size={14} />, label: "List" },
   ];
   return (
     <div className={styles.viewToggle} role="group" aria-label="Pilih tampilan">
@@ -477,15 +635,20 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
 
   const effectiveHidden = useMemo<Set<string>>(() => {
     const result = new Set<string>();
-    autoHidden.forEach((key) => { if (!manualHidden.has(key)) result.add(key); });
-    manualHidden.forEach((key) => { if (!autoHidden.has(key)) result.add(key); });
+    autoHidden.forEach((key) => {
+      if (!manualHidden.has(key)) result.add(key);
+    });
+    manualHidden.forEach((key) => {
+      if (!autoHidden.has(key)) result.add(key);
+    });
     return result;
   }, [autoHidden, manualHidden]);
 
   const toggleColVisibility = useCallback((key: string) => {
     setManualHidden((prev) => {
       const next = new Set(prev);
-      if (next.has(key)) next.delete(key); else next.add(key);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       return next;
     });
   }, []);
@@ -506,32 +669,63 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
   const toggleExpandRow = useCallback((rowId: any) => {
     setExpandedRows((prev) => {
       const next = new Set(prev);
-      if (next.has(rowId)) next.delete(rowId); else next.add(rowId);
+      if (next.has(rowId)) next.delete(rowId);
+      else next.add(rowId);
       return next;
     });
   }, []);
-  useEffect(() => { setExpandedRows(new Set()); }, [effectiveHidden]);
+  useEffect(() => {
+    setExpandedRows(new Set());
+  }, [effectiveHidden]);
 
   // ========== COLUMN FILTERS ==========
-  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
-  const [immediateFilters, setImmediateFilters] = useState<Record<string, string>>({});
+  const [columnFilters, setColumnFilters] = useState<Record<string, string>>(
+    {},
+  );
+  const [immediateFilters, setImmediateFilters] = useState<
+    Record<string, string>
+  >({});
   const debouncedFilters = useDebounce(immediateFilters, filterDebounceMs);
-  useEffect(() => { setColumnFilters(debouncedFilters); }, [debouncedFilters]);
+  useEffect(() => {
+    setColumnFilters(debouncedFilters);
+  }, [debouncedFilters]);
 
   // ========== USE TABLE DATA ==========
   const {
-    data: hookData, allData, loading, error, refetch, fetchAll,
-    search, setSearch, sortKey, sortDir, handleSort, page, setPage,
-    totalRows: serverTotalRows, totalPages: serverTotalPages,
-    selected, toggleRow, toggleAll, isSelected, isAllSelected, isIndeterminate,
+    data: hookData,
+    allData,
+    loading,
+    error,
+    refetch,
+    fetchAll,
+    search,
+    setSearch,
+    sortKey,
+    sortDir,
+    handleSort,
+    page,
+    setPage,
+    totalRows: serverTotalRows,
+    totalPages: serverTotalPages,
+    selected,
+    toggleRow,
+    toggleAll,
+    isSelected,
+    isAllSelected,
+    isIndeterminate,
   } = useTableData(url, {
-    pageSize, dataKey, defaultParams, serverSide,
+    pageSize,
+    dataKey,
+    defaultParams,
+    serverSide,
     filters: serverSideFiltering ? columnFilters : {},
   });
 
   const fallbackId = useId();
 
-  useEffect(() => { if (serverSide) setPage(1); }, [columnFilters, serverSide, setPage]);
+  useEffect(() => {
+    if (serverSide) setPage(1);
+  }, [columnFilters, serverSide, setPage]);
 
   const clearColumnFilters = useCallback(() => {
     setImmediateFilters({});
@@ -545,7 +739,9 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
   }, [clearColumnFilters, setSearch]);
 
   const activeFilterCount = useMemo(() => {
-    let count = Object.values(columnFilters).filter((v) => v && v.trim() !== "").length;
+    let count = Object.values(columnFilters).filter(
+      (v) => v && v.trim() !== "",
+    ).length;
     if (search.trim()) count++;
     return count;
   }, [columnFilters, search]);
@@ -561,7 +757,9 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
       result = result.filter((row) =>
         columns.some((col) => {
           const value = row[col.key];
-          return value != null && String(value).toLowerCase().includes(lowerSearch);
+          return (
+            value != null && String(value).toLowerCase().includes(lowerSearch)
+          );
         }),
       );
     }
@@ -587,7 +785,10 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
       if (aVal == null && bVal == null) return 0;
       if (aVal == null) return 1;
       if (bVal == null) return -1;
-      if (!isNaN(Number(aVal)) && !isNaN(Number(bVal))) { aVal = Number(aVal); bVal = Number(bVal); }
+      if (!isNaN(Number(aVal)) && !isNaN(Number(bVal))) {
+        aVal = Number(aVal);
+        bVal = Number(bVal);
+      }
       if (aVal < bVal) return sortDir === "asc" ? -1 : 1;
       if (aVal > bVal) return sortDir === "asc" ? 1 : -1;
       return 0;
@@ -608,7 +809,10 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
   }, [serverSide, hookData, sortedData, page, pageSize]);
 
   // ========== EXPORT ==========
-  const exportCols = useMemo(() => columns.filter((c) => c.exportable !== false), [columns]);
+  const exportCols = useMemo(
+    () => columns.filter((c) => c.exportable !== false),
+    [columns],
+  );
   const [exporting, setExporting] = useState(false);
 
   const handleExport = useCallback(
@@ -617,13 +821,18 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
       setExporting(true);
       try {
         let exportData: any[] = [];
-        if (url && serverSide) { exportData = await fetchAll(); }
-        else { exportData = sortedData; }
+        if (url && serverSide) {
+          exportData = await fetchAll();
+        } else {
+          exportData = sortedData;
+        }
         if (exportData.length === 0) return;
         const rows = exportData.map((row) =>
           Object.fromEntries(
             exportCols.map((col) => {
-              const val = col.exportValue ? (col.exportValue(row) ?? "") : (row[col.key] ?? "");
+              const val = col.exportValue
+                ? (col.exportValue(row) ?? "")
+                : (row[col.key] ?? "");
               return [col.label, val];
             }),
           ),
@@ -631,7 +840,13 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
         if (format === "xlsx") {
           const ws = utils.json_to_sheet(rows);
           ws["!cols"] = exportCols.map((col) => ({
-            wch: Math.min(Math.max(col.label.length, ...exportData.map((row) => String(row[col.key] ?? "").length)) + 2, 50),
+            wch: Math.min(
+              Math.max(
+                col.label.length,
+                ...exportData.map((row) => String(row[col.key] ?? "").length),
+              ) + 2,
+              50,
+            ),
           }));
           const wb = utils.book_new();
           utils.book_append_sheet(wb, ws, "Data");
@@ -651,10 +866,19 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
 
   // ========== SORT ICON ==========
   const SortIcon = ({ colKey }: { colKey: string }) => {
-    if (sortKey !== colKey) return <ChevronsUpDown size={12} className={styles.sortIcon} />;
-    return sortDir === "asc"
-      ? <ChevronUp size={12} className={`${styles.sortIcon} ${styles.sortIconActive}`} />
-      : <ChevronDown size={12} className={`${styles.sortIcon} ${styles.sortIconActive}`} />;
+    if (sortKey !== colKey)
+      return <ChevronsUpDown size={12} className={styles.sortIcon} />;
+    return sortDir === "asc" ? (
+      <ChevronUp
+        size={12}
+        className={`${styles.sortIcon} ${styles.sortIconActive}`}
+      />
+    ) : (
+      <ChevronDown
+        size={12}
+        className={`${styles.sortIcon} ${styles.sortIconActive}`}
+      />
+    );
   };
 
   // ========== PAGE NUMBERS ==========
@@ -663,10 +887,17 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
     if (!effectiveTotalPages || effectiveTotalPages <= 1) return pages;
     const delta = 1;
     const range: number[] = [];
-    for (let i = Math.max(1, page - delta); i <= Math.min(effectiveTotalPages, page + delta); i++) {
+    for (
+      let i = Math.max(1, page - delta);
+      i <= Math.min(effectiveTotalPages, page + delta);
+      i++
+    ) {
       range.push(i);
     }
-    if (range[0] > 1) { pages.push(1); if (range[0] > 2) pages.push("..."); }
+    if (range[0] > 1) {
+      pages.push(1);
+      if (range[0] > 2) pages.push("...");
+    }
     pages.push(...range);
     if (range[range.length - 1] < effectiveTotalPages) {
       if (range[range.length - 1] < effectiveTotalPages - 1) pages.push("...");
@@ -676,10 +907,17 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
   }, [page, effectiveTotalPages]);
 
   const goToPrevPage = () => setPage((p) => Math.max(1, p - 1));
-  const goToNextPage = () => setPage((p) => effectiveTotalPages ? Math.min(effectiveTotalPages, p + 1) : p);
+  const goToNextPage = () =>
+    setPage((p) =>
+      effectiveTotalPages ? Math.min(effectiveTotalPages, p + 1) : p,
+    );
 
   useImperativeHandle(ref, () => ({
-    refetch, data: paginatedData, loading, clearAllFilters, setSearch,
+    refetch,
+    data: paginatedData,
+    loading,
+    clearAllFilters,
+    setSearch,
   }));
 
   const handleFilterChange = (colKey: string, value: string) => {
@@ -687,7 +925,9 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
   };
 
   const totalVisibleCols =
-    visibleColumns.length + (selectable ? 1 : 0) + (hiddenColumns.length > 0 ? 1 : 0);
+    visibleColumns.length +
+    (selectable ? 1 : 0) +
+    (hiddenColumns.length > 0 ? 1 : 0);
 
   // Kolom card view — exclude cardRole:'hidden'
   const cardColumns = useMemo(
@@ -704,7 +944,9 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
           <div className={styles.toolbarRight}>
             {searchable && (
               <div className={styles.search}>
-                <span className={styles.searchIcon}><Search size={14} /></span>
+                <span className={styles.searchIcon}>
+                  <Search size={14} />
+                </span>
                 <input
                   type="text"
                   className={styles.searchInput}
@@ -716,7 +958,13 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
             )}
 
             {activeFilterCount > 0 && (
-              <Button variant="outline" size="sm" onClick={clearAllFilters} title="Hapus semua filter" className={styles.clearAllFiltersBtn}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearAllFilters}
+                title="Hapus semua filter"
+                className={styles.clearAllFiltersBtn}
+              >
                 <XCircle size={14} /> Reset filter ({activeFilterCount})
               </Button>
             )}
@@ -730,30 +978,48 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
             {view === "table" && hasCollapsibleCols && (
               <div className={styles.colToggleWrapper}>
                 <Button
-                  variant="outline" size="sm"
+                  variant="outline"
+                  size="sm"
                   onClick={() => setShowColPanel((v) => !v)}
                   title="Atur kolom"
                   className={`${styles.colToggleBtn} ${hiddenCount > 0 ? styles.colToggleBtnActive : ""}`}
                 >
                   <Columns3 size={14} />
-                  {hiddenCount > 0 && <span className={styles.colToggleBadge}>{hiddenCount}</span>}
+                  {hiddenCount > 0 && (
+                    <span className={styles.colToggleBadge}>{hiddenCount}</span>
+                  )}
                 </Button>
                 {showColPanel && (
                   <ColVisibilityPanel
-                    columns={columns} manualHidden={manualHidden}
-                    autoHidden={autoHidden} effectiveHidden={effectiveHidden}
-                    onToggle={toggleColVisibility} onClose={() => setShowColPanel(false)}
+                    columns={columns}
+                    manualHidden={manualHidden}
+                    autoHidden={autoHidden}
+                    effectiveHidden={effectiveHidden}
+                    onToggle={toggleColVisibility}
+                    onClose={() => setShowColPanel(false)}
                   />
                 )}
               </div>
             )}
 
             <div className={styles.exportGroup}>
-              <Button className={styles.exportBtn} onClick={() => handleExport("xlsx")} disabled={filteredData.length === 0 || exporting} title="Export ke Excel">
-                <FileSpreadsheet size={14} />{exporting ? "..." : "XLS"}
+              <Button
+                className={styles.exportBtn}
+                onClick={() => handleExport("xlsx")}
+                disabled={filteredData.length === 0 || exporting}
+                title="Export ke Excel"
+              >
+                <FileSpreadsheet size={14} />
+                {exporting ? "..." : "XLS"}
               </Button>
-              <Button className={styles.exportBtn} onClick={() => handleExport("pdf")} disabled={filteredData.length === 0 || exporting} title="Export ke PDF">
-                <FileText size={14} />{exporting ? "..." : "PDF"}
+              <Button
+                className={styles.exportBtn}
+                onClick={() => handleExport("pdf")}
+                disabled={filteredData.length === 0 || exporting}
+                title="Export ke PDF"
+              >
+                <FileText size={14} />
+                {exporting ? "..." : "PDF"}
               </Button>
             </div>
           </div>
@@ -761,9 +1027,25 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
       />
 
       {error && (
-        <div style={{ padding: "var(--space-4)", color: "var(--color-danger)", fontSize: "var(--text-sm)" }}>
+        <div
+          style={{
+            padding: "var(--space-4)",
+            color: "var(--color-danger)",
+            fontSize: "var(--text-sm)",
+          }}
+        >
           Gagal memuat data: {error}.{" "}
-          <Button onClick={refetch} variant="outline" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, marginLeft: "var(--space-1)" }}>
+          <Button
+            onClick={refetch}
+            variant="outline"
+            style={{
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              padding: 0,
+              marginLeft: "var(--space-1)",
+            }}
+          >
             Coba lagi
           </Button>
         </div>
@@ -776,20 +1058,33 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
         <div className={styles.cardViewWrapper}>
           {/* Skeleton */}
           {loading && (
-            <div className={view === "grid" ? styles.cardGrid : styles.cardList}>
+            <div
+              className={view === "grid" ? styles.cardGrid : styles.cardList}
+            >
               {Array.from({ length: pageSize }).map((_, i) => (
-                <div key={`card-skel-${i}`} className={`${styles.dataCard} ${view === "list" ? styles.dataCardList : styles.dataCardGrid} ${styles.dataCardSkeleton}`}>
+                <div
+                  key={`card-skel-${i}`}
+                  className={`${styles.dataCard} ${view === "list" ? styles.dataCardList : styles.dataCardGrid} ${styles.dataCardSkeleton}`}
+                >
                   <div className={styles.dataCardHeader}>
                     <div className={styles.dataCardTitles}>
-                      <div className={`${styles.skeleton} ${styles.skeletonTitle}`} />
-                      <div className={`${styles.skeleton} ${styles.skeletonSubtitle}`} />
+                      <div
+                        className={`${styles.skeleton} ${styles.skeletonTitle}`}
+                      />
+                      <div
+                        className={`${styles.skeleton} ${styles.skeletonSubtitle}`}
+                      />
                     </div>
                   </div>
                   <div className={styles.dataCardFields}>
                     {[1, 2, 3].map((j) => (
                       <div key={j} className={styles.dataCardField}>
-                        <div className={`${styles.skeleton} ${styles.skeletonLabel}`} />
-                        <div className={`${styles.skeleton} ${styles.skeletonValue}`} />
+                        <div
+                          className={`${styles.skeleton} ${styles.skeletonLabel}`}
+                        />
+                        <div
+                          className={`${styles.skeleton} ${styles.skeletonValue}`}
+                        />
                       </div>
                     ))}
                   </div>
@@ -801,14 +1096,23 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
           {/* Empty state */}
           {!loading && !error && paginatedData.length === 0 && (
             <div className={styles.empty}>
-              <div className={styles.emptyIcon}><Inbox size={40} /></div>
+              <div className={styles.emptyIcon}>
+                <Inbox size={40} />
+              </div>
               <p className={styles.emptyText}>
                 {activeFilterCount > 0
                   ? "Tidak ada data yang sesuai dengan filter"
-                  : search ? `Tidak ada hasil untuk "${search}"` : "Belum ada data"}
+                  : search
+                    ? `Tidak ada hasil untuk "${search}"`
+                    : "Belum ada data"}
               </p>
               {activeFilterCount > 0 && (
-                <Button variant="outline" size="sm" onClick={clearAllFilters} className={styles.clearFilterBtn}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={clearAllFilters}
+                  className={styles.clearFilterBtn}
+                >
                   <XCircle size={14} /> Hapus semua filter
                 </Button>
               )}
@@ -817,7 +1121,9 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
 
           {/* Cards */}
           {!loading && !error && paginatedData.length > 0 && (
-            <div className={view === "grid" ? styles.cardGrid : styles.cardList}>
+            <div
+              className={view === "grid" ? styles.cardGrid : styles.cardList}
+            >
               {paginatedData.map((row, index) => {
                 const rowId = row[rowIdKey];
                 return (
@@ -850,26 +1156,41 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
                 {selectable && (
                   <th className={styles.checkboxCell}>
                     <input
-                      type="checkbox" className={styles.checkbox}
+                      type="checkbox"
+                      className={styles.checkbox}
                       checked={isAllSelected}
-                      ref={(el) => { if (el) el.indeterminate = isIndeterminate; }}
-                      onChange={toggleAll} aria-label="Pilih semua"
+                      ref={(el) => {
+                        if (el) el.indeterminate = isIndeterminate;
+                      }}
+                      onChange={toggleAll}
+                      aria-label="Pilih semua"
                     />
                   </th>
                 )}
-                {hiddenColumns.length > 0 && <th className={styles.expandCell} aria-label="Detail" />}
+                {hiddenColumns.length > 0 && (
+                  <th className={styles.expandCell} aria-label="Detail" />
+                )}
                 {visibleColumns.map((col) => (
                   <th
-                    key={col.key} data-colkey={col.key}
+                    key={col.key}
+                    data-colkey={col.key}
                     className={`${styles.th} ${col.sortable ? styles.thSortable : ""}`}
                     onClick={() => col.sortable && handleSort(col.key)}
-                    aria-sort={sortKey === col.key ? (sortDir === "asc" ? "ascending" : "descending") : undefined}
+                    aria-sort={
+                      sortKey === col.key
+                        ? sortDir === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : undefined
+                    }
                   >
                     <span className={styles.thInner}>
                       {col.label}
                       {col.sortable && <SortIcon colKey={col.key} />}
                       {col.filterable && columnFilters[col.key] && (
-                        <span className={styles.filterActiveIcon}><Filter size={10} /></span>
+                        <span className={styles.filterActiveIcon}>
+                          <Filter size={10} />
+                        </span>
                       )}
                     </span>
                   </th>
@@ -879,22 +1200,38 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
               {visibleColumns.some((col) => col.filterable) && (
                 <tr className={styles.filterRow}>
                   {selectable && <td className={styles.filterCell} />}
-                  {hiddenColumns.length > 0 && <td className={styles.filterCell} />}
+                  {hiddenColumns.length > 0 && (
+                    <td className={styles.filterCell} />
+                  )}
                   {visibleColumns.map((col) => (
                     <td key={`filter-${col.key}`} className={styles.filterCell}>
                       {col.filterable && (
                         <div className={styles.filterInputWrapper}>
                           {col.filterType === "select" ? (
-                            <select value={immediateFilters[col.key] || ""} onChange={(e) => handleFilterChange(col.key, e.target.value)} className={styles.filterSelect}>
+                            <select
+                              value={immediateFilters[col.key] || ""}
+                              onChange={(e) =>
+                                handleFilterChange(col.key, e.target.value)
+                              }
+                              className={styles.filterSelect}
+                            >
                               <option value="">Semua</option>
-                              {col.filterOptions?.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                              {col.filterOptions?.map((opt) => (
+                                <option key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </option>
+                              ))}
                             </select>
                           ) : (
                             <input
                               type="text"
-                              placeholder={col.filterPlaceholder || `Filter ${col.label}`}
+                              placeholder={
+                                col.filterPlaceholder || `Filter ${col.label}`
+                              }
                               value={immediateFilters[col.key] || ""}
-                              onChange={(e) => handleFilterChange(col.key, e.target.value)}
+                              onChange={(e) =>
+                                handleFilterChange(col.key, e.target.value)
+                              }
                               className={styles.filterInput}
                             />
                           )}
@@ -907,30 +1244,52 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
             </thead>
 
             <tbody>
-              {loading && Array.from({ length: pageSize }).map((_, i) => (
-                <tr key={`skeleton-${i}`} className={styles.tr}>
-                  {selectable && <td className={styles.checkboxCell}><div className={styles.skeleton} style={{ width: 16, height: 16 }} /></td>}
-                  {hiddenColumns.length > 0 && <td className={styles.expandCell} />}
-                  {visibleColumns.map((col) => (
-                    <td key={col.key} className={styles.td}>
-                      <div className={styles.skeleton} style={{ width: `${60 + Math.random() * 30}%` }} />
-                    </td>
-                  ))}
-                </tr>
-              ))}
+              {loading &&
+                Array.from({ length: pageSize }).map((_, i) => (
+                  <tr key={`skeleton-${i}`} className={styles.tr}>
+                    {selectable && (
+                      <td className={styles.checkboxCell}>
+                        <div
+                          className={styles.skeleton}
+                          style={{ width: 16, height: 16 }}
+                        />
+                      </td>
+                    )}
+                    {hiddenColumns.length > 0 && (
+                      <td className={styles.expandCell} />
+                    )}
+                    {visibleColumns.map((col) => (
+                      <td key={col.key} className={styles.td}>
+                        <div
+                          className={styles.skeleton}
+                          style={{ width: `${60 + Math.random() * 30}%` }}
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
 
               {!loading && !error && paginatedData.length === 0 && (
                 <tr>
                   <td colSpan={totalVisibleCols}>
                     <div className={styles.empty}>
-                      <div className={styles.emptyIcon}><Inbox size={40} /></div>
+                      <div className={styles.emptyIcon}>
+                        <Inbox size={40} />
+                      </div>
                       <p className={styles.emptyText}>
                         {activeFilterCount > 0
                           ? "Tidak ada data yang sesuai dengan filter"
-                          : search ? `Tidak ada hasil untuk "${search}"` : "Belum ada data"}
+                          : search
+                            ? `Tidak ada hasil untuk "${search}"`
+                            : "Belum ada data"}
                       </p>
                       {activeFilterCount > 0 && (
-                        <Button variant="outline" size="sm" onClick={clearAllFilters} className={styles.clearFilterBtn}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={clearAllFilters}
+                          className={styles.clearFilterBtn}
+                        >
                           <XCircle size={14} /> Hapus semua filter
                         </Button>
                       )}
@@ -939,64 +1298,88 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
                 </tr>
               )}
 
-              {!loading && paginatedData.map((row, index) => {
-                const rowId = row[rowIdKey];
-                const isExpanded = expandedRows.has(rowId ?? index);
-                const hasHiddenData = hiddenColumns.length > 0;
-                return (
-                  <>
-                    <tr
-                      key={rowId ?? `${fallbackId}-${index}`}
-                      className={`${styles.tr} ${selectable && isSelected(rowId) ? styles.trSelected : ""} ${isExpanded ? styles.trExpanded : ""}`}
-                      onClick={() => selectable && toggleRow(rowId)}
-                    >
-                      {selectable && (
-                        <td className={styles.checkboxCell}>
-                          <input
-                            type="checkbox" className={styles.checkbox}
-                            checked={isSelected(rowId)} onChange={() => toggleRow(rowId)}
-                            onClick={(e) => e.stopPropagation()}
-                            aria-label={`Pilih baris ${rowId}`} disabled={rowId === undefined}
-                          />
-                        </td>
-                      )}
-                      {hasHiddenData && (
-                        <td className={styles.expandCell}>
-                          <button
-                            className={`${styles.expandBtn} ${isExpanded ? styles.expandBtnOpen : ""}`}
-                            onClick={(e) => { e.stopPropagation(); toggleExpandRow(rowId ?? index); }}
-                            aria-label={isExpanded ? "Tutup detail" : "Lihat detail"}
-                            aria-expanded={isExpanded}
-                          >
-                            <ChevronRight size={14} />
-                          </button>
-                        </td>
-                      )}
-                      {visibleColumns.map((col) => (
-                        <td key={col.key} className={styles.td}>
-                          {col.render ? col.render(row, refetch) : (row[col.key] ?? "—")}
-                        </td>
-                      ))}
-                    </tr>
-                    {hasHiddenData && isExpanded && (
-                      <tr key={`expand-${rowId ?? index}`} className={styles.expandDetailRow}>
-                        <td colSpan={totalVisibleCols} className={styles.expandDetailCell}>
-                          <div className={styles.expandDetail}>
-                            {hiddenColumns.map((col) => (
-                              <div key={col.key} className={styles.expandDetailItem}>
-                                <span className={styles.expandDetailLabel}>{col.label}</span>
-                                <span className={styles.expandDetailValue}>
-                                  {col.render ? col.render(row, refetch) : (row[col.key] ?? "—")}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </td>
+              {!loading &&
+                paginatedData.map((row, index) => {
+                  const rowId = row[rowIdKey];
+                  const isExpanded = expandedRows.has(rowId ?? index);
+                  const hasHiddenData = hiddenColumns.length > 0;
+                  return (
+                    <>
+                      <tr
+                        key={rowId ?? `${fallbackId}-${index}`}
+                        className={`${styles.tr} ${selectable && isSelected(rowId) ? styles.trSelected : ""} ${isExpanded ? styles.trExpanded : ""}`}
+                        onClick={() => selectable && toggleRow(rowId)}
+                      >
+                        {selectable && (
+                          <td className={styles.checkboxCell}>
+                            <input
+                              type="checkbox"
+                              className={styles.checkbox}
+                              checked={isSelected(rowId)}
+                              onChange={() => toggleRow(rowId)}
+                              onClick={(e) => e.stopPropagation()}
+                              aria-label={`Pilih baris ${rowId}`}
+                              disabled={rowId === undefined}
+                            />
+                          </td>
+                        )}
+                        {hasHiddenData && (
+                          <td className={styles.expandCell}>
+                            <button
+                              className={`${styles.expandBtn} ${isExpanded ? styles.expandBtnOpen : ""}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleExpandRow(rowId ?? index);
+                              }}
+                              aria-label={
+                                isExpanded ? "Tutup detail" : "Lihat detail"
+                              }
+                              aria-expanded={isExpanded}
+                            >
+                              <ChevronRight size={14} />
+                            </button>
+                          </td>
+                        )}
+                        {visibleColumns.map((col) => (
+                          <td key={col.key} className={styles.td}>
+                            {col.render
+                              ? col.render(row, refetch)
+                              : (row[col.key] ?? "—")}
+                          </td>
+                        ))}
                       </tr>
-                    )}
-                  </>
-                );
-              })}
+                      {hasHiddenData && isExpanded && (
+                        <tr
+                          key={`expand-${rowId ?? index}`}
+                          className={styles.expandDetailRow}
+                        >
+                          <td
+                            colSpan={totalVisibleCols}
+                            className={styles.expandDetailCell}
+                          >
+                            <div className={styles.expandDetail}>
+                              {hiddenColumns.map((col) => (
+                                <div
+                                  key={col.key}
+                                  className={styles.expandDetailItem}
+                                >
+                                  <span className={styles.expandDetailLabel}>
+                                    {col.label}
+                                  </span>
+                                  <span className={styles.expandDetailValue}>
+                                    {col.render
+                                      ? col.render(row, refetch)
+                                      : (row[col.key] ?? "—")}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  );
+                })}
             </tbody>
           </table>
         </div>
@@ -1006,32 +1389,61 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
       {!loading && !error && effectiveTotalRows !== undefined && (
         <div className={styles.footer}>
           <span className={styles.footerInfo}>
-            {selectable && selected.length > 0 && `${selected.length} dipilih · `}
+            {selectable &&
+              selected.length > 0 &&
+              `${selected.length} dipilih · `}
             {effectiveTotalRows} data
             {view === "table" && hiddenCount > 0 && (
-              <span className={styles.footerHiddenInfo}>· {hiddenCount} kolom disembunyikan</span>
+              <span className={styles.footerHiddenInfo}>
+                · {hiddenCount} kolom disembunyikan
+              </span>
             )}
             {activeFilterCount > 0 && (
-              <Button variant="ghost" size="sm" onClick={clearAllFilters} className={styles.clearFilterFooter}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearAllFilters}
+                className={styles.clearFilterFooter}
+              >
                 <XCircle size={12} /> Reset semua filter ({activeFilterCount})
               </Button>
             )}
           </span>
           {effectiveTotalPages > 1 && (
             <div className={styles.pagination}>
-              <Button className={styles.pageBtn} onClick={goToPrevPage} disabled={page === 1}>‹</Button>
+              <Button
+                className={styles.pageBtn}
+                onClick={goToPrevPage}
+                disabled={page === 1}
+              >
+                ‹
+              </Button>
               {pageNumbers.map((p, i) =>
                 p === "..." ? (
-                  <span key={`dots-${i}`} className={styles.footerInfo} style={{ padding: "0 4px" }}>…</span>
+                  <span
+                    key={`dots-${i}`}
+                    className={styles.footerInfo}
+                    style={{ padding: "0 4px" }}
+                  >
+                    …
+                  </span>
                 ) : (
                   <button
                     key={p}
                     className={`${styles.pageBtn} ${page === p ? styles.pageBtnActive : ""}`}
                     onClick={() => setPage(p as number)}
-                  >{p}</button>
+                  >
+                    {p}
+                  </button>
                 ),
               )}
-              <Button className={styles.pageBtn} onClick={goToNextPage} disabled={page === effectiveTotalPages}>›</Button>
+              <Button
+                className={styles.pageBtn}
+                onClick={goToNextPage}
+                disabled={page === effectiveTotalPages}
+              >
+                ›
+              </Button>
             </div>
           )}
         </div>
