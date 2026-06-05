@@ -98,7 +98,7 @@ export default function InvoiceReceiptManagement() {
   }, [selectedYear]);
 
   // ── Polling ───────────────────────────────────────────────────
-  const POLL_INTERVAL_MS = 1 * 60 * 1000;
+  const POLL_INTERVAL_MS = 5 * 60 * 1000;
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   useInterval(
@@ -216,7 +216,7 @@ export default function InvoiceReceiptManagement() {
         render: (row: any) => (
           <span className={styles.code}>{row.po_number || "—"}</span>
         ),
-        cardRole:"title"
+        cardRole: "title",
       },
       {
         key: "invoice_number",
@@ -510,6 +510,7 @@ export default function InvoiceReceiptManagement() {
           serverSide={true}
           serverSideFiltering={true}
           defaultParams={filterParams}
+          tableId="invoice-receipts"
         />
       </Collapsible>
     </div>

@@ -745,6 +745,8 @@
     var(--bg-surface-2) 100%
   );
   border-bottom: 1px solid var(--border-subtle);
+  overflow: hidden; /* kunci — cegah header melebar */
+  min-width: 0;
 }
 
 /* List card: header tidak punya border-bottom, melebar ke kiri */
@@ -761,6 +763,7 @@
     var(--bg-surface) 0%,
     var(--bg-surface-2) 100%
   );
+  overflow: hidden;
 }
 
 .dataCardHeaderLeft {
@@ -769,6 +772,7 @@
   gap: var(--space-2);
   flex: 1;
   min-width: 0;
+  overflow: hidden; /* penting agar child bisa truncate */
 }
 
 .dataCardTitles {
@@ -776,6 +780,8 @@
   flex-direction: column;
   gap: var(--space-1);
   min-width: 0;
+  width: 100%;      /* paksa ambil sisa ruang di flex parent */
+  overflow: hidden; /* cegah flex item ini melebar melewati batas */
 }
 
 .dataCardTitle {
@@ -783,10 +789,11 @@
   font-weight: var(--font-semibold);
   color: var(--text-primary);
   line-height: var(--leading-tight);
-  /* Truncate panjang jika perlu */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  display: block;
+  width: 100%;
 }
 
 .dataCardSubtitle {
@@ -796,6 +803,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  display: block;
+  width: 100%;
 }
 
 /* Badges di pojok kanan header */
@@ -890,83 +899,83 @@
 }
 
 /* ══════════════════════════════════════════════════════════════
-   TRUNCATED WITH POPOVER
+   CARD HEADER RIGHT — badges + info button
    ══════════════════════════════════════════════════════════════ */
-
-/* Container teks — overflow ellipsis, block penuh */
-.truncatedText {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-  max-width: 100%;
+.dataCardHeaderRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+  flex-shrink: 0;
 }
 
-/* Wrapper relatif — dipakai saat isTruncated=true, menampung measure + trigger */
-.truncatedWrapper {
-  position: relative;
-  display: block;
-  overflow: hidden;
-  min-width: 0;
-  max-width: 100%;
-}
-
-/* Span measurement — selalu di-mount agar ResizeObserver tidak stale.
-   Invisible tapi tetap ambil layout space (visibility:hidden bukan display:none) */
-.truncatedMeasure {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  visibility: hidden;
-  pointer-events: none;
-  user-select: none;
-  /* height 0 supaya tidak dobel tinggi — tinggi diambil dari trigger absolute */
-  height: 0;
-  opacity: 0;
-}
-
-/* Trigger state — absolute fill, klik membuka popover */
-.truncatedTrigger {
-  position: absolute;
-  inset: 0;
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+/* ── Info button ────────────────────────────────────────────── */
+.cardInfoBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-tertiary);
   cursor: pointer;
-  text-decoration-line: underline;
-  text-decoration-style: dotted;
-  text-decoration-color: var(--text-tertiary);
-  text-underline-offset: 3px;
-  transition: text-decoration-color var(--duration-fast) var(--ease-default),
-              color var(--duration-fast) var(--ease-default);
-  /* Inherit font dari parent (dataCardTitle / dataCardSubtitle) */
-  font: inherit;
-  color: inherit;
+  padding: 0;
+  flex-shrink: 0;
+  transition: color var(--duration-fast) var(--ease-default),
+              border-color var(--duration-fast) var(--ease-default),
+              background-color var(--duration-fast) var(--ease-default);
 }
 
-.truncatedTrigger:hover {
-  text-decoration-color: var(--color-primary-400);
-  color: var(--color-primary-600);
+.cardInfoBtn:hover {
+  color: var(--color-primary-500);
+  border-color: var(--color-primary-400);
+  background-color: var(--color-primary-50);
 }
 
-:global(.dark) .truncatedTrigger:hover {
-  color: var(--color-primary-400);
+:global(.dark) .cardInfoBtn:hover {
+  background-color: rgba(84, 112, 239, 0.1);
 }
 
-/* Konten di dalam popover — full text, boleh wrap */
-.truncatedPopoverContent {
-  display: block;
-  white-space: normal;
-  word-break: break-word;
+/* ── Info popover content ───────────────────────────────────── */
+.cardInfoPopover {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 200px;
+}
+
+.cardInfoRow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cardInfoLabel {
+  font-size: 10px;
+  font-weight: var(--font-semibold);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+}
+
+.cardInfoValue {
   font-size: var(--text-sm);
   color: var(--text-primary);
-  line-height: var(--leading-normal);
+  word-break: break-word;
+  white-space: normal;
 }
 
-/* Badge item di dataCardBadges — max-width supaya ikut truncate */
+/* Badge item di dataCardBadges */
 .dataCardBadgeItem {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  text-align: right;
   max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
 }
+

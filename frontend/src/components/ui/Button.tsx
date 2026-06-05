@@ -8,6 +8,7 @@ import {
 } from 'react';
 import { ChevronDown, ArrowLeft, ArrowRight } from 'lucide-react';
 import styles from './Button.module.css';
+import { Popover } from './Popover';
 
 export interface ButtonProps<T extends ElementType = 'button'> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'text';
@@ -115,25 +116,16 @@ export const SplitButton = ({
   loading = false,
 }: SplitButtonProps) => {
   const [open, setOpen] = useState(false);
-  const wrapperRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    function handleOutside(e: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    if (open) document.addEventListener('mousedown', handleOutside);
-    return () => document.removeEventListener('mousedown', handleOutside);
-  }, [open]);
+  // tidak perlu useEffect untuk outside click karena Popover menanganinya
 
   const needDarkDivider = variant === 'ghost' || variant === 'outline';
 
   return (
     <div
-      ref={wrapperRef}
       className={`${styles.splitWrapper} ${fullWidth ? styles.fullWidth : ''}`}
     >
+      {/* Main action button */}
       <Button
         variant={variant}
         size={size}
@@ -145,52 +137,63 @@ export const SplitButton = ({
       >
         {label}
       </Button>
-      <Button
-        variant={variant}
-        size={size}
-        disabled={disabled || loading}
-        onClick={() => setOpen((v) => !v)}
-        className={styles.splitChevron}
-        aria-haspopup="true"
-        aria-expanded={open}
-        aria-label="Tampilkan opsi lain"
+
+      {/* Popover dengan trigger tombol chevron */}
+      <Popover
+        open={open}
+        onOpenChange={setOpen}
+        trigger={
+          <Button
+            variant={variant}
+            size={size}
+            disabled={disabled || loading}
+            className={styles.splitChevron}
+            aria-haspopup="true"
+            aria-expanded={open}
+            aria-label="Tampilkan opsi lain"
+          >
+            <ChevronDown
+              size={14}
+              style={{
+                transform: open ? 'rotate(180deg)' : 'rotate(0)',
+                transition: `transform var(--duration-fast) var(--ease-default)`,
+              }}
+            />
+          </Button>
+        }
+        position="bottomEnd"
+        showClose={false}
       >
-        <ChevronDown
-          size={14}
-          style={{
-            transform: open ? 'rotate(180deg)' : 'rotate(0)',
-            transition: `transform var(--duration-fast) var(--ease-default)`,
-          }}
-        />
-      </Button>
-      {open && options.length > 0 && (
-        <div className={styles.splitDropdown} role="menu">
-          {options.map((opt, i) => {
-            const Tag = opt.as ?? 'button';
-            const props =
-              Tag === 'button'
-                ? {
-                    type: 'button',
-                    onClick: () => {
-                      opt.onClick?.();
-                      setOpen(false);
-                    },
-                  }
-                : { href: opt.href, to: opt.to, onClick: () => setOpen(false) };
-            return (
-              <Tag
-                key={i}
-                className={styles.splitDropdownItem}
-                role="menuitem"
-                {...props}
-              >
-                {opt.icon && <span aria-hidden="true">{opt.icon}</span>}
-                {opt.label}
-              </Tag>
-            );
-          })}
-        </div>
-      )}
+        {options.length > 0 && (
+          <div className={styles.splitDropdownInner}>
+            {options.map((opt, i) => {
+              const Tag = opt.as ?? 'button';
+              const props =
+                Tag === 'button'
+                  ? {
+                      type: 'button' as const,
+                      onClick: () => {
+                        opt.onClick?.();
+                        setOpen(false);
+                      },
+                    }
+                  : { href: opt.href, to: opt.to, onClick: () => setOpen(false) };
+
+              return (
+                <Tag
+                  key={i}
+                  className={styles.splitDropdownItem}
+                  role="menuitem"
+                  {...props}
+                >
+                  {opt.icon && <span aria-hidden="true">{opt.icon}</span>}
+                  {opt.label}
+                </Tag>
+              );
+            })}
+          </div>
+        )}
+      </Popover>
     </div>
   );
 };
