@@ -64,6 +64,7 @@ function useIsMobile(breakpoint = 768): boolean {
 }
 
 // ========== OVERFLOW-BASED AUTO COLLAPSE HOOK ==========
+// ========== OVERFLOW-BASED AUTO COLLAPSE HOOK (FIXED) ==========
 function useOverflowCollapse(
   scrollRef: React.RefObject<HTMLElement | null>,
   columns: Column[],
@@ -72,6 +73,9 @@ function useOverflowCollapse(
   const [autoHidden, setAutoHidden] = useState<Set<string>>(new Set());
   const colWidthsRef = useRef<Map<string, number>>(new Map());
   const lastClientWidthRef = useRef<number>(-1);
+  const lastScrollWidthRef = useRef<number>(-1);
+  const restoreTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isRestoringRef = useRef(false); // prevent simultaneous restore attempts
 
   const collapsibleQueue = useMemo(() => {
     return columns
@@ -108,61 +112,98 @@ function useOverflowCollapse(
 
     const run = () => {
       const clientWidth = el.clientWidth;
-      if (clientWidth === lastClientWidthRef.current) return;
+      const scrollWidth = el.scrollWidth;
+
+      // Skip if nothing changed (width stable)
+      if (
+        clientWidth === lastClientWidthRef.current &&
+        scrollWidth === lastScrollWidthRef.current
+      ) {
+        return;
+      }
       lastClientWidthRef.current = clientWidth;
+      lastScrollWidthRef.current = scrollWidth;
+
       measureColWidths();
 
       const queue = collapsibleQueueRef.current;
       const currentHidden = new Set(autoHiddenRef.current);
-      const isOverflowing = () => el.scrollWidth > el.clientWidth + 1;
+      const isOverflowing = () => scrollWidth > clientWidth + 1;
 
       if (isOverflowing()) {
+        // Cancel any pending restore timer
+        if (restoreTimerRef.current) {
+          clearTimeout(restoreTimerRef.current);
+          restoreTimerRef.current = null;
+        }
+        isRestoringRef.current = false;
+
         const next = new Set(currentHidden);
         for (const { col } of queue) {
           if (next.has(col.key)) continue;
           next.add(col.key);
-          break;
+          break; // hide one column per cycle
         }
         if (next.size !== currentHidden.size) {
           autoHiddenRef.current = next;
           setAutoHidden(new Set(next));
         }
       } else {
-        const slack = el.clientWidth - el.scrollWidth;
+        // Not overflowing – maybe restore columns with hysteresis
+        const slack = clientWidth - scrollWidth;
         if (slack <= 0 || currentHidden.size === 0) return;
+
         const restoreQueue = [...queue]
           .filter(({ col }) => currentHidden.has(col.key))
           .reverse();
-        const next = new Set(currentHidden);
-        let restored = false;
-        let accumulatedWidth = 0;
-        for (const { col } of restoreQueue) {
-          const colWidth = colWidthsRef.current.get(col.key) ?? 150;
-          accumulatedWidth += colWidth;
-          if (accumulatedWidth <= slack - 2) {
-            next.delete(col.key);
-            restored = true;
-            break;
-          } else {
-            break;
-          }
-        }
-        if (restored) {
-          autoHiddenRef.current = next;
-          setAutoHidden(new Set(next));
+
+        if (restoreQueue.length === 0) return;
+
+        // Avoid multiple restore timers; use a cooldown to ensure stability
+        if (!restoreTimerRef.current && !isRestoringRef.current) {
+          restoreTimerRef.current = setTimeout(() => {
+            restoreTimerRef.current = null;
+            // Re-measure to ensure situation still stable
+            const newClientWidth = el.clientWidth;
+            const newScrollWidth = el.scrollWidth;
+            if (newScrollWidth > newClientWidth + 1) {
+              // Overflow again, abort
+              return;
+            }
+
+            const newSlack = newClientWidth - newScrollWidth;
+            // Find the first column that fits with a margin of 10px
+            for (const { col } of restoreQueue) {
+              const colWidth = colWidthsRef.current.get(col.key) ?? 150;
+              if (colWidth + 10 <= newSlack) {
+                const next = new Set(autoHiddenRef.current);
+                next.delete(col.key);
+                autoHiddenRef.current = next;
+                setAutoHidden(new Set(next));
+                isRestoringRef.current = false;
+                return;
+              }
+            }
+            // No column fits, give up
+          }, 200); // 200ms cooldown
+          isRestoringRef.current = true;
         }
       }
     };
 
     const observer = new ResizeObserver(() => requestAnimationFrame(run));
     observer.observe(el);
+    // Initial run
     requestAnimationFrame(run);
     return () => {
       observer.disconnect();
       lastClientWidthRef.current = -1;
+      lastScrollWidthRef.current = -1;
+      if (restoreTimerRef.current) clearTimeout(restoreTimerRef.current);
     };
   }, [scrollRef]);
 
+  // Reset autoHidden when collapsibleQueue changes (e.g., manual hide toggles)
   useEffect(() => {
     lastClientWidthRef.current = -1;
     setAutoHidden((prev) => {
