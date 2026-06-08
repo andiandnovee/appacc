@@ -284,19 +284,14 @@ export default function VehicleLogbookPage() {
             }}
           />
           <div className={styles.fieldWrap}>
-            <label className={styles.filterLabel}>Bulan</label>
-            <select
-              className={styles.nativeSelect}
-              value={month}
-              onChange={(e) => setMonth(e.target.value)}
-            >
-              {MONTHS.map((m) => (
-                <option key={m.value} value={m.value}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
-          </div>
+  <Select
+    label="Bulan"
+    value={month}
+    onChange={(e) => setMonth(e.target.value)}
+    size="sm"
+    options={MONTHS}
+  />
+</div>
           <div className={styles.fieldWrap}>
             <label className={styles.filterLabel}>Tahun</label>
             <input

@@ -477,6 +477,8 @@ function DataCard({
     (c) => !c.cardRole || c.cardRole === "field",
   );
 
+  const EXPORT_LIMITS = { xlsx: 5000, pdf: 1000 }
+const EXPORT_WARN_THRESHOLD = 500
   const renderCell = (col: Column) =>
     col.render ? col.render(row, refetch) : (row[col.key] ?? "—");
 

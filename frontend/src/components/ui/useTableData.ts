@@ -94,7 +94,7 @@ export function useTableData(url, {
 
   // ========== FETCH ALL (untuk export) ==========
   // Kirim semua filter/search/sort yang aktif, tapi per_page=9999
-  const fetchAll = useCallback(async () => {
+  const fetchAll = useCallback(async (maxRows = 5000) => {
     try {
       const params = {}
 
@@ -104,7 +104,7 @@ export function useTableData(url, {
       })
 
       // per_page besar, page 1
-      params.per_page = 9999
+       params.per_page = maxRows 
       params.page = 1
 
       // Search
