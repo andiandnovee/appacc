@@ -8,11 +8,15 @@ interface FilterState {
   selectedYear: string;
   selectedStage: string;
   selectedIsPkp: boolean | null; // ← tambah
+  autoRefreshEnabled: boolean;
+  pollIntervalMinutes: number;
   setSelectedCompany: (value: string) => void;
   setSelectedVendor: (value: string) => void;
   setSelectedYear: (value: string) => void;
   setSelectedStage: (value: string) => void;
   setSelectedIsPkp: (value: boolean | null) => void; // ← tambah
+  setAutoRefreshEnabled: (value: boolean) => void;
+  setPollIntervalMinutes: (value: number) => void;
   resetFilters: () => void;
 }
 
@@ -24,11 +28,15 @@ export const useFilterStore = create<FilterState>()(
       selectedYear: new Date().getFullYear().toString(),
       selectedStage: "",
       selectedIsPkp: null,
+      autoRefreshEnabled: true,
+      pollIntervalMinutes: 5,
       setSelectedCompany: (value) => set({ selectedCompany: value }),
       setSelectedVendor: (value) => set({ selectedVendor: value }),
       setSelectedYear: (value) => set({ selectedYear: value }),
       setSelectedStage: (value) => set({ selectedStage: value }),
       setSelectedIsPkp: (value) => set({ selectedIsPkp: value }),
+      setAutoRefreshEnabled: (value) => set({ autoRefreshEnabled: value }),
+      setPollIntervalMinutes: (value) => set({ pollIntervalMinutes: value }),
       resetFilters: () =>
         set({
           selectedCompany: "",

@@ -42,10 +42,14 @@ export default function InvoiceReceiptManagement() {
     selectedYear,
     selectedStage,
     selectedIsPkp,
+         autoRefreshEnabled,
+  pollIntervalMinutes,
     setSelectedCompany,
     setSelectedVendor,
     setSelectedYear,
     setSelectedStage,
+  setAutoRefreshEnabled,
+  setPollIntervalMinutes,
     resetFilters,
   } = useFilterStore();
 
@@ -98,21 +102,21 @@ export default function InvoiceReceiptManagement() {
   }, [selectedYear]);
 
   // ── Polling ───────────────────────────────────────────────────
-  const POLL_INTERVAL_MS = 5 * 60 * 1000;
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+// ── Polling ───────────────────────────────────────────────────
+const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  useInterval(
-    useCallback(() => {
-      if (!IS_PROD && !getToken()) return;
-      tableRef.current?.refetch();
-      setLastUpdated(new Date());
-    }, []),
-    POLL_INTERVAL_MS,
-  );
-
-  useEffect(() => {
+useInterval(
+  useCallback(() => {
+    if (!IS_PROD && !getToken()) return;
+    tableRef.current?.refetch();
     setLastUpdated(new Date());
-  }, []);
+  }, []),
+  autoRefreshEnabled ? pollIntervalMinutes * 60 * 1000 : null,
+);
+
+useEffect(() => {
+  setLastUpdated(new Date());
+}, []);
 
   // ── Filter params ─────────────────────────────────────────────
   const filterParams = useMemo<Record<string, any>>(() => {
@@ -382,23 +386,51 @@ export default function InvoiceReceiptManagement() {
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
-        <div>
-          <h1 className={styles.pageTitle}>Manajemen Invoice Receipt</h1>
-          <p className={styles.pageSubtitle}>
-            Kelola data invoice receipt perusahaan
-          </p>
-          {lastUpdated && (
-            <p className={styles.lastUpdated}>
-              Diperbarui:{" "}
-              {lastUpdated.toLocaleTimeString("id-ID", {
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-              })}
-            </p>
-          )}
-        </div>
-      </div>
+  <div>
+    <h1 className={styles.pageTitle}>Manajemen Invoice Receipt</h1>
+    <p className={styles.pageSubtitle}>
+      Kelola data invoice receipt perusahaan
+    </p>
+    {lastUpdated && (
+      <p className={styles.lastUpdated}>
+        Diperbarui:{" "}
+        {lastUpdated.toLocaleTimeString("id-ID", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        })}
+      </p>
+    )}
+  </div>
+
+  {/* ── Auto-refresh control ── */}
+  <div className={styles.autoRefreshControl}>
+    <label className={styles.autoRefreshLabel}>
+      <input
+        type="checkbox"
+        checked={autoRefreshEnabled}
+        onChange={(e) => setAutoRefreshEnabled(e.target.checked)}
+        className={styles.autoRefreshCheckbox}
+      />
+      <span>Auto-refresh</span>
+    </label>
+    {autoRefreshEnabled && (
+      <select
+        value={String(pollIntervalMinutes)}
+        onChange={(e) => setPollIntervalMinutes(Number(e.target.value))}
+        className={styles.autoRefreshSelect}
+      >
+        <option value="1">1 menit</option>
+        <option value="2">2 menit</option>
+        <option value="5">5 menit</option>
+        <option value="10">10 menit</option>
+        <option value="15">15 menit</option>
+        <option value="30">30 menit</option>
+      </select>
+    )}
+  </div>
+</div>
+
 
       {/* ── Form panel ── */}
       <Collapsible
