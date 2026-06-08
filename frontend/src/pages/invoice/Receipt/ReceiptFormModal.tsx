@@ -192,37 +192,38 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
 
   // ── Field handlers ─────────────────────────────────────────────────────────
   const handleInputChange =
-  (field: keyof FormData) => (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+    (field: keyof FormData) =>
+    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const value = e.target.value;
 
-    if (field === "po_number") {
-      if (!isEdit) {
-        setPoFound(null);
-        setPoDuplicate(false);
-        setAutoFilled(new Set());
-        setBaseAmount("");
-        setPpnEnabled(false);
-        setAmountRaw(0);
-        setAmountDisplay("");
-        setForm((prev) => ({
-          ...prev,
-          po_number: value,
-          amount: "",
-          buyer_name: "",
-          company_id: "",
-          business_area_code: "",
-          pgr_id: "",
-          is_pkp: false,
-        }));
-      } else {
-        setForm((prev) => ({ ...prev, po_number: value }));
+      if (field === "po_number") {
+        if (!isEdit) {
+          setPoFound(null);
+          setPoDuplicate(false);
+          setAutoFilled(new Set());
+          setBaseAmount("");
+          setPpnEnabled(false);
+          setAmountRaw(0);
+          setAmountDisplay("");
+          setForm((prev) => ({
+            ...prev,
+            po_number: value,
+            amount: "",
+            buyer_name: "",
+            company_id: "",
+            business_area_code: "",
+            pgr_id: "",
+            is_pkp: false,
+          }));
+        } else {
+          setForm((prev) => ({ ...prev, po_number: value }));
+        }
+        return;
       }
-      return;
-    }
 
-    if (field === "year") setSelectedYear(value);
-    setForm((prev) => ({ ...prev, [field]: value }));
-  };  // ← INI YANG HILANG
+      if (field === "year") setSelectedYear(value);
+      setForm((prev) => ({ ...prev, [field]: value }));
+    }; // ← INI YANG HILANG
 
   const handleSelectChange =
     (field: keyof FormData) => (e: { target: { value: any } }) => {

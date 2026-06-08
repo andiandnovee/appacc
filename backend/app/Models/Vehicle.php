@@ -12,7 +12,7 @@ class Vehicle extends Model
     protected $table = 'vehicles';
 
     protected $fillable = [
-        'sap_id',
+        
         'vehicle_type',
         'company_code',
         'business_area_code',

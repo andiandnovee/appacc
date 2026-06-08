@@ -23,6 +23,9 @@ import PphReportPage from "./pages/invoice/PphReportPage";
 import F53ImportPage from "./pages/sap/F53ImportPage";
 import F53HelperPage from "./pages/invoice/F53HelperPage";
 import VehicleLogbookPage from "./pages/invoice/VehicleLogBook";
+import VehicleManagement from "./pages/invoice/VehicleManagementPage";
+
+
 const App: FC = (): ReactElement => {
   return (
     <BrowserRouter>
@@ -53,6 +56,7 @@ const App: FC = (): ReactElement => {
 
                 {/* ── Kendaraan ── */}
                 <Route path="/vehicles/logbook" element={<VehicleLogbookPage />} />
+                <Route path="/vehicles/manage" element={<VehicleManagement />} />
               </Route>
             </Route>
 

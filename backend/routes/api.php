@@ -23,6 +23,8 @@ use App\Http\Controllers\Api\F53ImportController;
 use App\Http\Controllers\Api\VehicleLogbookController;
 use App\Http\Controllers\Api\VehicleCostImportController;
 use App\Http\Controllers\Api\VehicleSelectController;
+use App\Http\Controllers\Api\VehicleController;
+
 
 
 
@@ -99,12 +101,12 @@ Route::middleware('auth:api')->group(function () {
     Route::middleware('role:accounting')->group(function () {
 
         // Vendors — search harus sebelum apiResource
-      // Vendors — static routes HARUS sebelum apiResource
-Route::delete('vendors/{vendor}/force-delete', [VendorController::class, 'forceDelete']);
-Route::post('vendors/{vendor}/restore',        [VendorController::class, 'restore']);
-Route::get('vendors/select-options',           [VendorController::class, 'selectOptions']); // ← tambah ini
-Route::get('vendors/search',                   [VendorController::class, 'search']);
-Route::apiResource('vendors', VendorController::class);
+        // Vendors — static routes HARUS sebelum apiResource
+        Route::delete('vendors/{vendor}/force-delete', [VendorController::class, 'forceDelete']);
+        Route::post('vendors/{vendor}/restore',        [VendorController::class, 'restore']);
+        Route::get('vendors/select-options',           [VendorController::class, 'selectOptions']); // ← tambah ini
+        Route::get('vendors/search',                   [VendorController::class, 'search']);
+        Route::apiResource('vendors', VendorController::class);
 
         // Master data — read only
 
@@ -115,7 +117,7 @@ Route::apiResource('vendors', VendorController::class);
         Route::get('stages/{stage}',             [StageController::class,        'show']);
         Route::apiResource('stages', \App\Http\Controllers\Api\StageController::class);
 
-        
+
 
 
         Route::get('business-areas',             [BusinessAreaController::class, 'index']);
@@ -134,41 +136,42 @@ Route::apiResource('vendors', VendorController::class);
         Route::get('invoice-receipts/{invoiceReceipt}/statuses',  [InvoiceReceiptController::class, 'statuses']);
         Route::post('invoice-receipts/{invoiceReceipt}/statuses', [InvoiceReceiptController::class, 'addStatus']);
 
+        Route::apiResource('vehicles', VehicleController::class);
 
         // SAP PO Import
-       // SAP PO Import
-Route::post('sap/import-po',             [SapImportController::class, 'importPo']);
-Route::post('sap/import-po-chunk',       [SapImportController::class, 'importPoChunk']);
-Route::get('sap/po-lookup',              [SapImportController::class, 'poLookup']);
-Route::prefix('sap')->group(function () {
-    Route::post('f53-import', [F53ImportController::class, 'importChunk']);
-    Route::get('f53-data',    [F53ImportController::class, 'getData']);
-    Route::delete('f53-data', [F53ImportController::class, 'destroy']);
-});
+        // SAP PO Import
+        Route::post('sap/import-po',             [SapImportController::class, 'importPo']);
+        Route::post('sap/import-po-chunk',       [SapImportController::class, 'importPoChunk']);
+        Route::get('sap/po-lookup',              [SapImportController::class, 'poLookup']);
+        Route::prefix('sap')->group(function () {
+            Route::post('f53-import', [F53ImportController::class, 'importChunk']);
+            Route::get('f53-data',    [F53ImportController::class, 'getData']);
+            Route::delete('f53-data', [F53ImportController::class, 'destroy']);
+        });
 
 
-Route::prefix('vehicles')->group(function () {
- 
-    // Dropdown kendaraan — dipakai di VehicleLogbookPage filter
-    Route::get('select-options', [VehicleSelectController::class, 'selectOptions']);
- 
-    // Cost center lookup + import biaya SAP
-    Route::post('cost-center-lookup', [VehicleCostImportController::class, 'lookup']);
-    Route::post('cost-import',        [VehicleCostImportController::class, 'import']);
- 
-    // Logbook
-    Route::get('logbook',                         [VehicleLogbookController::class, 'index']);
-    Route::post('logbook/detail',                 [VehicleLogbookController::class, 'storeDetail']);
-    Route::put('logbook/detail/{detail}',         [VehicleLogbookController::class, 'updateDetail']);
-    Route::delete('logbook/detail/{detail}',      [VehicleLogbookController::class, 'destroyDetail']);
-    Route::post('logbook/{headerId}/recalculate', [VehicleLogbookController::class, 'recalculate_endpoint']);
-    Route::post('logbook/{headerId}/carryover',   [VehicleLogbookController::class, 'carryover']);
-});
- 
+        Route::prefix('vehicles')->group(function () {
+
+            // Dropdown kendaraan — dipakai di VehicleLogbookPage filter
+            Route::get('select-options', [VehicleSelectController::class, 'selectOptions']);
+
+            // Cost center lookup + import biaya SAP
+            Route::post('cost-center-lookup', [VehicleCostImportController::class, 'lookup']);
+            Route::post('cost-import',        [VehicleCostImportController::class, 'import']);
+
+            // Logbook
+            Route::get('logbook',                         [VehicleLogbookController::class, 'index']);
+            Route::post('logbook/detail',                 [VehicleLogbookController::class, 'storeDetail']);
+            Route::put('logbook/detail/{detail}',         [VehicleLogbookController::class, 'updateDetail']);
+            Route::delete('logbook/detail/{detail}',      [VehicleLogbookController::class, 'destroyDetail']);
+            Route::post('logbook/{headerId}/recalculate', [VehicleLogbookController::class, 'recalculate_endpoint']);
+            Route::post('logbook/{headerId}/carryover',   [VehicleLogbookController::class, 'carryover']);
+        });
 
 
-// PPh Import & Report
-Route::post('sap/import-pph-chunk',      [PphImportController::class, 'importChunk']);
+
+        // PPh Import & Report
+        Route::post('sap/import-pph-chunk',      [PphImportController::class, 'importChunk']);
         Route::get('sap/import-pph-incomplete',  [PphImportController::class, 'incompleteBatches']);
         Route::get('sap/pph-companies',          [PphImportController::class, 'companyList']);
         Route::get('sap/pph-batches',            [PphImportController::class, 'batchList']);
@@ -176,7 +179,7 @@ Route::post('sap/import-pph-chunk',      [PphImportController::class, 'importChu
         Route::get('sap/pph-report',             [PphImportController::class, 'report']);
         Route::patch('sap/vendor-gl-cost',       [PphImportController::class, 'updateVendorGlCost']);
         // routes/api.php
-Route::delete('/sap/pph-data', [PphImportController::class, 'destroy']);
+        Route::delete('/sap/pph-data', [PphImportController::class, 'destroy']);
         Route::patch('/vendors/{vendor}/pkp', [VendorController::class, 'updatePkp']);
     });
 

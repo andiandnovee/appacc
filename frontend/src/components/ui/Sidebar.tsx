@@ -40,7 +40,7 @@ const NAV_GROUPS = [
     label: "Kendaraan",
     items: [
       { to: "/vehicles/logbook", icon: BookOpen, label: "Logbook & Biaya" },
-      { to: "/utility/kendaraan", icon: Car, label: "Master Kendaraan" },
+      { to: "/vehicles/manage", icon: Car, label: "Master Kendaraan" },
     ],
   },
   {
@@ -111,11 +111,17 @@ export default function Sidebar({
       ]
         .filter(Boolean)
         .join(" ")}
-      onMouseEnter={() => { if (!isMobile) setIsHovered(true); }}
-      onMouseLeave={() => { if (!isMobile) setIsHovered(false); }}
+      onMouseEnter={() => {
+        if (!isMobile) setIsHovered(true);
+      }}
+      onMouseLeave={() => {
+        if (!isMobile) setIsHovered(false);
+      }}
     >
       {/* Header */}
-      <div className={`${styles.header} ${!isExpanded ? styles.headerCollapsed : ""}`}>
+      <div
+        className={`${styles.header} ${!isExpanded ? styles.headerCollapsed : ""}`}
+      >
         {isExpanded && <h1 className={styles.brand}>APPACC</h1>}
 
         {!isMobile && (
@@ -124,12 +130,20 @@ export default function Sidebar({
             onClick={() => setIsCollapsed((v) => !v)}
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            {isExpanded ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
+            {isExpanded ? (
+              <ChevronLeft size={18} />
+            ) : (
+              <ChevronRight size={18} />
+            )}
           </button>
         )}
 
         {isMobile && (
-          <button className={styles.closeBtn} onClick={onMobileClose} aria-label="Tutup menu">
+          <button
+            className={styles.closeBtn}
+            onClick={onMobileClose}
+            aria-label="Tutup menu"
+          >
             <X size={18} />
           </button>
         )}
@@ -140,7 +154,9 @@ export default function Sidebar({
         {NAV_GROUPS.map((group, gi) => (
           <div key={gi} className={styles.group}>
             {group.label && (
-              <div className={`${styles.groupHeader} ${!isExpanded ? styles.groupHeaderCollapsed : ""}`}>
+              <div
+                className={`${styles.groupHeader} ${!isExpanded ? styles.groupHeaderCollapsed : ""}`}
+              >
                 <span className={styles.groupLabel}>{group.label}</span>
               </div>
             )}
@@ -161,12 +177,18 @@ export default function Sidebar({
                     .join(" ")
                 }
               >
-                <span className={styles.icon}><Icon size={18} /></span>
-                <span className={`${styles.navLabel} ${isExpanded ? styles.navLabelVisible : styles.navLabelHidden}`}>
+                <span className={styles.icon}>
+                  <Icon size={18} />
+                </span>
+                <span
+                  className={`${styles.navLabel} ${isExpanded ? styles.navLabelVisible : styles.navLabelHidden}`}
+                >
                   {label}
                 </span>
                 {badge && isExpanded && (
-                  <span className={`${styles.badge} ${styles[`badge_${badge}`] ?? styles.badge_default}`}>
+                  <span
+                    className={`${styles.badge} ${styles[`badge_${badge}`] ?? styles.badge_default}`}
+                  >
                     {badge}
                   </span>
                 )}
