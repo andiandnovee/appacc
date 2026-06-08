@@ -36,6 +36,7 @@ import Card from "./Card";
 import Button from "./Button";
 import { Popover } from "./Popover";
 import { useTablePrefsStore } from "../../stores/tablePrefs";
+import { useShallow } from "zustand/react/shallow";
 import styles from "./Table.module.css";
 
 // ========== DEBOUNCE ==========
@@ -674,9 +675,10 @@ const Table = forwardRef<any, TableProps>((props, ref) => {
   // ========== MANUAL HIDDEN (kolom tabel) ==========
 
   // FIX: selector langsung ke array di store — reactive
-  const storedHiddenCols = useTablePrefsStore((s) =>
-    tableId ? (s.prefs[tableId]?.hiddenColumns ?? []) : [],
+  const storedHiddenCols = useTablePrefsStore(
+    useShallow((s) => (tableId ? (s.prefs[tableId]?.hiddenColumns ?? []) : [])),
   );
+
   const storeSetHiddenCols = useTablePrefsStore((s) => s.setHiddenColumns);
 
   // FIX: useMemo (bukan useState) — selalu sync dengan store tanpa perlu useEffect tambahan
