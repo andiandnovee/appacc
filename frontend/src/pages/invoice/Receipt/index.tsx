@@ -15,6 +15,7 @@ import { useInterval } from "../../../hooks/useInterval";
 import { getToken } from "../../../api/axios";
 import { downloadME2N, downloadMIR7 } from "../../../utils/sapShortcuts";
 import { useAuth } from "../../../hooks/useAuth";
+import Drawer from "../../../components/ui/Drawer";
 
 const IS_PROD = import.meta.env.PROD;
 
@@ -60,7 +61,7 @@ export default function InvoiceReceiptManagement() {
   const { user } = useAuth();
 
   const [tableOpen, setTableOpen] = useState(true);
-  const [FormEditing, setFormEditing] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   // ── Handler: PO sudah ada → buka tabel & set search ──────────
   const handlePoAlreadyExists = useCallback((poNumber: string) => {
@@ -351,7 +352,7 @@ useEffect(() => {
                 size="sm"
                 onClick={() => {
                   setFormTarget(row);
-                  setFormEditing(true);
+                   setDrawerOpen(true); // ← bu
                 }}
                 options={[
                   {
@@ -435,38 +436,54 @@ useEffect(() => {
 
       {/* ── Form panel ── */}
       <Collapsible
-        title={
-          formTarget?.id
-            ? "Edit Invoice Receipt"
-            : "Tambah Invoice Receipt Baru"
-        }
-        subtitle={
-          formTarget?.id
-            ? `Invoice #${formTarget.invoice_number ?? "—"}`
-            : "Isi data invoice receipt dengan lengkap"
-        }
-        open={FormEditing}
-        defaultOpen={true}
-        onToggle={(v) => setFormEditing(v)}
-      >
-        <ReceiptFormModal
-          receipt={formTarget?.id ? formTarget : null}
-          onCancel={() => {
-            setFormTarget({});
-            // setFormEditing(false);
-          }}
-          onSaved={() => {
-            handleSaved();
-            if (formTarget?.id) setFormTarget({});
-            // setFormEditing(false);
-          }}
-          onSavedAndNew={() => {
-            handleSavedAndNew();
-            // setFormEditing(false);
-          }}
-          onPoAlreadyExists={handlePoAlreadyExists}
-        />
-      </Collapsible>
+  title="Tambah Invoice Receipt Baru"
+  subtitle="Isi data invoice receipt dengan lengkap"
+  defaultOpen={true}
+>
+  <ReceiptFormModal
+    receipt={null}
+    onCancel={() => {}}
+    onSaved={() => {
+      handleSaved();
+    }}
+    onSavedAndNew={handleSavedAndNew}
+    onPoAlreadyExists={handlePoAlreadyExists}
+  />
+</Collapsible>
+
+<Drawer
+  isOpen={drawerOpen}
+  onClose={() => {
+    setDrawerOpen(false);
+    setFormTarget({});
+  }}
+  size="lg"
+>
+  <Drawer.Header
+    title="Edit Invoice Receipt"
+    subtitle={`Invoice #${formTarget?.invoice_number ?? "—"}`}
+    onClose={() => {
+      setDrawerOpen(false);
+      setFormTarget({});
+    }}
+  />
+  <Drawer.Body>
+    <ReceiptFormModal
+      receipt={formTarget?.id ? formTarget : null}
+      onCancel={() => {
+        setDrawerOpen(false);
+        setFormTarget({});
+      }}
+      onSaved={() => {
+        handleSaved();
+        setDrawerOpen(false);
+        setFormTarget({});
+      }}
+      onSavedAndNew={handleSavedAndNew}
+      onPoAlreadyExists={handlePoAlreadyExists}
+    />
+  </Drawer.Body>
+</Drawer>
 
       {/* ── Filter + Tabel ── */}
       <Collapsible

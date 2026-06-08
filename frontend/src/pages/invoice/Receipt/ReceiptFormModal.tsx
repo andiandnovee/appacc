@@ -192,16 +192,16 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
 
   // ── Field handlers ─────────────────────────────────────────────────────────
   const handleInputChange =
-    (field: keyof FormData) => (e: ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value;
+  (field: keyof FormData) => (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
 
-      if (field === "po_number") {
+    if (field === "po_number") {
+      if (!isEdit) {
         setPoFound(null);
         setPoDuplicate(false);
         setAutoFilled(new Set());
         setBaseAmount("");
         setPpnEnabled(false);
-
         setAmountRaw(0);
         setAmountDisplay("");
         setForm((prev) => ({
@@ -214,12 +214,15 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
           pgr_id: "",
           is_pkp: false,
         }));
-        return;
+      } else {
+        setForm((prev) => ({ ...prev, po_number: value }));
       }
+      return;
+    }
 
-      if (field === "year") setSelectedYear(value);
-      setForm((prev) => ({ ...prev, [field]: value }));
-    };
+    if (field === "year") setSelectedYear(value);
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };  // ← INI YANG HILANG
 
   const handleSelectChange =
     (field: keyof FormData) => (e: { target: { value: any } }) => {
@@ -258,6 +261,7 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
   // ── PO Lookup ──────────────────────────────────────────────────────────────
 
   const handlePoBlur = useCallback(async () => {
+    if (isEdit) return; // ← TAMBAH INI
     const poNumber = form.po_number.trim();
     if (!poNumber) return;
 
@@ -359,7 +363,7 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
     } finally {
       setPoLooking(false);
     }
-  }, [form.po_number]);
+  }, [form.po_number, isEdit]);
 
   // ── Fetch options ──────────────────────────────────────────────────────────
   const vendorFetchOptions = useMemo(
