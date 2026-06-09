@@ -11,6 +11,7 @@ import * as XLSX from "xlsx";
 import { CheckCircle, AlertTriangle, Car } from "lucide-react";
 import Button from "../../../components/ui/Button";
 import Alert from "../../../components/ui/Alert";
+import Select from "../../../components/ui/Select";
 import Badge from "../../../components/ui/Badge";
 import FileUpload from "../../../components/ui/FileUpload";
 import api from "../../../api/axios";
@@ -222,8 +223,8 @@ export default function VehicleCostImportForm({ onSuccess }: Props) {
       <div className={styles.periodeRow}>
         <div className={styles.fieldWrap}>
           <label className={styles.label}>Bulan</label>
-          <select
-            className={styles.select}
+          <Select
+            label="Bulan"
             value={month}
             onChange={(e) => {
               setMonth(e.target.value);
@@ -231,13 +232,14 @@ export default function VehicleCostImportForm({ onSuccess }: Props) {
               setResult(null);
             }}
             disabled={importing}
+            options={MONTHS}
           >
             {MONTHS.map((m) => (
               <option key={m.value} value={m.value}>
                 {m.label}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className={styles.fieldWrap}>
           <label className={styles.label}>Tahun</label>

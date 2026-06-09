@@ -1,0 +1,296 @@
+/* ─────────────────────────────────────────────────────────
+   BebanSelect.module.css
+   Path: frontend/src/pages/vehicles/VehicleLogBook/BebanSelect.module.css
+
+   Token reference: tokens.css
+   - Surface  : --bg-surface, --bg-surface-2
+   - Border   : --border-subtle, --border-default, --border-strong, --border-focus
+   - Text     : --text-primary, --text-secondary, --text-tertiary, --text-disabled
+   - Semantic : --color-info, --color-info-light, --color-info-dark
+                --color-success, --color-success-light, --color-success-dark
+                --color-danger, --color-danger-light
+   - Spacing  : --space-*
+   - Radius   : --radius-sm, --radius-md, --radius-lg
+   - Shadow   : --shadow-md, --shadow-lg
+   - Font     : --font-sans, --font-mono, --text-xs, --text-sm
+   - Duration : --duration-fast, --duration-normal, --ease-default
+   - Z-index  : --z-dropdown
+   ───────────────────────────────────────────────────────── */
+
+/* ── Wrapper ─────────────────────────────────────────────── */
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  position: relative;
+  font-family: var(--font-sans);
+}
+
+/* ── Label ───────────────────────────────────────────────── */
+.label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-secondary);
+  line-height: var(--leading-snug);
+}
+
+.req {
+  color: var(--color-danger);
+  margin-left: 2px;
+}
+
+/* ── Input wrapper ───────────────────────────────────────── */
+.inputWrap {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: var(--space-1);
+  min-height: 38px;
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-2);
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-md);
+  transition:
+    border-color var(--duration-fast) var(--ease-default),
+    box-shadow   var(--duration-fast) var(--ease-default);
+  cursor: text;
+}
+
+.inputWrap:focus-within {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary-500) 15%, transparent);
+  outline: none;
+}
+
+.inputWrap.hasError {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-danger) 12%, transparent);
+}
+
+.inputWrap.disabled {
+  background: var(--bg-surface-2);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Input ───────────────────────────────────────────────── */
+.input {
+  flex: 1;
+  min-width: 60px;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  padding: 0;
+  line-height: var(--leading-normal);
+}
+
+.input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.input:disabled {
+  cursor: not-allowed;
+}
+
+/* ── Chip (nilai terpilih) ───────────────────────────────── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 3px var(--space-2) 3px var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  line-height: 1;
+  white-space: nowrap;
+  flex-shrink: 0;
+  border: 1px solid transparent;
+}
+
+/* CC → biru (info) */
+.chip_cost_center {
+  background: var(--color-info-light);
+  color: var(--color-info-dark);
+  border-color: color-mix(in srgb, var(--color-info) 25%, transparent);
+}
+
+/* Customer → hijau (success) */
+.chip_customer {
+  background: var(--color-success-light);
+  color: var(--color-success-dark);
+  border-color: color-mix(in srgb, var(--color-success) 25%, transparent);
+}
+
+.chipCode {
+  font-family: var(--font-mono);
+  font-weight: var(--font-semibold);
+  font-size: 0.7rem;
+  letter-spacing: var(--tracking-wide);
+}
+
+.chipName {
+  color: inherit;
+  opacity: 0.8;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chipClear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  opacity: 0.55;
+  cursor: pointer;
+  border-radius: var(--radius-full);
+  font-size: 0.9rem;
+  line-height: 1;
+  transition: opacity var(--duration-fast), background var(--duration-fast);
+  flex-shrink: 0;
+}
+
+.chipClear:hover {
+  opacity: 1;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+/* ── Dropdown ────────────────────────────────────────────── */
+.dropdown {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  left: 0;
+  right: 0;
+  z-index: var(--z-dropdown);
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  max-height: 280px;
+  overflow-y: auto;
+
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-default) transparent;
+}
+
+.dropdown::-webkit-scrollbar       { width: 4px; }
+.dropdown::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: var(--radius-full);
+}
+
+/* ── Group header ────────────────────────────────────────── */
+.groupHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3) var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: var(--font-bold);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  border-bottom: 1px solid var(--border-subtle);
+  position: sticky;
+  top: 0;
+  background: var(--bg-surface);
+  z-index: 1;
+}
+
+/* ── Option item ─────────────────────────────────────────── */
+.option {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-default);
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+}
+
+.option:last-child {
+  border-bottom-left-radius:  var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
+}
+
+.optionHighlighted {
+  background: var(--bg-surface-2);
+}
+
+.optionSelected {
+  background: color-mix(in srgb, var(--color-primary-500) 8%, transparent);
+}
+
+.optionSapId {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: var(--font-semibold);
+  color: var(--text-tertiary);
+  letter-spacing: var(--tracking-wide);
+  white-space: nowrap;
+}
+
+.optionName {
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.optionShort {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+/* ── Empty state ─────────────────────────────────────────── */
+.empty {
+  padding: var(--space-4) var(--space-3);
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+}
+
+/* ── Skeleton loading ────────────────────────────────────── */
+.skeletonWrap {
+  padding: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.skeleton {
+  height: 32px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(
+    90deg,
+    var(--bg-surface-2)  25%,
+    var(--border-subtle) 50%,
+    var(--bg-surface-2)  75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+@keyframes shimmer {
+  0%   { background-position:  200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Error message ───────────────────────────────────────── */
+.errorMsg {
+  font-size: var(--text-xs);
+  color: var(--color-danger);
+  margin: 0;
+  line-height: var(--leading-normal);
+}

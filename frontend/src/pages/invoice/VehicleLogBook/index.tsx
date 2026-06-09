@@ -1,13 +1,6 @@
 /**
  * VehicleLogbookPage.tsx
  * Path: frontend/src/pages/vehicles/VehicleLogbookPage.tsx
- *
- * Halaman utama logbook kendaraan.
- * - Filter: kendaraan + periode (bulan/tahun)
- * - Header info: total biaya, total KM, rate Rp/KM
- * - Tabel detail logbook per trip
- * - Drawer: Import Biaya SAP
- * - Drawer: Carryover dari bulan lalu
  */
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
@@ -32,7 +25,9 @@ import Drawer from "../../../components/ui/Drawer";
 import { useToast } from "../../../components/ui/Toast";
 
 import VehicleCostImportForm from "./VehicleCostImportForm";
-import LogbookDetailForm from "./LogbookDetailForm";
+import LogbookDetailForm, {
+  type LogbookDetailFormRef,
+} from "./LogbookDetailForm";
 import CarryoverPicker from "./CarryoverPicker";
 
 import styles from "./index.module.css";
@@ -66,14 +61,13 @@ export interface CostDetail {
   vehicle_cost_header_id: number;
   start_km: number;
   end_km: number;
-  km: number; // computed: end_km - start_km
+  km: number;
   cost_center: string | null;
   customer_code: string | null;
   description: string;
   cost_amount: number | null;
   is_carryover: boolean;
   source_detail_id: number | null;
-  // join info
   cost_center_name?: string;
   customer_name?: string;
   source_month?: number;
@@ -118,48 +112,42 @@ const MONTHS = [
 export default function VehicleLogbookPage() {
   const { addToast } = useToast();
 
-  // ── Filter state ─────────────────────────────
   const now = new Date();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>("");
   const [month, setMonth] = useState<string>(String(now.getMonth() + 1));
   const [year, setYear] = useState<string>(String(now.getFullYear()));
 
-  // ── Data state ───────────────────────────────
   const [header, setHeader] = useState<CostHeader | null>(null);
   const [details, setDetails] = useState<CostDetail[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Drawer state ─────────────────────────────
+  // Drawer: hanya untuk edit & import & carryover
   const [importOpen, setImportOpen] = useState(false);
-  const [addRowOpen, setAddRowOpen] = useState(false);
   const [carryoverOpen, setCarryoverOpen] = useState(false);
   const [editDetail, setEditDetail] = useState<CostDetail | null>(null);
 
-  // ── Deleting ─────────────────────────────────
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [recalculating, setRecalculating] = useState(false);
+  const [selectedBusinessArea, setSelectedBusinessArea] = useState<string>("");
 
-  // ── Fetch header + details ───────────────────
+  // Ref ke inline form — untuk focus via Ctrl+A
+  const inlineFormRef = useRef<LogbookDetailFormRef>(null);
+  const inlineFormWrapRef = useRef<HTMLDivElement>(null);
+
+  // ── Fetch ────────────────────────────────────
   const fetchData = useCallback(async () => {
     if (!selectedVehicleId || !month || !year) {
       setHeader(null);
       setDetails([]);
       return;
     }
-
     setLoading(true);
     setError(null);
-
     try {
       const { data } = await api.get("/vehicles/logbook", {
-        params: {
-          vehicle_id: selectedVehicleId,
-          month,
-          year,
-        },
+        params: { vehicle_id: selectedVehicleId, month, year },
       });
-
       setHeader(data.header ?? null);
       setDetails(data.details ?? []);
     } catch (e: any) {
@@ -175,13 +163,39 @@ export default function VehicleLogbookPage() {
     fetchData();
   }, [fetchData]);
 
-  // ── KM akhir terakhir (untuk prefill row baru) ──
-  const lastKm = useMemo(() => {
-    if (details.length === 0) return header?.start_km ?? null;
-    return details[details.length - 1].end_km;
-  }, [details, header]);
+  // ── Ctrl+A → focus ke inline form ───────────
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a") {
+        // Jangan intercept kalau user sedang seleksi teks di input/textarea
+        const tag = (e.target as HTMLElement)?.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA") return;
 
-  // ── Recalculate cost_amount semua details ────
+        if (!header) return;
+        e.preventDefault();
+
+        // Scroll ke form lalu focus
+        inlineFormWrapRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+        setTimeout(() => inlineFormRef.current?.focusEndKm(), 300);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [header]);
+
+  // ── Tombol "Tambah Baris" → scroll + focus ──
+  const handleScrollToForm = useCallback(() => {
+    inlineFormWrapRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+    setTimeout(() => inlineFormRef.current?.focusEndKm(), 300);
+  }, []);
+
+  // ── Recalculate ──────────────────────────────
   const handleRecalculate = useCallback(async () => {
     if (!header) return;
     setRecalculating(true);
@@ -202,7 +216,7 @@ export default function VehicleLogbookPage() {
     }
   }, [header, fetchData, addToast]);
 
-  // ── Delete detail ────────────────────────────
+  // ── Delete ───────────────────────────────────
   const handleDeleteDetail = useCallback(
     async (detail: CostDetail) => {
       if (
@@ -217,7 +231,7 @@ export default function VehicleLogbookPage() {
         await api.delete(`/vehicles/logbook/detail/${detail.id}`);
         addToast({ variant: "success", title: "Baris logbook dihapus." });
         fetchData();
-      } catch (e: any) {
+      } catch {
         addToast({ variant: "danger", title: "Gagal menghapus baris." });
       } finally {
         setDeletingId(null);
@@ -226,27 +240,27 @@ export default function VehicleLogbookPage() {
     [fetchData, addToast],
   );
 
-  // ── Derived stats ────────────────────────────
+  // ── Derived ──────────────────────────────────
+  const lastKm = useMemo(() => {
+    if (details.length === 0) return header?.start_km ?? null;
+    return details[details.length - 1].end_km;
+  }, [details, header]);
+
   const totalKm = useMemo(
     () => details.reduce((s, d) => s + (d.end_km - d.start_km), 0),
     [details],
   );
-
   const totalAllocated = useMemo(
     () => details.reduce((s, d) => s + (d.cost_amount ?? 0), 0),
     [details],
   );
-
   const ratePerKm =
     totalKm > 0 && header?.total_cost
       ? Math.round(header.total_cost / totalKm)
       : null;
-
   const isBalanced = header
     ? Math.abs(totalAllocated - header.total_cost) < 1
     : false;
-
-  const canAddRow = !!header;
 
   // ─────────────────────────────────────────────
   return (
@@ -257,6 +271,19 @@ export default function VehicleLogbookPage() {
           <div className={styles.pageIcon}>
             <Car size={20} />
           </div>
+          {/* <Select       
+            label="Area Bisnis" 
+                        value={selectedBusinessArea}
+                        onChange={(e) => setSelectedBusinessArea(e.target.value)}
+                        placeholder="Semua BusArea"
+                        fetchOptions={{
+                          endpoint: "/busa",
+                          searchParam: "search",
+                          limit: 10,
+                        }}
+                      />
+                     */}
+
           <div>
             <h1 className={styles.pageTitle}>Logbook Kendaraan</h1>
             <p className={styles.pageSubtitle}>
@@ -284,14 +311,14 @@ export default function VehicleLogbookPage() {
             }}
           />
           <div className={styles.fieldWrap}>
-  <Select
-    label="Bulan"
-    value={month}
-    onChange={(e) => setMonth(e.target.value)}
-    size="sm"
-    options={MONTHS}
-  />
-</div>
+            <Select
+              label="Bulan"
+              value={month}
+              onChange={(e) => setMonth(e.target.value)}
+              size="sm"
+              options={MONTHS}
+            />
+          </div>
           <div className={styles.fieldWrap}>
             <label className={styles.filterLabel}>Tahun</label>
             <input
@@ -310,21 +337,20 @@ export default function VehicleLogbookPage() {
               onClick={fetchData}
               disabled={loading}
             >
-              <RefreshCw size={14} className={loading ? styles.spinning : ""} />
+              <RefreshCw size={14} className={loading ? styles.spinning : ""} />{" "}
               Refresh
             </Button>
           </div>
         </div>
       </div>
 
-      {/* ── LOADING / ERROR ─────────────────── */}
+      {/* ── LOADING / ERROR / EMPTY ─────────── */}
       {loading && (
         <div className={styles.stateBox}>
           <Loader2 size={24} className={styles.spinning} />
           <span>Memuat data...</span>
         </div>
       )}
-
       {!loading && error && (
         <div className={styles.stateBox}>
           <AlertCircle size={18} className={styles.errorIcon} />
@@ -334,7 +360,6 @@ export default function VehicleLogbookPage() {
           </Button>
         </div>
       )}
-
       {!loading && !error && selectedVehicleId && !header && (
         <div className={styles.stateBox}>
           <Car size={36} className={styles.emptyIcon} />
@@ -344,7 +369,6 @@ export default function VehicleLogbookPage() {
           </p>
         </div>
       )}
-
       {!loading && !error && !selectedVehicleId && (
         <div className={styles.stateBox}>
           <Car size={36} className={styles.emptyIcon} />
@@ -352,9 +376,10 @@ export default function VehicleLogbookPage() {
         </div>
       )}
 
-      {/* ── HEADER INFO CARD ────────────────── */}
+      {/* ── CONTENT (hanya kalau header ada) ── */}
       {!loading && !error && header && (
         <>
+          {/* ── HEADER INFO CARD ────────────── */}
           <div className={styles.headerCard}>
             <div className={styles.headerCardLeft}>
               <div className={styles.statItem}>
@@ -397,22 +422,15 @@ export default function VehicleLogbookPage() {
           {/* ── ACTION BAR ──────────────────── */}
           <div className={styles.actionBar}>
             <div className={styles.actionBarLeft}>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => {
-                  setEditDetail(null);
-                  setAddRowOpen(true);
-                }}
-                disabled={!canAddRow}
-              >
+              {/* Sekarang scroll+focus ke inline form, bukan buka drawer */}
+              <Button variant="primary" size="sm" onClick={handleScrollToForm}>
                 <Plus size={14} /> Tambah Baris
+                <span className={styles.kbdHint}>Ctrl+A</span>
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setCarryoverOpen(true)}
-                disabled={!canAddRow}
               >
                 <History size={14} /> Pakai Bulan Lalu
               </Button>
@@ -435,8 +453,8 @@ export default function VehicleLogbookPage() {
             {details.length === 0 ? (
               <div className={styles.tableEmpty}>
                 <p>
-                  Belum ada baris logbook. Tambah baris atau pakai data bulan
-                  lalu.
+                  Belum ada baris logbook. Isi form di bawah atau pakai data
+                  bulan lalu.
                 </p>
               </div>
             ) : (
@@ -501,10 +519,7 @@ export default function VehicleLogbookPage() {
                           <div className={styles.rowActions}>
                             <button
                               className={styles.editBtn}
-                              onClick={() => {
-                                setEditDetail(d);
-                                setAddRowOpen(true);
-                              }}
+                              onClick={() => setEditDetail(d)}
                               title="Edit"
                             >
                               <ChevronRight size={14} />
@@ -542,6 +557,31 @@ export default function VehicleLogbookPage() {
               </div>
             )}
           </div>
+
+          {/* ── INLINE FORM TAMBAH BARIS ─────── */}
+          <div ref={inlineFormWrapRef} className={styles.inlineFormCard}>
+            <div className={styles.inlineFormHeader}>
+              <Plus size={14} />
+              <span>Tambah Baris Baru</span>
+              {lastKm !== null && (
+                <span className={styles.inlineFormKmHint}>
+                  KM awal: <strong>{formatKm(lastKm)}</strong>
+                </span>
+              )}
+              <span className={styles.inlineFormShortcut}>
+                Ctrl+A untuk fokus
+              </span>
+            </div>
+            <LogbookDetailForm
+              ref={inlineFormRef}
+              headerId={header.id}
+              lastKm={lastKm}
+              detail={null}
+              inline
+              onSuccess={() => fetchData()}
+              onCancel={() => {}}
+            />
+          </div>
         </>
       )}
 
@@ -566,50 +606,38 @@ export default function VehicleLogbookPage() {
         </Drawer.Body>
       </Drawer>
 
-      {/* ── DRAWER: Tambah / Edit Baris ─────── */}
+      {/* ── DRAWER: Edit Baris ───────────────── */}
       <Drawer
-        isOpen={addRowOpen}
-        onClose={() => {
-          setAddRowOpen(false);
-          setEditDetail(null);
-        }}
+        isOpen={!!editDetail}
+        onClose={() => setEditDetail(null)}
         size="md"
       >
         <Drawer.Header
-          title={editDetail ? "Edit Baris Logbook" : "Tambah Baris Logbook"}
+          title="Edit Baris Logbook"
           subtitle={
             editDetail
               ? `KM ${formatKm(editDetail.start_km)} → ${formatKm(editDetail.end_km)}`
-              : lastKm !== null
-                ? `KM awal: ${formatKm(lastKm)}`
-                : ""
+              : ""
           }
-          onClose={() => {
-            setAddRowOpen(false);
-            setEditDetail(null);
-          }}
+          onClose={() => setEditDetail(null)}
         />
         <Drawer.Body>
-          {header && (
+          {editDetail && header && (
             <LogbookDetailForm
               headerId={header.id}
               lastKm={lastKm}
               detail={editDetail}
               onSuccess={() => {
-                setAddRowOpen(false);
                 setEditDetail(null);
                 fetchData();
               }}
-              onCancel={() => {
-                setAddRowOpen(false);
-                setEditDetail(null);
-              }}
+              onCancel={() => setEditDetail(null)}
             />
           )}
         </Drawer.Body>
       </Drawer>
 
-      {/* ── DRAWER: Carryover Bulan Lalu ────── */}
+      {/* ── DRAWER: Carryover ────────────────── */}
       <Drawer
         isOpen={carryoverOpen}
         onClose={() => setCarryoverOpen(false)}

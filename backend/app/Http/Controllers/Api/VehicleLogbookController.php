@@ -75,7 +75,71 @@ class VehicleLogbookController extends Controller
             'header'  => $header,
             'details' => $details,
         ]);
+        }
+
+        // VehicleLogbookController.php — tambah method baru
+
+/**
+ * GET /vehicles/logbook/beban-search?q=text
+ * Unified search: cost_centers + customers
+ */
+public function bebanSearch(Request $request)
+{
+    $q = trim($request->query('q', ''));
+
+    if (strlen($q) < 1) {
+        return response()->json([]);
     }
+
+    // Pecah kata kunci berdasarkan spasi (bisa multiple spasi)
+    $keywords = preg_split('/\s+/', $q);
+    $keywords = array_filter($keywords); // buang empty string
+    $keywords = array_values($keywords);
+
+    $bindings = [];
+
+    // Fungsi untuk membuat WHERE clause dengan AND per kata dan OR antar field
+    $buildWhereClause = function($fields) use ($keywords, &$bindings) {
+        $fieldConditions = [];
+        foreach ($fields as $field) {
+            $keywordConditions = [];
+            foreach ($keywords as $kw) {
+                $keywordConditions[] = "$field LIKE ?";
+                $bindings[] = '%' . $kw . '%';
+            }
+            $fieldConditions[] = '(' . implode(' AND ', $keywordConditions) . ')';
+        }
+        return '(' . implode(' OR ', $fieldConditions) . ')';
+    };
+
+    // Field yang dicari di masing-masing tabel
+    $costCenterFields = ['description', 'short_name', 'sap_id'];
+    $customerFields   = ['name', 'short_name', 'sap_id'];
+
+    $costWhere = $buildWhereClause($costCenterFields);
+    $customerWhere = $buildWhereClause($customerFields);
+
+    $sql = "
+        SELECT 'cost_center' AS type, sap_id, description AS name, short_name
+        FROM cost_centers
+        WHERE deleted_at IS NULL
+          AND $costWhere
+
+        UNION ALL
+
+        SELECT 'customer' AS type, sap_id, name, short_name
+        FROM customers
+        WHERE deleted_at IS NULL
+          AND $customerWhere
+
+        ORDER BY name ASC
+        LIMIT 30
+    ";
+
+    $results = DB::select($sql, $bindings);
+    return response()->json($results);
+}
+
 
     /**
      * POST /vehicles/logbook/detail

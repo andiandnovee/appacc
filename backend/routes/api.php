@@ -137,7 +137,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('invoice-receipts/{invoiceReceipt}/statuses',  [InvoiceReceiptController::class, 'statuses']);
         Route::post('invoice-receipts/{invoiceReceipt}/statuses', [InvoiceReceiptController::class, 'addStatus']);
 
-        Route::apiResource('vehicles', VehicleController::class);
+        
          Route::apiResource('cost-centers', CostCenterController::class);
 
 
@@ -158,6 +158,7 @@ Route::middleware('auth:api')->group(function () {
 
             // Dropdown kendaraan — dipakai di VehicleLogbookPage filter
             Route::get('select-options', [VehicleSelectController::class, 'selectOptions']);
+            // routes/api.php
 
             // Cost center lookup + import biaya SAP
             Route::post('cost-center-lookup', [VehicleCostImportController::class, 'lookup']);
@@ -168,10 +169,14 @@ Route::middleware('auth:api')->group(function () {
             Route::post('logbook/detail',                 [VehicleLogbookController::class, 'storeDetail']);
             Route::put('logbook/detail/{detail}',         [VehicleLogbookController::class, 'updateDetail']);
             Route::delete('logbook/detail/{detail}',      [VehicleLogbookController::class, 'destroyDetail']);
+            Route::get('logbook/beban-search', [VehicleLogbookController::class, 'bebanSearch']);
             Route::post('logbook/{headerId}/recalculate', [VehicleLogbookController::class, 'recalculate_endpoint']);
-            Route::post('logbook/{headerId}/carryover',   [VehicleLogbookController::class, 'carryover']);
-        });
 
+            Route::post('logbook/{headerId}/carryover',   [VehicleLogbookController::class, 'carryover']);
+        
+
+        });
+        Route::apiResource('vehicles', VehicleController::class);
 
 
         // PPh Import & Report
