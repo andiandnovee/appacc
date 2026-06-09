@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\VehicleLogbookController;
 use App\Http\Controllers\Api\VehicleCostImportController;
 use App\Http\Controllers\Api\VehicleSelectController;
 use App\Http\Controllers\Api\VehicleController;
+use App\Http\Controllers\Api\CostCenterController;
 
 
 
@@ -137,6 +138,9 @@ Route::middleware('auth:api')->group(function () {
         Route::post('invoice-receipts/{invoiceReceipt}/statuses', [InvoiceReceiptController::class, 'addStatus']);
 
         Route::apiResource('vehicles', VehicleController::class);
+         Route::apiResource('cost-centers', CostCenterController::class);
+
+
 
         // SAP PO Import
         // SAP PO Import

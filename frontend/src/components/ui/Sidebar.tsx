@@ -16,6 +16,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import styles from "./Sidebar.module.css";
+import { DollarSign, HatGlassesIcon } from "lucide-react";
 
 interface SidebarProps {
   isMobile?: boolean;
@@ -33,7 +34,7 @@ const NAV_GROUPS = [
     items: [
       { to: "/invoice/receipts", icon: FileText, label: "Monitor Invoice" },
       { to: "/invoice/pph", icon: Percent, label: "Rekap PPh" },
-      { to: "/invoice/f53-helper", icon: Star, label: "F53 Helper" },
+      { to: "/invoice/f53-helper", icon: DollarSign, label: "F53 Helper" },
     ],
   },
   {
@@ -49,6 +50,7 @@ const NAV_GROUPS = [
       { to: "/ref/vendors", icon: Users, label: "Vendor" },
       { to: "/ref/busa", icon: MapPin, label: "Business Area" },
       { to: "/ref/stages", icon: Star, label: "Ref Stage" },
+      { to: "/ref/cost-centers", icon: DollarSign, label: "Ref Stage" },
     ],
   },
   {
