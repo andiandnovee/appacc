@@ -49,8 +49,8 @@ const NAV_GROUPS = [
     items: [
       { to: "/ref/vendors", icon: Users, label: "Vendor" },
       { to: "/ref/busa", icon: MapPin, label: "Business Area" },
-      { to: "/ref/stages", icon: Star, label: "Ref Stage" },
-      { to: "/ref/cost-centers", icon: DollarSign, label: "Ref Stage" },
+      { to: "/ref/stages", icon: Star, label: "Periode " },
+      { to: "/ref/cost-centers", icon: DollarSign, label: "Cost Centers" },
     ],
   },
   {
