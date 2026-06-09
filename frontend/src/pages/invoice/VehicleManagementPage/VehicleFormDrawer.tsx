@@ -56,11 +56,8 @@ interface Props {
 
 // ── Helpers ───────────────────────────────────────────────────
 const VEHICLE_TYPES = [
-  { value: "MT", label: "MT — Motor" },
-  { value: "MB", label: "MB — Mobil" },
-  { value: "TRK", label: "TRK — Truk" },
-  { value: "BIS", label: "BIS — Bus" },
-  { value: "ALT", label: "ALT — Alat Berat" },
+  { value: "R4", label: "Mobil" },
+  { value: "R2", label: "Sepeda Motor" },
 ];
 
 const IS_ACTIVE_OPTIONS = [
