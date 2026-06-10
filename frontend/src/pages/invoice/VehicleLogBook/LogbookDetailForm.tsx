@@ -1,5 +1,13 @@
 // LogbookDetailForm.tsx
-import { forwardRef, useImperativeHandle, useRef, useState, useEffect, useCallback, useMemo } from "react";
+import {
+  forwardRef,
+  useImperativeHandle,
+  useRef,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import Input from "../../../components/ui/Input";
 import Button from "../../../components/ui/Button";
 import Alert from "../../../components/ui/Alert";
@@ -13,6 +21,7 @@ import styles from "./LogbookDetailForm.module.css";
 // ─────────────────────────────────────────────
 export interface LogbookDetailFormRef {
   focusEndKm: () => void;
+   resetAndFocus: (newStartKm?: number | null) => void; // ← tambah
 }
 
 interface FormState {
@@ -42,10 +51,23 @@ const LogbookDetailForm = forwardRef<LogbookDetailFormRef, Props>(
 
     // Expose focusEndKm to parent
     useImperativeHandle(ref, () => ({
-      focusEndKm: () => {
-        endKmInputRef.current?.focus();
-      },
-    }));
+  focusEndKm: () => {
+    endKmInputRef.current?.focus();
+  },
+  resetAndFocus: (newStartKm) => {
+    setForm({
+      start_km: newStartKm !== undefined && newStartKm !== null
+        ? String(newStartKm)
+        : "",
+      end_km: "",
+      description: "",
+    });
+    setBeban(null);
+    setErrors({});
+    setError(null);
+    setTimeout(() => endKmInputRef.current?.focus(), 80);
+  },
+}));
 
     // ── State ────────────────────────────────────
     const [form, setForm] = useState<FormState>({
@@ -116,7 +138,8 @@ const LogbookDetailForm = forwardRef<LogbookDetailFormRef, Props>(
       if (!form.end_km) errs.end_km = "KM akhir wajib diisi.";
       if (!isNaN(s) && !isNaN(e) && e <= s)
         errs.end_km = "KM akhir harus lebih besar dari KM awal.";
-      if (!form.description.trim()) errs.description = "Keterangan wajib diisi.";
+      if (!form.description.trim())
+        errs.description = "Keterangan wajib diisi.";
       if (!beban) errs.beban = "Pilih beban (cost center atau customer).";
 
       setErrors(errs);
@@ -124,7 +147,8 @@ const LogbookDetailForm = forwardRef<LogbookDetailFormRef, Props>(
     };
 
     // ── Submit ───────────────────────────────────
-    const handleSave = async () => {
+    // ── Submit ───────────────────────────────────
+    const handleSave = useCallback(async () => {
       if (!validate()) return;
       setSaving(true);
       setError(null);
@@ -161,7 +185,19 @@ const LogbookDetailForm = forwardRef<LogbookDetailFormRef, Props>(
       } finally {
         setSaving(false);
       }
-    };
+    }, [headerId, form, beban, isEdit, detail, onSuccess]);
+
+    // ── Keyboard shortcut ────────────────────────
+    useEffect(() => {
+      const handler = (e: KeyboardEvent) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+          e.preventDefault();
+          handleSave();
+        }
+      };
+      window.addEventListener("keydown", handler);
+      return () => window.removeEventListener("keydown", handler);
+    }, [handleSave]);
 
     // ─────────────────────────────────────────────
     return (
@@ -172,10 +208,16 @@ const LogbookDetailForm = forwardRef<LogbookDetailFormRef, Props>(
             label="KM Awal"
             type="number"
             value={form.start_km}
-            onChange={(e) => setForm((p) => ({ ...p, start_km: e.target.value }))}
+            onChange={(e) =>
+              setForm((p) => ({ ...p, start_km: e.target.value }))
+            }
             error={errors.start_km}
             readOnly={!isEdit && lastKm !== null}
-            hint={!isEdit && lastKm !== null ? "Otomatis dari baris sebelumnya" : undefined}
+            hint={
+              !isEdit && lastKm !== null
+                ? "Otomatis dari baris sebelumnya"
+                : undefined
+            }
             required
           />
           <Input
@@ -186,7 +228,11 @@ const LogbookDetailForm = forwardRef<LogbookDetailFormRef, Props>(
             onChange={(e) => setForm((p) => ({ ...p, end_km: e.target.value }))}
             error={errors.end_km}
             required
-            hint={kmDiff !== null ? `${new Intl.NumberFormat("id-ID").format(kmDiff)} km` : undefined}
+            hint={
+              kmDiff !== null
+                ? `${new Intl.NumberFormat("id-ID").format(kmDiff)} km`
+                : undefined
+            }
           />
         </div>
 
@@ -197,7 +243,9 @@ const LogbookDetailForm = forwardRef<LogbookDetailFormRef, Props>(
           rows={2}
           placeholder="contoh: FADHLAN LGL/POLRES ROHIL"
           value={form.description}
-          onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
+          onChange={(e) =>
+            setForm((p) => ({ ...p, description: e.target.value }))
+          }
           error={errors.description}
           required
         />
@@ -225,17 +273,23 @@ const LogbookDetailForm = forwardRef<LogbookDetailFormRef, Props>(
           </Button>
           <Button variant="primary" onClick={handleSave} loading={saving}>
             {isEdit ? "Simpan Perubahan" : "Tambah Baris"}
+            {!saving && (
+              <span style={{ opacity: 0.6, fontSize: "0.75em", marginLeft: 4 }}>
+                Ctrl+S
+              </span>
+            )}
           </Button>
         </div>
 
         <p className={styles.hint}>
-          Biaya dikalkulasi otomatis saat "Kalkulasi Ulang" diklik. Rate = Total Biaya SAP ÷ Total KM semua baris.
+          Biaya dikalkulasi otomatis saat "Kalkulasi Ulang" diklik. Rate = Total
+          Biaya SAP ÷ Total KM semua baris.
         </p>
       </div>
     );
-  }
+  },
 );
 
 LogbookDetailForm.displayName = "LogbookDetailForm";
 
-export default LogbookDetailForm; 
+export default LogbookDetailForm;
