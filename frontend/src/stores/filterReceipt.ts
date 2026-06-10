@@ -10,6 +10,8 @@ interface FilterState {
   selectedIsPkp: boolean | null; // ← tambah
   autoRefreshEnabled: boolean;
   pollIntervalMinutes: number;
+  receiptDate: string;
+  setReceiptDate: (value: string) => void;
   setSelectedCompany: (value: string) => void;
   setSelectedVendor: (value: string) => void;
   setSelectedYear: (value: string) => void;
@@ -30,6 +32,8 @@ export const useFilterStore = create<FilterState>()(
       selectedIsPkp: null,
       autoRefreshEnabled: true,
       pollIntervalMinutes: 5,
+      receiptDate: new Date().toISOString().split("T")[0], // initial saja, setelah itu dari store
+      setReceiptDate: (value) => set({ receiptDate: value }),
       setSelectedCompany: (value) => set({ selectedCompany: value }),
       setSelectedVendor: (value) => set({ selectedVendor: value }),
       setSelectedYear: (value) => set({ selectedYear: value }),

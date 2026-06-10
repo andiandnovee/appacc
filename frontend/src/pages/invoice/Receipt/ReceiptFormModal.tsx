@@ -65,11 +65,13 @@ const makeInitialForm = (
   receipt?: Receipt | null,
   selectedStage?: string,
   selectedYear?: string,
+  receiptDate?: string,
 ): FormData => ({
-  receipt_date: receipt?.receipt_date ?? today(),
+  receipt_date: receipt?.receipt_date ?? receiptDate ?? today(),
   vendor_id: receipt?.vendor_id?.toString() ?? "",
   company_id: receipt?.company_id?.toString() ?? "",
   stage_id: receipt?.stage_id?.toString() ?? selectedStage ?? "",
+
   year:
     receipt?.year ??
     (selectedYear ? parseInt(selectedYear) : new Date().getFullYear()),
@@ -92,11 +94,17 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
   onPoAlreadyExists,
 }) => {
   const isEdit = Boolean(receipt?.id);
-  const { selectedStage, selectedYear, setSelectedStage, setSelectedYear } =
-    useFilterStore();
+  const {
+    selectedStage,
+    selectedYear,
+    receiptDate,
+    setSelectedStage,
+    setSelectedYear,
+    setReceiptDate,
+  } = useFilterStore();
 
   const [form, setForm] = useState<FormData>(() =>
-    makeInitialForm(receipt, selectedStage, selectedYear),
+    makeInitialForm(receipt, selectedStage, selectedYear, receiptDate),
   );
 
   const poInputRef = useRef<HTMLInputElement>(null);
@@ -125,7 +133,7 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
 
   // ── Reset saat receipt prop berubah ───────────────────────────────────────
   useEffect(() => {
-    setForm(makeInitialForm(receipt, selectedStage, selectedYear));
+    setForm(makeInitialForm(receipt, selectedStage, selectedYear,receiptDate));
     setAmountRaw(receipt?.amount ?? 0);
     setAmountDisplay(receipt?.amount?.toString() ?? "");
     setBaseAmount("");
@@ -195,6 +203,10 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
     (field: keyof FormData) =>
     (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const value = e.target.value;
+
+        if (field === "receipt_date") {
+      setReceiptDate(value);   // ← persist ke store
+    }
 
       if (field === "po_number") {
         if (!isEdit) {
