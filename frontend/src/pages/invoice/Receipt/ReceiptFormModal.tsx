@@ -133,7 +133,7 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
 
   // ── Reset saat receipt prop berubah ───────────────────────────────────────
   useEffect(() => {
-    setForm(makeInitialForm(receipt, selectedStage, selectedYear,receiptDate));
+    setForm(makeInitialForm(receipt, selectedStage, selectedYear, receiptDate));
     setAmountRaw(receipt?.amount ?? 0);
     setAmountDisplay(receipt?.amount?.toString() ?? "");
     setBaseAmount("");
@@ -204,9 +204,9 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
     (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const value = e.target.value;
 
-        if (field === "receipt_date") {
-      setReceiptDate(value);   // ← persist ke store
-    }
+      if (field === "receipt_date") {
+        setReceiptDate(value); // ← persist ke store
+      }
 
       if (field === "po_number") {
         if (!isEdit) {
@@ -412,7 +412,7 @@ const ReceiptFormModal: FC<ReceiptFormModalProps> = ({
 
   // ── Reset ke form kosong ───────────────────────────────────────────────────
   const resetToNew = () => {
-    setForm(makeInitialForm(null, selectedStage, selectedYear));
+    setForm(makeInitialForm(null, selectedStage, selectedYear, receiptDate));
     setPoFound(null);
     setPoDuplicate(false);
     setAutoFilled(new Set());
