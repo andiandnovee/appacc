@@ -1,9 +1,13 @@
 // exportZF0002.ts
 // Path: frontend/src/pages/vehicles/exportZF0002.ts
 //
-// Generate file Excel untuk upload ke tcode ZF0002_AGRI di SAP.
+// Generate file untuk upload ke tcode ZF0002_AGRI di SAP.
 // Berisi jurnal biaya kendaraan ke CUSTOMER (debet per line biaya,
 // kredit total per kendaraan ke GL alokasi 73730001).
+//
+// Dua format output, sumber data sama (buildZf0002Rows):
+//  - Excel (.xlsx)  : dengan header kolom, untuk preview/arsip
+//  - Text (.txt)    : tanpa header, tab-delimited, siap upload ke SAP
 
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
@@ -52,6 +56,19 @@ export interface ExportZf0002Params {
   postingDate: Date; // input user, default hari ini
 }
 
+// Satu cell bisa string, number, atau null (kosong)
+type ZfCell = string | number | null;
+type ZfRow = ZfCell[];
+
+export const ZF0002_HEADERS = [
+  "No", "Company Code", "Posting Date", "Period", "Document Date",
+  "Document Type", "Currency", "Exchange Rate", "Reference", "Document Header Text",
+  "Debet/Credit", "GL Account", "Vendor Account", "Customer Account", "SP GL Ind",
+  "Amount in Doc", "Business Area", "Cost Center", "Profit Center", "WBS",
+  "Assignment", "Text", "Tax Code", "Trading Partner", "Term of Payment",
+  "Base Line Date", "Number of Days", "Value Date", "Transaction type",
+];
+
 // ─────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────
@@ -75,61 +92,28 @@ function periodStr(month: number): string {
 }
 
 // ─────────────────────────────────────────────
-// MAIN EXPORT FUNCTION
+// SHARED ROW BUILDER
+// Dipakai oleh export Excel & Text — satu sumber kebenaran
+// untuk urutan & isi kolom A-AC.
 // ─────────────────────────────────────────────
-export async function exportZf0002Customer({
+export function buildZf0002Rows({
   payloads,
   companyCode,
   businessArea,
   month,
-  year,
   postingDate,
-}: ExportZf0002Params): Promise<void> {
-  const wb = new ExcelJS.Workbook();
-  const ws = wb.addWorksheet("Sheet1");
-
-  // ── Header row (29 kolom, A–AC) ───────────────
-  const headers = [
-    "No",
-    "Company Code",
-    "Posting Date",
-    "Period",
-    "Document Date",
-    "Document Type",
-    "Currency",
-    "Exchange Rate",
-    "Reference",
-    "Document Header Text",
-    "Debet/Credit",
-    "GL Account",
-    "Vendor Account",
-    "Customer Account",
-    "SP GL Ind",
-    "Amount in Doc",
-    "Business Area",
-    "Cost Center",
-    "Profit Center",
-    "WBS",
-    "Assignment",
-    "Text",
-    "Tax Code",
-    "Trading Partner",
-    "Term of Payment",
-    "Base Line Date",
-    "Number of Days",
-    "Value Date",
-    "Transaction type",
-  ];
-  ws.addRow(headers);
-  ws.getRow(1).font = { bold: true };
+}: Omit<ExportZf0002Params, "year">): ZfRow[] {
+  const rows: ZfRow[] = [];
 
   const postingDateStr = formatDateSAP(postingDate);
   const periodVal = periodStr(month);
-  const mmYYYY = `${periodVal}-${year}`;
 
   payloads.forEach((payload, idx) => {
     const no = idx + 1;
     const plate = payload.vehicle.plate_number;
+    const periodeLabel = payload.header.periode; // "4-2026"
+    const [, yearStr] = periodeLabel.split("-");
+    const mmYYYY = `${periodVal}-${yearStr}`;
     const refDoc = `${plate}-${mmYYYY}`;
     const headerText = `ALK ${refDoc}`;
     const noVoucher = payload.header.no_voucher;
@@ -143,36 +127,31 @@ export async function exportZf0002Customer({
 
       const text50 = `ALK ${plate}-${d.description}`;
 
-      ws.addRow([
-        no, // A
-        Number(companyCode), // B
-        postingDateStr, // C
-        periodVal, // D
-        postingDateStr, // E
-        "YA", // F
-        "IDR", // G
-        null, // H
-        noVoucher, // I
-        headerText, // J
-        "D", // K
-        null, // L
-        null, // M
-        Number(d.customer_code), // N
-        null, // O
-        amount, // P
-        Number(businessArea), // Q
-        null, // R - kosong untuk biaya
-        Number(businessArea), // S
-        null, // T
-        "DN", // U
-        text50, // V
-        null, // W - kosong untuk debet
-        null,
-        null,
-        null,
-        null,
-        null,
-        null, // X-AC
+      rows.push([
+        no,                          // A
+        Number(companyCode),         // B
+        postingDateStr,              // C
+        periodVal,                   // D
+        postingDateStr,              // E
+        "YA",                        // F
+        "IDR",                       // G
+        null,                        // H
+        noVoucher,                   // I
+        headerText,                  // J
+        "D",                         // K
+        null,                        // L
+        null,                        // M
+        Number(d.customer_code),     // N
+        null,                        // O
+        amount,                      // P
+        Number(businessArea),        // Q
+        null,                        // R - kosong untuk biaya
+        Number(businessArea),        // S
+        null,                        // T
+        "DN",                        // U
+        text50,                      // V
+        null,                        // W - kosong untuk debet
+        null, null, null, null, null, null, // X-AC
       ]);
     }
 
@@ -181,49 +160,65 @@ export async function exportZf0002Customer({
     const assignmentCredit = `ALK ${plate}`;
     const text50Credit = `ALK ${plate}-${totalKmAlloc}KM`;
 
-    ws.addRow([
-      no, // A
-      Number(companyCode), // B
-      postingDateStr, // C
-      periodVal, // D
-      postingDateStr, // E
-      "YA", // F
-      "IDR", // G
-      null, // H
-      noVoucher, // I
-      headerText, // J
-      "C", // K
-      73730001, // L
-      null, // M
-      null, // N
-      null, // O
-      debetTotal, // P - total biaya kendaraan ini
-      Number(businessArea), // Q
+    rows.push([
+      no,                            // A
+      Number(companyCode),           // B
+      postingDateStr,                // C
+      periodVal,                     // D
+      postingDateStr,                // E
+      "YA",                          // F
+      "IDR",                         // G
+      null,                          // H
+      noVoucher,                     // I
+      headerText,                    // J
+      "C",                           // K
+      73730001,                      // L
+      null,                          // M
+      null,                          // N
+      null,                          // O
+      debetTotal,                    // P - total biaya kendaraan ini
+      Number(businessArea),          // Q
       Number(payload.vehicle.cost_center), // R
-      Number(businessArea), // S
-      null, // T
-      assignmentCredit, // U
-      text50Credit, // V
-      "I0", // W
-      null,
-      null,
-      null,
-      null,
-      null,
-      null, // X-AC
+      Number(businessArea),          // S
+      null,                          // T
+      assignmentCredit,              // U
+      text50Credit,                  // V
+      "I0",                          // W
+      null, null, null, null, null, null, // X-AC
     ]);
   });
 
-  // ── Column widths (biar enak dilihat sebelum upload) ──
+  return rows;
+}
+
+/** Nama file dasar (tanpa ekstensi) */
+function buildFileBaseName(companyCode: string, month: number, year: number): string {
+  return `ZF0002_AGRI-${companyCode}-${periodStr(month)}-${year}`;
+}
+
+// ─────────────────────────────────────────────
+// EXPORT: Excel (.xlsx) — dengan header, untuk preview/arsip
+// ─────────────────────────────────────────────
+export async function exportZf0002Excel(params: ExportZf0002Params): Promise<void> {
+  const { companyCode, month, year } = params;
+  const rows = buildZf0002Rows(params);
+
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet("Sheet1");
+
+  ws.addRow(ZF0002_HEADERS);
+  ws.getRow(1).font = { bold: true };
+
+  rows.forEach((row) => ws.addRow(row));
+
+  // Column widths (biar enak dilihat sebelum upload)
   ws.columns.forEach((col, i) => {
-    // Beberapa kolom teks butuh lebih lebar
-    const wideCols = [9, 10, 14, 22]; // I, J, N(label?), V (1-indexed via i+1)
+    const wideCols = [9, 10, 14, 22]; // I, J, N, V
     col.width = wideCols.includes(i + 1) ? 28 : 12;
   });
 
-  // ── Generate & download ───────────────────────
   const buf = await wb.xlsx.writeBuffer();
-  const fileName = `ZF0002_AGRI-${companyCode}-${periodVal}-${year}.xlsx`;
+  const fileName = `${buildFileBaseName(companyCode, month, year)}.xlsx`;
   saveAs(
     new Blob([buf], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -231,3 +226,32 @@ export async function exportZf0002Customer({
     fileName,
   );
 }
+
+// ─────────────────────────────────────────────
+// EXPORT: Text (.txt) — tanpa header, tab-delimited
+// Siap upload langsung ke tcode ZF0002_AGRI.
+// ─────────────────────────────────────────────
+export function exportZf0002Text(params: ExportZf0002Params): void {
+  const { companyCode, month, year } = params;
+  const rows = buildZf0002Rows(params);
+
+  const lines = rows.map((row) =>
+    row
+      .map((cell) => (cell === null || cell === undefined ? "" : String(cell)))
+      .join("\t"),
+  );
+
+  // Gunakan CRLF — umum dipakai untuk file upload SAP di Windows
+  const content = lines.join("\r\n") + "\r\n";
+
+  const fileName = `${buildFileBaseName(companyCode, month, year)}.txt`;
+  saveAs(
+    new Blob([content], { type: "text/plain;charset=utf-8" }),
+    fileName,
+  );
+}
+
+// ─────────────────────────────────────────────
+// Backward-compat alias (kalau ada pemanggilan lama)
+// ─────────────────────────────────────────────
+export const exportZf0002Customer = exportZf0002Excel;

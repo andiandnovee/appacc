@@ -12,13 +12,23 @@ import {
   Printer,
   FileSpreadsheet,
   FileOutput,
+  FileText,
 } from "lucide-react";
 import api from "../../../api/axios";
 import Button from "../../../components/ui/Button";
+import { SplitButton } from "../../../components/ui/Button";
 import Badge from "../../../components/ui/Badge";
 import { useToast } from "../../../components/ui/Toast";
-import { openPrintSingle, openPrintAll, type PrintPayload } from "./printLogbook";
-import { exportZf0002Customer, type ZfPayload } from "./ExportZF0002";
+import {
+  openPrintSingle,
+  openPrintAll,
+  type PrintPayload,
+} from "./printLogbook";
+import {
+  exportZf0002Excel,
+  exportZf0002Text,
+  type ZfPayload,
+} from "./ExportZF0002";
 import styles from "./LogbookSummarySection.module.css";
 
 // ─────────────────────────────────────────────
@@ -109,6 +119,8 @@ export default function LogbookSummarySection({
   const [exportingZf, setExportingZf] = useState(false);
 
   const [postingDate, setPostingDate] = useState<string>(todayInputValue());
+  const handleExportExcel = () => handleExportZf0002("excel");
+  const handleExportText = () => handleExportZf0002("text");
 
   // ── Fetch summary ────────────────────────────
   const fetchSummary = useCallback(async () => {
@@ -164,12 +176,22 @@ export default function LogbookSummarySection({
     } catch (e: any) {
       addToast({
         variant: "danger",
-        title: "Gagal hapus: " + (e?.response?.data?.message ?? "Unknown error"),
+        title:
+          "Gagal hapus: " + (e?.response?.data?.message ?? "Unknown error"),
       });
     } finally {
       setDeleting(false);
     }
-  }, [busAreaSapId, companyCode, month, year, busAreaLabel, addToast, onDeleted, fetchSummary]);
+  }, [
+    busAreaSapId,
+    companyCode,
+    month,
+    year,
+    busAreaLabel,
+    addToast,
+    onDeleted,
+    fetchSummary,
+  ]);
 
   // ── Print single ──────────────────────────────
   const handlePrintOne = useCallback(
@@ -184,7 +206,9 @@ export default function LogbookSummarySection({
       } catch (e: any) {
         addToast({
           variant: "danger",
-          title: "Gagal memuat data print: " + (e?.response?.data?.message ?? "Unknown error"),
+          title:
+            "Gagal memuat data print: " +
+            (e?.response?.data?.message ?? "Unknown error"),
         });
       } finally {
         setPrintingId(null);
@@ -219,7 +243,9 @@ export default function LogbookSummarySection({
     } catch (e: any) {
       addToast({
         variant: "danger",
-        title: "Gagal memuat data print: " + (e?.response?.data?.message ?? "Unknown error"),
+        title:
+          "Gagal memuat data print: " +
+          (e?.response?.data?.message ?? "Unknown error"),
       });
     } finally {
       setPrintingAll(false);
@@ -227,9 +253,12 @@ export default function LogbookSummarySection({
   }, [busAreaSapId, companyCode, month, year, addToast]);
 
   // ── Export ZF0002_AGRI (customer) ─────────────
-  const handleExportZf0002 = useCallback(async () => {
+  const handleExportZf0002 = useCallback(async (type: 'excel' | 'text') => {
     if (!postingDate) {
-      addToast({ variant: "warning", title: "Pilih posting date terlebih dahulu." });
+      addToast({
+        variant: "warning",
+        title: "Pilih posting date terlebih dahulu.",
+      });
       return;
     }
     setExportingZf(true);
@@ -263,7 +292,17 @@ export default function LogbookSummarySection({
         return;
       }
 
-      await exportZf0002Customer({
+      if (type === 'excel') {
+      await exportZf0002Excel({
+        payloads: res.vehicles,
+        companyCode,
+        businessArea: busAreaSapId,
+        month,
+        year,
+        postingDate: new Date(postingDate + "T00:00:00"),
+      });  
+    } else if (type === 'text') {
+       await exportZf0002Text({
         payloads: res.vehicles,
         companyCode,
         businessArea: busAreaSapId,
@@ -271,6 +310,7 @@ export default function LogbookSummarySection({
         year,
         postingDate: new Date(postingDate + "T00:00:00"),
       });
+    }
 
       addToast({
         variant: "success",
@@ -279,7 +319,8 @@ export default function LogbookSummarySection({
     } catch (e: any) {
       addToast({
         variant: "danger",
-        title: "Gagal export: " + (e?.response?.data?.message ?? "Unknown error"),
+        title:
+          "Gagal export: " + (e?.response?.data?.message ?? "Unknown error"),
       });
     } finally {
       setExportingZf(false);
@@ -311,7 +352,10 @@ export default function LogbookSummarySection({
                   </Badge>
                 )}
                 {hasVehicles && (
-                  <Badge variant={allBalanced ? "success" : "warning"} size="sm">
+                  <Badge
+                    variant={allBalanced ? "success" : "warning"}
+                    size="sm"
+                  >
                     {allBalanced ? "Semua Balance" : "Belum Balance"}
                   </Badge>
                 )}
@@ -331,12 +375,19 @@ export default function LogbookSummarySection({
               onChange={(e) => setPostingDate(e.target.value)}
             />
           </div>
-
-          <Button
+          <SplitButton
+            label="ZF0002_AGRI to Text"
             variant="outline"
             size="sm"
-            onClick={handleExportZf0002}
-            loading={exportingZf}
+            icon={<FileText size={13} />}
+            onClick={() => handleExportText()}
+            options={[
+              {
+                label: "ZF0002_AGRI to Excel",
+                icon: <FileSpreadsheet size={13} />,
+                onClick: () => handleExportExcel(),
+              },
+            ]}
             disabled={!allBalanced || exportingZf || !hasVehicles}
             title={
               !hasVehicles
@@ -345,9 +396,8 @@ export default function LogbookSummarySection({
                   ? "Semua kendaraan harus Balance untuk export"
                   : "Export jurnal biaya ke Customer (ZF0002_AGRI)"
             }
-          >
-            <FileSpreadsheet size={13} /> Export ZF0002_AGRI
-          </Button>
+          />
+          
 
           <Button
             variant="outline"
@@ -510,9 +560,7 @@ export default function LogbookSummarySection({
                                 size="sm"
                                 onClick={() => handlePrintOne(v.vehicle_id)}
                                 loading={printingId === v.vehicle_id}
-                                disabled={
-                                  !v.is_balanced || printingId !== null
-                                }
+                                disabled={!v.is_balanced || printingId !== null}
                                 title={
                                   v.is_balanced
                                     ? "Print laporan kendaraan ini"
@@ -530,10 +578,14 @@ export default function LogbookSummarySection({
                           <td colSpan={2} className={styles.tfootLabel}>
                             Total ({data.with_cost.length} kendaraan)
                           </td>
-                          <td className={`${styles.tdRight} ${styles.tfootVal}`}>
+                          <td
+                            className={`${styles.tdRight} ${styles.tfootVal}`}
+                          >
                             {formatRupiah(data.total_cost_all)}
                           </td>
-                          <td className={`${styles.tdRight} ${styles.tfootVal}`}>
+                          <td
+                            className={`${styles.tdRight} ${styles.tfootVal}`}
+                          >
                             {formatKm(data.total_km_all)} km
                           </td>
                           <td colSpan={3} />
@@ -547,9 +599,7 @@ export default function LogbookSummarySection({
               {/* ── Kendaraan TANPA biaya ── */}
               <div className={styles.subSection}>
                 <div className={styles.subHeader}>
-                  <span className={styles.subTitle}>
-                    Kendaraan Tanpa Biaya
-                  </span>
+                  <span className={styles.subTitle}>Kendaraan Tanpa Biaya</span>
                   <Badge
                     variant={data.no_cost.length > 0 ? "warning" : "success"}
                     size="sm"
