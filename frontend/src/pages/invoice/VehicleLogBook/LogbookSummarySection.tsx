@@ -253,79 +253,82 @@ export default function LogbookSummarySection({
   }, [busAreaSapId, companyCode, month, year, addToast]);
 
   // ── Export ZF0002_AGRI (customer) ─────────────
-  const handleExportZf0002 = useCallback(async (type: 'excel' | 'text') => {
-    if (!postingDate) {
-      addToast({
-        variant: "warning",
-        title: "Pilih posting date terlebih dahulu.",
-      });
-      return;
-    }
-    setExportingZf(true);
-    try {
-      const { data: res } = await api.get<{
-        vehicles: ZfPayload[];
-        all_balanced: boolean;
-        vehicle_count: number;
-      }>("/vehicles/logbook/export-zf0002", {
-        params: {
-          bus_area_sap_id: busAreaSapId,
-          company_code: companyCode,
-          month,
-          year,
-        },
-      });
-
-      if (!res.all_balanced) {
+  const handleExportZf0002 = useCallback(
+    async (type: "excel" | "text") => {
+      if (!postingDate) {
         addToast({
           variant: "warning",
-          title: "Semua kendaraan harus Balance sebelum export ZF0002_AGRI.",
+          title: "Pilih posting date terlebih dahulu.",
         });
         return;
       }
-
-      if (res.vehicles.length === 0) {
-        addToast({
-          variant: "warning",
-          title: "Tidak ada baris biaya ke customer untuk diexport.",
+      setExportingZf(true);
+      try {
+        const { data: res } = await api.get<{
+          vehicles: ZfPayload[];
+          all_balanced: boolean;
+          vehicle_count: number;
+        }>("/vehicles/logbook/export-zf0002", {
+          params: {
+            bus_area_sap_id: busAreaSapId,
+            company_code: companyCode,
+            month,
+            year,
+          },
         });
-        return;
+
+        if (!res.all_balanced) {
+          addToast({
+            variant: "warning",
+            title: "Semua kendaraan harus Balance sebelum export ZF0002_AGRI.",
+          });
+          return;
+        }
+
+        if (res.vehicles.length === 0) {
+          addToast({
+            variant: "warning",
+            title: "Tidak ada baris biaya ke customer untuk diexport.",
+          });
+          return;
+        }
+
+        if (type === "excel") {
+          await exportZf0002Excel({
+            payloads: res.vehicles,
+            companyCode,
+            businessArea: busAreaSapId,
+            month,
+            year,
+            postingDate: new Date(postingDate + "T00:00:00"),
+          });
+        } else if (type === "text") {
+          await exportZf0002Text({
+            payloads: res.vehicles,
+            companyCode,
+            businessArea: busAreaSapId,
+            month,
+            year,
+            postingDate: new Date(postingDate + "T00:00:00"),
+          });
+        }
+
+        addToast({
+          variant: "success",
+          title: `File ZF0002_AGRI berhasil dibuat (${res.vehicles.length} kendaraan).`,
+        });
+      } catch (e: any) {
+        addToast({
+          variant: "danger",
+          title:
+            "Gagal export: " + (e?.response?.data?.message ?? "Unknown error"),
+        });
+      } finally {
+        setExportingZf(false);
       }
-
-      if (type === 'excel') {
-      await exportZf0002Excel({
-        payloads: res.vehicles,
-        companyCode,
-        businessArea: busAreaSapId,
-        month,
-        year,
-        postingDate: new Date(postingDate + "T00:00:00"),
-      });  
-    } else if (type === 'text') {
-       await exportZf0002Text({
-        payloads: res.vehicles,
-        companyCode,
-        businessArea: busAreaSapId,
-        month,
-        year,
-        postingDate: new Date(postingDate + "T00:00:00"),
-      });
-    }
-
-      addToast({
-        variant: "success",
-        title: `File ZF0002_AGRI berhasil dibuat (${res.vehicles.length} kendaraan).`,
-      });
-    } catch (e: any) {
-      addToast({
-        variant: "danger",
-        title:
-          "Gagal export: " + (e?.response?.data?.message ?? "Unknown error"),
-      });
-    } finally {
-      setExportingZf(false);
-    }
-  }, [busAreaSapId, companyCode, month, year, postingDate, addToast]);
+    },
+    [busAreaSapId, companyCode, month, year, postingDate, addToast],
+  );
 
   // ─────────────────────────────────────────────
   return (
@@ -379,7 +382,6 @@ export default function LogbookSummarySection({
             label="ZF0002_AGRI to Text"
             variant="outline"
             size="sm"
-            icon={<FileText size={13} />}
             onClick={() => handleExportText()}
             options={[
               {
@@ -397,7 +399,6 @@ export default function LogbookSummarySection({
                   : "Export jurnal biaya ke Customer (ZF0002_AGRI)"
             }
           />
-          
 
           <Button
             variant="outline"
