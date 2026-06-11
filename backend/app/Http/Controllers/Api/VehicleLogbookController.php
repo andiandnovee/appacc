@@ -339,7 +339,7 @@ public function bebanSearch(Request $request)
      * Formula: cost_amount = (km_detail / total_km) × total_cost
      * Baris terakhir mendapat sisa (hindari selisih pembulatan).
      */
-    private function recalculate(int $headerId): int
+    public static function recalculate(int $headerId): int
     {
         $header = VehicleCostHeader::find($headerId);
         if (!$header || !$header->total_cost) return 0;
@@ -373,4 +373,383 @@ public function bebanSearch(Request $request)
 
         return $count;
     }
+
+    // Tambahkan dua method ini ke VehicleLogbookController.php
+// Letakkan setelah method carryover(), sebelum private helpers
+
+    /**
+     * GET /vehicles/logbook/summary
+     * Ringkasan per business area per periode:
+     *  - Kendaraan yang sudah punya header biaya (with_cost)
+     *  - Kendaraan yang belum punya header biaya (no_cost)
+     *
+     * Query params:
+     *   bus_area_sap_id  : string (sap_id di tabel business_areas)
+     *   company_code     : string
+     *   month            : int
+     *   year             : int
+     */
+    // Tambahkan dua method ini ke VehicleLogbookController.php
+// Letakkan setelah method carryover(), sebelum private helpers
+
+    /**
+     * GET /vehicles/logbook/summary
+     * Ringkasan per business area per periode:
+     *  - Kendaraan yang sudah punya header biaya (with_cost)
+     *  - Kendaraan yang belum punya header biaya (no_cost)
+     *
+     * Query params:
+     *   bus_area_sap_id  : string (sap_id di tabel business_areas)
+     *   company_code     : string
+     *   month            : int
+     *   year             : int
+     */
+    public function summary(Request $request)
+    {
+        $request->validate([
+            'bus_area_sap_id' => 'required|string',
+            'company_code'    => 'required|string',
+            'month'           => 'required|integer|min:1|max:12',
+            'year'            => 'required|integer|min:2000|max:2099',
+        ]);
+
+        $busAreaSapId = $request->bus_area_sap_id;
+        $companyCode  = $request->company_code;
+        $month        = (int) $request->month;
+        $year         = (int) $request->year;
+
+        // Semua kendaraan aktif di bus area + company ini
+        $vehicles = DB::table('vehicles')
+            ->where('business_area_code', $busAreaSapId)
+            ->where('company_code', $companyCode)
+            ->where('is_active', 1)
+            ->whereNull('deleted_at')
+            ->select('id', 'plate_number', 'description', 'cost_center')
+            ->orderBy('plate_number')
+            ->get();
+
+        $vehicleIds = $vehicles->pluck('id');
+
+        // Header yang ada untuk periode ini
+        $headers = DB::table('vehicle_cost_headers')
+            ->whereIn('vehicle_id', $vehicleIds)
+            ->where('month', $month)
+            ->where('year', $year)
+            ->whereNull('deleted_at')
+            ->select('id', 'vehicle_id', 'total_cost')
+            ->get()
+            ->keyBy('vehicle_id');
+
+        // Detail summary per header
+        $headerIds = $headers->pluck('id');
+
+        $detailStats = DB::table('vehicle_cost_details')
+            ->whereIn('vehicle_cost_header_id', $headerIds)
+            ->whereNull('deleted_at')
+            ->selectRaw('
+                vehicle_cost_header_id,
+                COUNT(*) as detail_count,
+                SUM(end_km - start_km) as total_km,
+                SUM(COALESCE(cost_amount, 0)) as total_allocated
+            ')
+            ->groupBy('vehicle_cost_header_id')
+            ->get()
+            ->keyBy('vehicle_cost_header_id');
+
+        $withCost = [];
+        $noCost   = [];
+
+        foreach ($vehicles as $v) {
+            $header = $headers->get($v->id);
+
+            if ($header) {
+                $stats = $detailStats->get($header->id);
+                $totalAllocated = (float) ($stats?->total_allocated ?? 0);
+                $isBalanced = abs($totalAllocated - (float) $header->total_cost) < 1;
+
+                $withCost[] = [
+                    'vehicle_id'    => $v->id,
+                    'plate_number'  => $v->plate_number,
+                    'description'   => $v->description,
+                    'header_id'     => $header->id,
+                    'total_cost'    => (float) $header->total_cost,
+                    'total_km'      => $stats ? (int) $stats->total_km : null,
+                    'detail_count'  => $stats ? (int) $stats->detail_count : 0,
+                    'is_balanced'   => $isBalanced,
+                ];
+            } else {
+                $noCost[] = [
+                    'vehicle_id'   => $v->id,
+                    'plate_number' => $v->plate_number,
+                    'description'  => $v->description,
+                    'cost_center'  => $v->cost_center,
+                ];
+            }
+        }
+
+        return response()->json([
+            'with_cost'      => $withCost,
+            'no_cost'        => $noCost,
+            'period_label'   => $month . '/' . $year,
+            'bus_area_label' => $busAreaSapId,
+            'total_cost_all' => array_sum(array_column($withCost, 'total_cost')),
+            'total_km_all'   => array_sum(array_map(fn($v) => $v['total_km'] ?? 0, $withCost)),
+        ]);
+    }
+
+    /**
+     * DELETE /vehicles/logbook/bulk
+     * Hard delete semua vehicle_cost_headers (beserta details-nya)
+     * untuk satu business area + periode tertentu.
+     *
+     * Hanya boleh diakses role accounting (enforce di route middleware).
+     *
+     * Query params:
+     *   bus_area_sap_id  : string
+     *   company_code     : string
+     *   month            : int
+     *   year             : int
+     */
+    public function bulkDelete(Request $request)
+    {
+        $request->validate([
+            'bus_area_sap_id' => 'required|string',
+            'company_code'    => 'required|string',
+            'month'           => 'required|integer|min:1|max:12',
+            'year'            => 'required|integer|min:2000|max:2099',
+        ]);
+
+        $busAreaSapId = $request->bus_area_sap_id;
+        $companyCode  = $request->company_code;
+        $month        = (int) $request->month;
+        $year         = (int) $request->year;
+
+        // Ambil vehicle_ids di bus area + company ini
+        $vehicleIds = DB::table('vehicles')
+            ->where('business_area_code', $busAreaSapId)
+            ->where('company_code', $companyCode)
+            ->whereNull('deleted_at')
+            ->pluck('id');
+
+        if ($vehicleIds->isEmpty()) {
+            return response()->json([
+                'message' => 'Tidak ada kendaraan ditemukan untuk area ini.',
+                'deleted' => 0,
+            ]);
+        }
+
+        // Ambil header IDs yang akan dihapus
+        $headerIds = DB::table('vehicle_cost_headers')
+            ->whereIn('vehicle_id', $vehicleIds)
+            ->where('month', $month)
+            ->where('year', $year)
+            ->pluck('id');
+
+        if ($headerIds->isEmpty()) {
+            return response()->json([
+                'message' => 'Tidak ada data biaya di periode ini.',
+                'deleted' => 0,
+            ]);
+        }
+
+        DB::beginTransaction();
+        try {
+            // Hard delete details dulu (FK constraint)
+            $detailsDeleted = DB::table('vehicle_cost_details')
+                ->whereIn('vehicle_cost_header_id', $headerIds)
+                ->delete();
+
+            // Hard delete headers
+            $headersDeleted = DB::table('vehicle_cost_headers')
+                ->whereIn('id', $headerIds)
+                ->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'message'         => "{$headersDeleted} header biaya dan {$detailsDeleted} baris logbook dihapus.",
+                'deleted'         => $headersDeleted,
+                'details_deleted' => $detailsDeleted,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Gagal menghapus: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
+// Tambahkan dua method ini ke VehicleLogbookController.php
+// Letakkan setelah method bulkDelete(), sebelum private helpers
+
+    /**
+     * GET /vehicles/logbook/print
+     * Data lengkap satu kendaraan satu periode untuk keperluan print.
+     *
+     * Query params:
+     *   vehicle_id : int
+     *   month      : int
+     *   year       : int
+     */
+    public function printData(Request $request)
+    {
+        $request->validate([
+            'vehicle_id' => 'required|integer|exists:vehicles,id',
+            'month'      => 'required|integer|min:1|max:12',
+            'year'       => 'required|integer|min:2000|max:2099',
+        ]);
+
+        $data = $this->buildPrintPayload(
+            (int) $request->vehicle_id,
+            (int) $request->month,
+            (int) $request->year,
+        );
+
+        if (!$data) {
+            return response()->json([
+                'message' => 'Data tidak ditemukan untuk periode ini.',
+            ], 404);
+        }
+
+        return response()->json($data);
+    }
+
+    /**
+     * GET /vehicles/logbook/print-all
+     * Data print untuk SEMUA kendaraan yang sudah balance
+     * di satu business area + periode tertentu.
+     *
+     * Query params:
+     *   bus_area_sap_id : string
+     *   company_code    : string
+     *   month           : int
+     *   year            : int
+     */
+    public function printAll(Request $request)
+    {
+        $request->validate([
+            'bus_area_sap_id' => 'required|string',
+            'company_code'    => 'required|string',
+            'month'           => 'required|integer|min:1|max:12',
+            'year'            => 'required|integer|min:2000|max:2099',
+        ]);
+
+        $busAreaSapId = $request->bus_area_sap_id;
+        $companyCode  = $request->company_code;
+        $month        = (int) $request->month;
+        $year         = (int) $request->year;
+
+        $vehicleIds = DB::table('vehicles')
+            ->where('business_area_code', $busAreaSapId)
+            ->where('company_code', $companyCode)
+            ->where('is_active', 1)
+            ->whereNull('deleted_at')
+            ->orderBy('plate_number')
+            ->pluck('id');
+
+        $results = [];
+        foreach ($vehicleIds as $vehicleId) {
+            $payload = $this->buildPrintPayload($vehicleId, $month, $year);
+            if (!$payload) continue;
+
+            // Hanya sertakan yang balance
+            $totalAllocated = collect($payload['details'])->sum('cost_amount');
+            $isBalanced = abs($totalAllocated - $payload['header']['total_cost']) < 1;
+
+            if ($isBalanced) {
+                $results[] = $payload;
+            }
+        }
+
+        return response()->json(['vehicles' => $results]);
+    }
+
+    /**
+     * Helper: build payload print untuk satu kendaraan + periode.
+     * Dipakai oleh printData() dan printAll().
+     */
+    private function buildPrintPayload(int $vehicleId, int $month, int $year): ?array
+    {
+        $vehicle = DB::table('vehicles')
+            ->where('id', $vehicleId)
+            ->whereNull('deleted_at')
+            ->first(['id', 'plate_number', 'description', 'cost_center', 'company_code', 'business_area_code']);
+
+        if (!$vehicle) return null;
+
+        $header = VehicleCostHeader::where('vehicle_id', $vehicleId)
+            ->where('month', $month)
+            ->where('year', $year)
+            ->whereNull('deleted_at')
+            ->first();
+
+        if (!$header) return null;
+
+        $details = VehicleCostDetail::where('vehicle_cost_header_id', $header->id)
+            ->whereNull('deleted_at')
+            ->orderBy('start_km')
+            ->get()
+            ->map(function ($d) {
+                $ccName = null;
+                if ($d->cost_center) {
+                    $cc = DB::table('cost_centers')->where('sap_id', $d->cost_center)->first();
+                    $ccName = $cc?->description;
+                }
+                $custName = null;
+                if ($d->customer_code) {
+                    $cust = DB::table('customers')->where('sap_id', $d->customer_code)->first();
+                    $custName = $cust?->name;
+                }
+
+                return [
+                    'start_km'         => $d->start_km,
+                    'end_km'           => $d->end_km,
+                    'km'               => $d->end_km - $d->start_km,
+                    'cost_center'      => $d->cost_center,
+                    'cost_center_name' => $ccName,
+                    'customer_code'    => $d->customer_code,
+                    'customer_name'    => $custName,
+                    'description'      => $d->description,
+                    'cost_amount'      => (float) ($d->cost_amount ?? 0),
+                ];
+            })
+            ->values()
+            ->toArray();
+
+        // Tgl awal/akhir periode otomatis dari month+year
+        $startDate = sprintf('%04d-%02d-01', $year, $month);
+        $endDate   = date('Y-m-t', strtotime($startDate)); // hari terakhir bulan itu
+
+        $totalKm = collect($details)->sum('km');
+        $totalCost = (float) $header->total_cost;
+        $rate = $totalKm > 0 ? (int) round($totalCost / $totalKm) : 0;
+
+        // No Voucher: MMYYYY-{cost_center kendaraan}
+        $noVoucher = sprintf('%02d%04d-%s', $month, $year, $vehicle->cost_center);
+
+        return [
+            'vehicle' => [
+                'plate_number' => $vehicle->plate_number,
+                'description'  => $vehicle->description,
+                'cost_center'  => $vehicle->cost_center,
+            ],
+            'header' => [
+                'periode'    => sprintf('%d-%d', $month, $year),
+                'tgl_awal'   => $startDate,
+                'tgl_akhir'  => $endDate,
+                'start_km'   => $header->start_km,
+                'end_km'     => $header->end_km,
+                'total_km'   => $totalKm,
+                'total_cost' => $totalCost,
+                'rate'       => $rate,
+                'alokasi'    => '73730001',
+                'no_voucher' => $noVoucher,
+            ],
+            'details' => $details,
+        ];
+    }
+
+
+
 }

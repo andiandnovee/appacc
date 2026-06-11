@@ -23,12 +23,15 @@ import Select from "../../../components/ui/Select";
 import Badge from "../../../components/ui/Badge";
 import Drawer from "../../../components/ui/Drawer";
 import { useToast } from "../../../components/ui/Toast";
+import { useFilterVehicleLogbook } from "../../../stores/filterVehicleLogbook";
+import { useAuth } from "../../../hooks/useAuth";
 
 import VehicleCostImportForm from "./VehicleCostImportForm";
 import LogbookDetailForm, {
   type LogbookDetailFormRef,
 } from "./LogbookDetailForm";
 import CarryoverPicker from "./CarryoverPicker";
+import LogbookSummarySection from "./LogbookSummarySection";
 
 import styles from "./index.module.css";
 
@@ -92,18 +95,18 @@ function formatKm(val: number | null): string {
 }
 
 const MONTHS = [
-  { value: "1", label: "Januari" },
-  { value: "2", label: "Februari" },
-  { value: "3", label: "Maret" },
-  { value: "4", label: "April" },
-  { value: "5", label: "Mei" },
-  { value: "6", label: "Juni" },
-  { value: "7", label: "Juli" },
-  { value: "8", label: "Agustus" },
-  { value: "9", label: "September" },
-  { value: "10", label: "Oktober" },
-  { value: "11", label: "November" },
-  { value: "12", label: "Desember" },
+  { value: "1",  label: "Januari"   },
+  { value: "2",  label: "Februari"  },
+  { value: "3",  label: "Maret"     },
+  { value: "4",  label: "April"     },
+  { value: "5",  label: "Mei"       },
+  { value: "6",  label: "Juni"      },
+  { value: "7",  label: "Juli"      },
+  { value: "8",  label: "Agustus"   },
+  { value: "9",  label: "September" },
+  { value: "10", label: "Oktober"   },
+  { value: "11", label: "November"  },
+  { value: "12", label: "Desember"  },
 ];
 
 // ─────────────────────────────────────────────
@@ -112,27 +115,47 @@ const MONTHS = [
 export default function VehicleLogbookPage() {
   const { addToast } = useToast();
 
-  const now = new Date();
-  const [selectedVehicleId, setSelectedVehicleId] = useState<string>("");
-  const [month, setMonth] = useState<string>(String(now.getMonth() + 1));
-  const [year, setYear] = useState<string>(String(now.getFullYear()));
+  // ── Zustand filter store ─────────────────────
+  const {
+    selectedCompany,
+    selectedBusArea,
+    selectedVehicleId,
+    month,
+    year,
+    setSelectedCompany,
+    setSelectedBusArea,
+    setSelectedVehicleId,
+    setMonth,
+    setYear,
+  } = useFilterVehicleLogbook();
 
-  // Tambah state baru (setelah deklarasi state yang ada)
+  // ── Auth — cek role accounting ───────────────
+  // TODO: sesuaikan field roles/permissions setelah cek shape /auth/me
+  const { user } = useAuth();
+  const canDelete = useMemo(() => {
+    if (!user) return false;
+    const roles: string[] = user.roles ?? [];
+    const perms: string[] = user.permissions ?? [];
+    return (
+      roles.some((r: string) => r.toLowerCase().includes("accounting")) ||
+      perms.includes("vehicle.logbook.bulk-delete")
+    );
+  }, [user]);
+
+  // ── Company & BusArea options ────────────────
   const [companies, setCompanies] = useState<
     { id: string; name: string; company_id: number }[]
   >([]);
   const [busAreas, setBusAreas] = useState<
     { id: number; sap_id: string; name: string; company_id: number }[]
   >([]);
-  const [selectedCompany, setSelectedCompany] = useState<string>("");
-  const [selectedBusArea, setSelectedBusArea] = useState<string>("");
 
   const [header, setHeader] = useState<CostHeader | null>(null);
   const [details, setDetails] = useState<CostDetail[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Drawer: hanya untuk edit & import & carryover
+  // Drawers
   const [importOpen, setImportOpen] = useState(false);
   const [carryoverOpen, setCarryoverOpen] = useState(false);
   const [editDetail, setEditDetail] = useState<CostDetail | null>(null);
@@ -140,11 +163,11 @@ export default function VehicleLogbookPage() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [recalculating, setRecalculating] = useState(false);
 
-  // Ref ke inline form — untuk focus via Ctrl+A
+  // Inline form ref
   const inlineFormRef = useRef<LogbookDetailFormRef>(null);
   const inlineFormWrapRef = useRef<HTMLDivElement>(null);
 
-  // ── Derived ──────────────────────────────────
+  // ── Derived options ──────────────────────────
   const activeCompany = companies.find((c) => String(c.id) === selectedCompany);
   const activeBusArea = busAreas.find((b) => String(b.id) === selectedBusArea);
 
@@ -157,7 +180,31 @@ export default function VehicleLogbookPage() {
     label: `${b.sap_id} — ${b.name}`,
   }));
 
-  // ── Fetch ────────────────────────────────────
+  // ── Load companies ───────────────────────────
+  useEffect(() => {
+    api
+      .get("/companies/select-options")
+      .then((r) => setCompanies(r.data?.data ?? r.data ?? []));
+  }, []);
+
+  // ── Load busAreas saat company berubah ───────
+  useEffect(() => {
+    if (!selectedCompany) {
+      setBusAreas([]);
+      return;
+    }
+    const active = companies.find((c) => String(c.id) === selectedCompany);
+    api
+      .get("/busa", {
+        params: {
+          company_id: active?.company_id ?? selectedCompany,
+          per_page: 999,
+        },
+      })
+      .then((r) => setBusAreas(r.data?.data ?? r.data ?? []));
+  }, [selectedCompany, companies]);
+
+  // ── Fetch logbook data ───────────────────────
   const fetchData = useCallback(async () => {
     if (!selectedVehicleId || !month || !year) {
       setHeader(null);
@@ -177,6 +224,7 @@ export default function VehicleLogbookPage() {
       setError(e?.response?.data?.message ?? "Gagal memuat data logbook.");
       setHeader(null);
       setDetails([]);
+      return null;
     } finally {
       setLoading(false);
     }
@@ -186,52 +234,14 @@ export default function VehicleLogbookPage() {
     fetchData();
   }, [fetchData]);
 
-  useEffect(() => {
-    console.log("[fetchData trigger]", { selectedVehicleId, month, year });
-  }, [selectedVehicleId, month, year]);
-  // Tambah useEffect load companies (setelah deklarasi state)
-  useEffect(() => {
-    api
-      .get("/companies/select-options")
-      .then((r) => setCompanies(r.data?.data ?? r.data ?? []));
-  }, []);
-
-  // Load busAreas saat company berubah
-  useEffect(() => {
-    if (!selectedCompany) {
-      setBusAreas([]);
-      setSelectedBusArea("");
-      setSelectedVehicleId("");
-      return;
-    }
-    const active = companies.find((c) => String(c.id) === selectedCompany);
-    api
-      .get("/busa", {
-        params: {
-          company_id: active?.company_id ?? selectedCompany,
-          per_page: 999,
-        },
-      })
-      .then((r) => setBusAreas(r.data?.data ?? r.data ?? []));
-  }, [selectedCompany, companies]);
-
-  // Reset vehicle saat busArea berubah
-  useEffect(() => {
-    setSelectedVehicleId("");
-  }, [selectedBusArea]);
-
-  // ── Ctrl+A → focus ke inline form ───────────
+  // ── Ctrl+A → focus inline form ───────────────
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (!header) return;
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a") {
-        // Jangan intercept kalau user sedang seleksi teks di input/textarea
-        const tag = (e.target as HTMLElement)?.tagName;
-        if (tag === "INPUT" || tag === "TEXTAREA") return;
-
-        if (!header) return;
         e.preventDefault();
-
-        // Scroll ke form lalu focus
         inlineFormWrapRef.current?.scrollIntoView({
           behavior: "smooth",
           block: "center",
@@ -243,7 +253,6 @@ export default function VehicleLogbookPage() {
     return () => window.removeEventListener("keydown", handler);
   }, [header]);
 
-  // ── Tombol "Tambah Baris" → scroll + focus ──
   const handleScrollToForm = useCallback(() => {
     inlineFormWrapRef.current?.scrollIntoView({
       behavior: "smooth",
@@ -258,10 +267,7 @@ export default function VehicleLogbookPage() {
     setRecalculating(true);
     try {
       await api.post(`/vehicles/logbook/${header.id}/recalculate`);
-      addToast({
-        variant: "success",
-        title: "Biaya berhasil dikalkulasi ulang.",
-      });
+      addToast({ variant: "success", title: "Biaya berhasil dikalkulasi ulang." });
       fetchData();
     } catch (e: any) {
       addToast({
@@ -273,7 +279,7 @@ export default function VehicleLogbookPage() {
     }
   }, [header, fetchData, addToast]);
 
-  // ── Delete ───────────────────────────────────
+  // ── Delete detail ────────────────────────────
   const handleDeleteDetail = useCallback(
     async (detail: CostDetail) => {
       if (
@@ -328,19 +334,6 @@ export default function VehicleLogbookPage() {
           <div className={styles.pageIcon}>
             <Car size={20} />
           </div>
-          {/* <Select       
-            label="Area Bisnis" 
-                        value={selectedBusinessArea}
-                        onChange={(e) => setSelectedBusinessArea(e.target.value)}
-                        placeholder="Semua BusArea"
-                        fetchOptions={{
-                          endpoint: "/busa",
-                          searchParam: "search",
-                          limit: 10,
-                        }}
-                      />
-                     */}
-
           <div>
             <h1 className={styles.pageTitle}>Logbook Kendaraan</h1>
             <p className={styles.pageSubtitle}>
@@ -354,10 +347,8 @@ export default function VehicleLogbookPage() {
       </div>
 
       {/* ── FILTER BAR ──────────────────────── */}
-      {/* ── FILTER BAR ──────────────────────── */}
       <div className={styles.filterCard}>
         <div className={styles.filterGrid}>
-          {/* Company */}
           <Select
             label="Company"
             placeholder="Pilih company..."
@@ -366,24 +357,18 @@ export default function VehicleLogbookPage() {
             options={companyOptions}
           />
 
-          {/* Business Area */}
           <Select
             label="Business Area"
-            placeholder={
-              selectedCompany ? "Pilih area..." : "Pilih company dulu"
-            }
+            placeholder={selectedCompany ? "Pilih area..." : "Pilih company dulu"}
             value={selectedBusArea}
             onChange={(e) => setSelectedBusArea(e.target.value)}
             disabled={!selectedCompany || busAreas.length === 0}
             options={busAreaOptions}
           />
 
-          {/* Kendaraan — async, filter by company & busarea */}
           <Select
             label="Kendaraan"
-            placeholder={
-              selectedBusArea ? "Pilih kendaraan..." : "Pilih area dulu"
-            }
+            placeholder={selectedBusArea ? "Pilih kendaraan..." : "Pilih area dulu"}
             value={selectedVehicleId}
             onChange={(e) => setSelectedVehicleId(e.target.value)}
             disabled={!selectedBusArea}
@@ -402,7 +387,6 @@ export default function VehicleLogbookPage() {
             }
           />
 
-          {/* Bulan & Tahun tetap */}
           <div className={styles.fieldWrap}>
             <Select
               label="Bulan"
@@ -470,7 +454,7 @@ export default function VehicleLogbookPage() {
         </div>
       )}
 
-      {/* ── CONTENT (hanya kalau header ada) ── */}
+      {/* ── CONTENT ────────────────────────── */}
       {!loading && !error && header && (
         <>
           {/* ── HEADER INFO CARD ────────────── */}
@@ -516,12 +500,9 @@ export default function VehicleLogbookPage() {
           {/* ── ACTION BAR ──────────────────── */}
           <div className={styles.actionBar}>
             <div className={styles.actionBarLeft}>
-              {/* Sekarang scroll+focus ke inline form, bukan buka drawer */}
               <Button variant="primary" size="sm" onClick={handleScrollToForm}>
                 <Plus size={14} /> Tambah Baris
-                <span
-                  style={{ opacity: 0.6, fontSize: "0.75em", marginLeft: 4 }}
-                >
+                <span style={{ opacity: 0.6, fontSize: "0.75em", marginLeft: 4 }}>
                   Ctrl+A
                 </span>
               </Button>
@@ -678,13 +659,11 @@ export default function VehicleLogbookPage() {
               inline
               onSuccess={async () => {
                 const data = await fetchData();
-                // Ambil lastKm terbaru dari response
                 const newDetails: CostDetail[] = data?.details ?? [];
                 const newLastKm =
                   newDetails.length > 0
                     ? newDetails[newDetails.length - 1].end_km
-                    : (header?.start_km ?? null);
-                // Reset form + fokus dengan lastKm yang sudah fresh
+                    : header?.start_km ?? null;
                 inlineFormRef.current?.resetAndFocus(newLastKm);
               }}
               onCancel={() => {}}
@@ -693,12 +672,24 @@ export default function VehicleLogbookPage() {
         </>
       )}
 
-      {/* ── DRAWER: Import Biaya SAP ─────────── */}
-      <Drawer
-        isOpen={importOpen}
-        onClose={() => setImportOpen(false)}
-        size="md"
-      >
+      {/* ── SUMMARY SECTION (selalu tampil kalau busArea + bulan dipilih) ── */}
+      {selectedBusArea && month && year && activeBusArea && (
+        <LogbookSummarySection
+          busAreaSapId={activeBusArea.sap_id}
+          busAreaLabel={`${activeBusArea.sap_id} — ${activeBusArea.name}`}
+          month={Number(month)}
+          year={Number(year)}
+          companyCode={activeCompany?.id ?? ""}
+          canDelete={canDelete}
+          onDeleted={() => {
+            // Kalau kendaraan yang sedang dilihat ikut terhapus, reset
+            fetchData();
+          }}
+        />
+      )}
+
+      {/* ── DRAWER: Import ───────────────────── */}
+      <Drawer isOpen={importOpen} onClose={() => setImportOpen(false)} size="md">
         <Drawer.Header
           title="Import Biaya Kendaraan"
           subtitle="Upload Excel SAP (cost center + nominal)"

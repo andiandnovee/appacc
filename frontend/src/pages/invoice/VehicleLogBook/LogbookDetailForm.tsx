@@ -21,7 +21,7 @@ import styles from "./LogbookDetailForm.module.css";
 // ─────────────────────────────────────────────
 export interface LogbookDetailFormRef {
   focusEndKm: () => void;
-   resetAndFocus: (newStartKm?: number | null) => void; // ← tambah
+  resetAndFocus: (newStartKm?: number | null) => void; // ← tambah
 }
 
 interface FormState {
@@ -51,23 +51,24 @@ const LogbookDetailForm = forwardRef<LogbookDetailFormRef, Props>(
 
     // Expose focusEndKm to parent
     useImperativeHandle(ref, () => ({
-  focusEndKm: () => {
-    endKmInputRef.current?.focus();
-  },
-  resetAndFocus: (newStartKm) => {
-    setForm({
-      start_km: newStartKm !== undefined && newStartKm !== null
-        ? String(newStartKm)
-        : "",
-      end_km: "",
-      description: "",
-    });
-    setBeban(null);
-    setErrors({});
-    setError(null);
-    setTimeout(() => endKmInputRef.current?.focus(), 80);
-  },
-}));
+      focusEndKm: () => {
+        endKmInputRef.current?.focus();
+      },
+      resetAndFocus: (newStartKm) => {
+        setForm({
+          start_km:
+            newStartKm !== undefined && newStartKm !== null
+              ? String(newStartKm)
+              : "",
+          end_km: "",
+          description: "",
+        });
+        setBeban(null);
+        setErrors({});
+        setError(null);
+        setTimeout(() => endKmInputRef.current?.focus(), 80);
+      },
+    }));
 
     // ── State ────────────────────────────────────
     const [form, setForm] = useState<FormState>({
@@ -158,7 +159,7 @@ const LogbookDetailForm = forwardRef<LogbookDetailFormRef, Props>(
           vehicle_cost_header_id: headerId,
           start_km: parseInt(form.start_km),
           end_km: parseInt(form.end_km),
-          description: form.description.trim(),
+          description: form.description.trim().toUpperCase(),
           cost_center: beban?.type === "cost_center" ? beban.sap_id : null,
           customer_code: beban?.type === "customer" ? beban.sap_id : null,
         };
@@ -244,7 +245,10 @@ const LogbookDetailForm = forwardRef<LogbookDetailFormRef, Props>(
           placeholder="contoh: FADHLAN LGL/POLRES ROHIL"
           value={form.description}
           onChange={(e) =>
-            setForm((p) => ({ ...p, description: e.target.value }))
+            setForm((p) => ({
+              ...p,
+              description: e.target.value.toUpperCase(),
+            }))
           }
           error={errors.description}
           required

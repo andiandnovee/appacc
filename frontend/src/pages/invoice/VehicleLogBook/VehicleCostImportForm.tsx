@@ -34,6 +34,7 @@ interface ImportResult {
   inserted: number;
   updated: number;
   skipped: number;
+  recalculated: number;
   errors: { cost_center: string; message: string }[];
 }
 
@@ -416,27 +417,40 @@ export default function VehicleCostImportForm({ onSuccess }: Props) {
             </Badge>
           </div>
           <div className={styles.statGrid}>
-            <StatItem
-              label="Disimpan Baru"
-              value={result.inserted}
-              variant="success"
-            />
-            <StatItem
-              label="Diperbarui"
-              value={result.updated}
-              variant="default"
-            />
-            <StatItem
-              label="Dilewati"
-              value={result.skipped}
-              variant="warning"
-            />
-            <StatItem
-              label="Error"
-              value={result.errors.length}
-              variant={result.errors.length > 0 ? "danger" : "default"}
-            />
-          </div>
+  <StatItem
+    label="Disimpan Baru"
+    value={result.inserted}
+    variant="success"
+  />
+  <StatItem
+    label="Diperbarui"
+    value={result.updated}
+    variant="default"
+  />
+  {result.recalculated > 0 && (
+    <StatItem
+      label="Dikalkulasi Ulang"
+      value={result.recalculated}
+      variant="default"
+    />
+  )}
+  <StatItem
+    label="Dilewati"
+    value={result.skipped}
+    variant="warning"
+  />
+  <StatItem
+    label="Error"
+    value={result.errors.length}
+    variant={result.errors.length > 0 ? "danger" : "default"}
+  />
+</div>
+{result.updated > 0 && result.recalculated > 0 && (
+  <p className={styles.recalcNote}>
+    {result.recalculated} kendaraan memiliki baris logbook yang
+    dikalkulasi ulang karena total biaya SAP berubah.
+  </p>
+)}
           {result.errors.length > 0 && (
             <div className={styles.errorList}>
               {result.errors.map((e, i) => (

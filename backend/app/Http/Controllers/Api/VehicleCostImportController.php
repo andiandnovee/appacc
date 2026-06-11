@@ -56,7 +56,9 @@ class VehicleCostImportController extends Controller
      * POST /vehicles/cost-import
      *
      * Simpan biaya per kendaraan per periode ke vehicle_cost_headers.
-     * Kalau header bulan itu sudah ada → update total_cost.
+     * Kalau header bulan itu sudah ada → UPDATE total_cost
+     *   + auto re-kalkulasi cost_amount tiap baris logbook
+     *     (karena total_cost berubah, alokasi per baris ikut berubah).
      * Kalau belum ada → insert baru.
      *
      * Request:
@@ -70,7 +72,7 @@ class VehicleCostImportController extends Controller
      * }
      *
      * Response:
-     * { inserted: N, updated: N, skipped: N, errors: [...] }
+     * { inserted: N, updated: N, skipped: N, recalculated: N, errors: [...] }
      */
     public function import(Request $request)
     {
@@ -87,10 +89,11 @@ class VehicleCostImportController extends Controller
         $month = $request->integer('month');
         $rows  = $request->input('rows');
 
-        $inserted = 0;
-        $updated  = 0;
-        $skipped  = 0;
-        $errors   = [];
+        $inserted    = 0;
+        $updated     = 0;
+        $skipped     = 0;
+        $recalculated = 0;
+        $errors      = [];
 
         DB::beginTransaction();
         try {
@@ -115,8 +118,15 @@ class VehicleCostImportController extends Controller
                             'business_area_code' => $vehicle->business_area_code,
                         ]);
                         $updated++;
+
+                        // total_cost berubah → re-alokasi cost_amount
+                        // tiap baris logbook bulan ini
+                        $rowsAffected = VehicleLogbookController::recalculate($existing->id);
+                        if ($rowsAffected > 0) {
+                            $recalculated++;
+                        }
                     } else {
-                        VehicleCostHeader::create([
+                        $newHeader = VehicleCostHeader::create([
                             'vehicle_id'         => $row['vehicle_id'],
                             'company_code'       => $vehicle->company_code,
                             'business_area_code' => $vehicle->business_area_code,
@@ -125,6 +135,13 @@ class VehicleCostImportController extends Controller
                             'total_cost'         => $row['total_cost'],
                         ]);
                         $inserted++;
+
+                        // Jaga-jaga kalau sudah ada details (misal carryover
+                        // dibuat lebih dulu sebelum import biaya)
+                        $rowsAffected = VehicleLogbookController::recalculate($newHeader->id);
+                        if ($rowsAffected > 0) {
+                            $recalculated++;
+                        }
                     }
                 } catch (\Exception $e) {
                     $errors[] = [
@@ -143,10 +160,11 @@ class VehicleCostImportController extends Controller
         }
 
         return response()->json([
-            'inserted' => $inserted,
-            'updated'  => $updated,
-            'skipped'  => $skipped,
-            'errors'   => $errors,
+            'inserted'     => $inserted,
+            'updated'      => $updated,
+            'skipped'      => $skipped,
+            'recalculated' => $recalculated,
+            'errors'       => $errors,
         ]);
     }
 }

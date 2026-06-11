@@ -173,7 +173,16 @@ Route::middleware('auth:api')->group(function () {
             Route::post('logbook/{headerId}/recalculate', [VehicleLogbookController::class, 'recalculate_endpoint']);
 
             Route::post('logbook/{headerId}/carryover',   [VehicleLogbookController::class, 'carryover']);
-        
+            
+            Route::get('logbook/summary', [VehicleLogbookController::class, 'summary']);
+
+            Route::delete('logbook/bulk', [VehicleLogbookController::class, 'bulkDelete']);
+
+
+            // Tambahkan ke routes/api.php, di dalam route group vehicles
+
+            Route::get('logbook/print', [VehicleLogbookController::class, 'printData']);
+            Route::get('logbook/print-all', [VehicleLogbookController::class, 'printAll']);
 
         });
         Route::apiResource('vehicles', VehicleController::class);
