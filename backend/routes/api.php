@@ -5,30 +5,26 @@ use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BusinessAreaController;
 use App\Http\Controllers\Api\CompanyController;
+use App\Http\Controllers\Api\CostCenterController;
+use App\Http\Controllers\Api\F53ImportController;
 use App\Http\Controllers\Api\InvoiceReceiptController;
+use App\Http\Controllers\Api\PgrController;
+use App\Http\Controllers\Api\PphImportController;
+use App\Http\Controllers\Api\SapImportController;
 use App\Http\Controllers\Api\StageController;
+use App\Http\Controllers\Api\VehicleController;
+use App\Http\Controllers\Api\VehicleCostImportController;
+use App\Http\Controllers\Api\VehicleLogbookController;
+use App\Http\Controllers\Api\VehicleSelectController;
 use App\Http\Controllers\Api\VendorController;
-use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\Auth\MobileAuthController;
+use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\Api\SapImportController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\PgrController;
-use App\Http\Controllers\Api\PphImportController;
-use App\Http\Controllers\Api\F53ImportController;
-use App\Http\Controllers\Api\VehicleLogbookController;
-use App\Http\Controllers\Api\VehicleCostImportController;
-use App\Http\Controllers\Api\VehicleSelectController;
-use App\Http\Controllers\Api\VehicleController;
-use App\Http\Controllers\Api\CostCenterController;
-
-
-
-
 
 /*
 |--------------------------------------------------------------------------
@@ -39,7 +35,7 @@ use App\Http\Controllers\Api\CostCenterController;
 // ── PUBLIC ────────────────────────────────────────────────────────────────
 
 Route::prefix('auth')->group(function () {
-    Route::post('/login',   [AuthController::class, 'login']);
+    Route::post('/login', [AuthController::class, 'login']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
 
     Route::post('/exchange', [SocialAuthController::class, 'exchange']);
@@ -51,21 +47,19 @@ Route::prefix('auth')->group(function () {
     });
 });
 
-
-
 // ── PROTECTED (JWT) ───────────────────────────────────────────────────────
 
 Route::middleware('auth:api')->group(function () {
 
     // Auth
     Route::prefix('auth')->group(function () {
-        Route::get('/me',      [AuthController::class, 'me']);
+        Route::get('/me', [AuthController::class, 'me']);
         Route::post('/logout', [AuthController::class, 'logout']);
     });
 
     // Dashboard
     Route::prefix('dashboard')->group(function () {
-        Route::get('/stats',    [DashboardController::class, 'stats']);
+        Route::get('/stats', [DashboardController::class, 'stats']);
         Route::get('/activity', [DashboardController::class, 'activity']);
     });
 
@@ -73,19 +67,19 @@ Route::middleware('auth:api')->group(function () {
 
     // Users
     Route::prefix('users')->group(function () {
-        Route::get('/',        [UserController::class, 'index']);
-        Route::post('/',       [UserController::class, 'store'])->middleware('check-permission:create users');
-        Route::get('/{id}',    [UserController::class, 'show']);
-        Route::put('/{id}',    [UserController::class, 'update'])->middleware('check-permission:edit users');
+        Route::get('/', [UserController::class, 'index']);
+        Route::post('/', [UserController::class, 'store'])->middleware('check-permission:create users');
+        Route::get('/{id}', [UserController::class, 'show']);
+        Route::put('/{id}', [UserController::class, 'update'])->middleware('check-permission:edit users');
         Route::delete('/{id}', [UserController::class, 'destroy'])->middleware('check-permission:delete users');
         Route::post('/{id}/assign-role', [UserController::class, 'assignRole'])->middleware('check-permission:edit users');
     });
 
     // Roles
     Route::prefix('roles')->group(function () {
-        Route::get('/',        [RoleController::class, 'index'])->middleware('check-permission:view roles');
-        Route::post('/',       [RoleController::class, 'store'])->middleware('check-permission:create roles');
-        Route::put('/{id}',    [RoleController::class, 'update'])->middleware('check-permission:edit roles');
+        Route::get('/', [RoleController::class, 'index'])->middleware('check-permission:view roles');
+        Route::post('/', [RoleController::class, 'store'])->middleware('check-permission:create roles');
+        Route::put('/{id}', [RoleController::class, 'update'])->middleware('check-permission:edit roles');
         Route::delete('/{id}', [RoleController::class, 'destroy'])->middleware('check-permission:delete roles');
     });
 
@@ -94,8 +88,8 @@ Route::middleware('auth:api')->group(function () {
 
     // Settings
     Route::prefix('settings')->group(function () {
-        Route::get('/',  [SettingController::class, 'index']);
-        Route::put('/',  [SettingController::class, 'update'])->middleware('check-permission:edit settings');
+        Route::get('/', [SettingController::class, 'index']);
+        Route::put('/', [SettingController::class, 'update'])->middleware('check-permission:edit settings');
     });
 
     // ── ROLE: accounting ──────────────────────────────────────────────────
@@ -104,24 +98,21 @@ Route::middleware('auth:api')->group(function () {
         // Vendors — search harus sebelum apiResource
         // Vendors — static routes HARUS sebelum apiResource
         Route::delete('vendors/{vendor}/force-delete', [VendorController::class, 'forceDelete']);
-        Route::post('vendors/{vendor}/restore',        [VendorController::class, 'restore']);
-        Route::get('vendors/select-options',           [VendorController::class, 'selectOptions']); // ← tambah ini
-        Route::get('vendors/search',                   [VendorController::class, 'search']);
+        Route::post('vendors/{vendor}/restore', [VendorController::class, 'restore']);
+        Route::get('vendors/select-options', [VendorController::class, 'selectOptions']); // ← tambah ini
+        Route::get('vendors/search', [VendorController::class, 'search']);
         Route::apiResource('vendors', VendorController::class);
 
         // Master data — read only
 
         Route::get('/companies/select-options', [CompanyController::class, 'selectOptions']);
-        Route::get('companies',                  [CompanyController::class,      'index']);
-        Route::get('companies/{company}',        [CompanyController::class,      'show']);
-        Route::get('stages',                     [StageController::class,        'index']);
-        Route::get('stages/{stage}',             [StageController::class,        'show']);
+        Route::get('companies', [CompanyController::class, 'index']);
+        Route::get('companies/{company}', [CompanyController::class, 'show']);
+        Route::get('stages', [StageController::class, 'index']);
+        Route::get('stages/{stage}', [StageController::class, 'show']);
         Route::apiResource('stages', \App\Http\Controllers\Api\StageController::class);
 
-
-
-
-        Route::get('business-areas',             [BusinessAreaController::class, 'index']);
+        Route::get('business-areas', [BusinessAreaController::class, 'index']);
         Route::get('business-areas/{businessArea}', [BusinessAreaController::class, 'show']);
 
         // Invoice receipts
@@ -133,26 +124,21 @@ Route::middleware('auth:api')->group(function () {
         Route::get('busa/search', [BusinessAreaController::class, 'search']);
         Route::apiResource('busa', BusinessAreaController::class)->parameters(['busa' => 'businessArea']);;
 
-
-        Route::get('invoice-receipts/{invoiceReceipt}/statuses',  [InvoiceReceiptController::class, 'statuses']);
+        Route::get('invoice-receipts/{invoiceReceipt}/statuses', [InvoiceReceiptController::class, 'statuses']);
         Route::post('invoice-receipts/{invoiceReceipt}/statuses', [InvoiceReceiptController::class, 'addStatus']);
 
-        
-         Route::apiResource('cost-centers', CostCenterController::class);
-
-
+        Route::apiResource('cost-centers', CostCenterController::class);
 
         // SAP PO Import
         // SAP PO Import
-        Route::post('sap/import-po',             [SapImportController::class, 'importPo']);
-        Route::post('sap/import-po-chunk',       [SapImportController::class, 'importPoChunk']);
-        Route::get('sap/po-lookup',              [SapImportController::class, 'poLookup']);
+        Route::post('sap/import-po', [SapImportController::class, 'importPo']);
+        Route::post('sap/import-po-chunk', [SapImportController::class, 'importPoChunk']);
+        Route::get('sap/po-lookup', [SapImportController::class, 'poLookup']);
         Route::prefix('sap')->group(function () {
             Route::post('f53-import', [F53ImportController::class, 'importChunk']);
-            Route::get('f53-data',    [F53ImportController::class, 'getData']);
+            Route::get('f53-data', [F53ImportController::class, 'getData']);
             Route::delete('f53-data', [F53ImportController::class, 'destroy']);
         });
-
 
         Route::prefix('vehicles')->group(function () {
 
@@ -162,58 +148,56 @@ Route::middleware('auth:api')->group(function () {
 
             // Cost center lookup + import biaya SAP
             Route::post('cost-center-lookup', [VehicleCostImportController::class, 'lookup']);
-            Route::post('cost-import',        [VehicleCostImportController::class, 'import']);
+            Route::post('cost-import', [VehicleCostImportController::class, 'import']);
 
             // Logbook
-            Route::get('logbook',                         [VehicleLogbookController::class, 'index']);
-            Route::post('logbook/detail',                 [VehicleLogbookController::class, 'storeDetail']);
-            Route::put('logbook/detail/{detail}',         [VehicleLogbookController::class, 'updateDetail']);
-            Route::delete('logbook/detail/{detail}',      [VehicleLogbookController::class, 'destroyDetail']);
+            Route::get('logbook', [VehicleLogbookController::class, 'index']);
+            Route::post('logbook/detail', [VehicleLogbookController::class, 'storeDetail']);
+            Route::put('logbook/detail/{detail}', [VehicleLogbookController::class, 'updateDetail']);
+            Route::delete('logbook/detail/{detail}', [VehicleLogbookController::class, 'destroyDetail']);
             Route::get('logbook/beban-search', [VehicleLogbookController::class, 'bebanSearch']);
             Route::post('logbook/{headerId}/recalculate', [VehicleLogbookController::class, 'recalculate_endpoint']);
 
-            Route::post('logbook/{headerId}/carryover',   [VehicleLogbookController::class, 'carryover']);
-            
+            Route::post('logbook/{headerId}/carryover', [VehicleLogbookController::class, 'carryover']);
+
             Route::get('logbook/summary', [VehicleLogbookController::class, 'summary']);
 
             Route::delete('logbook/bulk', [VehicleLogbookController::class, 'bulkDelete']);
 
+            // Tambahkan ke routes/api.php, di dalam route group vehicles
 
             // Tambahkan ke routes/api.php, di dalam route group vehicles
 
             Route::get('logbook/print', [VehicleLogbookController::class, 'printData']);
             Route::get('logbook/print-all', [VehicleLogbookController::class, 'printAll']);
+            Route::get('logbook/export-zf0002', [VehicleLogbookController::class, 'exportZf0002']);
 
         });
         Route::apiResource('vehicles', VehicleController::class);
 
-
         // PPh Import & Report
-        Route::post('sap/import-pph-chunk',      [PphImportController::class, 'importChunk']);
-        Route::get('sap/import-pph-incomplete',  [PphImportController::class, 'incompleteBatches']);
-        Route::get('sap/pph-companies',          [PphImportController::class, 'companyList']);
-        Route::get('sap/pph-batches',            [PphImportController::class, 'batchList']);
-        Route::get('sap/pph-data',               [PphImportController::class, 'getData']);
-        Route::get('sap/pph-report',             [PphImportController::class, 'report']);
-        Route::patch('sap/vendor-gl-cost',       [PphImportController::class, 'updateVendorGlCost']);
+        Route::post('sap/import-pph-chunk', [PphImportController::class, 'importChunk']);
+        Route::get('sap/import-pph-incomplete', [PphImportController::class, 'incompleteBatches']);
+        Route::get('sap/pph-companies', [PphImportController::class, 'companyList']);
+        Route::get('sap/pph-batches', [PphImportController::class, 'batchList']);
+        Route::get('sap/pph-data', [PphImportController::class, 'getData']);
+        Route::get('sap/pph-report', [PphImportController::class, 'report']);
+        Route::patch('sap/vendor-gl-cost', [PphImportController::class, 'updateVendorGlCost']);
         // routes/api.php
         Route::delete('/sap/pph-data', [PphImportController::class, 'destroy']);
         Route::patch('/vendors/{vendor}/pkp', [VendorController::class, 'updatePkp']);
     });
 
-
-
-
     // ── ROLE: super-admin ─────────────────────────────────────────────────
     Route::middleware('role:super-admin')->prefix('admin')->name('admin.')->group(function () {
 
-        Route::get('/users',                  [UserManagementController::class, 'index']);
-        Route::put('/users/{user}/roles',     [UserManagementController::class, 'assignRoles']);
-        Route::delete('/users/{user}',        [UserManagementController::class, 'destroy']);
+        Route::get('/users', [UserManagementController::class, 'index']);
+        Route::put('/users/{user}/roles', [UserManagementController::class, 'assignRoles']);
+        Route::delete('/users/{user}', [UserManagementController::class, 'destroy']);
 
-        Route::get('/roles',           [RoleManagementController::class, 'index']);
-        Route::post('/roles',          [RoleManagementController::class, 'store']);
-        Route::put('/roles/{role}',    [RoleManagementController::class, 'update']);
+        Route::get('/roles', [RoleManagementController::class, 'index']);
+        Route::post('/roles', [RoleManagementController::class, 'store']);
+        Route::put('/roles/{role}', [RoleManagementController::class, 'update']);
         Route::delete('/roles/{role}', [RoleManagementController::class, 'destroy']);
     });
 });

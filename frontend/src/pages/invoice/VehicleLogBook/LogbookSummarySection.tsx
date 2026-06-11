@@ -2,12 +2,23 @@
 // Path: frontend/src/pages/vehicles/LogbookSummarySection.tsx
 
 import { useState, useEffect, useCallback } from "react";
-import { ChevronDown, ChevronUp, Trash2, Car, AlertTriangle, Loader2, Printer } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Trash2,
+  Car,
+  AlertTriangle,
+  Loader2,
+  Printer,
+  FileSpreadsheet,
+  FileOutput,
+} from "lucide-react";
 import api from "../../../api/axios";
 import Button from "../../../components/ui/Button";
 import Badge from "../../../components/ui/Badge";
 import { useToast } from "../../../components/ui/Toast";
 import { openPrintSingle, openPrintAll, type PrintPayload } from "./printLogbook";
+import { exportZf0002Customer, type ZfPayload } from "./ExportZF0002";
 import styles from "./LogbookSummarySection.module.css";
 
 // ─────────────────────────────────────────────
@@ -43,10 +54,10 @@ interface SummaryData {
 interface Props {
   busAreaSapId: string;
   busAreaLabel: string;
+  companyCode: string;
   month: number;
   year: number;
-  companyCode: string;
-  canDelete: boolean; // hanya true kalau role = accounting
+  canDelete: boolean;
   onDeleted: () => void;
 }
 
@@ -67,19 +78,27 @@ function formatKm(val: number | null): string {
   return new Intl.NumberFormat("id-ID").format(val);
 }
 
+function todayInputValue(): string {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 // ─────────────────────────────────────────────
 export default function LogbookSummarySection({
   busAreaSapId,
   busAreaLabel,
+  companyCode,
   month,
   year,
-  companyCode,
   canDelete,
   onDeleted,
 }: Props) {
   const { addToast } = useToast();
 
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const [data, setData] = useState<SummaryData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -87,6 +106,9 @@ export default function LogbookSummarySection({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [printingId, setPrintingId] = useState<number | null>(null);
   const [printingAll, setPrintingAll] = useState(false);
+  const [exportingZf, setExportingZf] = useState(false);
+
+  const [postingDate, setPostingDate] = useState<string>(todayInputValue());
 
   // ── Fetch summary ────────────────────────────
   const fetchSummary = useCallback(async () => {
@@ -110,11 +132,14 @@ export default function LogbookSummarySection({
     }
   }, [busAreaSapId, companyCode, month, year]);
 
-  // Fetch saat panel dibuka atau filter berubah
   useEffect(() => {
-    if (open) fetchSummary();
-    else setData(null);
-  }, [open, fetchSummary]);
+    fetchSummary();
+  }, [fetchSummary]);
+
+  // ── Derived: status balance keseluruhan ─────
+  const hasVehicles = (data?.with_cost.length ?? 0) > 0;
+  const allBalanced =
+    hasVehicles && data!.with_cost.every((v) => v.is_balanced);
 
   // ── Delete all ───────────────────────────────
   const handleDelete = useCallback(async () => {
@@ -134,6 +159,7 @@ export default function LogbookSummarySection({
       });
       setConfirmDelete(false);
       setData(null);
+      fetchSummary();
       onDeleted();
     } catch (e: any) {
       addToast({
@@ -143,7 +169,7 @@ export default function LogbookSummarySection({
     } finally {
       setDeleting(false);
     }
-  }, [busAreaSapId, companyCode, month, year, busAreaLabel, addToast, onDeleted]);
+  }, [busAreaSapId, companyCode, month, year, busAreaLabel, addToast, onDeleted, fetchSummary]);
 
   // ── Print single ──────────────────────────────
   const handlePrintOne = useCallback(
@@ -200,37 +226,197 @@ export default function LogbookSummarySection({
     }
   }, [busAreaSapId, companyCode, month, year, addToast]);
 
+  // ── Export ZF0002_AGRI (customer) ─────────────
+  const handleExportZf0002 = useCallback(async () => {
+    if (!postingDate) {
+      addToast({ variant: "warning", title: "Pilih posting date terlebih dahulu." });
+      return;
+    }
+    setExportingZf(true);
+    try {
+      const { data: res } = await api.get<{
+        vehicles: ZfPayload[];
+        all_balanced: boolean;
+        vehicle_count: number;
+      }>("/vehicles/logbook/export-zf0002", {
+        params: {
+          bus_area_sap_id: busAreaSapId,
+          company_code: companyCode,
+          month,
+          year,
+        },
+      });
+
+      if (!res.all_balanced) {
+        addToast({
+          variant: "warning",
+          title: "Semua kendaraan harus Balance sebelum export ZF0002_AGRI.",
+        });
+        return;
+      }
+
+      if (res.vehicles.length === 0) {
+        addToast({
+          variant: "warning",
+          title: "Tidak ada baris biaya ke customer untuk diexport.",
+        });
+        return;
+      }
+
+      await exportZf0002Customer({
+        payloads: res.vehicles,
+        companyCode,
+        businessArea: busAreaSapId,
+        month,
+        year,
+        postingDate: new Date(postingDate + "T00:00:00"),
+      });
+
+      addToast({
+        variant: "success",
+        title: `File ZF0002_AGRI berhasil dibuat (${res.vehicles.length} kendaraan).`,
+      });
+    } catch (e: any) {
+      addToast({
+        variant: "danger",
+        title: "Gagal export: " + (e?.response?.data?.message ?? "Unknown error"),
+      });
+    } finally {
+      setExportingZf(false);
+    }
+  }, [busAreaSapId, companyCode, month, year, postingDate, addToast]);
+
   // ─────────────────────────────────────────────
   return (
     <div className={styles.section}>
-      {/* ── Toggle Header ── */}
-      <button
-        className={styles.toggleBtn}
-        onClick={() => setOpen((v) => !v)}
-        type="button"
-      >
-        <span className={styles.toggleLeft}>
-          {open ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-          <span className={styles.toggleLabel}>Ringkasan & Manajemen Data</span>
-          {!open && data === null && (
-            <span className={styles.toggleHint}>
-              {busAreaLabel} · {month}/{year}
-            </span>
-          )}
-          {!open && data !== null && (
-            <>
-              <Badge variant="success" size="sm">
-                {data.with_cost.length} kendaraan
-              </Badge>
-              {data.no_cost.length > 0 && (
-                <Badge variant="warning" size="sm">
-                  {data.no_cost.length} tanpa biaya
+      {/* ── Header / Toolbar (selalu terlihat) ── */}
+      <div className={styles.headerBar}>
+        <button
+          className={styles.toggleBtn}
+          onClick={() => setOpen((v) => !v)}
+          type="button"
+        >
+          <span className={styles.toggleLeft}>
+            {open ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+            <span className={styles.toggleLabel}>Ringkasan & Ekspor SAP</span>
+            {loading && <Loader2 size={14} className={styles.spinning} />}
+            {!loading && data !== null && (
+              <>
+                <Badge variant="success" size="sm">
+                  {data.with_cost.length} kendaraan
                 </Badge>
-              )}
-            </>
+                {data.no_cost.length > 0 && (
+                  <Badge variant="warning" size="sm">
+                    {data.no_cost.length} tanpa biaya
+                  </Badge>
+                )}
+                {hasVehicles && (
+                  <Badge variant={allBalanced ? "success" : "warning"} size="sm">
+                    {allBalanced ? "Semua Balance" : "Belum Balance"}
+                  </Badge>
+                )}
+              </>
+            )}
+          </span>
+        </button>
+
+        {/* ── Toolbar Aksi ── */}
+        <div className={styles.toolbar}>
+          <div className={styles.postingDateWrap}>
+            <label className={styles.postingDateLabel}>Posting Date</label>
+            <input
+              type="date"
+              className={styles.postingDateInput}
+              value={postingDate}
+              onChange={(e) => setPostingDate(e.target.value)}
+            />
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportZf0002}
+            loading={exportingZf}
+            disabled={!allBalanced || exportingZf || !hasVehicles}
+            title={
+              !hasVehicles
+                ? "Belum ada data biaya periode ini"
+                : !allBalanced
+                  ? "Semua kendaraan harus Balance untuk export"
+                  : "Export jurnal biaya ke Customer (ZF0002_AGRI)"
+            }
+          >
+            <FileSpreadsheet size={13} /> Export ZF0002_AGRI
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            disabled
+            title="Export biaya ke Cost Center / Departemen — segera hadir"
+          >
+            <FileOutput size={13} /> Export SKF
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePrintAll}
+            loading={printingAll}
+            disabled={!allBalanced || printingAll || !hasVehicles}
+            title={
+              !hasVehicles
+                ? "Belum ada data biaya periode ini"
+                : !allBalanced
+                  ? "Semua kendaraan harus Balance untuk print semua"
+                  : "Print semua kendaraan (PDF)"
+            }
+          >
+            <Printer size={13} /> Print Semua
+          </Button>
+
+          {canDelete && (
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => setConfirmDelete(true)}
+              disabled={!hasVehicles}
+              title="Hapus seluruh data biaya periode ini"
+            >
+              <Trash2 size={13} /> Hapus Semua
+            </Button>
           )}
-        </span>
-      </button>
+        </div>
+      </div>
+
+      {/* ── Confirm delete (banner di luar collapsible) ── */}
+      {confirmDelete && (
+        <div className={styles.confirmBox}>
+          <span className={styles.confirmText}>
+            ⚠️ Yakin? Tindakan ini <strong>tidak bisa dibatalkan</strong>. Semua
+            header biaya dan baris logbook untuk {busAreaLabel} {month}/{year}{" "}
+            akan dihapus permanen.
+          </span>
+          <div className={styles.confirmActions}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setConfirmDelete(false)}
+              disabled={deleting}
+            >
+              Batal
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={handleDelete}
+              loading={deleting}
+            >
+              Ya, Hapus Sekarang
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* ── Collapsible Body ── */}
       {open && (
@@ -267,25 +453,6 @@ export default function LogbookSummarySection({
                     <Badge variant="info" size="sm">
                       Total: {formatRupiah(data.total_cost_all)}
                     </Badge>
-                  )}
-                  {data.with_cost.length > 0 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handlePrintAll}
-                      loading={printingAll}
-                      disabled={
-                        printingAll ||
-                        data.with_cost.some((v) => !v.is_balanced)
-                      }
-                      title={
-                        data.with_cost.some((v) => !v.is_balanced)
-                          ? "Semua kendaraan harus Balance untuk print semua"
-                          : "Print semua kendaraan (PDF)"
-                      }
-                    >
-                      <Printer size={13} /> Print Semua
-                    </Button>
                   )}
                 </div>
 
@@ -409,70 +576,6 @@ export default function LogbookSummarySection({
                   </div>
                 )}
               </div>
-
-              {/* ── Delete Zone (hanya kalau canDelete) ── */}
-              {canDelete && (
-                <div className={styles.deleteZone}>
-                  {!confirmDelete ? (
-                    <>
-                      <div className={styles.deleteInfo}>
-                        <AlertTriangle
-                          size={15}
-                          className={styles.deleteWarningIcon}
-                        />
-                        <span>
-                          Hapus seluruh data biaya{" "}
-                          <strong>{busAreaLabel}</strong> periode{" "}
-                          <strong>
-                            {month}/{year}
-                          </strong>{" "}
-                          ({data.with_cost.length} kendaraan,{" "}
-                          {data.with_cost.reduce(
-                            (s, v) => s + v.detail_count,
-                            0,
-                          )}{" "}
-                          baris logbook).
-                        </span>
-                      </div>
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => setConfirmDelete(true)}
-                        disabled={data.with_cost.length === 0}
-                      >
-                        <Trash2 size={13} /> Hapus Semua Data Periode Ini
-                      </Button>
-                    </>
-                  ) : (
-                    <div className={styles.confirmBox}>
-                      <span className={styles.confirmText}>
-                        ⚠️ Yakin? Tindakan ini{" "}
-                        <strong>tidak bisa dibatalkan</strong>. Semua header
-                        biaya dan baris logbook untuk {busAreaLabel} {month}/
-                        {year} akan dihapus permanen.
-                      </span>
-                      <div className={styles.confirmActions}>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setConfirmDelete(false)}
-                          disabled={deleting}
-                        >
-                          Batal
-                        </Button>
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={handleDelete}
-                          loading={deleting}
-                        >
-                          Ya, Hapus Sekarang
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
             </>
           )}
         </div>

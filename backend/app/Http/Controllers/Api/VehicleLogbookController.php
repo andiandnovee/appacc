@@ -750,6 +750,85 @@ public function bebanSearch(Request $request)
         ];
     }
 
+    // Tambahkan method ini ke VehicleLogbookController.php
+// Letakkan setelah printAll(), sebelum buildPrintPayload()
+
+    /**
+     * GET /vehicles/logbook/export-zf0002
+     * Data untuk export ZF0002_AGRI — biaya ke CUSTOMER.
+     * Hanya kendaraan yang sudah balance di periode ini yang disertakan.
+     *
+     * Query params:
+     *   bus_area_sap_id : string
+     *   company_code    : string
+     *   month           : int
+     *   year            : int
+     *
+     * Response: { vehicles: [...], all_balanced: bool, vehicle_count: int }
+     * Setiap item vehicles[] = payload dari buildPrintPayload(), tapi
+     * hanya berisi details dengan customer_code (bukan cost_center).
+     */
+    public function exportZf0002(Request $request)
+    {
+        $request->validate([
+            'bus_area_sap_id' => 'required|string',
+            'company_code'    => 'required|string',
+            'month'           => 'required|integer|min:1|max:12',
+            'year'            => 'required|integer|min:2000|max:2099',
+        ]);
+
+        $busAreaSapId = $request->bus_area_sap_id;
+        $companyCode  = $request->company_code;
+        $month        = (int) $request->month;
+        $year         = (int) $request->year;
+
+        $vehicleIds = DB::table('vehicles')
+            ->where('business_area_code', $busAreaSapId)
+            ->where('company_code', $companyCode)
+            ->where('is_active', 1)
+            ->whereNull('deleted_at')
+            ->orderBy('plate_number')
+            ->pluck('id');
+
+        $vehiclesWithCustomer = [];
+        $totalVehicles = 0;
+        $balancedVehicles = 0;
+
+        foreach ($vehicleIds as $vehicleId) {
+            $payload = $this->buildPrintPayload($vehicleId, $month, $year);
+            if (!$payload) continue;
+
+            $totalVehicles++;
+
+            $totalAllocated = collect($payload['details'])->sum('cost_amount');
+            $isBalanced = abs($totalAllocated - $payload['header']['total_cost']) < 1;
+            if ($isBalanced) $balancedVehicles++;
+
+            // Filter hanya baris dengan customer_code (biaya ke customer)
+            $customerDetails = array_values(array_filter(
+                $payload['details'],
+                fn($d) => !empty($d['customer_code'])
+            ));
+
+            if (empty($customerDetails)) continue;
+
+            $payload['details'] = $customerDetails;
+            $payload['is_balanced'] = $isBalanced;
+            $vehiclesWithCustomer[] = $payload;
+        }
+
+        return response()->json([
+            'vehicles'        => $vehiclesWithCustomer,
+            'all_balanced'    => $totalVehicles > 0 && $totalVehicles === $balancedVehicles,
+            'vehicle_count'   => $totalVehicles,
+            'balanced_count'  => $balancedVehicles,
+            'company_code'    => $companyCode,
+            'business_area'   => $busAreaSapId,
+            'month'           => $month,
+            'year'            => $year,
+        ]);
+    }
+
 
 
 }

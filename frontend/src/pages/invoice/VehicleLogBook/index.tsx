@@ -422,6 +422,21 @@ export default function VehicleLogbookPage() {
         </div>
       </div>
 
+      {/* ── SUMMARY & EKSPOR SAP (panel kontrol utama) ── */}
+      {selectedBusArea && month && year && activeBusArea && (
+        <LogbookSummarySection
+          busAreaSapId={activeBusArea.sap_id}
+          busAreaLabel={`${activeBusArea.sap_id} — ${activeBusArea.name}`}
+          companyCode={activeCompany?.id ?? ""}
+          month={Number(month)}
+          year={Number(year)}
+          canDelete={canDelete}
+          onDeleted={() => {
+            fetchData();
+          }}
+        />
+      )}
+
       {/* ── LOADING / ERROR / EMPTY ─────────── */}
       {loading && (
         <div className={styles.stateBox}>
@@ -670,22 +685,6 @@ export default function VehicleLogbookPage() {
             />
           </div>
         </>
-      )}
-
-      {/* ── SUMMARY SECTION (selalu tampil kalau busArea + bulan dipilih) ── */}
-      {selectedBusArea && month && year && activeBusArea && (
-        <LogbookSummarySection
-          busAreaSapId={activeBusArea.sap_id}
-          busAreaLabel={`${activeBusArea.sap_id} — ${activeBusArea.name}`}
-          month={Number(month)}
-          year={Number(year)}
-          companyCode={activeCompany?.id ?? ""}
-          canDelete={canDelete}
-          onDeleted={() => {
-            // Kalau kendaraan yang sedang dilihat ikut terhapus, reset
-            fetchData();
-          }}
-        />
       )}
 
       {/* ── DRAWER: Import ───────────────────── */}
