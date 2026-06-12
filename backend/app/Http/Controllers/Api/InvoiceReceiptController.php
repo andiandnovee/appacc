@@ -12,6 +12,7 @@ use App\Http\Resources\ReceiptStatusResource;
 use App\Models\InvoiceReceipt;
 use App\Models\ReceiptStatus;
 use Illuminate\Http\Request;
+use App\Services\IcatIdImportService;
 
 
 class InvoiceReceiptController extends Controller
@@ -184,4 +185,14 @@ if ($sortBy === 'vendor') {
             ->response()
             ->setStatusCode(201);
     }
+
+
+
+    public function importIcatChunk(Request $request)
+{
+    $request->validate(['rows' => 'required|array']);
+
+    $service = new IcatIdImportService();
+    return response()->json($service->importChunk($request->input('rows')));
+}
 }

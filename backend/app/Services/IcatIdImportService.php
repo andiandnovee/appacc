@@ -14,8 +14,19 @@ class IcatIdImportService
 
     public function importChunk(array $rows): array
     {
-        $imported = 0;
-        $notFound = [];
+        // Kumpulkan semua po_number unik dari chunk ini → 1 query saja
+        $poNumbers = array_values(array_unique(array_filter(array_map(
+            fn ($r) => $r['PO_Number'] ?? $r['po_number'] ?? null,
+            $rows
+        ))));
+
+        $candidates = InvoiceReceipt::whereIn('po_number', $poNumbers)
+            ->whereNull('icat_id')
+            ->get()
+            ->groupBy('po_number');
+
+        $imported  = 0;
+        $notFound  = [];
         $ambiguous = [];
 
         foreach ($rows as $row) {
@@ -27,9 +38,7 @@ class IcatIdImportService
                 continue;
             }
 
-            $matches = InvoiceReceipt::where('po_number', $poNumber)
-                ->whereNull('icat_id')
-                ->get();
+            $matches = $candidates->get($poNumber, collect());
 
             if ($matches->isEmpty()) {
                 $notFound[] = ['po_number' => $poNumber, 'icat_id' => $icatId];
