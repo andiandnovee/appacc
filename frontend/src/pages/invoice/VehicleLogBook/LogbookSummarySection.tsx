@@ -29,6 +29,11 @@ import {
   exportZf0002Text,
   type ZfPayload,
 } from "./ExportZF0002";
+import {
+  copySkfToClipboard,
+  exportSkfExcel,
+  type SkfPayload,
+} from "./Exportskf";
 import styles from "./LogbookSummarySection.module.css";
 
 // ─────────────────────────────────────────────
@@ -117,6 +122,7 @@ export default function LogbookSummarySection({
   const [printingId, setPrintingId] = useState<number | null>(null);
   const [printingAll, setPrintingAll] = useState(false);
   const [exportingZf, setExportingZf] = useState(false);
+  const [exportingSkf, setExportingSkf] = useState(false);
 
   const [postingDate, setPostingDate] = useState<string>(todayInputValue());
   const handleExportExcel = () => handleExportZf0002("excel");
@@ -330,6 +336,108 @@ export default function LogbookSummarySection({
     [busAreaSapId, companyCode, month, year, postingDate, addToast],
   );
 
+  // ── Export SKF (cost center penerima) ─────────
+  const handleCopySkf = useCallback(async () => {
+    if (!postingDate) {
+      addToast({
+        variant: "warning",
+        title: "Pilih posting date terlebih dahulu.",
+      });
+      return;
+    }
+    setExportingSkf(true);
+    try {
+      const { data: res } = await api.get<{
+        vehicles: SkfPayload[];
+        vehicle_count: number;
+      }>("/vehicles/logbook/export-skf", {
+        params: {
+          bus_area_sap_id: busAreaSapId,
+          company_code: companyCode,
+          month,
+          year,
+        },
+      });
+
+      if (res.vehicles.length === 0) {
+        addToast({
+          variant: "warning",
+          title: "Tidak ada baris biaya ke cost center untuk diexport.",
+        });
+        return;
+      }
+
+      const count = await copySkfToClipboard({
+        payloads: res.vehicles,
+        postingDate: new Date(postingDate + "T00:00:00"),
+      });
+
+      addToast({
+        variant: "success",
+        title: `${count} baris SKF berhasil dicopy ke clipboard.`,
+      });
+    } catch (e: any) {
+      addToast({
+        variant: "danger",
+        title: "Gagal copy: " + (e?.response?.data?.message ?? "Unknown error"),
+      });
+    } finally {
+      setExportingSkf(false);
+    }
+  }, [busAreaSapId, companyCode, month, year, postingDate, addToast]);
+
+  const handleExportSkfExcel = useCallback(async () => {
+    if (!postingDate) {
+      addToast({
+        variant: "warning",
+        title: "Pilih posting date terlebih dahulu.",
+      });
+      return;
+    }
+    setExportingSkf(true);
+    try {
+      const { data: res } = await api.get<{
+        vehicles: SkfPayload[];
+        vehicle_count: number;
+      }>("/vehicles/logbook/export-skf", {
+        params: {
+          bus_area_sap_id: busAreaSapId,
+          company_code: companyCode,
+          month,
+          year,
+        },
+      });
+
+      if (res.vehicles.length === 0) {
+        addToast({
+          variant: "warning",
+          title: "Tidak ada baris biaya ke cost center untuk diexport.",
+        });
+        return;
+      }
+
+      await exportSkfExcel({
+        payloads: res.vehicles,
+        postingDate: new Date(postingDate + "T00:00:00"),
+        month,
+        year,
+      });
+
+      addToast({
+        variant: "success",
+        title: `File SKF berhasil dibuat (${res.vehicles.length} kendaraan).`,
+      });
+    } catch (e: any) {
+      addToast({
+        variant: "danger",
+        title:
+          "Gagal export: " + (e?.response?.data?.message ?? "Unknown error"),
+      });
+    } finally {
+      setExportingSkf(false);
+    }
+  }, [busAreaSapId, companyCode, month, year, postingDate, addToast]);
+
   // ─────────────────────────────────────────────
   return (
     <div className={styles.section}>
@@ -391,23 +499,23 @@ export default function LogbookSummarySection({
               },
             ]}
             disabled={!allBalanced || exportingZf || !hasVehicles}
-            title={
-              !hasVehicles
-                ? "Belum ada data biaya periode ini"
-                : !allBalanced
-                  ? "Semua kendaraan harus Balance untuk export"
-                  : "Export jurnal biaya ke Customer (ZF0002_AGRI)"
-            }
           />
 
-          <Button
+          <SplitButton
+            label="Copy SKF"
             variant="outline"
             size="sm"
-            disabled
-            title="Export biaya ke Cost Center / Departemen — segera hadir"
-          >
-            <FileOutput size={13} /> Export SKF
-          </Button>
+            onClick={handleCopySkf}
+            options={[
+              {
+                label: "Export SKF to Excel",
+                icon: <FileSpreadsheet size={13} />,
+                onClick: handleExportSkfExcel,
+              },
+            ]}
+            loading={exportingSkf}
+            disabled={exportingSkf || !hasVehicles}
+          />
 
           <Button
             variant="outline"

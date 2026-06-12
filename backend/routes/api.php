@@ -171,6 +171,7 @@ Route::middleware('auth:api')->group(function () {
             Route::get('logbook/print', [VehicleLogbookController::class, 'printData']);
             Route::get('logbook/print-all', [VehicleLogbookController::class, 'printAll']);
             Route::get('logbook/export-zf0002', [VehicleLogbookController::class, 'exportZf0002']);
+            Route::get('logbook/export-skf', [VehicleLogbookController::class, 'exportSkf']);
 
         });
         Route::apiResource('vehicles', VehicleController::class);

@@ -829,6 +829,74 @@ public function bebanSearch(Request $request)
         ]);
     }
 
+    /**
+     * GET /vehicles/logbook/export-skf
+     * Data untuk export SKF (Statistical Key Figures) — alokasi internal
+     * berdasarkan cost center penerima. Beda dengan exportZf0002:
+     *  - tidak ada konsep debet/kredit, cuma data mentah alokasi
+     *  - filter details yang punya cost_center (bukan customer_code)
+     *  - tidak butuh status balance, semua kendaraan yg punya baris
+     *    cost_center disertakan
+     *
+     * Query params:
+     *   bus_area_sap_id : string
+     *   company_code    : string
+     *   month           : int
+     *   year            : int
+     *
+     * Response: { vehicles: [...], vehicle_count: int }
+     * Setiap item vehicles[] = payload dari buildPrintPayload(), tapi
+     * hanya berisi details dengan cost_center (bukan customer_code).
+     */
+    public function exportSkf(Request $request)
+    {
+        $request->validate([
+            'bus_area_sap_id' => 'required|string',
+            'company_code'    => 'required|string',
+            'month'           => 'required|integer|min:1|max:12',
+            'year'            => 'required|integer|min:2000|max:2099',
+        ]);
+
+        $busAreaSapId = $request->bus_area_sap_id;
+        $companyCode  = $request->company_code;
+        $month        = (int) $request->month;
+        $year         = (int) $request->year;
+
+        $vehicleIds = DB::table('vehicles')
+            ->where('business_area_code', $busAreaSapId)
+            ->where('company_code', $companyCode)
+            ->where('is_active', 1)
+            ->whereNull('deleted_at')
+            ->orderBy('plate_number')
+            ->pluck('id');
+
+        $vehiclesWithCc = [];
+
+        foreach ($vehicleIds as $vehicleId) {
+            $payload = $this->buildPrintPayload($vehicleId, $month, $year);
+            if (!$payload) continue;
+
+            // Filter hanya baris dengan cost_center (alokasi SKF)
+            $ccDetails = array_values(array_filter(
+                $payload['details'],
+                fn($d) => !empty($d['cost_center'])
+            ));
+
+            if (empty($ccDetails)) continue;
+
+            $payload['details'] = $ccDetails;
+            $vehiclesWithCc[] = $payload;
+        }
+
+        return response()->json([
+            'vehicles'      => $vehiclesWithCc,
+            'vehicle_count' => count($vehiclesWithCc),
+            'company_code'  => $companyCode,
+            'business_area' => $busAreaSapId,
+            'month'         => $month,
+            'year'          => $year,
+        ]);
+    }
 
 
 }
