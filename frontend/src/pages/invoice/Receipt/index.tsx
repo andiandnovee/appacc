@@ -7,7 +7,7 @@ import type { Column } from "../../../components/ui/Table";
 import Select from "../../../components/ui/Select";
 import Collapsible from "../../../components/ui/Collapsible";
 import { useToast } from "../../../components/ui/Toast";
-import { Trash2, Download } from "lucide-react";
+import { Trash2, Download, Upload } from "lucide-react";
 import styles from "./ReceiptManagement.module.css";
 import apiClient from "../../../api/axios";
 import { useFilterStore } from "../../../stores/filterReceipt";
@@ -17,7 +17,7 @@ import { downloadME2N, downloadMIR7 } from "../../../utils/sapShortcuts";
 import { useAuth } from "../../../hooks/useAuth";
 import Drawer from "../../../components/ui/Drawer";
 import SapPoImportForm from "./SapPoImportForm";
-import { Upload } from "lucide-react"; // tambahin ke import lucide-react yang udah ada
+
 
 const IS_PROD = import.meta.env.PROD;
 
@@ -406,27 +406,18 @@ export default function InvoiceReceiptManagement() {
             </p>
           )}
 
-          <div
-            style={{
-              display: "flex",
-              gap: "var(--space-2)",
-              alignItems: "center",
-            }}
-          >
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setImportDrawerOpen(true)}
-            >
-              <Upload size={14} />
-              Import SAP PO
-            </Button>
-            {/* auto-refresh control existing tetap di sini */}
-          </div>
+        
         </div>
 
         {/* ── Auto-refresh control ── */}
         <div className={styles.autoRefreshControl}>
+
+          <Button variant="outline" size="sm" onClick={() => setImportDrawerOpen(true)}>
+      <Upload size={14} />
+      Import SAP PO
+    </Button>
+
+
           <label className={styles.autoRefreshLabel}>
             <input
               type="checkbox"
