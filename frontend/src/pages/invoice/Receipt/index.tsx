@@ -16,6 +16,8 @@ import { getToken } from "../../../api/axios";
 import { downloadME2N, downloadMIR7 } from "../../../utils/sapShortcuts";
 import { useAuth } from "../../../hooks/useAuth";
 import Drawer from "../../../components/ui/Drawer";
+import SapPoImportForm from "./SapPoImportForm";
+import { Upload } from "lucide-react"; // tambahin ke import lucide-react yang udah ada
 
 const IS_PROD = import.meta.env.PROD;
 
@@ -43,14 +45,14 @@ export default function InvoiceReceiptManagement() {
     selectedYear,
     selectedStage,
     selectedIsPkp,
-         autoRefreshEnabled,
-  pollIntervalMinutes,
+    autoRefreshEnabled,
+    pollIntervalMinutes,
     setSelectedCompany,
     setSelectedVendor,
     setSelectedYear,
     setSelectedStage,
-  setAutoRefreshEnabled,
-  setPollIntervalMinutes,
+    setAutoRefreshEnabled,
+    setPollIntervalMinutes,
     resetFilters,
   } = useFilterStore();
 
@@ -62,6 +64,7 @@ export default function InvoiceReceiptManagement() {
 
   const [tableOpen, setTableOpen] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [importDrawerOpen, setImportDrawerOpen] = useState(false);
 
   // ── Handler: PO sudah ada → buka tabel & set search ──────────
   const handlePoAlreadyExists = useCallback((poNumber: string) => {
@@ -103,21 +106,21 @@ export default function InvoiceReceiptManagement() {
   }, [selectedYear]);
 
   // ── Polling ───────────────────────────────────────────────────
-// ── Polling ───────────────────────────────────────────────────
-const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  // ── Polling ───────────────────────────────────────────────────
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-useInterval(
-  useCallback(() => {
-    if (!IS_PROD && !getToken()) return;
-    tableRef.current?.refetch();
+  useInterval(
+    useCallback(() => {
+      if (!IS_PROD && !getToken()) return;
+      tableRef.current?.refetch();
+      setLastUpdated(new Date());
+    }, []),
+    autoRefreshEnabled ? pollIntervalMinutes * 60 * 1000 : null,
+  );
+
+  useEffect(() => {
     setLastUpdated(new Date());
-  }, []),
-  autoRefreshEnabled ? pollIntervalMinutes * 60 * 1000 : null,
-);
-
-useEffect(() => {
-  setLastUpdated(new Date());
-}, []);
+  }, []);
 
   // ── Filter params ─────────────────────────────────────────────
   const filterParams = useMemo<Record<string, any>>(() => {
@@ -352,7 +355,7 @@ useEffect(() => {
                 size="sm"
                 onClick={() => {
                   setFormTarget(row);
-                   setDrawerOpen(true); // ← bu
+                  setDrawerOpen(true); // ← bu
                 }}
                 options={[
                   {
@@ -387,103 +390,135 @@ useEffect(() => {
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
-  <div>
-    <h1 className={styles.pageTitle}>Manajemen Invoice Receipt</h1>
-    <p className={styles.pageSubtitle}>
-      Kelola data invoice receipt perusahaan
-    </p>
-    {lastUpdated && (
-      <p className={styles.lastUpdated}>
-        Diperbarui:{" "}
-        {lastUpdated.toLocaleTimeString("id-ID", {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        })}
-      </p>
-    )}
-  </div>
+        <div>
+          <h1 className={styles.pageTitle}>Manajemen Invoice Receipt</h1>
+          <p className={styles.pageSubtitle}>
+            Kelola data invoice receipt perusahaan
+          </p>
+          {lastUpdated && (
+            <p className={styles.lastUpdated}>
+              Diperbarui:{" "}
+              {lastUpdated.toLocaleTimeString("id-ID", {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+              })}
+            </p>
+          )}
 
-  {/* ── Auto-refresh control ── */}
-  <div className={styles.autoRefreshControl}>
-    <label className={styles.autoRefreshLabel}>
-      <input
-        type="checkbox"
-        checked={autoRefreshEnabled}
-        onChange={(e) => setAutoRefreshEnabled(e.target.checked)}
-        className={styles.autoRefreshCheckbox}
-      />
-      <span>Auto-refresh</span>
-    </label>
-    {autoRefreshEnabled && (
-  <Select
-    value={String(pollIntervalMinutes)}
-    onChange={(e) => setPollIntervalMinutes(Number(e.target.value))}
-    size="sm"
-    options={[
-      { value: "1",  label: "1 menit"  },
-      { value: "2",  label: "2 menit"  },
-      { value: "5",  label: "5 menit"  },
-      { value: "10", label: "10 menit" },
-      { value: "15", label: "15 menit" },
-      { value: "30", label: "30 menit" },
-    ]}
-  />
-)}
-  </div>
-</div>
+          <div
+            style={{
+              display: "flex",
+              gap: "var(--space-2)",
+              alignItems: "center",
+            }}
+          >
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setImportDrawerOpen(true)}
+            >
+              <Upload size={14} />
+              Import SAP PO
+            </Button>
+            {/* auto-refresh control existing tetap di sini */}
+          </div>
+        </div>
 
+        {/* ── Auto-refresh control ── */}
+        <div className={styles.autoRefreshControl}>
+          <label className={styles.autoRefreshLabel}>
+            <input
+              type="checkbox"
+              checked={autoRefreshEnabled}
+              onChange={(e) => setAutoRefreshEnabled(e.target.checked)}
+              className={styles.autoRefreshCheckbox}
+            />
+            <span>Auto-refresh</span>
+          </label>
+          {autoRefreshEnabled && (
+            <Select
+              value={String(pollIntervalMinutes)}
+              onChange={(e) => setPollIntervalMinutes(Number(e.target.value))}
+              size="sm"
+              options={[
+                { value: "1", label: "1 menit" },
+                { value: "2", label: "2 menit" },
+                { value: "5", label: "5 menit" },
+                { value: "10", label: "10 menit" },
+                { value: "15", label: "15 menit" },
+                { value: "30", label: "30 menit" },
+              ]}
+            />
+          )}
+        </div>
+      </div>
 
       {/* ── Form panel ── */}
       <Collapsible
-  title="Tambah Invoice Receipt Baru"
-  subtitle="Isi data invoice receipt dengan lengkap"
-  defaultOpen={true}
->
-  <ReceiptFormModal
-    receipt={null}
-    onCancel={() => {}}
-    onSaved={() => {
-      handleSaved();
-    }}
-    onSavedAndNew={handleSavedAndNew}
-    onPoAlreadyExists={handlePoAlreadyExists}
-  />
-</Collapsible>
+        title="Tambah Invoice Receipt Baru"
+        subtitle="Isi data invoice receipt dengan lengkap"
+        defaultOpen={true}
+      >
+        <ReceiptFormModal
+          receipt={null}
+          onCancel={() => {}}
+          onSaved={() => {
+            handleSaved();
+          }}
+          onSavedAndNew={handleSavedAndNew}
+          onPoAlreadyExists={handlePoAlreadyExists}
+        />
+      </Collapsible>
 
-<Drawer
-  isOpen={drawerOpen}
-  onClose={() => {
-    setDrawerOpen(false);
-    setFormTarget({});
-  }}
-  size="lg"
->
-  <Drawer.Header
-    title="Edit Invoice Receipt"
-    subtitle={`Invoice #${formTarget?.invoice_number ?? "—"}`}
-    onClose={() => {
-      setDrawerOpen(false);
-      setFormTarget({});
-    }}
-  />
-  <Drawer.Body>
-    <ReceiptFormModal
-      receipt={formTarget?.id ? formTarget : null}
-      onCancel={() => {
-        setDrawerOpen(false);
-        setFormTarget({});
-      }}
-      onSaved={() => {
-        handleSaved();
-        setDrawerOpen(false);
-        setFormTarget({});
-      }}
-      onSavedAndNew={handleSavedAndNew}
-      onPoAlreadyExists={handlePoAlreadyExists}
-    />
-  </Drawer.Body>
-</Drawer>
+      <Drawer
+        isOpen={drawerOpen}
+        onClose={() => {
+          setDrawerOpen(false);
+          setFormTarget({});
+        }}
+        size="lg"
+      >
+        <Drawer.Header
+          title="Edit Invoice Receipt"
+          subtitle={`Invoice #${formTarget?.invoice_number ?? "—"}`}
+          onClose={() => {
+            setDrawerOpen(false);
+            setFormTarget({});
+          }}
+        />
+        <Drawer.Body>
+          <ReceiptFormModal
+            receipt={formTarget?.id ? formTarget : null}
+            onCancel={() => {
+              setDrawerOpen(false);
+              setFormTarget({});
+            }}
+            onSaved={() => {
+              handleSaved();
+              setDrawerOpen(false);
+              setFormTarget({});
+            }}
+            onSavedAndNew={handleSavedAndNew}
+            onPoAlreadyExists={handlePoAlreadyExists}
+          />
+        </Drawer.Body>
+      </Drawer>
+
+      <Drawer
+        isOpen={importDrawerOpen}
+        onClose={() => setImportDrawerOpen(false)}
+        size="md"
+      >
+        <Drawer.Header
+          title="Import Data SAP PO"
+          subtitle="Upload file Excel hasil ekspor SAP"
+          onClose={() => setImportDrawerOpen(false)}
+        />
+        <Drawer.Body>
+          <SapPoImportForm onSuccess={() => tableRef.current?.refetch()} />
+        </Drawer.Body>
+      </Drawer>
 
       {/* ── Filter + Tabel ── */}
       <Collapsible

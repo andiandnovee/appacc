@@ -14,13 +14,13 @@ import Users from "./pages/general/Users";
 import Settings from "./pages/general/Settings";
 import UserManagement from "./pages/admin/UserManagement";
 import VendorManagement from "./pages/invoice/VendorManagement";
-import SapPoImportPage from "./pages/sap/SapPoImportPage";
+//import SapPoImportPage from "./pages/sap/SapPoImportPage";
 import Stages from "./pages/invoice/Stage";
 import Receipt from "./pages/invoice/Receipt";
 import BusinessArea from "./pages/invoice/BusArea";
-import PphImportPage from "./pages/sap/PphImportPage";
+//import PphImportPage from "./pages/sap/PphImportPage";
 import PphReportPage from "./pages/invoice/PphReportPage";
-import F53ImportPage from "./pages/sap/F53ImportPage";
+//import F53ImportPage from "./pages/sap/F53ImportPage";
 import F53HelperPage from "./pages/invoice/F53HelperPage";
 import VehicleLogbookPage from "./pages/invoice/VehicleLogBook";
 import VehicleManagement from "./pages/invoice/VehicleManagementPage";
@@ -47,16 +47,19 @@ const App: FC = (): ReactElement => {
                 <Route path="/admin/users" element={<UserManagement />} />
                 <Route path="/ref/vendors" element={<VendorManagement />} />
                 <Route path="/ref/busa" element={<BusinessArea />} />
-                <Route
+                {/* <Route
                   path="/utility/import-po"
                   element={<SapPoImportPage />}
-                />
-                <Route path="/utility/import-pph" element={<PphImportPage />} />
+                /> */}
+                {/* <Route path="/utility/import-pph" element={<PphImportPage />} /> */}
                 <Route path="/invoice/pph" element={<PphReportPage />} />
-                <Route path="/utility/import-f53" element={<F53ImportPage />} />
+                {/* <Route path="/utility/import-f53" element={<F53ImportPage />} /> */}
                 <Route path="/invoice/receipts" element={<Receipt />} />
                 <Route path="/ref/stages" element={<Stages />} />
-                <Route path="/ref/cost-centers" element={<CostCenterManagement />} />
+                <Route
+                  path="/ref/cost-centers"
+                  element={<CostCenterManagement />}
+                />
 
                 {/* ── Kendaraan ── */}
                 <Route
