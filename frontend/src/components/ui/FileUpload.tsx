@@ -20,8 +20,6 @@ const formatSize = (bytes) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-
-
 const getExt = (name) => name.split(".").pop()?.slice(0, 4) ?? "file";
 
 /**

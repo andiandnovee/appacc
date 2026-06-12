@@ -127,6 +127,9 @@ Route::middleware('auth:api')->group(function () {
         Route::get('invoice-receipts/{invoiceReceipt}/statuses', [InvoiceReceiptController::class, 'statuses']);
         Route::post('invoice-receipts/{invoiceReceipt}/statuses', [InvoiceReceiptController::class, 'addStatus']);
 
+        // routes/api.php
+        Route::post('/receipts/import-icat-chunk', [InvoiceReceiptController::class, 'importIcatChunk']);
+
         Route::apiResource('cost-centers', CostCenterController::class);
 
         // SAP PO Import

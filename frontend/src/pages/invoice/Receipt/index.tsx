@@ -16,7 +16,8 @@ import { getToken } from "../../../api/axios";
 import { downloadME2N, downloadMIR7 } from "../../../utils/sapShortcuts";
 import { useAuth } from "../../../hooks/useAuth";
 import Drawer from "../../../components/ui/Drawer";
-import SapPoImportForm from "./SapPoImportForm";
+import ImportDispatcher from "./ImportDispatcher";
+
 
 
 const IS_PROD = import.meta.env.PROD;
@@ -507,7 +508,7 @@ export default function InvoiceReceiptManagement() {
           onClose={() => setImportDrawerOpen(false)}
         />
         <Drawer.Body>
-          <SapPoImportForm onSuccess={() => tableRef.current?.refetch()} />
+           <ImportDispatcher onSuccess={() => tableRef.current?.refetch()} />
         </Drawer.Body>
       </Drawer>
 

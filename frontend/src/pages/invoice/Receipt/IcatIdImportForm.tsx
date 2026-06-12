@@ -1,9 +1,10 @@
 /**
- * SapPoImportForm.tsx
- * Path: frontend/src/pages/invoice/ReceiptManagement/SapPoImportForm.tsx
+ * IcatIdImportForm.tsx
+ * Path: frontend/src/pages/invoice/ReceiptManagement/IcatIdImportForm.tsx
  *
- * Dipakai di dalam ImportDispatcher — FileUpload & parsing dipindah ke parent.
- * Extracted dari SapPoImportPage.tsx, mengikuti pattern F53ImportForm.
+ * Update kolom icat_id pada invoice_receipts berdasarkan PO_Number,
+ * dengan Total sebagai disambiguator untuk PO yang punya >1 invoice receipt.
+ * Mengikuti pattern SapPoImportForm.
  */
 
 import { useState, useRef } from "react";
@@ -25,7 +26,7 @@ interface Props {
   onReset: () => void;
 }
 
-export default function SapPoImportForm({ rows, fileName, onSuccess, onReset }: Props) {
+export default function IcatIdImportForm({ rows, fileName, onSuccess, onReset }: Props) {
   const [importing, setImporting] = useState(false);
   const [progress, setProgress]   = useState({ current: 0, total: 0 });
   const [result, setResult]       = useState<any>(null);
@@ -43,8 +44,6 @@ export default function SapPoImportForm({ rows, fileName, onSuccess, onReset }: 
     abortRef.current = false;
 
     try {
-      const batchId = new Date().toISOString().slice(0, 7); // YYYY-MM
-
       const chunks: any[][] = [];
       for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
         chunks.push(rows.slice(i, i + CHUNK_SIZE));
@@ -52,38 +51,29 @@ export default function SapPoImportForm({ rows, fileName, onSuccess, onReset }: 
 
       setProgress({ current: 0, total: chunks.length });
 
-      let totalImported   = 0;
-      let totalDuplicates = 0;
-      let totalVendors    = 0;
-      let totalGroups     = 0;
-      const allErrors: any[] = [];
+      let totalImported = 0;
+      const allNotFound: any[] = [];
+      const allAmbiguous: any[] = [];
 
       for (let i = 0; i < chunks.length; i++) {
         if (abortRef.current) break;
 
-        const { data } = await api.post("/sap/import-po-chunk", {
+        const { data } = await api.post("/receipts/import-icat-chunk", {
           rows: chunks[i],
-          batch_id: batchId,
         });
 
-        totalImported   += data.imported ?? 0;
-        totalDuplicates += data.duplicates ?? 0;
-        totalVendors    += data.vendors_synced ?? 0;
-        totalGroups     += data.groups_synced ?? 0;
-        if (Array.isArray(data.errors)) allErrors.push(...data.errors);
+        totalImported += data.imported ?? 0;
+        if (Array.isArray(data.not_found)) allNotFound.push(...data.not_found);
+        if (Array.isArray(data.ambiguous)) allAmbiguous.push(...data.ambiguous);
         setProgress({ current: i + 1, total: chunks.length });
       }
 
       setResult({
-        success:        !abortRef.current,
-        aborted:        abortRef.current,
-        batch_id:       batchId,
-        total_rows:     rows.length,
-        imported:       totalImported,
-        duplicates:     totalDuplicates,
-        vendors_synced: totalVendors,
-        groups_synced:  totalGroups,
-        errors:         allErrors,
+        aborted:    abortRef.current,
+        total_rows: rows.length,
+        imported:   totalImported,
+        not_found:  allNotFound,
+        ambiguous:  allAmbiguous,
       });
 
       if (!abortRef.current) {
@@ -114,7 +104,7 @@ export default function SapPoImportForm({ rows, fileName, onSuccess, onReset }: 
         <span>
           File: <strong>{fileName}</strong> · {rows.length.toLocaleString("id-ID")} baris
         </span>
-        <Badge variant="default">SAP PO Export</Badge>
+        <Badge variant="default">ICAT ID Export</Badge>
         {!importing && !result && (
           <button className={styles.changeFileBtn} onClick={onReset}>
             Ganti file
@@ -158,7 +148,7 @@ export default function SapPoImportForm({ rows, fileName, onSuccess, onReset }: 
         >
           {importing
             ? `Mengimport chunk ${progress.current}/${progress.total}...`
-            : "Import Data PO"}
+            : "Update ICAT ID"}
         </Button>
       )}
 
@@ -166,31 +156,48 @@ export default function SapPoImportForm({ rows, fileName, onSuccess, onReset }: 
       {result && (
         <div className={styles.result}>
           <div className={styles.resultHeader}>
-            <span className={styles.resultTitle}>Hasil Import — Batch {result.batch_id}</span>
+            <span className={styles.resultTitle}>Hasil Update ICAT ID</span>
             <Badge variant={result.aborted ? "warning" : "success"} icon={<CheckCircle size={12} />}>
               {result.aborted ? "Dibatalkan" : "Selesai"}
             </Badge>
           </div>
 
           <div className={styles.statGrid}>
-            <StatItem label="Total Baris"       value={result.total_rows}     />
-            <StatItem label="Berhasil"          value={result.imported}       variant="success" />
-            <StatItem label="Duplikat Dilewati" value={result.duplicates}     variant="warning" />
-            <StatItem label="Vendor Baru"       value={result.vendors_synced} variant="default" />
-            <StatItem label="Purc. Group Baru"  value={result.groups_synced}  variant="default" />
-            <StatItem label="Error"             value={result.errors.length}  variant={result.errors.length > 0 ? "danger" : "default"} />
+            <StatItem label="Total Baris"     value={result.total_rows} />
+            <StatItem label="Berhasil"        value={result.imported}   variant="success" />
+            <StatItem label="Tidak Ditemukan" value={result.not_found.length} variant={result.not_found.length > 0 ? "warning" : "default"} />
+            <StatItem label="Ambigu"          value={result.ambiguous.length}  variant={result.ambiguous.length > 0 ? "danger" : "default"} />
           </div>
 
-          {result.errors.length > 0 && (
+          {result.not_found.length > 0 && (
             <div className={styles.errorList}>
-              {result.errors.slice(0, 50).map((err: any, i: number) => (
+              <p className={styles.guideLabel}>PO tidak ditemukan di Invoice Receipt:</p>
+              {result.not_found.slice(0, 50).map((item: any, i: number) => (
                 <div key={i} className={styles.errorItem}>
                   <AlertTriangle size={13} />
-                  <span><strong>Baris {err.row}:</strong> {err.error}</span>
+                  <span>PO <strong>{item.po_number}</strong> (ICAT ID: {item.icat_id})</span>
                 </div>
               ))}
-              {result.errors.length > 50 && (
-                <p className={styles.errorMore}>...dan {result.errors.length - 50} error lainnya</p>
+              {result.not_found.length > 50 && (
+                <p className={styles.errorMore}>...dan {result.not_found.length - 50} lainnya</p>
+              )}
+            </div>
+          )}
+
+          {result.ambiguous.length > 0 && (
+            <div className={styles.errorList}>
+              <p className={styles.guideLabel}>PO ambigu (multi-invoice, total tidak cocok persis):</p>
+              {result.ambiguous.slice(0, 50).map((item: any, i: number) => (
+                <div key={i} className={styles.errorItem}>
+                  <AlertTriangle size={13} />
+                  <span>
+                    PO <strong>{item.po_number}</strong> — {item.candidates} kandidat,
+                    {" "}{item.amount_match} cocok dgn Total {Number(item.total).toLocaleString("id-ID")}
+                  </span>
+                </div>
+              ))}
+              {result.ambiguous.length > 50 && (
+                <p className={styles.errorMore}>...dan {result.ambiguous.length - 50} lainnya</p>
               )}
             </div>
           )}
@@ -204,30 +211,24 @@ export default function SapPoImportForm({ rows, fileName, onSuccess, onReset }: 
       {/* ── Panduan (collapsible) ────────────── */}
       <div className={styles.guide}>
         <button className={styles.guideToggle} onClick={() => setShowGuide((v) => !v)}>
-          <span>Panduan & Kolom Wajib</span>
+          <span>Panduan</span>
           {showGuide ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
         </button>
 
         {showGuide && (
           <div className={styles.guideBody}>
-            <p className={styles.guideLabel}>Kolom wajib:</p>
+            <p className={styles.guideLabel}>Kolom yang dibaca:</p>
             <ul className={styles.guideList}>
-              <li><strong>PO No</strong> — Nomor PO</li>
-              <li><strong>Item No</strong> — Line item PO</li>
-              <li><strong>PO UoM</strong> — Satuan</li>
-              <li><strong>PO Qty</strong> — Jumlah</li>
-              <li><strong>Net Value</strong> — Nilai PO (angka)</li>
-              <li><strong>Plant</strong> — Kode Business Area</li>
-              <li><strong>Vendor</strong> — Kode vendor SAP</li>
-              <li><strong>Vendor Name</strong> — Nama vendor</li>
-              <li><strong>Purc. Grp</strong> — Purchasing Group</li>
-              <li><strong>Buyer Name</strong> — Nama buyer</li>
+              <li><strong>ID</strong> — ICAT ID, akan diisi ke kolom <code>icat_id</code></li>
+              <li><strong>PO_Number</strong> — dicocokkan ke <code>po_number</code></li>
+              <li><strong>Total</strong> — dicocokkan ke <code>amount</code> jika 1 PO punya lebih dari 1 invoice receipt</li>
             </ul>
             <p className={styles.guideLabel} style={{ marginTop: "var(--space-3)" }}>Catatan:</p>
             <ul className={styles.guideList}>
-              <li>Duplikat <strong>PO No + Item No</strong> akan dilewati otomatis</li>
-              <li>Vendor baru otomatis disync ke master vendor</li>
-              <li>File besar diproses per 500 baris (chunked)</li>
+              <li>Receipt yang sudah punya <code>icat_id</code> tidak akan ditimpa (aman untuk re-import)</li>
+              <li>Jika 1 PO = 1 invoice receipt, ICAT ID langsung diisi tanpa cek Total</li>
+              <li>Jika 1 PO &gt; 1 invoice receipt, dicari yang nilai <code>amount</code>-nya cocok persis dengan <code>Total</code></li>
+              <li>Jika tidak ketemu kecocokan persis → masuk daftar "Ambigu", perlu dicek manual</li>
             </ul>
           </div>
         )}

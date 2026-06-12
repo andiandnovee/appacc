@@ -31,6 +31,7 @@ class InvoiceReceiptRequest extends FormRequest
         'attachment1'        => ['nullable', 'string', 'max:255'],
         'attachment2'        => ['nullable', 'string', 'max:255'],
         'attachment3'        => ['nullable', 'string', 'max:255'],
+        'icat_id'           => ['nullable', 'string', 'max:100'], // ← tambahan
         // payment_location → hapus
     ];
 }

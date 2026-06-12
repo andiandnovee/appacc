@@ -30,6 +30,7 @@ class InvoiceReceipt extends Model
         'attachment1',
         'attachment2',
         'attachment3',
+        'icat_id'
     ];
 
     protected $casts = [
