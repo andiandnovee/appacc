@@ -97,6 +97,12 @@ const LogbookDetailForm = forwardRef<LogbookDetailFormRef, Props>(
       };
     }, [detail, lastKm]);
 
+    // Helper — taruh di atas komponen
+function parseKm(val: string): number {
+  // Hapus pemisah ribuan (titik atau koma), lalu parse
+  return parseInt(val.replace(/[.,]/g, ""), 10);
+}
+
     useEffect(() => {
       setForm(makeInitial());
       setError(null);
@@ -123,8 +129,8 @@ const LogbookDetailForm = forwardRef<LogbookDetailFormRef, Props>(
 
     // ── Derived ──────────────────────────────────
     const kmDiff = useMemo(() => {
-      const s = Number(form.start_km);
-      const e = Number(form.end_km);
+      const s = parseKm(form.start_km);
+const e = parseKm(form.end_km);
       if (!isNaN(s) && !isNaN(e) && e > s) return e - s;
       return null;
     }, [form.start_km, form.end_km]);
@@ -132,8 +138,8 @@ const LogbookDetailForm = forwardRef<LogbookDetailFormRef, Props>(
     // ── Validate ─────────────────────────────────
     const validate = (): boolean => {
       const errs: FormErrors = {};
-      const s = Number(form.start_km);
-      const e = Number(form.end_km);
+      const s = parseKm(form.start_km);
+const e = parseKm(form.end_km);
 
       if (!form.start_km) errs.start_km = "KM awal wajib diisi.";
       if (!form.end_km) errs.end_km = "KM akhir wajib diisi.";
@@ -157,8 +163,8 @@ const LogbookDetailForm = forwardRef<LogbookDetailFormRef, Props>(
       try {
         const payload = {
           vehicle_cost_header_id: headerId,
-          start_km: parseInt(form.start_km),
-          end_km: parseInt(form.end_km),
+          start_km: parseKm(form.start_km),
+end_km:   parseKm(form.end_km),
           description: form.description.trim().toUpperCase(),
           cost_center: beban?.type === "cost_center" ? beban.sap_id : null,
           customer_code: beban?.type === "customer" ? beban.sap_id : null,
