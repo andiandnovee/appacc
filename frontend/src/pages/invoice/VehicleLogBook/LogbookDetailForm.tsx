@@ -123,8 +123,8 @@ const LogbookDetailForm = forwardRef<LogbookDetailFormRef, Props>(
 
     // ── Derived ──────────────────────────────────
     const kmDiff = useMemo(() => {
-      const s = parseInt(form.start_km);
-      const e = parseInt(form.end_km);
+      const s = Number(form.start_km);
+      const e = Number(form.end_km);
       if (!isNaN(s) && !isNaN(e) && e > s) return e - s;
       return null;
     }, [form.start_km, form.end_km]);
@@ -132,8 +132,8 @@ const LogbookDetailForm = forwardRef<LogbookDetailFormRef, Props>(
     // ── Validate ─────────────────────────────────
     const validate = (): boolean => {
       const errs: FormErrors = {};
-      const s = parseInt(form.start_km);
-      const e = parseInt(form.end_km);
+      const s = Number(form.start_km);
+      const e = Number(form.end_km);
 
       if (!form.start_km) errs.start_km = "KM awal wajib diisi.";
       if (!form.end_km) errs.end_km = "KM akhir wajib diisi.";
