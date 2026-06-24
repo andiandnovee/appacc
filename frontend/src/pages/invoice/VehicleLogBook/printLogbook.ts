@@ -133,8 +133,8 @@ function buildVehiclePage(payload: PrintPayload, no: number): string {
   let rows = "";
   details.forEach((d, i) => {
     const beban = d.cost_center
-      ? d.cost_center_name ?? d.cost_center
-      : d.customer_name ?? d.customer_code ?? "";
+      ? (d.cost_center_name ?? d.cost_center)
+      : (d.customer_name ?? d.customer_code ?? "");
     const ccCust = d.cost_center ?? d.customer_code ?? "";
 
     rows += `
@@ -251,9 +251,7 @@ export function openPrintSingle(payload: PrintPayload): void {
 export function openPrintAll(payloads: PrintPayload[]): void {
   if (payloads.length === 0) return;
 
-  const pages = payloads
-    .map((p, i) => buildVehiclePage(p, i + 1))
-    .join("\n");
+  const pages = payloads.map((p, i) => buildVehiclePage(p, i + 1)).join("\n");
 
   const html = `<!DOCTYPE html>
 <html lang="id">
@@ -272,7 +270,6 @@ export function openPrintAll(payloads: PrintPayload[]): void {
   win?.document.write(html);
   win?.document.close();
 }
-
 
 // ─────────────────────────────────────────────
 // REKAP KENDARAAN — satu tabel ringkasan semua kendaraan
@@ -308,24 +305,37 @@ export function buildRekapFromPayloads(
   year: number,
 ): RekapPayload {
   const MONTHS_ID = [
-    "", "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-    "Juli", "Agustus", "September", "Oktober", "November", "Desember",
+    "",
+    "Januari",
+    "Februari",
+    "Maret",
+    "April",
+    "Mei",
+    "Juni",
+    "Juli",
+    "Agustus",
+    "September",
+    "Oktober",
+    "November",
+    "Desember",
   ];
 
-  const rows: RekapRow[] = payloads.map((p) => {
-    const totalKm = p.details.reduce((s, d) => s + d.km, 0);
-    const rate = totalKm > 0 ? Math.round(p.header.total_cost / totalKm) : 0;
-    return {
-      cost_center: p.vehicle.cost_center,
-      plate_number: p.vehicle.plate_number,
-      start_km: p.header.start_km,
-      end_km: p.header.end_km,
-      total_km: totalKm,
-      total_cost: p.header.total_cost,
-      rate,
-      description: p.vehicle.description,
-    };
-  });
+  const rows: RekapRow[] = payloads
+    .map((p) => {
+      const totalKm = p.details.reduce((s, d) => s + d.km, 0);
+      const rate = totalKm > 0 ? Math.round(p.header.total_cost / totalKm) : 0;
+      return {
+        cost_center: p.vehicle.cost_center,
+        plate_number: p.vehicle.plate_number,
+        start_km: p.header.start_km,
+        end_km: p.header.end_km,
+        total_km: totalKm,
+        total_cost: p.header.total_cost,
+        rate,
+        description: p.vehicle.description,
+      };
+    })
+    .sort((a, b) => a.cost_center.localeCompare(b.cost_center)); // ← tambah ini
 
   const grandTotalKm = rows.reduce((s, r) => s + r.total_km, 0);
   const grandTotalCost = rows.reduce((s, r) => s + r.total_cost, 0);
