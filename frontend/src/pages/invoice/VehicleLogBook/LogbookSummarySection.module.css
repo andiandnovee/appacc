@@ -262,8 +262,7 @@
   margin-top: 2px;
 }
 
-/* ── Delete Zone ── */
-/* ── Confirm Delete Banner (standalone, di luar collapsible) ── */
+/* ── Confirm Delete Banner ── */
 .confirmBox {
   margin: 0 var(--space-3) var(--space-2);
   padding: var(--space-3) var(--space-4);
@@ -287,83 +286,38 @@
   justify-content: flex-end;
 }
 
-dditions · CSS
-/* ─────────────────────────────────────────────────────────────
-   TAMBAHKAN ke LogbookSummarySection.module.css
-   ───────────────────────────────────────────────────────────── */
- 
-/* Kolom Last KM di tabel with_cost */
-.lastKmCell {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-}
- 
-.lastKmValue {
-  font-variant-numeric: tabular-nums;
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--color-text-primary);
-}
- 
-/* Label "Last KM" di no-cost card */
-.noCostLastKm {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.72rem;
-  color: var(--color-text-muted);
-  margin-top: 2px;
-}
- 
-/* Teks muted untuk nilai kosong */
-.muted {
-  color: var(--color-text-muted);
-  font-size: 0.8rem;
-}
- 
-
-* ─────────────────────────────────────────────────────────────
-   TAMBAHKAN ke LogbookSummarySection.module.css
-   ───────────────────────────────────────────────────────────── */
- 
-/* KM Akhir Periode — nilai tunggal, sedikit bold */
+/* ── Last KM columns ── */
 .currentEndKm {
   font-variant-numeric: tabular-nums;
   font-size: 0.85rem;
   font-weight: 500;
-  color: var(--color-text-primary);
+  color: var(--text-primary);
 }
- 
-/* Kolom Last KM All Time di tabel with_cost */
+
 .lastKmCell {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 2px;
 }
- 
+
 .lastKmValue {
   font-variant-numeric: tabular-nums;
   font-size: 0.85rem;
   font-weight: 500;
-  color: var(--color-text-primary);
+  color: var(--text-primary);
 }
- 
-/* Label "Last KM" di no-cost card */
+
 .noCostLastKm {
   display: flex;
   align-items: center;
   gap: 4px;
   font-size: 0.72rem;
-  color: var(--color-text-muted);
+  color: var(--text-secondary);
   margin-top: 2px;
 }
- 
-/* Teks muted untuk nilai kosong */
+
 .muted {
-  color: var(--color-text-muted);
+  color: var(--text-tertiary);
   font-size: 0.8rem;
 }
- 

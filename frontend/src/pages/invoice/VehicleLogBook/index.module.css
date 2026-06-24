@@ -196,6 +196,27 @@
   flex-shrink: 0;
 }
 
+/* ── Last KM hint di bawah KM Odometer ── */
+.lastKmHint {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+
+.lastKmHintLabel {
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.lastKmHint strong {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ── Action Bar ── */
 .actionBar {
   display: flex;
@@ -401,54 +422,34 @@
   color: var(--color-warning, #d97706);
 }
 
+/* ── Inline Form Card ── */
+.inlineFormCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
 
-
-/* ─────────────────────────────────────────────────────────────
-   TAMBAHKAN ke index.module.css (VehicleLogbookPage)
-   ───────────────────────────────────────────────────────────── */
- 
-/* Hint "Last KM (CC)" di bawah nilai KM Odometer */
-.lastKmHint {
+.inlineFormHeader {
   display: flex;
   align-items: center;
-  gap: 5px;
-  margin-top: 4px;
-  font-size: 0.72rem;
-  color: var(--color-text-muted);
-  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-secondary, var(--surface));
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
 }
- 
-.lastKmHintLabel {
-  color: var(--color-text-muted);
-  white-space: nowrap;
+
+.inlineFormKmHint {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  margin-left: auto;
 }
- 
-.lastKmHint strong {
-  color: var(--color-text-secondary);
-  font-variant-numeric: tabular-nums;
-}
- 
-/* ─────────────────────────────────────────────────────────────
-   TAMBAHKAN ke index.module.css (VehicleLogbookPage)
-   ───────────────────────────────────────────────────────────── */
- 
-/* Hint "Last KM (CC)" di bawah nilai KM Odometer */
-.lastKmHint {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-top: 4px;
-  font-size: 0.72rem;
-  color: var(--color-text-muted);
-  flex-wrap: wrap;
-}
- 
-.lastKmHintLabel {
-  color: var(--color-text-muted);
-  white-space: nowrap;
-}
- 
-.lastKmHint strong {
-  color: var(--color-text-secondary);
-  font-variant-numeric: tabular-nums;
+
+.inlineFormShortcut {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  font-weight: var(--font-normal);
 }
