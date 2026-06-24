@@ -272,3 +272,137 @@ export function openPrintAll(payloads: PrintPayload[]): void {
   win?.document.write(html);
   win?.document.close();
 }
+
+
+// ─────────────────────────────────────────────
+// REKAP KENDARAAN — satu tabel ringkasan semua kendaraan
+// ─────────────────────────────────────────────
+
+export interface RekapRow {
+  cost_center: string;
+  plate_number: string;
+  start_km: number | null;
+  end_km: number | null;
+  total_km: number;
+  total_cost: number;
+  rate: number;
+  description: string; // keterangan / nama kendaraan
+}
+
+export interface RekapPayload {
+  period_label: string; // "Mei 2026"
+  bus_area_label: string;
+  rows: RekapRow[];
+  grand_total_km: number;
+  grand_total_cost: number;
+}
+
+/**
+ * Build RekapPayload dari array PrintPayload (data yg sudah ada di summary).
+ * Dipanggil di frontend setelah fetch /print-all, jadi tidak butuh endpoint baru.
+ */
+export function buildRekapFromPayloads(
+  payloads: PrintPayload[],
+  busAreaLabel: string,
+  month: number,
+  year: number,
+): RekapPayload {
+  const MONTHS_ID = [
+    "", "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember",
+  ];
+
+  const rows: RekapRow[] = payloads.map((p) => {
+    const totalKm = p.details.reduce((s, d) => s + d.km, 0);
+    const rate = totalKm > 0 ? Math.round(p.header.total_cost / totalKm) : 0;
+    return {
+      cost_center: p.vehicle.cost_center,
+      plate_number: p.vehicle.plate_number,
+      start_km: p.header.start_km,
+      end_km: p.header.end_km,
+      total_km: totalKm,
+      total_cost: p.header.total_cost,
+      rate,
+      description: p.vehicle.description,
+    };
+  });
+
+  const grandTotalKm = rows.reduce((s, r) => s + r.total_km, 0);
+  const grandTotalCost = rows.reduce((s, r) => s + r.total_cost, 0);
+
+  return {
+    period_label: `${MONTHS_ID[month]} ${year}`,
+    bus_area_label: busAreaLabel,
+    rows,
+    grand_total_km: grandTotalKm,
+    grand_total_cost: grandTotalCost,
+  };
+}
+
+export function openPrintRekap(rekap: RekapPayload): void {
+  let tableRows = "";
+  rekap.rows.forEach((r, i) => {
+    tableRows += `
+    <tr>
+      <td class="center">${i + 1}</td>
+      <td>${r.cost_center}</td>
+      <td>${r.plate_number}</td>
+      <td class="num">${formatNumber(r.start_km ?? 0)}</td>
+      <td class="num">${formatNumber(r.end_km ?? 0)}</td>
+      <td class="num">${formatNumber(r.total_km)}</td>
+      <td class="num">${formatNumber(r.total_cost)}</td>
+      <td class="num">${formatNumber(r.rate)}</td>
+      <td>${r.description}</td>
+    </tr>`;
+  });
+
+  const html = `<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Rekap Kendaraan - ${rekap.period_label}</title>
+<style>
+  ${PRINT_CSS}
+  .rekap-title { font-weight: bold; font-size: 12pt; margin-bottom: 4px; }
+  .rekap-sub   { font-size: 9pt; margin-bottom: 12px; color: #333; }
+</style>
+</head>
+<body>
+  <div class="print-btn">
+    <button onclick="window.print()">🖨️ Print / Save PDF</button>
+  </div>
+  <div class="page">
+    <div class="rekap-title">PEMAKAIAN KENDARAAN BULAN ${rekap.period_label}</div>
+    <div class="rekap-sub">Business Area: ${rekap.bus_area_label}</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:32px">NO</th>
+          <th style="width:90px">Cost Center</th>
+          <th style="width:100px">TNKB</th>
+          <th style="width:70px">KM Awal</th>
+          <th style="width:70px">KM Akhir</th>
+          <th style="width:65px">Total KM</th>
+          <th style="width:100px">Rupiah SAP</th>
+          <th style="width:65px">Rp/KM</th>
+          <th>Keterangan</th>
+        </tr>
+      </thead>
+      <tbody>${tableRows}</tbody>
+      <tfoot>
+        <tr>
+          <td colspan="5" class="center">TOTAL (${rekap.rows.length} kendaraan)</td>
+          <td class="num">${formatNumber(rekap.grand_total_km)}</td>
+          <td class="num">${formatNumber(rekap.grand_total_cost)}</td>
+          <td colspan="2"></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</body>
+</html>`;
+
+  const win = window.open("", "_blank");
+  win?.document.write(html);
+  win?.document.close();
+}

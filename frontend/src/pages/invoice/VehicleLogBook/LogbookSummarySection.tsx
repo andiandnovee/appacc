@@ -22,6 +22,8 @@ import { useToast } from "../../../components/ui/Toast";
 import {
   openPrintSingle,
   openPrintAll,
+  buildRekapFromPayloads,
+  openPrintRekap,
   type PrintPayload,
 } from "./printLogbook";
 import {
@@ -35,6 +37,9 @@ import {
   type SkfPayload,
 } from "./Exportskf";
 import styles from "./LogbookSummarySection.module.css";
+
+
+
 
 // ─────────────────────────────────────────────
 // TYPES
@@ -257,6 +262,48 @@ export default function LogbookSummarySection({
       setPrintingAll(false);
     }
   }, [busAreaSapId, companyCode, month, year, addToast]);
+
+// ── Print Rekap ───────────────────────────────
+const handlePrintRekap = useCallback(async () => {
+  setPrintingAll(true);
+  try {
+    const { data: res } = await api.get<{ vehicles: PrintPayload[] }>(
+      "/vehicles/logbook/print-all",
+      {
+        params: {
+          bus_area_sap_id: busAreaSapId,
+          company_code: companyCode,
+          month,
+          year,
+        },
+      },
+    );
+    if (res.vehicles.length === 0) {
+      addToast({
+        variant: "warning",
+        title: "Tidak ada kendaraan balance untuk dicetak.",
+      });
+      return;
+    }
+    const rekap = buildRekapFromPayloads(
+      res.vehicles,
+      busAreaLabel,
+      month,
+      year,
+    );
+    openPrintRekap(rekap);
+  } catch (e: any) {
+    addToast({
+      variant: "danger",
+      title:
+        "Gagal memuat data rekap: " +
+        (e?.response?.data?.message ?? "Unknown error"),
+    });
+  } finally {
+    setPrintingAll(false);
+  }
+}, [busAreaSapId, companyCode, month, year, busAreaLabel, addToast]);
+
 
   // ── Export ZF0002_AGRI (customer) ─────────────
   const handleExportZf0002 = useCallback(
@@ -517,22 +564,21 @@ export default function LogbookSummarySection({
             disabled={exportingSkf || !hasVehicles}
           />
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePrintAll}
-            loading={printingAll}
-            disabled={!allBalanced || printingAll || !hasVehicles}
-            title={
-              !hasVehicles
-                ? "Belum ada data biaya periode ini"
-                : !allBalanced
-                  ? "Semua kendaraan harus Balance untuk print semua"
-                  : "Print semua kendaraan (PDF)"
-            }
-          >
-            <Printer size={13} /> Print Semua
-          </Button>
+         <SplitButton
+  label="Print Semua"
+  variant="outline"
+  size="sm"
+  onClick={handlePrintAll}
+  options={[
+    {
+      label: "Print Rekap Kendaraan",
+      icon: <FileText size={13} />,
+      onClick: handlePrintRekap,
+    },
+  ]}
+  loading={printingAll}
+  disabled={!allBalanced || printingAll || !hasVehicles}
+/>
 
           {canDelete && (
             <Button

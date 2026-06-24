@@ -41,6 +41,7 @@ class InvoiceReceiptResource extends JsonResource
             'service_type' => $this->vendor->service_type,
             'pph_type'     => $this->vendor->pph_type,
             'pph_rate'     => $this->vendor->pph_rate,
+            'is_pkp'        => $this->vendor->is_pkp,
         ]),
 
         'company' => $this->whenLoaded('company', fn() => [
