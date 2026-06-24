@@ -169,7 +169,7 @@ end_km:   parseKm(form.end_km),
           cost_center: beban?.type === "cost_center" ? beban.sap_id : null,
           customer_code: beban?.type === "customer" ? beban.sap_id : null,
         };
-
+        console.log("payload:", payload)
         if (isEdit && detail?.id) {
           await api.put(`/vehicles/logbook/detail/${detail.id}`, payload);
         } else {
