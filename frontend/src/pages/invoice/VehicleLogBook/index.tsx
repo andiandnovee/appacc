@@ -31,7 +31,10 @@ import LogbookDetailForm, {
   type LogbookDetailFormRef,
 } from "./LogbookDetailForm";
 import CarryoverPicker from "./CarryoverPicker";
-import LogbookSummarySection from "./LogbookSummarySection";
+
+import LogbookSummarySection, {
+  type LogbookSummarySectionRef,
+} from "./LogbookSummarySection";
 
 import styles from "./index.module.css";
 
@@ -95,18 +98,18 @@ function formatKm(val: number | null): string {
 }
 
 const MONTHS = [
-  { value: "1",  label: "Januari"   },
-  { value: "2",  label: "Februari"  },
-  { value: "3",  label: "Maret"     },
-  { value: "4",  label: "April"     },
-  { value: "5",  label: "Mei"       },
-  { value: "6",  label: "Juni"      },
-  { value: "7",  label: "Juli"      },
-  { value: "8",  label: "Agustus"   },
-  { value: "9",  label: "September" },
-  { value: "10", label: "Oktober"   },
-  { value: "11", label: "November"  },
-  { value: "12", label: "Desember"  },
+  { value: "1", label: "Januari" },
+  { value: "2", label: "Februari" },
+  { value: "3", label: "Maret" },
+  { value: "4", label: "April" },
+  { value: "5", label: "Mei" },
+  { value: "6", label: "Juni" },
+  { value: "7", label: "Juli" },
+  { value: "8", label: "Agustus" },
+  { value: "9", label: "September" },
+  { value: "10", label: "Oktober" },
+  { value: "11", label: "November" },
+  { value: "12", label: "Desember" },
 ];
 
 // ─────────────────────────────────────────────
@@ -128,6 +131,7 @@ export default function VehicleLogbookPage() {
     setMonth,
     setYear,
   } = useFilterVehicleLogbook();
+  const summaryRef = useRef<LogbookSummarySectionRef>(null);
 
   // ── Auth — cek role accounting ───────────────
   // TODO: sesuaikan field roles/permissions setelah cek shape /auth/me
@@ -267,8 +271,12 @@ export default function VehicleLogbookPage() {
     setRecalculating(true);
     try {
       await api.post(`/vehicles/logbook/${header.id}/recalculate`);
-      addToast({ variant: "success", title: "Biaya berhasil dikalkulasi ulang." });
+      addToast({
+        variant: "success",
+        title: "Biaya berhasil dikalkulasi ulang.",
+      });
       fetchData();
+       summaryRef.current?.refresh();  // ← tambah ini
     } catch (e: any) {
       addToast({
         variant: "danger",
@@ -294,6 +302,7 @@ export default function VehicleLogbookPage() {
         await api.delete(`/vehicles/logbook/detail/${detail.id}`);
         addToast({ variant: "success", title: "Baris logbook dihapus." });
         fetchData();
+        summaryRef.current?.refresh(); // ← tambah ini
       } catch {
         addToast({ variant: "danger", title: "Gagal menghapus baris." });
       } finally {
@@ -359,7 +368,9 @@ export default function VehicleLogbookPage() {
 
           <Select
             label="Business Area"
-            placeholder={selectedCompany ? "Pilih area..." : "Pilih company dulu"}
+            placeholder={
+              selectedCompany ? "Pilih area..." : "Pilih company dulu"
+            }
             value={selectedBusArea}
             onChange={(e) => setSelectedBusArea(e.target.value)}
             disabled={!selectedCompany || busAreas.length === 0}
@@ -368,7 +379,9 @@ export default function VehicleLogbookPage() {
 
           <Select
             label="Kendaraan"
-            placeholder={selectedBusArea ? "Pilih kendaraan..." : "Pilih area dulu"}
+            placeholder={
+              selectedBusArea ? "Pilih kendaraan..." : "Pilih area dulu"
+            }
             value={selectedVehicleId}
             onChange={(e) => setSelectedVehicleId(e.target.value)}
             disabled={!selectedBusArea}
@@ -425,6 +438,7 @@ export default function VehicleLogbookPage() {
       {/* ── SUMMARY & EKSPOR SAP (panel kontrol utama) ── */}
       {selectedBusArea && month && year && activeBusArea && (
         <LogbookSummarySection
+          ref={summaryRef}
           busAreaSapId={activeBusArea.sap_id}
           busAreaLabel={`${activeBusArea.sap_id} — ${activeBusArea.name}`}
           companyCode={activeCompany?.id ?? ""}
@@ -517,7 +531,9 @@ export default function VehicleLogbookPage() {
             <div className={styles.actionBarLeft}>
               <Button variant="primary" size="sm" onClick={handleScrollToForm}>
                 <Plus size={14} /> Tambah Baris
-                <span style={{ opacity: 0.6, fontSize: "0.75em", marginLeft: 4 }}>
+                <span
+                  style={{ opacity: 0.6, fontSize: "0.75em", marginLeft: 4 }}
+                >
                   Ctrl+A
                 </span>
               </Button>
@@ -674,11 +690,12 @@ export default function VehicleLogbookPage() {
               inline
               onSuccess={async () => {
                 const data = await fetchData();
+                summaryRef.current?.refresh(); // ← tambah ini
                 const newDetails: CostDetail[] = data?.details ?? [];
                 const newLastKm =
                   newDetails.length > 0
                     ? newDetails[newDetails.length - 1].end_km
-                    : header?.start_km ?? null;
+                    : (header?.start_km ?? null);
                 inlineFormRef.current?.resetAndFocus(newLastKm);
               }}
               onCancel={() => {}}
@@ -688,7 +705,11 @@ export default function VehicleLogbookPage() {
       )}
 
       {/* ── DRAWER: Import ───────────────────── */}
-      <Drawer isOpen={importOpen} onClose={() => setImportOpen(false)} size="md">
+      <Drawer
+        isOpen={importOpen}
+        onClose={() => setImportOpen(false)}
+        size="md"
+      >
         <Drawer.Header
           title="Import Biaya Kendaraan"
           subtitle="Upload Excel SAP (cost center + nominal)"
