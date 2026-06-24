@@ -51,6 +51,12 @@ interface VehicleWithCost {
   total_km: number | null;
   detail_count: number;
   is_balanced: boolean;
+  // KM akhir header periode ini (dari vehicle_cost_headers.end_km)
+  current_end_km: number | null;
+  // Last KM tertinggi lintas waktu dari cost_center yang sama
+  last_km: number | null;
+  last_km_month: number | null;
+  last_km_year: number | null;
 }
 
 interface VehicleNoCost {
@@ -58,6 +64,10 @@ interface VehicleNoCost {
   plate_number: string;
   description: string;
   cost_center: string;
+  // ── NEW ──
+  last_km: number | null;
+  last_km_month: number | null;
+  last_km_year: number | null;
 }
 
 interface SummaryData {
@@ -98,6 +108,13 @@ function formatRupiah(val: number | null): string {
 function formatKm(val: number | null): string {
   if (val === null || val === undefined) return "—";
   return new Intl.NumberFormat("id-ID").format(val);
+}
+
+/** Format periode (month, year) → "Apr 2026" */
+function formatPeriode(month: number | null, year: number | null): string {
+  if (!month || !year) return "—";
+  const d = new Date(year, month - 1, 1);
+  return d.toLocaleDateString("id-ID", { month: "short", year: "numeric" });
 }
 
 function todayInputValue(): string {
@@ -686,6 +703,8 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
                             <th>Plat / Keterangan</th>
                             <th className={styles.thRight}>Total Biaya SAP</th>
                             <th className={styles.thRight}>Total KM</th>
+                            <th className={styles.thRight}>KM Akhir Periode</th>
+                            <th className={styles.thRight}>Last KM (All Time)</th>
                             <th className={styles.thRight}>Baris</th>
                             <th>Status</th>
                             <th className={styles.thRight}>Print</th>
@@ -710,6 +729,31 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
                                 {v.total_km
                                   ? `${formatKm(v.total_km)} km`
                                   : "—"}
+                              </td>
+                              {/* KM Akhir Periode — end_km header bulan ini */}
+                              <td className={styles.tdRight}>
+                                {v.current_end_km !== null ? (
+                                  <span className={styles.currentEndKm}>
+                                    {formatKm(v.current_end_km)}
+                                  </span>
+                                ) : (
+                                  <span className={styles.muted}>—</span>
+                                )}
+                              </td>
+                              {/* Last KM All Time — end_km tertinggi lintas waktu per CC */}
+                              <td className={styles.tdRight}>
+                                {v.last_km !== null ? (
+                                  <span className={styles.lastKmCell}>
+                                    <span className={styles.lastKmValue}>
+                                      {formatKm(v.last_km)}
+                                    </span>
+                                    <Badge variant="neutral" size="sm">
+                                      {formatPeriode(v.last_km_month, v.last_km_year)}
+                                    </Badge>
+                                  </span>
+                                ) : (
+                                  <span className={styles.muted}>—</span>
+                                )}
                               </td>
                               <td className={styles.tdRight}>
                                 {v.detail_count}
@@ -761,7 +805,8 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
                             >
                               {formatKm(data.total_km_all)} km
                             </td>
-                            <td colSpan={3} />
+                            {/* current_end_km + last_km + baris + status + print */}
+                            <td colSpan={5} />
                           </tr>
                         </tfoot>
                       </table>
@@ -799,6 +844,16 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
                             <span className={styles.vDesc}>
                               {v.description}
                             </span>
+                            {/* ── NEW: Last KM hint di card no-cost ── */}
+                            {v.last_km !== null && (
+                              <span className={styles.noCostLastKm}>
+                                Last KM:{" "}
+                                <strong>{formatKm(v.last_km)}</strong>{" "}
+                                <Badge variant="neutral" size="sm">
+                                  {formatPeriode(v.last_km_month, v.last_km_year)}
+                                </Badge>
+                              </span>
+                            )}
                           </div>
                         </div>
                       ))}

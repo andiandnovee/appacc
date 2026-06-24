@@ -80,6 +80,13 @@ export interface CostDetail {
   source_year?: number;
 }
 
+// ── NEW: tipe untuk last KM info ─────────────
+interface LastKmInfo {
+  last_km: number | null;
+  month: number | null;
+  year: number | null;
+}
+
 // ─────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────
@@ -95,6 +102,13 @@ function formatRupiah(val: number | null): string {
 function formatKm(val: number | null): string {
   if (val === null || val === undefined) return "—";
   return new Intl.NumberFormat("id-ID").format(val);
+}
+
+/** Format periode ke string pendek: "Apr 2026" */
+function formatPeriode(month: number | null, year: number | null): string {
+  if (!month || !year) return "";
+  const d = new Date(year, month - 1, 1);
+  return d.toLocaleDateString("id-ID", { month: "short", year: "numeric" });
 }
 
 const MONTHS = [
@@ -134,7 +148,6 @@ export default function VehicleLogbookPage() {
   const summaryRef = useRef<LogbookSummarySectionRef>(null);
 
   // ── Auth — cek role accounting ───────────────
-  // TODO: sesuaikan field roles/permissions setelah cek shape /auth/me
   const { user } = useAuth();
   const canDelete = useMemo(() => {
     if (!user) return false;
@@ -158,6 +171,13 @@ export default function VehicleLogbookPage() {
   const [details, setDetails] = useState<CostDetail[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // ── NEW: last KM state ───────────────────────
+  const [lastKmInfo, setLastKmInfo] = useState<LastKmInfo>({
+    last_km: null,
+    month: null,
+    year: null,
+  });
 
   // Drawers
   const [importOpen, setImportOpen] = useState(false);
@@ -208,6 +228,28 @@ export default function VehicleLogbookPage() {
       .then((r) => setBusAreas(r.data?.data ?? r.data ?? []));
   }, [selectedCompany, companies]);
 
+  // ── NEW: Fetch last KM saat vehicle berubah ──
+  const fetchLastKm = useCallback(async () => {
+    if (!selectedVehicleId) {
+      setLastKmInfo({ last_km: null, month: null, year: null });
+      return;
+    }
+    try {
+      const { data: res } = await api.get<LastKmInfo>(
+        "/vehicles/logbook/last-km",
+        { params: { vehicle_id: selectedVehicleId } },
+      );
+      setLastKmInfo(res);
+    } catch {
+      // silent — last KM non-critical
+      setLastKmInfo({ last_km: null, month: null, year: null });
+    }
+  }, [selectedVehicleId]);
+
+  useEffect(() => {
+    fetchLastKm();
+  }, [fetchLastKm]);
+
   // ── Fetch logbook data ───────────────────────
   const fetchData = useCallback(async () => {
     if (!selectedVehicleId || !month || !year) {
@@ -223,6 +265,8 @@ export default function VehicleLogbookPage() {
       });
       setHeader(data.header ?? null);
       setDetails(data.details ?? []);
+      // Refresh last KM setelah data logbook berubah
+      fetchLastKm();
       return data;
     } catch (e: any) {
       setError(e?.response?.data?.message ?? "Gagal memuat data logbook.");
@@ -232,7 +276,7 @@ export default function VehicleLogbookPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedVehicleId, month, year]);
+  }, [selectedVehicleId, month, year, fetchLastKm]);
 
   useEffect(() => {
     fetchData();
@@ -276,7 +320,7 @@ export default function VehicleLogbookPage() {
         title: "Biaya berhasil dikalkulasi ulang.",
       });
       fetchData();
-       summaryRef.current?.refresh();  // ← tambah ini
+      summaryRef.current?.refresh();
     } catch (e: any) {
       addToast({
         variant: "danger",
@@ -302,7 +346,7 @@ export default function VehicleLogbookPage() {
         await api.delete(`/vehicles/logbook/detail/${detail.id}`);
         addToast({ variant: "success", title: "Baris logbook dihapus." });
         fetchData();
-        summaryRef.current?.refresh(); // ← tambah ini
+        summaryRef.current?.refresh();
       } catch {
         addToast({ variant: "danger", title: "Gagal menghapus baris." });
       } finally {
@@ -508,11 +552,24 @@ export default function VehicleLogbookPage() {
                 </span>
               </div>
               <div className={styles.statDivider} />
+              {/* ── KM Odometer + Last KM hint ── */}
               <div className={styles.statItem}>
                 <span className={styles.statLabel}>KM Odometer</span>
                 <span className={styles.statValue}>
                   {formatKm(header.start_km)} → {formatKm(header.end_km)}
                 </span>
+                {/* NEW: last KM dari cost_center kendaraan ini, lintas waktu */}
+                {lastKmInfo.last_km !== null && (
+                  <span className={styles.lastKmHint}>
+                    <span className={styles.lastKmHintLabel}>Last KM (CC):</span>
+                    <strong>{formatKm(lastKmInfo.last_km)}</strong>
+                    {lastKmInfo.month && lastKmInfo.year && (
+                      <Badge variant="neutral" size="sm">
+                        {formatPeriode(lastKmInfo.month, lastKmInfo.year)}
+                      </Badge>
+                    )}
+                  </span>
+                )}
               </div>
             </div>
             <div className={styles.headerCardRight}>
@@ -690,7 +747,7 @@ export default function VehicleLogbookPage() {
               inline
               onSuccess={async () => {
                 const data = await fetchData();
-                summaryRef.current?.refresh(); // ← tambah ini
+                summaryRef.current?.refresh();
                 const newDetails: CostDetail[] = data?.details ?? [];
                 const newLastKm =
                   newDetails.length > 0

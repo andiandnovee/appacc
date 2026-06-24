@@ -400,3 +400,55 @@
 .tfootUnbalanced {
   color: var(--color-warning, #d97706);
 }
+
+
+
+/* ─────────────────────────────────────────────────────────────
+   TAMBAHKAN ke index.module.css (VehicleLogbookPage)
+   ───────────────────────────────────────────────────────────── */
+ 
+/* Hint "Last KM (CC)" di bawah nilai KM Odometer */
+.lastKmHint {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  flex-wrap: wrap;
+}
+ 
+.lastKmHintLabel {
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+ 
+.lastKmHint strong {
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+ 
+/* ─────────────────────────────────────────────────────────────
+   TAMBAHKAN ke index.module.css (VehicleLogbookPage)
+   ───────────────────────────────────────────────────────────── */
+ 
+/* Hint "Last KM (CC)" di bawah nilai KM Odometer */
+.lastKmHint {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  flex-wrap: wrap;
+}
+ 
+.lastKmHintLabel {
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+ 
+.lastKmHint strong {
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}

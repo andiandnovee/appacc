@@ -431,12 +431,13 @@ public function bebanSearch(Request $request)
         $vehicleIds = $vehicles->pluck('id');
 
         // Header yang ada untuk periode ini
+        // Ambil juga end_km untuk kolom "KM Akhir Periode"
         $headers = DB::table('vehicle_cost_headers')
             ->whereIn('vehicle_id', $vehicleIds)
             ->where('month', $month)
             ->where('year', $year)
             ->whereNull('deleted_at')
-            ->select('id', 'vehicle_id', 'total_cost')
+            ->select('id', 'vehicle_id', 'total_cost', 'end_km')
             ->get()
             ->keyBy('vehicle_id');
 
@@ -456,33 +457,84 @@ public function bebanSearch(Request $request)
             ->get()
             ->keyBy('vehicle_cost_header_id');
 
+        // ── Last KM per cost_center (lintas waktu, end_km tertinggi) ─────────
+        // 1. Kumpulkan semua cost_center unik dari kendaraan di bus area ini
+        $allCostCenters = $vehicles
+            ->pluck('cost_center')
+            ->filter()
+            ->unique()
+            ->values()
+            ->toArray();
+
+        $lastKmByCc = [];
+
+        if (!empty($allCostCenters)) {
+            // 2. Cari semua sibling vehicle (seluruh perusahaan) per cost_center
+            $allSiblings = DB::table('vehicles')
+                ->whereIn('cost_center', $allCostCenters)
+                ->whereNull('deleted_at')
+                ->select('id', 'cost_center')
+                ->get();
+
+            // Kelompokkan sibling ids per cost_center
+            $siblingIdsByCc = [];
+            foreach ($allSiblings as $s) {
+                $siblingIdsByCc[$s->cost_center][] = $s->id;
+            }
+
+            // 3. Untuk tiap cost_center, ambil header dengan end_km tertinggi
+            foreach ($siblingIdsByCc as $cc => $ids) {
+                $row = DB::table('vehicle_cost_headers')
+                    ->whereIn('vehicle_id', $ids)
+                    ->whereNotNull('end_km')
+                    ->whereNull('deleted_at')
+                    ->orderByDesc('end_km')
+                    ->select('end_km', 'month', 'year')
+                    ->first();
+
+                $lastKmByCc[$cc] = $row
+                    ? ['last_km' => $row->end_km, 'month' => $row->month, 'year' => $row->year]
+                    : ['last_km' => null, 'month' => null, 'year' => null];
+            }
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
         $withCost = [];
         $noCost   = [];
 
         foreach ($vehicles as $v) {
-            $header = $headers->get($v->id);
+            $header     = $headers->get($v->id);
+            $lastKmInfo = $lastKmByCc[$v->cost_center ?? '']
+                ?? ['last_km' => null, 'month' => null, 'year' => null];
 
             if ($header) {
-                $stats = $detailStats->get($header->id);
+                $stats          = $detailStats->get($header->id);
                 $totalAllocated = (float) ($stats?->total_allocated ?? 0);
-                $isBalanced = abs($totalAllocated - (float) $header->total_cost) < 1;
+                $isBalanced     = abs($totalAllocated - (float) $header->total_cost) < 1;
 
                 $withCost[] = [
-                    'vehicle_id'    => $v->id,
-                    'plate_number'  => $v->plate_number,
-                    'description'   => $v->description,
-                    'header_id'     => $header->id,
-                    'total_cost'    => (float) $header->total_cost,
-                    'total_km'      => $stats ? (int) $stats->total_km : null,
-                    'detail_count'  => $stats ? (int) $stats->detail_count : 0,
-                    'is_balanced'   => $isBalanced,
+                    'vehicle_id'     => $v->id,
+                    'plate_number'   => $v->plate_number,
+                    'description'    => $v->description,
+                    'header_id'      => $header->id,
+                    'total_cost'     => (float) $header->total_cost,
+                    'total_km'       => $stats ? (int) $stats->total_km : null,
+                    'detail_count'   => $stats ? (int) $stats->detail_count : 0,
+                    'is_balanced'    => $isBalanced,
+                    'current_end_km' => $header->end_km,          // KM akhir periode ini
+                    'last_km'        => $lastKmInfo['last_km'],    // KM tertinggi all-time per CC
+                    'last_km_month'  => $lastKmInfo['month'],
+                    'last_km_year'   => $lastKmInfo['year'],
                 ];
             } else {
                 $noCost[] = [
-                    'vehicle_id'   => $v->id,
-                    'plate_number' => $v->plate_number,
-                    'description'  => $v->description,
-                    'cost_center'  => $v->cost_center,
+                    'vehicle_id'    => $v->id,
+                    'plate_number'  => $v->plate_number,
+                    'description'   => $v->description,
+                    'cost_center'   => $v->cost_center,
+                    'last_km'       => $lastKmInfo['last_km'],
+                    'last_km_month' => $lastKmInfo['month'],
+                    'last_km_year'  => $lastKmInfo['year'],
                 ];
             }
         }
@@ -828,6 +880,56 @@ public function bebanSearch(Request $request)
             'year'            => $year,
         ]);
     }
+
+    /**
+ * GET /vehicles/logbook/last-km
+ * KM akhir tertinggi dari semua header kendaraan yang memiliki
+ * cost_center yang sama dengan kendaraan terpilih (lintas waktu).
+ *
+ * Query params:
+ *   vehicle_id : int
+ */
+public function lastKm(Request $request)
+{
+    $request->validate([
+        'vehicle_id' => 'required|integer|exists:vehicles,id',
+    ]);
+
+    $vehicle = DB::table('vehicles')
+        ->where('id', $request->vehicle_id)
+        ->whereNull('deleted_at')
+        ->first(['cost_center']);
+
+    if (!$vehicle || !$vehicle->cost_center) {
+        return response()->json(['last_km' => null, 'month' => null, 'year' => null]);
+    }
+
+    // Semua vehicle_id yang punya cost_center sama
+    $siblingIds = DB::table('vehicles')
+        ->where('cost_center', $vehicle->cost_center)
+        ->whereNull('deleted_at')
+        ->pluck('id');
+
+    // Header dengan end_km tertinggi di antara sibling
+    $row = DB::table('vehicle_cost_headers')
+        ->whereIn('vehicle_id', $siblingIds)
+        ->whereNotNull('end_km')
+        ->whereNull('deleted_at')
+        ->orderByDesc('end_km')
+        ->select('end_km', 'month', 'year', 'vehicle_id')
+        ->first();
+
+    if (!$row) {
+        return response()->json(['last_km' => null, 'month' => null, 'year' => null]);
+    }
+
+    return response()->json([
+        'last_km'    => $row->end_km,
+        'month'      => $row->month,
+        'year'       => $row->year,
+        'vehicle_id' => $row->vehicle_id,
+    ]);
+}
 
     /**
      * GET /vehicles/logbook/export-skf

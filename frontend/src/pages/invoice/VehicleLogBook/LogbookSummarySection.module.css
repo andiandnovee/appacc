@@ -286,3 +286,84 @@
   gap: var(--space-2);
   justify-content: flex-end;
 }
+
+dditions · CSS
+/* ─────────────────────────────────────────────────────────────
+   TAMBAHKAN ke LogbookSummarySection.module.css
+   ───────────────────────────────────────────────────────────── */
+ 
+/* Kolom Last KM di tabel with_cost */
+.lastKmCell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+ 
+.lastKmValue {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+ 
+/* Label "Last KM" di no-cost card */
+.noCostLastKm {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+ 
+/* Teks muted untuk nilai kosong */
+.muted {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+ 
+
+* ─────────────────────────────────────────────────────────────
+   TAMBAHKAN ke LogbookSummarySection.module.css
+   ───────────────────────────────────────────────────────────── */
+ 
+/* KM Akhir Periode — nilai tunggal, sedikit bold */
+.currentEndKm {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+ 
+/* Kolom Last KM All Time di tabel with_cost */
+.lastKmCell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+ 
+.lastKmValue {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+ 
+/* Label "Last KM" di no-cost card */
+.noCostLastKm {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+ 
+/* Teks muted untuk nilai kosong */
+.muted {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+ 
