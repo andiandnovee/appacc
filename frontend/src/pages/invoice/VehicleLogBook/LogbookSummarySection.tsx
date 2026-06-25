@@ -30,6 +30,7 @@ import {
   exportZf0002Excel,
   exportZf0002Text,
   type ZfPayload,
+  type ZfMode,
 } from "./ExportZF0002";
 import {
   copySkfToClipboard,
@@ -153,8 +154,7 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
     const [exportingSkf, setExportingSkf] = useState(false);
 
     const [postingDate, setPostingDate] = useState<string>(todayInputValue());
-    const handleExportExcel = () => handleExportZf0002("excel");
-    const handleExportText = () => handleExportZf0002("text");
+    
 
     // ── Fetch summary ────────────────────────────
     const fetchSummary = useCallback(async () => {
@@ -332,84 +332,61 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
     }, [busAreaSapId, companyCode, month, year, busAreaLabel, addToast]);
 
     // ── Export ZF0002_AGRI (customer) ─────────────
-    const handleExportZf0002 = useCallback(
-      async (type: "excel" | "text") => {
-        if (!postingDate) {
-          addToast({
-            variant: "warning",
-            title: "Pilih posting date terlebih dahulu.",
-          });
-          return;
-        }
-        setExportingZf(true);
-        try {
-          const { data: res } = await api.get<{
-            vehicles: ZfPayload[];
-            all_balanced: boolean;
-            vehicle_count: number;
-          }>("/vehicles/logbook/export-zf0002", {
-            params: {
-              bus_area_sap_id: busAreaSapId,
-              company_code: companyCode,
-              month,
-              year,
-            },
-          });
-
-          if (!res.all_balanced) {
-            addToast({
-              variant: "warning",
-              title:
-                "Semua kendaraan harus Balance sebelum export ZF0002_AGRI.",
-            });
-            return;
-          }
-
-          if (res.vehicles.length === 0) {
-            addToast({
-              variant: "warning",
-              title: "Tidak ada baris biaya ke customer untuk diexport.",
-            });
-            return;
-          }
-
-          if (type === "excel") {
-            await exportZf0002Excel({
-              payloads: res.vehicles,
-              companyCode,
-              businessArea: busAreaSapId,
-              month,
-              year,
-              postingDate: new Date(postingDate + "T00:00:00"),
-            });
-          } else if (type === "text") {
-            await exportZf0002Text({
-              payloads: res.vehicles,
-              companyCode,
-              businessArea: busAreaSapId,
-              month,
-              year,
-              postingDate: new Date(postingDate + "T00:00:00"),
-            });
-          }
-
-          addToast({
-            variant: "success",
-            title: `File ZF0002_AGRI berhasil dibuat (${res.vehicles.length} kendaraan).`,
-          });
-        } catch (e: any) {
-          addToast({
-            variant: "danger",
-            title:
-              "Gagal export: " +
-              (e?.response?.data?.message ?? "Unknown error"),
-          });
-        } finally {
-          setExportingZf(false);
-        }
-      },
-      [busAreaSapId, companyCode, month, year, postingDate, addToast],
-    );
+    
+const handleExportZf0002 = useCallback(
+  async (type: "excel" | "text", mode: ZfMode = "all") => {
+    if (!postingDate) {
+      addToast({ variant: "warning", title: "Pilih posting date terlebih dahulu." });
+      return;
+    }
+    setExportingZf(true);
+    try {
+      const { data: res } = await api.get<{
+        vehicles: ZfPayload[];
+        all_balanced: boolean;
+        vehicle_count: number;
+      }>("/vehicles/logbook/export-zf0002", {
+        params: { bus_area_sap_id: busAreaSapId, company_code: companyCode, month, year },
+      });
+ 
+      if (!res.all_balanced) {
+        addToast({ variant: "warning", title: "Semua kendaraan harus Balance sebelum export ZF0002_AGRI." });
+        return;
+      }
+      if (res.vehicles.length === 0) {
+        addToast({ variant: "warning", title: "Tidak ada data untuk diexport." });
+        return;
+      }
+ 
+      const exportParams = {
+        payloads: res.vehicles,
+        companyCode,
+        businessArea: busAreaSapId,
+        month,
+        year,
+        postingDate: new Date(postingDate + "T00:00:00"),
+        mode,
+      };
+ 
+      if (type === "excel") {
+        await exportZf0002Excel(exportParams);
+      } else {
+        exportZf0002Text(exportParams);
+      }
+ 
+      const modeLabel = mode === "customer" ? "Customer" : mode === "cc" ? "CC" : "Gabung";
+      addToast({
+        variant: "success",
+        title: `File ZF0002_AGRI (${modeLabel}) berhasil dibuat (${res.vehicles.length} kendaraan).`,
+      });
+    } catch (e: any) {
+      addToast({ variant: "danger", title: "Gagal export: " + (e?.response?.data?.message ?? "Unknown error") });
+    } finally {
+      setExportingZf(false);
+    }
+  },
+  [busAreaSapId, companyCode, month, year, postingDate, addToast],
+);
 
     // ── Export SKF (cost center penerima) ─────────
     const handleCopySkf = useCallback(async () => {
@@ -562,20 +539,47 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
                 onChange={(e) => setPostingDate(e.target.value)}
               />
             </div>
-            <SplitButton
-              label="ZF0002_AGRI to Text"
-              variant="outline"
-              size="sm"
-              onClick={() => handleExportText()}
-              options={[
-                {
-                  label: "ZF0002_AGRI to Excel",
-                  icon: <FileSpreadsheet size={13} />,
-                  onClick: () => handleExportExcel(),
-                },
-              ]}
-              disabled={!allBalanced || exportingZf || !hasVehicles}
-            />
+            // 4. Ganti SplitButton ZF0002 di toolbar (dari 1 menjadi 2):
+<SplitButton
+  label={<><FileSpreadsheet size={13} /> ZF0002 Excel</>}
+  variant="outline"
+  size="sm"
+  onClick={() => handleExportZf0002("excel", "all")}
+  options={[
+    {
+      label: "Excel — Hanya Customer",
+      icon: <FileSpreadsheet size={13} />,
+      onClick: () => handleExportZf0002("excel", "customer"),
+    },
+    {
+      label: "Excel — Hanya CC",
+      icon: <FileSpreadsheet size={13} />,
+      onClick: () => handleExportZf0002("excel", "cc"),
+    },
+  ]}
+  loading={exportingZf}
+  disabled={!allBalanced || exportingZf || !hasVehicles}
+/>
+<SplitButton
+  label={<><FileOutput size={13} /> ZF0002 Text</>}
+  variant="outline"
+  size="sm"
+  onClick={() => handleExportZf0002("text", "all")}
+  options={[
+    {
+      label: "Text — Hanya Customer",
+      icon: <FileOutput size={13} />,
+      onClick: () => handleExportZf0002("text", "customer"),
+    },
+    {
+      label: "Text — Hanya CC",
+      icon: <FileOutput size={13} />,
+      onClick: () => handleExportZf0002("text", "cc"),
+    },
+  ]}
+  loading={exportingZf}
+  disabled={!allBalanced || exportingZf || !hasVehicles}
+/>
 
             <SplitButton
               label="Copy SKF"

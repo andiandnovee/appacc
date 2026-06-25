@@ -856,17 +856,11 @@ public function bebanSearch(Request $request)
             $isBalanced = abs($totalAllocated - $payload['header']['total_cost']) < 1;
             if ($isBalanced) $balancedVehicles++;
 
-            // Filter hanya baris dengan customer_code (biaya ke customer)
-            $customerDetails = array_values(array_filter(
-                $payload['details'],
-                fn($d) => !empty($d['customer_code'])
-            ));
-
-            if (empty($customerDetails)) continue;
-
-            $payload['details'] = $customerDetails;
             $payload['is_balanced'] = $isBalanced;
-            $vehiclesWithCustomer[] = $payload;
+if (!empty($payload['details'])) {
+    $vehiclesWithCustomer[] = $payload;
+}
+           
         }
 
         return response()->json([

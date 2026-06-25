@@ -5,14 +5,14 @@ import {
   ReactNode,
   ElementType,
   ComponentPropsWithoutRef,
-} from 'react';
-import { ChevronDown, ArrowLeft, ArrowRight } from 'lucide-react';
-import styles from './Button.module.css';
-import { Popover } from './Popover';
+} from "react";
+import { ChevronDown, ArrowLeft, ArrowRight } from "lucide-react";
+import styles from "./Button.module.css";
+import { Popover } from "./Popover";
 
-export interface ButtonProps<T extends ElementType = 'button'> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'text';
-  size?: 'sm' | 'md' | 'lg';
+export interface ButtonProps<T extends ElementType = "button"> {
+  variant?: "primary" | "secondary" | "outline" | "ghost" | "danger" | "text";
+  size?: "sm" | "md" | "lg";
   fullWidth?: boolean;
   loading?: boolean;
   disabled?: boolean;
@@ -24,49 +24,50 @@ export interface ButtonProps<T extends ElementType = 'button'> {
   className?: string;
 }
 
-export const Button = <T extends ElementType = 'button'>({
-  variant = 'primary',
-  size = 'md',
+export const Button = <T extends ElementType = "button">({
+  variant = "primary",
+  size = "md",
   fullWidth = false,
   loading = false,
   disabled = false,
   iconLeft,
   iconRight,
   onClick,
-  as: Tag = 'button' as T,
+  as: Tag = "button" as T,
   children,
-  className = '',
+  className = "",
   ...rest
-}: ButtonProps<T> & Omit<ComponentPropsWithoutRef<T>, keyof ButtonProps<T>>) => {
+}: ButtonProps<T> &
+  Omit<ComponentPropsWithoutRef<T>, keyof ButtonProps<T>>) => {
   const isDisabled = disabled || loading;
 
   const btnClass = [
     styles.btn,
     styles[variant],
     styles[size],
-    fullWidth ? styles.fullWidth : '',
-    loading ? styles.loading : '',
-    isDisabled ? styles.btnDisabled : '',
-    !children ? styles.iconOnly : '',
+    fullWidth ? styles.fullWidth : "",
+    loading ? styles.loading : "",
+    isDisabled ? styles.btnDisabled : "",
+    !children ? styles.iconOnly : "",
     className,
   ]
     .filter(Boolean)
-    .join(' ');
+    .join(" ");
 
   // Build props object with conditional attributes
   const { children: _childrenFromRest, ...restProps } = rest;
 
-const elementProps = {
-  className: btnClass,
-  onClick,
-  ...restProps,
-  ...(Tag === 'button'
-    ? { type: 'button' as const, disabled: isDisabled }
-    : { 'aria-disabled': isDisabled }),
-};
+  const elementProps = {
+    className: btnClass,
+    onClick,
+    ...restProps,
+    ...(Tag === "button"
+      ? { type: "button" as const, disabled: isDisabled }
+      : { "aria-disabled": isDisabled }),
+  };
 
   return (
-   <Tag {...(elementProps as any)}>
+    <Tag {...(elementProps as any)}>
       {loading && (
         <span className={styles.spinnerWrapper} aria-hidden="true">
           <span className={styles.spinner} />
@@ -86,7 +87,7 @@ const elementProps = {
    SplitButton (tidak berubah, hanya untuk kelengkapan)
    ════════════════════════════════════════════════════════════ */
 export interface SplitButtonOption {
-  label: string;
+  label: ReactNode;
   icon?: ReactNode;
   onClick?: () => void;
   as?: ElementType;
@@ -95,11 +96,11 @@ export interface SplitButtonOption {
 }
 
 export interface SplitButtonProps {
-  label: string;
+  label: ReactNode;
   onClick: () => void;
   options?: SplitButtonOption[];
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: "primary" | "secondary" | "outline" | "ghost" | "danger";
+  size?: "sm" | "md" | "lg";
   fullWidth?: boolean;
   disabled?: boolean;
   loading?: boolean;
@@ -109,8 +110,8 @@ export const SplitButton = ({
   label,
   onClick,
   options = [],
-  variant = 'primary',
-  size = 'md',
+  variant = "primary",
+  size = "md",
   fullWidth = false,
   disabled = false,
   loading = false,
@@ -119,11 +120,11 @@ export const SplitButton = ({
 
   // tidak perlu useEffect untuk outside click karena Popover menanganinya
 
-  const needDarkDivider = variant === 'ghost' || variant === 'outline';
+  const needDarkDivider = variant === "ghost" || variant === "outline";
 
   return (
     <div
-      className={`${styles.splitWrapper} ${fullWidth ? styles.fullWidth : ''}`}
+      className={`${styles.splitWrapper} ${fullWidth ? styles.fullWidth : ""}`}
     >
       {/* Main action button */}
       <Button
@@ -133,7 +134,7 @@ export const SplitButton = ({
         disabled={disabled}
         loading={loading}
         onClick={onClick}
-        className={`${styles.splitMain} ${needDarkDivider ? styles.splitDividerDark : ''}`}
+        className={`${styles.splitMain} ${needDarkDivider ? styles.splitDividerDark : ""}`}
       >
         {label}
       </Button>
@@ -155,7 +156,7 @@ export const SplitButton = ({
             <ChevronDown
               size={14}
               style={{
-                transform: open ? 'rotate(180deg)' : 'rotate(0)',
+                transform: open ? "rotate(180deg)" : "rotate(0)",
                 transition: `transform var(--duration-fast) var(--ease-default)`,
               }}
             />
@@ -167,17 +168,21 @@ export const SplitButton = ({
         {options.length > 0 && (
           <div className={styles.splitDropdownInner}>
             {options.map((opt, i) => {
-              const Tag = opt.as ?? 'button';
+              const Tag = opt.as ?? "button";
               const props =
-                Tag === 'button'
+                Tag === "button"
                   ? {
-                      type: 'button' as const,
+                      type: "button" as const,
                       onClick: () => {
                         opt.onClick?.();
                         setOpen(false);
                       },
                     }
-                  : { href: opt.href, to: opt.to, onClick: () => setOpen(false) };
+                  : {
+                      href: opt.href,
+                      to: opt.to,
+                      onClick: () => setOpen(false),
+                    };
 
               return (
                 <Tag

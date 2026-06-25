@@ -1,19 +1,11 @@
 // exportZF0002.ts
 // Path: frontend/src/pages/vehicles/exportZF0002.ts
-//
-// Generate file untuk upload ke tcode ZF0002_AGRI di SAP.
-// Berisi jurnal biaya kendaraan ke CUSTOMER (debet per line biaya,
-// kredit total per kendaraan ke GL alokasi 73730001).
-//
-// Dua format output, sumber data sama (buildZf0002Rows):
-//  - Excel (.xlsx)  : dengan header kolom, untuk preview/arsip
-//  - Text (.txt)    : tanpa header, tab-delimited, siap upload ke SAP
 
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 
 // ─────────────────────────────────────────────
-// TYPES (cocok dengan response /vehicles/logbook/export-zf0002)
+// TYPES
 // ─────────────────────────────────────────────
 export interface ZfDetailRow {
   start_km: number;
@@ -28,10 +20,10 @@ export interface ZfDetailRow {
 }
 
 export interface ZfHeader {
-  periode: string; // "4-2026"
+  periode: string;
   total_km: number;
   total_cost: number;
-  no_voucher: string; // "042026-3512147016"
+  no_voucher: string;
 }
 
 export interface ZfVehicle {
@@ -43,20 +35,22 @@ export interface ZfVehicle {
 export interface ZfPayload {
   vehicle: ZfVehicle;
   header: ZfHeader;
-  details: ZfDetailRow[]; // sudah difilter hanya yang punya customer_code
+  details: ZfDetailRow[]; // semua details (customer + cc)
   is_balanced: boolean;
 }
 
+export type ZfMode = "all" | "customer" | "cc";
+
 export interface ExportZf0002Params {
   payloads: ZfPayload[];
-  companyCode: string; // contoh "3500"
-  businessArea: string; // contoh "3512"
+  companyCode: string;
+  businessArea: string;
   month: number;
   year: number;
-  postingDate: Date; // input user, default hari ini
+  postingDate: Date;
+  mode?: ZfMode; // default: "all"
 }
 
-// Satu cell bisa string, number, atau null (kosong)
 type ZfCell = string | number | null;
 type ZfRow = ZfCell[];
 
@@ -72,13 +66,10 @@ export const ZF0002_HEADERS = [
 // ─────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────
-
-/** "12.345.678" -> 12345678 (integer, tanpa titik/koma) */
 function toIntAmount(val: number): number {
   return Math.round(val);
 }
 
-/** Date -> "dd.mm.yyyy" */
 function formatDateSAP(d: Date): string {
   const dd = String(d.getDate()).padStart(2, "0");
   const mm = String(d.getMonth() + 1).padStart(2, "0");
@@ -86,15 +77,21 @@ function formatDateSAP(d: Date): string {
   return `${dd}.${mm}.${yyyy}`;
 }
 
-/** bulan numerik 2 digit, contoh 4 -> "04" */
 function periodStr(month: number): string {
   return String(month).padStart(2, "0");
 }
 
+function buildFileBaseName(companyCode: string, month: number, year: number, mode: ZfMode): string {
+  const suffix = mode === "customer" ? "-CUST" : mode === "cc" ? "-CC" : "";
+  return `ZF0002_AGRI-${companyCode}-${periodStr(month)}-${year}${suffix}`;
+}
+
 // ─────────────────────────────────────────────
 // SHARED ROW BUILDER
-// Dipakai oleh export Excel & Text — satu sumber kebenaran
-// untuk urutan & isi kolom A-AC.
+// mode:
+//   "all"      → semua details (customer + cc), kredit gabung
+//   "customer" → hanya details dengan customer_code (perilaku lama)
+//   "cc"       → hanya details dengan cost_center
 // ─────────────────────────────────────────────
 export function buildZf0002Rows({
   payloads,
@@ -102,105 +99,141 @@ export function buildZf0002Rows({
   businessArea,
   month,
   postingDate,
+  mode = "all",
 }: Omit<ExportZf0002Params, "year">): ZfRow[] {
   const rows: ZfRow[] = [];
-
   const postingDateStr = formatDateSAP(postingDate);
   const periodVal = periodStr(month);
 
   payloads.forEach((payload, idx) => {
     const no = idx + 1;
     const plate = payload.vehicle.plate_number;
-    const periodeLabel = payload.header.periode; // "4-2026"
-    const [, yearStr] = periodeLabel.split("-");
+    const [, yearStr] = payload.header.periode.split("-");
     const mmYYYY = `${periodVal}-${yearStr}`;
     const refDoc = `${plate}-${mmYYYY}`;
     const headerText = `ALK ${refDoc}`;
     const noVoucher = payload.header.no_voucher;
 
+    // Filter details sesuai mode
+    const allDetails = payload.details;
+    const filteredDetails = mode === "customer"
+      ? allDetails.filter((d) => d.customer_code)
+      : mode === "cc"
+        ? allDetails.filter((d) => d.cost_center)
+        : allDetails; // "all" — tidak difilter
+
+    if (filteredDetails.length === 0) return;
+
     let debetTotal = 0;
 
-    // ── Baris DEBET — satu per detail dengan customer_code ──
-    for (const d of payload.details) {
+    for (const d of filteredDetails) {
       const amount = toIntAmount(d.cost_amount);
       debetTotal += amount;
 
-      const text50 = `ALK ${plate}-${d.description}`;
+      const isCustomer = !!d.customer_code;
 
-      rows.push([
-        no,                          // A
-        Number(companyCode),         // B
-        postingDateStr,              // C
-        periodVal,                   // D
-        postingDateStr,              // E
-        "YA",                        // F
-        "IDR",                       // G
-        null,                        // H
-        noVoucher,                   // I
-        headerText,                  // J
-        "D",                         // K
-        null,                        // L
-        null,                        // M
-        Number(d.customer_code),     // N
-        null,                        // O
-        amount,                      // P
-        Number(businessArea),        // Q
-        null,                        // R - kosong untuk biaya
-        Number(businessArea),        // S
-        null,                        // T
-        "DN",                        // U
-        text50,                      // V
-        null,                        // W - kosong untuk debet
-        null, null, null, null, null, null, // X-AC
-      ]);
+      if (isCustomer) {
+        // ── Debet ke CUSTOMER ──
+        const text50 = `ALK ${plate}-${d.description}`;
+        rows.push([
+          no,                        // A
+          Number(companyCode),       // B
+          postingDateStr,            // C
+          periodVal,                 // D
+          postingDateStr,            // E
+          "YA",                      // F
+          "IDR",                     // G
+          null,                      // H
+          noVoucher,                 // I
+          headerText,                // J
+          "D",                       // K
+          null,                      // L - kosong untuk customer
+          null,                      // M
+          Number(d.customer_code),   // N - customer account
+          null,                      // O
+          amount,                    // P
+          Number(businessArea),      // Q
+          null,                      // R - kosong untuk customer
+          Number(businessArea),      // S
+          null,                      // T
+          "DN",                      // U
+          text50,                    // V
+          null,                      // W
+          null, null, null, null, null, null, // X-AC
+        ]);
+      } else {
+        // ── Debet ke COST CENTER (perjalanan dinas) ──
+        const text50 = `ALK ${plate}-${d.description}`;
+        rows.push([
+          no,                        // A
+          Number(companyCode),       // B
+          postingDateStr,            // C
+          periodVal,                 // D
+          postingDateStr,            // E
+          "YA",                      // F
+          "IDR",                     // G
+          null,                      // H
+          noVoucher,                 // I
+          headerText,                // J
+          "D",                       // K
+          70920001,                  // L - akun perjalanan dinas
+          null,                      // M
+          null,                      // N - kosong (beda dari customer)
+          null,                      // O
+          amount,                    // P
+          Number(businessArea),      // Q
+          Number(d.cost_center),     // R - cost center pengguna
+          Number(businessArea),      // S
+          null,                      // T
+          "DN",                      // U
+          text50,                    // V
+          null,                      // W
+          null, null, null, null, null, null, // X-AC
+        ]);
+      }
     }
 
-    // ── Baris KREDIT — total per kendaraan ──
-    const totalKmAlloc = payload.details.reduce((s, d) => s + d.km, 0);
+    // ── Baris KREDIT — total gabung semua detail yang difilter ──
+    const totalKmAlloc = filteredDetails.reduce((s, d) => s + d.km, 0);
     const assignmentCredit = `ALK ${plate}`;
     const text50Credit = `ALK ${plate}-${totalKmAlloc}KM`;
 
     rows.push([
-      no,                            // A
-      Number(companyCode),           // B
-      postingDateStr,                // C
-      periodVal,                     // D
-      postingDateStr,                // E
-      "YA",                          // F
-      "IDR",                         // G
-      null,                          // H
-      noVoucher,                     // I
-      headerText,                    // J
-      "C",                           // K
-      73730001,                      // L
-      null,                          // M
-      null,                          // N
-      null,                          // O
-      debetTotal,                    // P - total biaya kendaraan ini
-      Number(businessArea),          // Q
-      Number(payload.vehicle.cost_center), // R
-      Number(businessArea),          // S
-      null,                          // T
-      assignmentCredit,              // U
-      text50Credit,                  // V
-      "I0",                          // W
-      null, null, null, null, null, null, // X-AC
+      no,                                    // A
+      Number(companyCode),                   // B
+      postingDateStr,                        // C
+      periodVal,                             // D
+      postingDateStr,                        // E
+      "YA",                                  // F
+      "IDR",                                 // G
+      null,                                  // H
+      noVoucher,                             // I
+      headerText,                            // J
+      "C",                                   // K
+      73730001,                              // L
+      null,                                  // M
+      null,                                  // N
+      null,                                  // O
+      debetTotal,                            // P - total semua debet (gabung)
+      Number(businessArea),                  // Q
+      Number(payload.vehicle.cost_center),   // R
+      Number(businessArea),                  // S
+      null,                                  // T
+      assignmentCredit,                      // U
+      text50Credit,                          // V
+      "I0",                                  // W
+      null, null, null, null, null, null,    // X-AC
     ]);
   });
 
   return rows;
 }
 
-/** Nama file dasar (tanpa ekstensi) */
-function buildFileBaseName(companyCode: string, month: number, year: number): string {
-  return `ZF0002_AGRI-${companyCode}-${periodStr(month)}-${year}`;
-}
-
 // ─────────────────────────────────────────────
-// EXPORT: Excel (.xlsx) — dengan header, untuk preview/arsip
+// EXPORT: Excel (.xlsx)
 // ─────────────────────────────────────────────
 export async function exportZf0002Excel(params: ExportZf0002Params): Promise<void> {
-  const { companyCode, month, year } = params;
+  const { companyCode, month, year, mode = "all" } = params;
   const rows = buildZf0002Rows(params);
 
   const wb = new ExcelJS.Workbook();
@@ -211,14 +244,13 @@ export async function exportZf0002Excel(params: ExportZf0002Params): Promise<voi
 
   rows.forEach((row) => ws.addRow(row));
 
-  // Column widths (biar enak dilihat sebelum upload)
   ws.columns.forEach((col, i) => {
-    const wideCols = [9, 10, 14, 22]; // I, J, N, V
+    const wideCols = [9, 10, 14, 22];
     col.width = wideCols.includes(i + 1) ? 28 : 12;
   });
 
   const buf = await wb.xlsx.writeBuffer();
-  const fileName = `${buildFileBaseName(companyCode, month, year)}.xlsx`;
+  const fileName = `${buildFileBaseName(companyCode, month, year, mode)}.xlsx`;
   saveAs(
     new Blob([buf], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -228,11 +260,10 @@ export async function exportZf0002Excel(params: ExportZf0002Params): Promise<voi
 }
 
 // ─────────────────────────────────────────────
-// EXPORT: Text (.txt) — tanpa header, tab-delimited
-// Siap upload langsung ke tcode ZF0002_AGRI.
+// EXPORT: Text (.txt)
 // ─────────────────────────────────────────────
 export function exportZf0002Text(params: ExportZf0002Params): void {
-  const { companyCode, month, year } = params;
+  const { companyCode, month, year, mode = "all" } = params;
   const rows = buildZf0002Rows(params);
 
   const lines = rows.map((row) =>
@@ -241,17 +272,12 @@ export function exportZf0002Text(params: ExportZf0002Params): void {
       .join("\t"),
   );
 
-  // Gunakan CRLF — umum dipakai untuk file upload SAP di Windows
   const content = lines.join("\r\n") + "\r\n";
-
-  const fileName = `${buildFileBaseName(companyCode, month, year)}.txt`;
+  const fileName = `${buildFileBaseName(companyCode, month, year, mode)}.txt`;
   saveAs(
     new Blob([content], { type: "text/plain;charset=utf-8" }),
     fileName,
   );
 }
 
-// ─────────────────────────────────────────────
-// Backward-compat alias (kalau ada pemanggilan lama)
-// ─────────────────────────────────────────────
 export const exportZf0002Customer = exportZf0002Excel;
