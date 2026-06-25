@@ -797,7 +797,7 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
                                       <span className={styles.lastKmValue}>
                                         {formatKm(v.last_km)}
                                       </span>
-                                      <Badge variant="neutral" size="sm">
+                                      <Badge variant="info" size="sm">
                                         {formatPeriode(
                                           v.last_km_month,
                                           v.last_km_year,
@@ -907,7 +907,7 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
                             {v.last_km !== null && (
                               <span className={styles.noCostLastKm}>
                                 Last KM: <strong>{formatKm(v.last_km)}</strong>{" "}
-                                <Badge variant="neutral" size="sm">
+                                <Badge variant="info" size="sm">
                                   {formatPeriode(
                                     v.last_km_month,
                                     v.last_km_year,
