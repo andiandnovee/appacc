@@ -89,6 +89,8 @@ export const Button = <T extends ElementType = "button">({
 export interface SplitButtonOption {
   label: ReactNode;
   icon?: ReactNode;
+  disabled?: boolean;
+  loading?: boolean;
   onClick?: () => void;
   as?: ElementType;
   href?: string;
@@ -97,6 +99,7 @@ export interface SplitButtonOption {
 
 export interface SplitButtonProps {
   label: ReactNode;
+  icon?: ReactNode;
   onClick: () => void;
   options?: SplitButtonOption[];
   variant?: "primary" | "secondary" | "outline" | "ghost" | "danger";
@@ -108,6 +111,7 @@ export interface SplitButtonProps {
 
 export const SplitButton = ({
   label,
+  icon,
   onClick,
   options = [],
   variant = "primary",
@@ -136,7 +140,8 @@ export const SplitButton = ({
         onClick={onClick}
         className={`${styles.splitMain} ${needDarkDivider ? styles.splitDividerDark : ""}`}
       >
-        {label}
+        {icon && <span aria-hidden="true">{icon}</span>} 
+        {label} 
       </Button>
 
       {/* Popover dengan trigger tombol chevron */}
@@ -177,11 +182,14 @@ export const SplitButton = ({
                         opt.onClick?.();
                         setOpen(false);
                       },
+                      disabled: opt.disabled || opt.loading,
+                      "aria-busy": opt.loading,
                     }
                   : {
                       href: opt.href,
                       to: opt.to,
                       onClick: () => setOpen(false),
+                      
                     };
 
               return (

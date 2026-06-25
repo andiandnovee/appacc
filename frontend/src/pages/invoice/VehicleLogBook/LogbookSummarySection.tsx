@@ -568,11 +568,8 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
             </div>
 
             <SplitButton
-              label={
-                <>
-                  <FileSpreadsheet size={13} /> ZF0002 Excel
-                </>
-              }
+              label={"ZF0002 Excel ALL"}
+              icon={<FileSpreadsheet size={13} />}
               variant="outline"
               size="sm"
               onClick={() => handleExportZf0002("excel", "all")}
@@ -581,22 +578,23 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
                   label: "Excel — Hanya Customer",
                   icon: <FileSpreadsheet size={13} />,
                   onClick: () => handleExportZf0002("excel", "customer"),
+                  loading: exportingZf,
+                  disabled: !allBalanced || exportingZf || !hasVehicles,
                 },
                 {
                   label: "Excel — Hanya CC",
                   icon: <FileSpreadsheet size={13} />,
                   onClick: () => handleExportZf0002("excel", "cc"),
+                  loading: exportingZf,
+                  disabled: !allBalanced || exportingZf || !hasVehicles,
                 },
               ]}
               loading={exportingZf}
               disabled={!allBalanced || exportingZf || !hasVehicles}
             />
             <SplitButton
-              label={
-                <>
-                  <FileOutput size={13} /> ZF0002 Text
-                </>
-              }
+              label={"ZF0002 Text ALL"}
+              icon={<FileOutput size={13} />}
               variant="outline"
               size="sm"
               onClick={() => handleExportZf0002("text", "all")}
@@ -605,11 +603,16 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
                   label: "Text — Hanya Customer",
                   icon: <FileOutput size={13} />,
                   onClick: () => handleExportZf0002("text", "customer"),
+                  loading: exportingZf,
+                  disabled: !allBalanced || exportingZf || !hasVehicles,
                 },
                 {
                   label: "Text — Hanya CC",
                   icon: <FileOutput size={13} />,
+
                   onClick: () => handleExportZf0002("text", "cc"),
+                  loading: exportingZf,
+                  disabled: !allBalanced || exportingZf || !hasVehicles,
                 },
               ]}
               loading={exportingZf}
@@ -626,10 +629,12 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
                   label: "Export SKF to Excel",
                   icon: <FileSpreadsheet size={13} />,
                   onClick: handleExportSkfExcel,
+                  loading: exportingSkf,
+                  disabled: !allBalanced || exportingZf || !hasVehicles,
                 },
               ]}
               loading={exportingSkf}
-              disabled={exportingSkf || !hasVehicles}
+              disabled={!allBalanced || exportingZf || !hasVehicles}
             />
 
             <SplitButton
