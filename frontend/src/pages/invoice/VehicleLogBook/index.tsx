@@ -80,7 +80,6 @@ export interface CostDetail {
   source_year?: number;
 }
 
-// ── NEW: tipe untuk last KM info ─────────────
 interface LastKmInfo {
   last_km: number | null;
   month: number | null;
@@ -104,7 +103,6 @@ function formatKm(val: number | null): string {
   return new Intl.NumberFormat("id-ID").format(val);
 }
 
-/** Format periode ke string pendek: "Apr 2026" */
 function formatPeriode(month: number | null, year: number | null): string {
   if (!month || !year) return "";
   const d = new Date(year, month - 1, 1);
@@ -136,18 +134,16 @@ export default function VehicleLogbookPage() {
   const {
     selectedCompany,
     selectedBusArea,
-    selectedVehicleId,
     month,
     year,
     setSelectedCompany,
     setSelectedBusArea,
-    setSelectedVehicleId,
     setMonth,
     setYear,
   } = useFilterVehicleLogbook();
   const summaryRef = useRef<LogbookSummarySectionRef>(null);
 
-  // ── Auth — cek role accounting ───────────────
+  // ── Auth ─────────────────────────────────────
   const { user } = useAuth();
   const canDelete = useMemo(() => {
     if (!user) return false;
@@ -167,12 +163,14 @@ export default function VehicleLogbookPage() {
     { id: number; sap_id: string; name: string; company_id: number }[]
   >([]);
 
+  // ── Kendaraan terpilih (dari klik summary) ───
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+
   const [header, setHeader] = useState<CostHeader | null>(null);
   const [details, setDetails] = useState<CostDetail[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ── NEW: last KM state ───────────────────────
   const [lastKmInfo, setLastKmInfo] = useState<LastKmInfo>({
     last_km: null,
     month: null,
@@ -187,9 +185,10 @@ export default function VehicleLogbookPage() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [recalculating, setRecalculating] = useState(false);
 
-  // Inline form ref
+  // Refs
   const inlineFormRef = useRef<LogbookDetailFormRef>(null);
   const inlineFormWrapRef = useRef<HTMLDivElement>(null);
+  const logbookSectionRef = useRef<HTMLDivElement>(null);
 
   // ── Derived options ──────────────────────────
   const activeCompany = companies.find((c) => String(c.id) === selectedCompany);
@@ -228,31 +227,30 @@ export default function VehicleLogbookPage() {
       .then((r) => setBusAreas(r.data?.data ?? r.data ?? []));
   }, [selectedCompany, companies]);
 
-  // ── NEW: Fetch last KM saat vehicle berubah ──
-  const fetchLastKm = useCallback(async () => {
-    if (!selectedVehicleId) {
-      setLastKmInfo({ last_km: null, month: null, year: null });
-      return;
-    }
+  // ── Reset kendaraan saat area/periode berubah ─
+  useEffect(() => {
+    setSelectedVehicle(null);
+    setHeader(null);
+    setDetails([]);
+    setLastKmInfo({ last_km: null, month: null, year: null });
+  }, [selectedBusArea, month, year]);
+
+  // ── Fetch last KM ────────────────────────────
+  const fetchLastKm = useCallback(async (vehicleId: number) => {
     try {
       const { data: res } = await api.get<LastKmInfo>(
         "/vehicles/logbook/last-km",
-        { params: { vehicle_id: selectedVehicleId } },
+        { params: { vehicle_id: vehicleId } },
       );
       setLastKmInfo(res);
     } catch {
-      // silent — last KM non-critical
       setLastKmInfo({ last_km: null, month: null, year: null });
     }
-  }, [selectedVehicleId]);
-
-  useEffect(() => {
-    fetchLastKm();
-  }, [fetchLastKm]);
+  }, []);
 
   // ── Fetch logbook data ───────────────────────
   const fetchData = useCallback(async () => {
-    if (!selectedVehicleId || !month || !year) {
+    if (!selectedVehicle || !month || !year) {
       setHeader(null);
       setDetails([]);
       return null;
@@ -261,12 +259,11 @@ export default function VehicleLogbookPage() {
     setError(null);
     try {
       const { data } = await api.get("/vehicles/logbook", {
-        params: { vehicle_id: selectedVehicleId, month, year },
+        params: { vehicle_id: selectedVehicle.id, month, year },
       });
       setHeader(data.header ?? null);
       setDetails(data.details ?? []);
-      // Refresh last KM setelah data logbook berubah
-      fetchLastKm();
+      fetchLastKm(selectedVehicle.id);
       return data;
     } catch (e: any) {
       setError(e?.response?.data?.message ?? "Gagal memuat data logbook.");
@@ -276,11 +273,26 @@ export default function VehicleLogbookPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedVehicleId, month, year, fetchLastKm]);
+  }, [selectedVehicle, month, year, fetchLastKm]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // ── Handler: pilih kendaraan dari summary ────
+  const handleVehicleSelect = useCallback(
+    (vehicle: Vehicle) => {
+      setSelectedVehicle(vehicle);
+      // Scroll ke section logbook setelah vehicle dipilih
+      setTimeout(() => {
+        logbookSectionRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 100);
+    },
+    [],
+  );
 
   // ── Ctrl+A → focus inline form ───────────────
   useEffect(() => {
@@ -315,10 +327,7 @@ export default function VehicleLogbookPage() {
     setRecalculating(true);
     try {
       await api.post(`/vehicles/logbook/${header.id}/recalculate`);
-      addToast({
-        variant: "success",
-        title: "Biaya berhasil dikalkulasi ulang.",
-      });
+      addToast({ variant: "success", title: "Biaya berhasil dikalkulasi ulang." });
       fetchData();
       summaryRef.current?.refresh();
     } catch (e: any) {
@@ -399,9 +408,9 @@ export default function VehicleLogbookPage() {
         </Button>
       </div>
 
-      {/* ── FILTER BAR ──────────────────────── */}
+      {/* ── FILTER BAR (tanpa Select kendaraan) ── */}
       <div className={styles.filterCard}>
-        <div className={styles.filterGrid}>
+        <div className={styles.filterGridSimple}>
           <Select
             label="Company"
             placeholder="Pilih company..."
@@ -412,36 +421,11 @@ export default function VehicleLogbookPage() {
 
           <Select
             label="Business Area"
-            placeholder={
-              selectedCompany ? "Pilih area..." : "Pilih company dulu"
-            }
+            placeholder={selectedCompany ? "Pilih area..." : "Pilih company dulu"}
             value={selectedBusArea}
             onChange={(e) => setSelectedBusArea(e.target.value)}
             disabled={!selectedCompany || busAreas.length === 0}
             options={busAreaOptions}
-          />
-
-          <Select
-            label="Kendaraan"
-            placeholder={
-              selectedBusArea ? "Pilih kendaraan..." : "Pilih area dulu"
-            }
-            value={selectedVehicleId}
-            onChange={(e) => setSelectedVehicleId(e.target.value)}
-            disabled={!selectedBusArea}
-            fetchOptions={
-              selectedBusArea
-                ? {
-                    endpoint: "/vehicles/select-options",
-                    searchParam: "search",
-                    filters: {
-                      company_code: activeCompany?.id ?? "",
-                      business_area_code: activeBusArea?.sap_id ?? "",
-                    },
-                    limit: 10,
-                  }
-                : null
-            }
           />
 
           <div className={styles.fieldWrap}>
@@ -479,7 +463,7 @@ export default function VehicleLogbookPage() {
         </div>
       </div>
 
-      {/* ── SUMMARY & EKSPOR SAP (panel kontrol utama) ── */}
+      {/* ── SUMMARY & EKSPOR SAP ── */}
       {selectedBusArea && month && year && activeBusArea && (
         <LogbookSummarySection
           ref={summaryRef}
@@ -489,284 +473,298 @@ export default function VehicleLogbookPage() {
           month={Number(month)}
           year={Number(year)}
           canDelete={canDelete}
+          selectedVehicleId={selectedVehicle?.id ?? null}
+          onVehicleSelect={handleVehicleSelect}
           onDeleted={() => {
+            setSelectedVehicle(null);
+            setHeader(null);
+            setDetails([]);
             fetchData();
           }}
         />
       )}
 
-      {/* ── LOADING / ERROR / EMPTY ─────────── */}
-      {loading && (
-        <div className={styles.stateBox}>
-          <Loader2 size={24} className={styles.spinning} />
-          <span>Memuat data...</span>
-        </div>
-      )}
-      {!loading && error && (
-        <div className={styles.stateBox}>
-          <AlertCircle size={18} className={styles.errorIcon} />
-          <span>{error}</span>
-          <Button variant="outline" size="sm" onClick={fetchData}>
-            Coba lagi
-          </Button>
-        </div>
-      )}
-      {!loading && !error && selectedVehicleId && !header && (
-        <div className={styles.stateBox}>
-          <Car size={36} className={styles.emptyIcon} />
-          <p>Belum ada data biaya untuk periode ini.</p>
-          <p className={styles.stateHint}>
-            Upload biaya SAP terlebih dahulu via tombol "Import Biaya SAP".
-          </p>
-        </div>
-      )}
-      {!loading && !error && !selectedVehicleId && (
-        <div className={styles.stateBox}>
-          <Car size={36} className={styles.emptyIcon} />
-          <p>Pilih kendaraan untuk memulai.</p>
-        </div>
-      )}
+      {/* ── LOGBOOK SECTION ─────────────────── */}
+      <div ref={logbookSectionRef}>
+        {/* ── LOADING / ERROR / EMPTY ── */}
+        {loading && (
+          <div className={styles.stateBox}>
+            <Loader2 size={24} className={styles.spinning} />
+            <span>Memuat data...</span>
+          </div>
+        )}
+        {!loading && error && (
+          <div className={styles.stateBox}>
+            <AlertCircle size={18} className={styles.errorIcon} />
+            <span>{error}</span>
+            <Button variant="outline" size="sm" onClick={fetchData}>
+              Coba lagi
+            </Button>
+          </div>
+        )}
+        {!loading && !error && !selectedVehicle && (
+          <div className={styles.stateBox}>
+            <Car size={36} className={styles.emptyIcon} />
+            <p>Pilih kendaraan dari tabel ringkasan di atas.</p>
+          </div>
+        )}
+        {!loading && !error && selectedVehicle && !header && (
+          <div className={styles.stateBox}>
+            <Car size={36} className={styles.emptyIcon} />
+            <p>Belum ada data biaya untuk <strong>{selectedVehicle.plate_number}</strong> periode ini.</p>
+            <p className={styles.stateHint}>
+              Upload biaya SAP terlebih dahulu via tombol "Import Biaya SAP".
+            </p>
+          </div>
+        )}
 
-      {/* ── CONTENT ────────────────────────── */}
-      {!loading && !error && header && (
-        <>
-          {/* ── HEADER INFO CARD ────────────── */}
-          <div className={styles.headerCard}>
-            <div className={styles.headerCardLeft}>
-              <div className={styles.statItem}>
-                <span className={styles.statLabel}>Total Biaya SAP</span>
-                <span className={styles.statValue}>
-                  {formatRupiah(header.total_cost)}
-                </span>
-              </div>
-              <div className={styles.statDivider} />
-              <div className={styles.statItem}>
-                <span className={styles.statLabel}>Total KM</span>
-                <span className={styles.statValue}>{formatKm(totalKm)} km</span>
-              </div>
-              <div className={styles.statDivider} />
-              <div className={styles.statItem}>
-                <span className={styles.statLabel}>Rate Rp/KM</span>
-                <span className={styles.statValue}>
-                  {ratePerKm ? formatRupiah(ratePerKm) : "—"}
-                </span>
-              </div>
-              <div className={styles.statDivider} />
-              {/* ── KM Odometer + Last KM hint ── */}
-              <div className={styles.statItem}>
-                <span className={styles.statLabel}>KM Odometer</span>
-                <span className={styles.statValue}>
-                  {formatKm(header.start_km)} → {formatKm(header.end_km)}
-                </span>
-                {/* NEW: last KM dari cost_center kendaraan ini, lintas waktu */}
-                {lastKmInfo.last_km !== null && (
-                  <span className={styles.lastKmHint}>
-                    <span className={styles.lastKmHintLabel}>Last KM (CC):</span>
-                    <strong>{formatKm(lastKmInfo.last_km)}</strong>
-                    {lastKmInfo.month && lastKmInfo.year && (
-                      <Badge variant="neutral" size="sm">
-                        {formatPeriode(lastKmInfo.month, lastKmInfo.year)}
-                      </Badge>
-                    )}
+        {/* ── CONTENT ── */}
+        {!loading && !error && header && selectedVehicle && (
+          <>
+            {/* ── HEADER INFO CARD ── */}
+            <div className={styles.headerCard}>
+              <div className={styles.headerCardLeft}>
+
+                {/* Identitas kendaraan */}
+                <div className={styles.statItem}>
+                  <span className={styles.statLabel}>Kendaraan</span>
+                  <span className={styles.statValue}>
+                    {selectedVehicle.plate_number}
                   </span>
+                  <span className={styles.statSub}>
+                    {selectedVehicle.description}
+                  </span>
+                </div>
+                <div className={styles.statDivider} />
+
+                <div className={styles.statItem}>
+                  <span className={styles.statLabel}>Total Biaya SAP</span>
+                  <span className={styles.statValue}>
+                    {formatRupiah(header.total_cost)}
+                  </span>
+                </div>
+                <div className={styles.statDivider} />
+
+                <div className={styles.statItem}>
+                  <span className={styles.statLabel}>Total KM</span>
+                  <span className={styles.statValue}>{formatKm(totalKm)} km</span>
+                </div>
+                <div className={styles.statDivider} />
+
+                <div className={styles.statItem}>
+                  <span className={styles.statLabel}>Rate Rp/KM</span>
+                  <span className={styles.statValue}>
+                    {ratePerKm ? formatRupiah(ratePerKm) : "—"}
+                  </span>
+                </div>
+                <div className={styles.statDivider} />
+
+                {/* KM Odometer — real-time dari derived lastKm */}
+                <div className={styles.statItem}>
+                  <span className={styles.statLabel}>KM Odometer</span>
+                  <span className={styles.statValue}>
+                    {formatKm(header.start_km)} → {formatKm(lastKm)}
+                  </span>
+                  {/* Last KM global dari CC, update setiap fetchData */}
+                  {lastKmInfo.last_km !== null && (
+                    <span className={styles.lastKmHint}>
+                      <span className={styles.lastKmHintLabel}>Last KM (CC):</span>
+                      <strong>{formatKm(lastKmInfo.last_km)}</strong>
+                      {lastKmInfo.month && lastKmInfo.year && (
+                        <Badge variant="neutral" size="sm">
+                          {formatPeriode(lastKmInfo.month, lastKmInfo.year)}
+                        </Badge>
+                      )}
+                    </span>
+                  )}
+                </div>
+
+              </div>
+              <div className={styles.headerCardRight}>
+                {isBalanced ? (
+                  <Badge variant="success">✓ Balance</Badge>
+                ) : (
+                  <Badge variant="warning">
+                    Selisih {formatRupiah(header.total_cost - totalAllocated)}
+                  </Badge>
                 )}
               </div>
             </div>
-            <div className={styles.headerCardRight}>
-              {isBalanced ? (
-                <Badge variant="success">✓ Balance</Badge>
-              ) : (
-                <Badge variant="warning">
-                  Selisih {formatRupiah(header.total_cost - totalAllocated)}
-                </Badge>
-              )}
-            </div>
-          </div>
 
-          {/* ── ACTION BAR ──────────────────── */}
-          <div className={styles.actionBar}>
-            <div className={styles.actionBarLeft}>
-              <Button variant="primary" size="sm" onClick={handleScrollToForm}>
-                <Plus size={14} /> Tambah Baris
-                <span
-                  style={{ opacity: 0.6, fontSize: "0.75em", marginLeft: 4 }}
+            {/* ── ACTION BAR ── */}
+            <div className={styles.actionBar}>
+              <div className={styles.actionBarLeft}>
+                <Button variant="primary" size="sm" onClick={handleScrollToForm}>
+                  <Plus size={14} /> Tambah Baris
+                  <span style={{ opacity: 0.6, fontSize: "0.75em", marginLeft: 4 }}>
+                    Ctrl+A
+                  </span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCarryoverOpen(true)}
                 >
-                  Ctrl+A
-                </span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCarryoverOpen(true)}
-              >
-                <History size={14} /> Pakai Bulan Lalu
-              </Button>
-            </div>
-            <div className={styles.actionBarRight}>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRecalculate}
-                loading={recalculating}
-                disabled={details.length === 0 || !header.total_cost}
-              >
-                <Calculator size={14} /> Kalkulasi Ulang
-              </Button>
-            </div>
-          </div>
-
-          {/* ── TABEL LOGBOOK ───────────────── */}
-          <div className={styles.tableCard}>
-            {details.length === 0 ? (
-              <div className={styles.tableEmpty}>
-                <p>
-                  Belum ada baris logbook. Isi form di bawah atau pakai data
-                  bulan lalu.
-                </p>
+                  <History size={14} /> Pakai Bulan Lalu
+                </Button>
               </div>
-            ) : (
-              <div className={styles.tableWrap}>
-                <table className={styles.table}>
-                  <thead>
-                    <tr>
-                      <th className={styles.thNo}>No</th>
-                      <th>Log KM</th>
-                      <th>Beban</th>
-                      <th>CC / Customer</th>
-                      <th className={styles.thRight}>KM</th>
-                      <th className={styles.thRight}>Rupiah</th>
-                      <th>Keterangan</th>
-                      <th className={styles.thAction} />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {details.map((d, i) => (
-                      <tr
-                        key={d.id}
-                        className={`${styles.tr} ${d.is_carryover ? styles.trCarryover : ""}`}
-                      >
-                        <td className={styles.tdNo}>{i + 1}</td>
-                        <td className={styles.tdMono}>
-                          {formatKm(d.start_km)} → {formatKm(d.end_km)}
-                        </td>
-                        <td>
-                          {d.is_carryover && (
-                            <Badge variant="info" size="sm">
-                              <History size={10} /> bln lalu
-                            </Badge>
-                          )}
-                          <span className={styles.bebanType}>
-                            {d.cost_center ? "Dept" : "Customer"}
-                          </span>
-                        </td>
-                        <td className={styles.tdCode}>
-                          <span className={styles.codeText}>
-                            {d.cost_center ?? d.customer_code}
-                          </span>
-                          {(d.cost_center_name || d.customer_name) && (
-                            <span className={styles.codeName}>
-                              {d.cost_center_name ?? d.customer_name}
-                            </span>
-                          )}
-                        </td>
-                        <td className={styles.tdRight}>
-                          {formatKm(d.end_km - d.start_km)}
-                        </td>
-                        <td className={styles.tdRight}>
-                          {d.cost_amount !== null ? (
-                            formatRupiah(d.cost_amount)
-                          ) : (
-                            <span className={styles.muted}>—</span>
-                          )}
-                        </td>
-                        <td className={styles.tdDesc}>
-                          {d.description || "—"}
-                        </td>
-                        <td className={styles.tdAction}>
-                          <div className={styles.rowActions}>
-                            <button
-                              className={styles.editBtn}
-                              onClick={() => setEditDetail(d)}
-                              title="Edit"
-                            >
-                              <ChevronRight size={14} />
-                            </button>
-                            <button
-                              className={styles.deleteBtn}
-                              onClick={() => handleDeleteDetail(d)}
-                              disabled={deletingId === d.id}
-                              title="Hapus"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        </td>
+              <div className={styles.actionBarRight}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRecalculate}
+                  loading={recalculating}
+                  disabled={details.length === 0 || !header.total_cost}
+                >
+                  <Calculator size={14} /> Kalkulasi Ulang
+                </Button>
+              </div>
+            </div>
+
+            {/* ── TABEL LOGBOOK ── */}
+            <div className={styles.tableCard}>
+              {details.length === 0 ? (
+                <div className={styles.tableEmpty}>
+                  <p>Belum ada baris logbook. Isi form di bawah atau pakai data bulan lalu.</p>
+                </div>
+              ) : (
+                <div className={styles.tableWrap}>
+                  <table className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th className={styles.thNo}>No</th>
+                        <th>Log KM</th>
+                        <th>Beban</th>
+                        <th>CC / Customer</th>
+                        <th className={styles.thRight}>KM</th>
+                        <th className={styles.thRight}>Rupiah</th>
+                        <th>Keterangan</th>
+                        <th className={styles.thAction} />
                       </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr className={styles.tfootRow}>
-                      <td colSpan={4} className={styles.tfootLabel}>
-                        Total ({details.length} baris)
-                      </td>
-                      <td className={`${styles.tdRight} ${styles.tfootVal}`}>
-                        {formatKm(totalKm)}
-                      </td>
-                      <td
-                        className={`${styles.tdRight} ${styles.tfootVal} ${!isBalanced ? styles.tfootUnbalanced : ""}`}
-                      >
-                        {formatRupiah(totalAllocated)}
-                      </td>
-                      <td colSpan={2} />
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            )}
-          </div>
-
-          {/* ── INLINE FORM TAMBAH BARIS ─────── */}
-          <div ref={inlineFormWrapRef} className={styles.inlineFormCard}>
-            <div className={styles.inlineFormHeader}>
-              <Plus size={14} />
-              <span>Tambah Baris Baru</span>
-              {lastKm !== null && (
-                <span className={styles.inlineFormKmHint}>
-                  KM awal: <strong>{formatKm(lastKm)}</strong>
-                </span>
+                    </thead>
+                    <tbody>
+                      {details.map((d, i) => (
+                        <tr
+                          key={d.id}
+                          className={`${styles.tr} ${d.is_carryover ? styles.trCarryover : ""}`}
+                        >
+                          <td className={styles.tdNo}>{i + 1}</td>
+                          <td className={styles.tdMono}>
+                            {formatKm(d.start_km)} → {formatKm(d.end_km)}
+                          </td>
+                          <td>
+                            {d.is_carryover && (
+                              <Badge variant="info" size="sm">
+                                <History size={10} /> bln lalu
+                              </Badge>
+                            )}
+                            <span className={styles.bebanType}>
+                              {d.cost_center ? "Dept" : "Customer"}
+                            </span>
+                          </td>
+                          <td className={styles.tdCode}>
+                            <span className={styles.codeText}>
+                              {d.cost_center ?? d.customer_code}
+                            </span>
+                            {(d.cost_center_name || d.customer_name) && (
+                              <span className={styles.codeName}>
+                                {d.cost_center_name ?? d.customer_name}
+                              </span>
+                            )}
+                          </td>
+                          <td className={styles.tdRight}>
+                            {formatKm(d.end_km - d.start_km)}
+                          </td>
+                          <td className={styles.tdRight}>
+                            {d.cost_amount !== null ? (
+                              formatRupiah(d.cost_amount)
+                            ) : (
+                              <span className={styles.muted}>—</span>
+                            )}
+                          </td>
+                          <td className={styles.tdDesc}>{d.description || "—"}</td>
+                          <td className={styles.tdAction}>
+                            <div className={styles.rowActions}>
+                              <button
+                                className={styles.editBtn}
+                                onClick={() => setEditDetail(d)}
+                                title="Edit"
+                              >
+                                <ChevronRight size={14} />
+                              </button>
+                              <button
+                                className={styles.deleteBtn}
+                                onClick={() => handleDeleteDetail(d)}
+                                disabled={deletingId === d.id}
+                                title="Hapus"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className={styles.tfootRow}>
+                        <td colSpan={4} className={styles.tfootLabel}>
+                          Total ({details.length} baris)
+                        </td>
+                        <td className={`${styles.tdRight} ${styles.tfootVal}`}>
+                          {formatKm(totalKm)}
+                        </td>
+                        <td
+                          className={`${styles.tdRight} ${styles.tfootVal} ${!isBalanced ? styles.tfootUnbalanced : ""}`}
+                        >
+                          {formatRupiah(totalAllocated)}
+                        </td>
+                        <td colSpan={2} />
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
               )}
-              <span className={styles.inlineFormShortcut}>
-                Ctrl+A untuk fokus
-              </span>
             </div>
-            <LogbookDetailForm
-              ref={inlineFormRef}
-              headerId={header.id}
-              lastKm={lastKm}
-              detail={null}
-              inline
-              onSuccess={async () => {
-                const data = await fetchData();
-                summaryRef.current?.refresh();
-                const newDetails: CostDetail[] = data?.details ?? [];
-                const newLastKm =
-                  newDetails.length > 0
-                    ? newDetails[newDetails.length - 1].end_km
-                    : (header?.start_km ?? null);
-                inlineFormRef.current?.resetAndFocus(newLastKm);
-              }}
-              onCancel={() => {}}
-            />
-          </div>
-        </>
-      )}
 
-      {/* ── DRAWER: Import ───────────────────── */}
-      <Drawer
-        isOpen={importOpen}
-        onClose={() => setImportOpen(false)}
-        size="md"
-      >
+            {/* ── INLINE FORM TAMBAH BARIS ── */}
+            <div ref={inlineFormWrapRef} className={styles.inlineFormCard}>
+              <div className={styles.inlineFormHeader}>
+                <Plus size={14} />
+                <span>Tambah Baris Baru</span>
+                {lastKm !== null && (
+                  <span className={styles.inlineFormKmHint}>
+                    KM awal: <strong>{formatKm(lastKm)}</strong>
+                  </span>
+                )}
+                <span className={styles.inlineFormShortcut}>
+                  Ctrl+A untuk fokus
+                </span>
+              </div>
+              <LogbookDetailForm
+                ref={inlineFormRef}
+                headerId={header.id}
+                lastKm={lastKm}
+                detail={null}
+                inline
+                onSuccess={async () => {
+                  const data = await fetchData();
+                  summaryRef.current?.refresh();
+                  const newDetails: CostDetail[] = data?.details ?? [];
+                  const newLastKm =
+                    newDetails.length > 0
+                      ? newDetails[newDetails.length - 1].end_km
+                      : (header?.start_km ?? null);
+                  inlineFormRef.current?.resetAndFocus(newLastKm);
+                }}
+                onCancel={() => {}}
+              />
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* ── DRAWER: Import ── */}
+      <Drawer isOpen={importOpen} onClose={() => setImportOpen(false)} size="md">
         <Drawer.Header
           title="Import Biaya Kendaraan"
           subtitle="Upload Excel SAP (cost center + nominal)"
@@ -777,17 +775,14 @@ export default function VehicleLogbookPage() {
             onSuccess={() => {
               setImportOpen(false);
               fetchData();
+              summaryRef.current?.refresh();
             }}
           />
         </Drawer.Body>
       </Drawer>
 
-      {/* ── DRAWER: Edit Baris ───────────────── */}
-      <Drawer
-        isOpen={!!editDetail}
-        onClose={() => setEditDetail(null)}
-        size="md"
-      >
+      {/* ── DRAWER: Edit Baris ── */}
+      <Drawer isOpen={!!editDetail} onClose={() => setEditDetail(null)} size="md">
         <Drawer.Header
           title="Edit Baris Logbook"
           subtitle={
@@ -813,7 +808,7 @@ export default function VehicleLogbookPage() {
         </Drawer.Body>
       </Drawer>
 
-      {/* ── DRAWER: Carryover ────────────────── */}
+      {/* ── DRAWER: Carryover ── */}
       <Drawer
         isOpen={carryoverOpen}
         onClose={() => setCarryoverOpen(false)}

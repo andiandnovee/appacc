@@ -39,6 +39,7 @@ import {
 } from "./Exportskf";
 import styles from "./LogbookSummarySection.module.css";
 import { forwardRef, useImperativeHandle } from "react";
+import type { Vehicle } from "./index.tsx";
 
 // ─────────────────────────────────────────────
 // TYPES
@@ -52,9 +53,7 @@ interface VehicleWithCost {
   total_km: number | null;
   detail_count: number;
   is_balanced: boolean;
-  // KM akhir header periode ini (dari vehicle_cost_headers.end_km)
   current_end_km: number | null;
-  // Last KM tertinggi lintas waktu dari cost_center yang sama
   last_km: number | null;
   last_km_month: number | null;
   last_km_year: number | null;
@@ -65,7 +64,6 @@ interface VehicleNoCost {
   plate_number: string;
   description: string;
   cost_center: string;
-  // ── NEW ──
   last_km: number | null;
   last_km_month: number | null;
   last_km_year: number | null;
@@ -87,6 +85,8 @@ interface Props {
   month: number;
   year: number;
   canDelete: boolean;
+  selectedVehicleId: number | null;
+  onVehicleSelect: (vehicle: Vehicle) => void;
   onDeleted: () => void;
 }
 
@@ -111,7 +111,6 @@ function formatKm(val: number | null): string {
   return new Intl.NumberFormat("id-ID").format(val);
 }
 
-/** Format periode (month, year) → "Apr 2026" */
 function formatPeriode(month: number | null, year: number | null): string {
   if (!month || !year) return "—";
   const d = new Date(year, month - 1, 1);
@@ -136,6 +135,8 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
       month,
       year,
       canDelete,
+      selectedVehicleId,
+      onVehicleSelect,
       onDeleted,
     },
     ref,
@@ -152,11 +153,9 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
     const [printingAll, setPrintingAll] = useState(false);
     const [exportingZf, setExportingZf] = useState(false);
     const [exportingSkf, setExportingSkf] = useState(false);
-
     const [postingDate, setPostingDate] = useState<string>(todayInputValue());
-    
 
-    // ── Fetch summary ────────────────────────────
+    // ── Fetch summary ──────────────────────────
     const fetchSummary = useCallback(async () => {
       if (!busAreaSapId || !month || !year) return;
       setLoading(true);
@@ -178,20 +177,34 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
       }
     }, [busAreaSapId, companyCode, month, year]);
 
-    useImperativeHandle(ref, () => ({
-      refresh: fetchSummary,
-    }));
+    useImperativeHandle(ref, () => ({ refresh: fetchSummary }));
 
     useEffect(() => {
       fetchSummary();
     }, [fetchSummary]);
 
-    // ── Derived: status balance keseluruhan ─────
     const hasVehicles = (data?.with_cost.length ?? 0) > 0;
     const allBalanced =
       hasVehicles && data!.with_cost.every((v) => v.is_balanced);
 
-    // ── Delete all ───────────────────────────────
+    // ── Handle klik row → pilih kendaraan ──────
+    const handleRowClick = useCallback(
+      (v: VehicleWithCost) => {
+        onVehicleSelect({
+          id: v.vehicle_id,
+          plate_number: v.plate_number,
+          description: v.description,
+          // cost_center, company_code, business_area_code tidak ada di summary,
+          // tapi tidak dipakai di logbook page — isi kosong
+          cost_center: "",
+          company_code: companyCode,
+          business_area_code: busAreaSapId,
+        });
+      },
+      [onVehicleSelect, companyCode, busAreaSapId],
+    );
+
+    // ── Delete all ─────────────────────────────
     const handleDelete = useCallback(async () => {
       setDeleting(true);
       try {
@@ -231,9 +244,10 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
       fetchSummary,
     ]);
 
-    // ── Print single ──────────────────────────────
+    // ── Print single ───────────────────────────
     const handlePrintOne = useCallback(
-      async (vehicleId: number) => {
+      async (vehicleId: number, e: React.MouseEvent) => {
+        e.stopPropagation(); // jangan trigger row click
         setPrintingId(vehicleId);
         try {
           const { data: payload } = await api.get<PrintPayload>(
@@ -255,7 +269,7 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
       [month, year, addToast],
     );
 
-    // ── Print all ─────────────────────────────────
+    // ── Print all ──────────────────────────────
     const handlePrintAll = useCallback(async () => {
       setPrintingAll(true);
       try {
@@ -290,7 +304,7 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
       }
     }, [busAreaSapId, companyCode, month, year, addToast]);
 
-    // ── Print Rekap ───────────────────────────────
+    // ── Print Rekap ────────────────────────────
     const handlePrintRekap = useCallback(async () => {
       setPrintingAll(true);
       try {
@@ -331,64 +345,84 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
       }
     }, [busAreaSapId, companyCode, month, year, busAreaLabel, addToast]);
 
-    // ── Export ZF0002_AGRI (customer) ─────────────
-    
-const handleExportZf0002 = useCallback(
-  async (type: "excel" | "text", mode: ZfMode = "all") => {
-    if (!postingDate) {
-      addToast({ variant: "warning", title: "Pilih posting date terlebih dahulu." });
-      return;
-    }
-    setExportingZf(true);
-    try {
-      const { data: res } = await api.get<{
-        vehicles: ZfPayload[];
-        all_balanced: boolean;
-        vehicle_count: number;
-      }>("/vehicles/logbook/export-zf0002", {
-        params: { bus_area_sap_id: busAreaSapId, company_code: companyCode, month, year },
-      });
- 
-      if (!res.all_balanced) {
-        addToast({ variant: "warning", title: "Semua kendaraan harus Balance sebelum export ZF0002_AGRI." });
-        return;
-      }
-      if (res.vehicles.length === 0) {
-        addToast({ variant: "warning", title: "Tidak ada data untuk diexport." });
-        return;
-      }
- 
-      const exportParams = {
-        payloads: res.vehicles,
-        companyCode,
-        businessArea: busAreaSapId,
-        month,
-        year,
-        postingDate: new Date(postingDate + "T00:00:00"),
-        mode,
-      };
- 
-      if (type === "excel") {
-        await exportZf0002Excel(exportParams);
-      } else {
-        exportZf0002Text(exportParams);
-      }
- 
-      const modeLabel = mode === "customer" ? "Customer" : mode === "cc" ? "CC" : "Gabung";
-      addToast({
-        variant: "success",
-        title: `File ZF0002_AGRI (${modeLabel}) berhasil dibuat (${res.vehicles.length} kendaraan).`,
-      });
-    } catch (e: any) {
-      addToast({ variant: "danger", title: "Gagal export: " + (e?.response?.data?.message ?? "Unknown error") });
-    } finally {
-      setExportingZf(false);
-    }
-  },
-  [busAreaSapId, companyCode, month, year, postingDate, addToast],
-);
+    // ── Export ZF0002_AGRI ─────────────────────
+    const handleExportZf0002 = useCallback(
+      async (type: "excel" | "text", mode: ZfMode = "all") => {
+        if (!postingDate) {
+          addToast({
+            variant: "warning",
+            title: "Pilih posting date terlebih dahulu.",
+          });
+          return;
+        }
+        setExportingZf(true);
+        try {
+          const { data: res } = await api.get<{
+            vehicles: ZfPayload[];
+            all_balanced: boolean;
+            vehicle_count: number;
+          }>("/vehicles/logbook/export-zf0002", {
+            params: {
+              bus_area_sap_id: busAreaSapId,
+              company_code: companyCode,
+              month,
+              year,
+            },
+          });
 
-    // ── Export SKF (cost center penerima) ─────────
+          if (!res.all_balanced) {
+            addToast({
+              variant: "warning",
+              title:
+                "Semua kendaraan harus Balance sebelum export ZF0002_AGRI.",
+            });
+            return;
+          }
+          if (res.vehicles.length === 0) {
+            addToast({
+              variant: "warning",
+              title: "Tidak ada data untuk diexport.",
+            });
+            return;
+          }
+
+          const exportParams = {
+            payloads: res.vehicles,
+            companyCode,
+            businessArea: busAreaSapId,
+            month,
+            year,
+            postingDate: new Date(postingDate + "T00:00:00"),
+            mode,
+          };
+
+          if (type === "excel") {
+            await exportZf0002Excel(exportParams);
+          } else {
+            exportZf0002Text(exportParams);
+          }
+
+          const modeLabel =
+            mode === "customer" ? "Customer" : mode === "cc" ? "CC" : "Gabung";
+          addToast({
+            variant: "success",
+            title: `File ZF0002_AGRI (${modeLabel}) berhasil dibuat (${res.vehicles.length} kendaraan).`,
+          });
+        } catch (e: any) {
+          addToast({
+            variant: "danger",
+            title:
+              "Gagal export: " +
+              (e?.response?.data?.message ?? "Unknown error"),
+          });
+        } finally {
+          setExportingZf(false);
+        }
+      },
+      [busAreaSapId, companyCode, month, year, postingDate, addToast],
+    );
+
+    // ── Export SKF ─────────────────────────────
     const handleCopySkf = useCallback(async () => {
       if (!postingDate) {
         addToast({
@@ -410,7 +444,6 @@ const handleExportZf0002 = useCallback(
             year,
           },
         });
-
         if (res.vehicles.length === 0) {
           addToast({
             variant: "warning",
@@ -418,12 +451,10 @@ const handleExportZf0002 = useCallback(
           });
           return;
         }
-
         const count = await copySkfToClipboard({
           payloads: res.vehicles,
           postingDate: new Date(postingDate + "T00:00:00"),
         });
-
         addToast({
           variant: "success",
           title: `${count} baris SKF berhasil dicopy ke clipboard.`,
@@ -460,7 +491,6 @@ const handleExportZf0002 = useCallback(
             year,
           },
         });
-
         if (res.vehicles.length === 0) {
           addToast({
             variant: "warning",
@@ -468,14 +498,12 @@ const handleExportZf0002 = useCallback(
           });
           return;
         }
-
         await exportSkfExcel({
           payloads: res.vehicles,
           postingDate: new Date(postingDate + "T00:00:00"),
           month,
           year,
         });
-
         addToast({
           variant: "success",
           title: `File SKF berhasil dibuat (${res.vehicles.length} kendaraan).`,
@@ -494,7 +522,7 @@ const handleExportZf0002 = useCallback(
     // ─────────────────────────────────────────────
     return (
       <div className={styles.section}>
-        {/* ── Header / Toolbar (selalu terlihat) ── */}
+        {/* ── Header / Toolbar ── */}
         <div className={styles.headerBar}>
           <button
             className={styles.toggleBtn}
@@ -528,7 +556,6 @@ const handleExportZf0002 = useCallback(
             </span>
           </button>
 
-          {/* ── Toolbar Aksi ── */}
           <div className={styles.toolbar}>
             <div className={styles.postingDateWrap}>
               <label className={styles.postingDateLabel}>Posting Date</label>
@@ -539,47 +566,55 @@ const handleExportZf0002 = useCallback(
                 onChange={(e) => setPostingDate(e.target.value)}
               />
             </div>
-            // 4. Ganti SplitButton ZF0002 di toolbar (dari 1 menjadi 2):
-<SplitButton
-  label={<><FileSpreadsheet size={13} /> ZF0002 Excel</>}
-  variant="outline"
-  size="sm"
-  onClick={() => handleExportZf0002("excel", "all")}
-  options={[
-    {
-      label: "Excel — Hanya Customer",
-      icon: <FileSpreadsheet size={13} />,
-      onClick: () => handleExportZf0002("excel", "customer"),
-    },
-    {
-      label: "Excel — Hanya CC",
-      icon: <FileSpreadsheet size={13} />,
-      onClick: () => handleExportZf0002("excel", "cc"),
-    },
-  ]}
-  loading={exportingZf}
-  disabled={!allBalanced || exportingZf || !hasVehicles}
-/>
-<SplitButton
-  label={<><FileOutput size={13} /> ZF0002 Text</>}
-  variant="outline"
-  size="sm"
-  onClick={() => handleExportZf0002("text", "all")}
-  options={[
-    {
-      label: "Text — Hanya Customer",
-      icon: <FileOutput size={13} />,
-      onClick: () => handleExportZf0002("text", "customer"),
-    },
-    {
-      label: "Text — Hanya CC",
-      icon: <FileOutput size={13} />,
-      onClick: () => handleExportZf0002("text", "cc"),
-    },
-  ]}
-  loading={exportingZf}
-  disabled={!allBalanced || exportingZf || !hasVehicles}
-/>
+
+            <SplitButton
+              label={
+                <>
+                  <FileSpreadsheet size={13} /> ZF0002 Excel
+                </>
+              }
+              variant="outline"
+              size="sm"
+              onClick={() => handleExportZf0002("excel", "all")}
+              options={[
+                {
+                  label: "Excel — Hanya Customer",
+                  icon: <FileSpreadsheet size={13} />,
+                  onClick: () => handleExportZf0002("excel", "customer"),
+                },
+                {
+                  label: "Excel — Hanya CC",
+                  icon: <FileSpreadsheet size={13} />,
+                  onClick: () => handleExportZf0002("excel", "cc"),
+                },
+              ]}
+              loading={exportingZf}
+              disabled={!allBalanced || exportingZf || !hasVehicles}
+            />
+            <SplitButton
+              label={
+                <>
+                  <FileOutput size={13} /> ZF0002 Text
+                </>
+              }
+              variant="outline"
+              size="sm"
+              onClick={() => handleExportZf0002("text", "all")}
+              options={[
+                {
+                  label: "Text — Hanya Customer",
+                  icon: <FileOutput size={13} />,
+                  onClick: () => handleExportZf0002("text", "customer"),
+                },
+                {
+                  label: "Text — Hanya CC",
+                  icon: <FileOutput size={13} />,
+                  onClick: () => handleExportZf0002("text", "cc"),
+                },
+              ]}
+              loading={exportingZf}
+              disabled={!allBalanced || exportingZf || !hasVehicles}
+            />
 
             <SplitButton
               label="Copy SKF"
@@ -627,7 +662,7 @@ const handleExportZf0002 = useCallback(
           </div>
         </div>
 
-        {/* ── Confirm delete (banner di luar collapsible) ── */}
+        {/* ── Confirm delete ── */}
         {confirmDelete && (
           <div className={styles.confirmBox}>
             <span className={styles.confirmText}>
@@ -692,6 +727,9 @@ const handleExportZf0002 = useCallback(
                         Total: {formatRupiah(data.total_cost_all)}
                       </Badge>
                     )}
+                    <span className={styles.rowHint}>
+                      ↓ Klik baris untuk buka logbook
+                    </span>
                   </div>
 
                   {data.with_cost.length === 0 ? (
@@ -708,91 +746,110 @@ const handleExportZf0002 = useCallback(
                             <th className={styles.thRight}>Total Biaya SAP</th>
                             <th className={styles.thRight}>Total KM</th>
                             <th className={styles.thRight}>KM Akhir Periode</th>
-                            <th className={styles.thRight}>Last KM (All Time)</th>
+                            <th className={styles.thRight}>
+                              Last KM (All Time)
+                            </th>
                             <th className={styles.thRight}>Baris</th>
                             <th>Status</th>
                             <th className={styles.thRight}>Print</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {data.with_cost.map((v, i) => (
-                            <tr key={v.vehicle_id} className={styles.tr}>
-                              <td className={styles.tdNo}>{i + 1}</td>
-                              <td>
-                                <span className={styles.plate}>
-                                  {v.plate_number}
-                                </span>
-                                <span className={styles.vDesc}>
-                                  {v.description}
-                                </span>
-                              </td>
-                              <td className={styles.tdRight}>
-                                {formatRupiah(v.total_cost)}
-                              </td>
-                              <td className={styles.tdRight}>
-                                {v.total_km
-                                  ? `${formatKm(v.total_km)} km`
-                                  : "—"}
-                              </td>
-                              {/* KM Akhir Periode — end_km header bulan ini */}
-                              <td className={styles.tdRight}>
-                                {v.current_end_km !== null ? (
-                                  <span className={styles.currentEndKm}>
-                                    {formatKm(v.current_end_km)}
+                          {data.with_cost.map((v, i) => {
+                            const isSelected =
+                              selectedVehicleId === v.vehicle_id;
+                            return (
+                              <tr
+                                key={v.vehicle_id}
+                                className={`${styles.tr} ${styles.trClickable} ${isSelected ? styles.trSelected : ""}`}
+                                onClick={() => handleRowClick(v)}
+                                title="Klik untuk buka logbook kendaraan ini"
+                              >
+                                <td className={styles.tdNo}>{i + 1}</td>
+                                <td>
+                                  <span className={styles.plate}>
+                                    {v.plate_number}
                                   </span>
-                                ) : (
-                                  <span className={styles.muted}>—</span>
-                                )}
-                              </td>
-                              {/* Last KM All Time — end_km tertinggi lintas waktu per CC */}
-                              <td className={styles.tdRight}>
-                                {v.last_km !== null ? (
-                                  <span className={styles.lastKmCell}>
-                                    <span className={styles.lastKmValue}>
-                                      {formatKm(v.last_km)}
+                                  <span className={styles.vDesc}>
+                                    {v.description}
+                                  </span>
+                                </td>
+                                <td className={styles.tdRight}>
+                                  {formatRupiah(v.total_cost)}
+                                </td>
+                                <td className={styles.tdRight}>
+                                  {v.total_km
+                                    ? `${formatKm(v.total_km)} km`
+                                    : "—"}
+                                </td>
+                                <td className={styles.tdRight}>
+                                  {v.current_end_km !== null ? (
+                                    <span className={styles.currentEndKm}>
+                                      {formatKm(v.current_end_km)}
                                     </span>
-                                    <Badge variant="neutral" size="sm">
-                                      {formatPeriode(v.last_km_month, v.last_km_year)}
+                                  ) : (
+                                    <span className={styles.muted}>—</span>
+                                  )}
+                                </td>
+                                <td className={styles.tdRight}>
+                                  {v.last_km !== null ? (
+                                    <span className={styles.lastKmCell}>
+                                      <span className={styles.lastKmValue}>
+                                        {formatKm(v.last_km)}
+                                      </span>
+                                      <Badge variant="neutral" size="sm">
+                                        {formatPeriode(
+                                          v.last_km_month,
+                                          v.last_km_year,
+                                        )}
+                                      </Badge>
+                                    </span>
+                                  ) : (
+                                    <span className={styles.muted}>—</span>
+                                  )}
+                                </td>
+                                <td className={styles.tdRight}>
+                                  {v.detail_count}
+                                </td>
+                                <td>
+                                  {v.is_balanced ? (
+                                    <Badge variant="success" size="sm">
+                                      Balance
                                     </Badge>
-                                  </span>
-                                ) : (
-                                  <span className={styles.muted}>—</span>
-                                )}
-                              </td>
-                              <td className={styles.tdRight}>
-                                {v.detail_count}
-                              </td>
-                              <td>
-                                {v.is_balanced ? (
-                                  <Badge variant="success" size="sm">
-                                    Balance
-                                  </Badge>
-                                ) : (
-                                  <Badge variant="warning" size="sm">
-                                    Belum
-                                  </Badge>
-                                )}
-                              </td>
-                              <td className={styles.tdRight}>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handlePrintOne(v.vehicle_id)}
-                                  loading={printingId === v.vehicle_id}
-                                  disabled={
-                                    !v.is_balanced || printingId !== null
-                                  }
-                                  title={
-                                    v.is_balanced
-                                      ? "Print laporan kendaraan ini"
-                                      : "Kalkulasi belum balance"
-                                  }
-                                >
-                                  <Printer size={13} />
-                                </Button>
-                              </td>
-                            </tr>
-                          ))}
+                                  ) : (
+                                    <Badge variant="warning" size="sm">
+                                      Belum
+                                    </Badge>
+                                  )}
+                                </td>
+                                <td className={styles.tdRight}>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      handlePrintOne(
+                                        v.vehicle_id,
+                                        {} as React.MouseEvent,
+                                      ).catch((error) => {
+                                        console.error("Print error:", error);
+                                      });
+                                    }}
+                                    loading={printingId === v.vehicle_id}
+                                    disabled={
+                                      !v.is_balanced || printingId !== null
+                                    }
+                                    title={
+                                      v.is_balanced
+                                        ? "Print laporan kendaraan ini"
+                                        : "Kalkulasi belum balance"
+                                    }
+                                  >
+                                    <Printer size={13} />
+                                  </Button>
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                         <tfoot>
                           <tr className={styles.tfootRow}>
@@ -809,7 +866,6 @@ const handleExportZf0002 = useCallback(
                             >
                               {formatKm(data.total_km_all)} km
                             </td>
-                            {/* current_end_km + last_km + baris + status + print */}
                             <td colSpan={5} />
                           </tr>
                         </tfoot>
@@ -848,13 +904,14 @@ const handleExportZf0002 = useCallback(
                             <span className={styles.vDesc}>
                               {v.description}
                             </span>
-                            {/* ── NEW: Last KM hint di card no-cost ── */}
                             {v.last_km !== null && (
                               <span className={styles.noCostLastKm}>
-                                Last KM:{" "}
-                                <strong>{formatKm(v.last_km)}</strong>{" "}
+                                Last KM: <strong>{formatKm(v.last_km)}</strong>{" "}
                                 <Badge variant="neutral" size="sm">
-                                  {formatPeriode(v.last_km_month, v.last_km_year)}
+                                  {formatPeriode(
+                                    v.last_km_month,
+                                    v.last_km_year,
+                                  )}
                                 </Badge>
                               </span>
                             )}

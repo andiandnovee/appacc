@@ -321,3 +321,49 @@
   color: var(--text-tertiary);
   font-size: 0.8rem;
 }
+
+/* Tambahkan ke LogbookSummarySection.module.css */
+
+/* Row clickable */
+.trClickable {
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.trClickable:hover {
+  background: var(--color-primary-subtle, rgba(59, 130, 246, 0.06));
+}
+
+/* Row terpilih */
+.trSelected {
+  background: var(--color-primary-subtle, rgba(59, 130, 246, 0.10)) !important;
+  outline: 2px solid var(--color-primary, #3b82f6);
+  outline-offset: -2px;
+}
+
+.trSelected td {
+  font-weight: var(--font-medium);
+}
+
+/* Hint "klik baris" di subheader */
+.rowHint {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary, var(--text-secondary));
+  font-style: italic;
+  margin-left: auto;
+}
+
+/* statSub di VehicleLogbookPage headerCard */
+.statSub {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  margin-top: 1px;
+}
+
+/* filterGridSimple — tanpa kolom kendaraan */
+.filterGridSimple {
+  display: grid;
+  grid-template-columns: 2fr 1fr auto auto auto;
+  gap: var(--space-3);
+  align-items: end;
+}
