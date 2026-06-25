@@ -22,6 +22,7 @@ import Button from "../../../components/ui/Button";
 import Select from "../../../components/ui/Select";
 import Badge from "../../../components/ui/Badge";
 import Drawer from "../../../components/ui/Drawer";
+import Collapsible from "../../../components/ui/Collapsible";
 import { useToast } from "../../../components/ui/Toast";
 import { useFilterVehicleLogbook } from "../../../stores/filterVehicleLogbook";
 import { useAuth } from "../../../hooks/useAuth";
@@ -280,19 +281,16 @@ export default function VehicleLogbookPage() {
   }, [fetchData]);
 
   // ── Handler: pilih kendaraan dari summary ────
-  const handleVehicleSelect = useCallback(
-    (vehicle: Vehicle) => {
-      setSelectedVehicle(vehicle);
-      // Scroll ke section logbook setelah vehicle dipilih
-      setTimeout(() => {
-        logbookSectionRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }, 100);
-    },
-    [],
-  );
+  const handleVehicleSelect = useCallback((vehicle: Vehicle) => {
+    setSelectedVehicle(vehicle);
+    // Scroll ke section logbook setelah vehicle dipilih
+    setTimeout(() => {
+      logbookSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 100);
+  }, []);
 
   // ── Ctrl+A → focus inline form ───────────────
   useEffect(() => {
@@ -327,7 +325,10 @@ export default function VehicleLogbookPage() {
     setRecalculating(true);
     try {
       await api.post(`/vehicles/logbook/${header.id}/recalculate`);
-      addToast({ variant: "success", title: "Biaya berhasil dikalkulasi ulang." });
+      addToast({
+        variant: "success",
+        title: "Biaya berhasil dikalkulasi ulang.",
+      });
       fetchData();
       summaryRef.current?.refresh();
     } catch (e: any) {
@@ -409,59 +410,70 @@ export default function VehicleLogbookPage() {
       </div>
 
       {/* ── FILTER BAR (tanpa Select kendaraan) ── */}
-      <div className={styles.filterCard}>
-        <div className={styles.filterGridSimple}>
-          <Select
-            label="Company"
-            placeholder="Pilih company..."
-            value={selectedCompany}
-            onChange={(e) => setSelectedCompany(e.target.value)}
-            options={companyOptions}
-          />
-
-          <Select
-            label="Business Area"
-            placeholder={selectedCompany ? "Pilih area..." : "Pilih company dulu"}
-            value={selectedBusArea}
-            onChange={(e) => setSelectedBusArea(e.target.value)}
-            disabled={!selectedCompany || busAreas.length === 0}
-            options={busAreaOptions}
-          />
-
-          <div className={styles.fieldWrap}>
+      <Collapsible
+        title="Pilih Perusahaan, Area Bisnis, dan Periode"
+        subtitle={selectedBusArea && selectedCompany ? `${selectedCompany} -  ${formatPeriode(Number(month), Number(year))}` : ""}
+        defaultOpen={true}
+      >
+        <div className={styles.filterCard}>
+          <div className={styles.filterGridSimple}>
             <Select
-              label="Bulan"
-              value={month}
-              onChange={(e) => setMonth(e.target.value)}
-              size="sm"
-              options={MONTHS}
+              label="Company"
+              placeholder="Pilih company..."
+              value={selectedCompany}
+              onChange={(e) => setSelectedCompany(e.target.value)}
+              options={companyOptions}
             />
-          </div>
-          <div className={styles.fieldWrap}>
-            <label className={styles.filterLabel}>Tahun</label>
-            <input
-              type="number"
-              className={styles.yearInput}
-              value={year}
-              min="2020"
-              max="2099"
-              onChange={(e) => setYear(e.target.value)}
-            />
-          </div>
 
-          <div className={styles.filterActions}>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={fetchData}
-              disabled={loading}
-            >
-              <RefreshCw size={14} className={loading ? styles.spinning : ""} />{" "}
-              Refresh
-            </Button>
+            <Select
+              label="Business Area"
+              placeholder={
+                selectedCompany ? "Pilih area..." : "Pilih company dulu"
+              }
+              value={selectedBusArea}
+              onChange={(e) => setSelectedBusArea(e.target.value)}
+              disabled={!selectedCompany || busAreas.length === 0}
+              options={busAreaOptions}
+            />
+
+            <div className={styles.fieldWrap}>
+              <Select
+                label="Bulan"
+                value={month}
+                onChange={(e) => setMonth(e.target.value)}
+                size="sm"
+                options={MONTHS}
+              />
+            </div>
+            <div className={styles.fieldWrap}>
+              <label className={styles.filterLabel}>Tahun</label>
+              <input
+                type="number"
+                className={styles.yearInput}
+                value={year}
+                min="2020"
+                max="2099"
+                onChange={(e) => setYear(e.target.value)}
+              />
+            </div>
+
+            <div className={styles.filterActions}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchData}
+                disabled={loading}
+              >
+                <RefreshCw
+                  size={14}
+                  className={loading ? styles.spinning : ""}
+                />{" "}
+                Refresh
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      </Collapsible>
 
       {/* ── SUMMARY & EKSPOR SAP ── */}
       {selectedBusArea && month && year && activeBusArea && (
@@ -511,7 +523,10 @@ export default function VehicleLogbookPage() {
         {!loading && !error && selectedVehicle && !header && (
           <div className={styles.stateBox}>
             <Car size={36} className={styles.emptyIcon} />
-            <p>Belum ada data biaya untuk <strong>{selectedVehicle.plate_number}</strong> periode ini.</p>
+            <p>
+              Belum ada data biaya untuk{" "}
+              <strong>{selectedVehicle.plate_number}</strong> periode ini.
+            </p>
             <p className={styles.stateHint}>
               Upload biaya SAP terlebih dahulu via tombol "Import Biaya SAP".
             </p>
@@ -524,7 +539,6 @@ export default function VehicleLogbookPage() {
             {/* ── HEADER INFO CARD ── */}
             <div className={styles.headerCard}>
               <div className={styles.headerCardLeft}>
-
                 {/* Identitas kendaraan */}
                 <div className={styles.statItem}>
                   <span className={styles.statLabel}>Kendaraan</span>
@@ -547,7 +561,9 @@ export default function VehicleLogbookPage() {
 
                 <div className={styles.statItem}>
                   <span className={styles.statLabel}>Total KM</span>
-                  <span className={styles.statValue}>{formatKm(totalKm)} km</span>
+                  <span className={styles.statValue}>
+                    {formatKm(totalKm)} km
+                  </span>
                 </div>
                 <div className={styles.statDivider} />
 
@@ -568,7 +584,9 @@ export default function VehicleLogbookPage() {
                   {/* Last KM global dari CC, update setiap fetchData */}
                   {lastKmInfo.last_km !== null && (
                     <span className={styles.lastKmHint}>
-                      <span className={styles.lastKmHintLabel}>Last KM (CC):</span>
+                      <span className={styles.lastKmHintLabel}>
+                        Last KM (CC):
+                      </span>
                       <strong>{formatKm(lastKmInfo.last_km)}</strong>
                       {lastKmInfo.month && lastKmInfo.year && (
                         <Badge variant="neutral" size="sm">
@@ -578,7 +596,6 @@ export default function VehicleLogbookPage() {
                     </span>
                   )}
                 </div>
-
               </div>
               <div className={styles.headerCardRight}>
                 {isBalanced ? (
@@ -594,9 +611,15 @@ export default function VehicleLogbookPage() {
             {/* ── ACTION BAR ── */}
             <div className={styles.actionBar}>
               <div className={styles.actionBarLeft}>
-                <Button variant="primary" size="sm" onClick={handleScrollToForm}>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleScrollToForm}
+                >
                   <Plus size={14} /> Tambah Baris
-                  <span style={{ opacity: 0.6, fontSize: "0.75em", marginLeft: 4 }}>
+                  <span
+                    style={{ opacity: 0.6, fontSize: "0.75em", marginLeft: 4 }}
+                  >
                     Ctrl+A
                   </span>
                 </Button>
@@ -625,7 +648,10 @@ export default function VehicleLogbookPage() {
             <div className={styles.tableCard}>
               {details.length === 0 ? (
                 <div className={styles.tableEmpty}>
-                  <p>Belum ada baris logbook. Isi form di bawah atau pakai data bulan lalu.</p>
+                  <p>
+                    Belum ada baris logbook. Isi form di bawah atau pakai data
+                    bulan lalu.
+                  </p>
                 </div>
               ) : (
                 <div className={styles.tableWrap}>
@@ -682,7 +708,9 @@ export default function VehicleLogbookPage() {
                               <span className={styles.muted}>—</span>
                             )}
                           </td>
-                          <td className={styles.tdDesc}>{d.description || "—"}</td>
+                          <td className={styles.tdDesc}>
+                            {d.description || "—"}
+                          </td>
                           <td className={styles.tdAction}>
                             <div className={styles.rowActions}>
                               <button
@@ -764,7 +792,11 @@ export default function VehicleLogbookPage() {
       </div>
 
       {/* ── DRAWER: Import ── */}
-      <Drawer isOpen={importOpen} onClose={() => setImportOpen(false)} size="md">
+      <Drawer
+        isOpen={importOpen}
+        onClose={() => setImportOpen(false)}
+        size="md"
+      >
         <Drawer.Header
           title="Import Biaya Kendaraan"
           subtitle="Upload Excel SAP (cost center + nominal)"
@@ -782,7 +814,11 @@ export default function VehicleLogbookPage() {
       </Drawer>
 
       {/* ── DRAWER: Edit Baris ── */}
-      <Drawer isOpen={!!editDetail} onClose={() => setEditDetail(null)} size="md">
+      <Drawer
+        isOpen={!!editDetail}
+        onClose={() => setEditDetail(null)}
+        size="md"
+      >
         <Drawer.Header
           title="Edit Baris Logbook"
           subtitle={
