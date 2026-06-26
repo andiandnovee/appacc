@@ -369,11 +369,11 @@ public function bebanSearch(Request $request)
         $allocated += $amount;
     }
 
-    // // ✅ Sync end_km header dari detail terakhir
-    // $lastDetail = $details->last();
-    // if ($lastDetail) {
-    //     $header->update(['end_km' => $lastDetail->end_km]);
-    // }
+    // ✅ Sync end_km header dari detail terakhir
+    $lastDetail = $details->last();
+    if ($lastDetail) {
+        $header->update(['end_km' => $lastDetail->end_km]);
+    }
 
        $header->update([
         'start_km' => $details->first()->start_km,
