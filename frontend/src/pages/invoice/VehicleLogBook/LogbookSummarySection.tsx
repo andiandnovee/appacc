@@ -153,7 +153,7 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
     const [printingAll, setPrintingAll] = useState(false);
     const [exportingZf, setExportingZf] = useState(false);
     const [exportingSkf, setExportingSkf] = useState(false);
-    const [postingDate, setPostingDate] = useState<string>(todayInputValue());
+    const [postingDate, setPostingDate] = useState<string>("");
 
     // ── Fetch summary ──────────────────────────
     const fetchSummary = useCallback(async () => {
@@ -558,13 +558,24 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
 
           <div className={styles.toolbar}>
             <div className={styles.postingDateWrap}>
-              <label className={styles.postingDateLabel}>Posting Date</label>
+              <label className={styles.postingDateLabel}>
+                Posting Date{" "}
+                <span style={{ color: "var(--color-danger)" }}>*</span>
+              </label>
               <input
                 type="date"
                 className={styles.postingDateInput}
                 value={postingDate}
                 onChange={(e) => setPostingDate(e.target.value)}
+                placeholder="Wajib diisi"
               />
+              {!postingDate && (
+                <span
+                  style={{ fontSize: "0.7rem", color: "var(--color-warning)" }}
+                >
+                  Isi tanggal untuk mengaktifkan export
+                </span>
+              )}
             </div>
 
             <SplitButton
@@ -579,18 +590,22 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
                   icon: <FileSpreadsheet size={13} />,
                   onClick: () => handleExportZf0002("excel", "customer"),
                   loading: exportingZf,
-                  disabled: !allBalanced || exportingZf || !hasVehicles,
+                  disabled:
+                    !allBalanced || exportingZf || !hasVehicles || !postingDate,
                 },
                 {
                   label: "Excel — Hanya CC",
                   icon: <FileSpreadsheet size={13} />,
                   onClick: () => handleExportZf0002("excel", "cc"),
                   loading: exportingZf,
-                  disabled: !allBalanced || exportingZf || !hasVehicles,
+                  disabled:
+                    !allBalanced || exportingZf || !hasVehicles || !postingDate,
                 },
               ]}
               loading={exportingZf}
-              disabled={!allBalanced || exportingZf || !hasVehicles}
+              disabled={
+                !allBalanced || exportingZf || !hasVehicles || !postingDate
+              }
             />
             <SplitButton
               label={"ZF0002 Text ALL"}
@@ -604,7 +619,8 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
                   icon: <FileOutput size={13} />,
                   onClick: () => handleExportZf0002("text", "customer"),
                   loading: exportingZf,
-                  disabled: !allBalanced || exportingZf || !hasVehicles,
+                  disabled:
+                    !allBalanced || exportingZf || !hasVehicles || !postingDate,
                 },
                 {
                   label: "Text — Hanya CC",
@@ -612,11 +628,14 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
 
                   onClick: () => handleExportZf0002("text", "cc"),
                   loading: exportingZf,
-                  disabled: !allBalanced || exportingZf || !hasVehicles,
+                  disabled:
+                    !allBalanced || exportingZf || !hasVehicles || !postingDate,
                 },
               ]}
               loading={exportingZf}
-              disabled={!allBalanced || exportingZf || !hasVehicles}
+              disabled={
+                !allBalanced || exportingZf || !hasVehicles || !postingDate
+              }
             />
 
             <SplitButton
@@ -630,7 +649,8 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
                   icon: <FileSpreadsheet size={13} />,
                   onClick: handleExportSkfExcel,
                   loading: exportingSkf,
-                  disabled: !allBalanced || exportingZf || !hasVehicles,
+                  disabled:
+                    !allBalanced || exportingZf || !hasVehicles || !postingDate,
                 },
               ]}
               loading={exportingSkf}
