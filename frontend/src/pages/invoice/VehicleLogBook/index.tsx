@@ -644,6 +644,40 @@ export default function VehicleLogbookPage() {
               </div>
             </div>
 
+{/* ── INLINE FORM TAMBAH BARIS ── */}
+            <div ref={inlineFormWrapRef} className={styles.inlineFormCard}>
+              <div className={styles.inlineFormHeader}>
+                <Plus size={14} />
+                <span>Tambah Baris Baru</span>
+                {lastKm !== null && (
+                  <span className={styles.inlineFormKmHint}>
+                    KM awal: <strong>{formatKm(lastKm)}</strong>
+                  </span>
+                )}
+                <span className={styles.inlineFormShortcut}>
+                  Ctrl+A untuk fokus
+                </span>
+              </div>
+              <LogbookDetailForm
+                ref={inlineFormRef}
+                headerId={header.id}
+                lastKm={lastKm}
+                detail={null}
+                inline
+                onSuccess={async () => {
+                  const data = await fetchData();
+                  summaryRef.current?.refresh();
+                  const newDetails: CostDetail[] = data?.details ?? [];
+                  const newLastKm =
+                    newDetails.length > 0
+                      ? newDetails[newDetails.length - 1].end_km
+                      : (header?.start_km ?? null);
+                  inlineFormRef.current?.resetAndFocus(newLastKm);
+                }}
+                onCancel={() => {}}
+              />
+            </div>
+         
             {/* ── TABEL LOGBOOK ── */}
             <div className={styles.tableCard}>
               {details.length === 0 ? (
@@ -754,39 +788,9 @@ export default function VehicleLogbookPage() {
               )}
             </div>
 
-            {/* ── INLINE FORM TAMBAH BARIS ── */}
-            <div ref={inlineFormWrapRef} className={styles.inlineFormCard}>
-              <div className={styles.inlineFormHeader}>
-                <Plus size={14} />
-                <span>Tambah Baris Baru</span>
-                {lastKm !== null && (
-                  <span className={styles.inlineFormKmHint}>
-                    KM awal: <strong>{formatKm(lastKm)}</strong>
-                  </span>
-                )}
-                <span className={styles.inlineFormShortcut}>
-                  Ctrl+A untuk fokus
-                </span>
-              </div>
-              <LogbookDetailForm
-                ref={inlineFormRef}
-                headerId={header.id}
-                lastKm={lastKm}
-                detail={null}
-                inline
-                onSuccess={async () => {
-                  const data = await fetchData();
-                  summaryRef.current?.refresh();
-                  const newDetails: CostDetail[] = data?.details ?? [];
-                  const newLastKm =
-                    newDetails.length > 0
-                      ? newDetails[newDetails.length - 1].end_km
-                      : (header?.start_km ?? null);
-                  inlineFormRef.current?.resetAndFocus(newLastKm);
-                }}
-                onCancel={() => {}}
-              />
-            </div>
+            
+         
+         
           </>
         )}
       </div>
