@@ -340,39 +340,48 @@ public function bebanSearch(Request $request)
      * Baris terakhir mendapat sisa (hindari selisih pembulatan).
      */
     public static function recalculate(int $headerId): int
-    {
-        $header = VehicleCostHeader::find($headerId);
-        if (!$header || !$header->total_cost) return 0;
+{
+    $header = VehicleCostHeader::find($headerId);
+    if (!$header || !$header->total_cost) return 0;
 
-        $details = VehicleCostDetail::where('vehicle_cost_header_id', $headerId)
-            ->whereNull('deleted_at')
-            ->orderBy('start_km')
-            ->get();
+    $details = VehicleCostDetail::where('vehicle_cost_header_id', $headerId)
+        ->whereNull('deleted_at')
+        ->orderBy('start_km')
+        ->get();
 
-        if ($details->isEmpty()) return 0;
+    if ($details->isEmpty()) return 0;
 
-        $totalKm = $details->sum(fn($d) => $d->end_km - $d->start_km);
-        if ($totalKm <= 0) return 0;
+    $totalKm = $details->sum(fn($d) => $d->end_km - $d->start_km);
+    if ($totalKm <= 0) return 0;
 
-        $totalCost    = $header->total_cost;
-        $allocated    = 0;
-        $count        = $details->count();
+    $totalCost = $header->total_cost;
+    $allocated = 0;
+    $count     = $details->count();
 
-        foreach ($details as $i => $d) {
-            $km = $d->end_km - $d->start_km;
-            $isLast = ($i === $count - 1);
+    foreach ($details as $i => $d) {
+        $km     = $d->end_km - $d->start_km;
+        $isLast = ($i === $count - 1);
+        $amount = $isLast
+            ? $totalCost - $allocated
+            : (int) round(($km / $totalKm) * $totalCost);
 
-            // Baris terakhir dapat sisa (anti selisih pembulatan)
-            $amount = $isLast
-                ? $totalCost - $allocated
-                : (int) round(($km / $totalKm) * $totalCost);
-
-            $d->update(['cost_amount' => $amount]);
-            $allocated += $amount;
-        }
-
-        return $count;
+        $d->update(['cost_amount' => $amount]);
+        $allocated += $amount;
     }
+
+    // // ✅ Sync end_km header dari detail terakhir
+    // $lastDetail = $details->last();
+    // if ($lastDetail) {
+    //     $header->update(['end_km' => $lastDetail->end_km]);
+    // }
+
+       $header->update([
+        'start_km' => $details->first()->start_km,
+        'end_km'   => $details->last()->end_km,
+    ]);
+
+    return $count;
+}
 
     // Tambahkan dua method ini ke VehicleLogbookController.php
 // Letakkan setelah method carryover(), sebelum private helpers
