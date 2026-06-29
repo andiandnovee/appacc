@@ -87,6 +87,11 @@ interface LastKmInfo {
   year: number | null;
 }
 
+// Tambah di bagian TYPES (atas file)
+interface KmContinuity {
+  valid: boolean;
+  issues: { type: "gap" | "overlap"; msg: string }[];
+}
 // ─────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────
@@ -178,6 +183,12 @@ export default function VehicleLogbookPage() {
     year: null,
   });
 
+  // Tambah di bagian state (bawah lastKmInfo)
+  const [kmContinuity, setKmContinuity] = useState<KmContinuity>({
+    valid: true,
+    issues: [],
+  });
+
   // Drawers
   const [importOpen, setImportOpen] = useState(false);
   const [carryoverOpen, setCarryoverOpen] = useState(false);
@@ -234,6 +245,7 @@ export default function VehicleLogbookPage() {
     setHeader(null);
     setDetails([]);
     setLastKmInfo({ last_km: null, month: null, year: null });
+    setKmContinuity({ valid: true, issues: [] }); // ←
   }, [selectedBusArea, month, year]);
 
   // ── Fetch last KM ────────────────────────────
@@ -254,6 +266,7 @@ export default function VehicleLogbookPage() {
     if (!selectedVehicle || !month || !year) {
       setHeader(null);
       setDetails([]);
+      setKmContinuity({ valid: true, issues: [] });
       return null;
     }
     setLoading(true);
@@ -264,12 +277,14 @@ export default function VehicleLogbookPage() {
       });
       setHeader(data.header ?? null);
       setDetails(data.details ?? []);
+      setKmContinuity(data.km_continuity ?? { valid: true, issues: [] }); // ← tambah
       fetchLastKm(selectedVehicle.id);
       return data;
     } catch (e: any) {
       setError(e?.response?.data?.message ?? "Gagal memuat data logbook.");
       setHeader(null);
       setDetails([]);
+      setKmContinuity({ valid: true, issues: [] }); // ← tambah
       return null;
     } finally {
       setLoading(false);
@@ -412,7 +427,11 @@ export default function VehicleLogbookPage() {
       {/* ── FILTER BAR (tanpa Select kendaraan) ── */}
       <Collapsible
         title="Pilih Perusahaan, Area Bisnis, dan Periode"
-        subtitle={selectedBusArea && selectedCompany ? `${selectedCompany} -  ${formatPeriode(Number(month), Number(year))}` : ""}
+        subtitle={
+          selectedBusArea && selectedCompany
+            ? `${selectedCompany} -  ${formatPeriode(Number(month), Number(year))}`
+            : ""
+        }
         defaultOpen={true}
       >
         <div className={styles.filterCard}>
@@ -637,14 +656,18 @@ export default function VehicleLogbookPage() {
                   size="sm"
                   onClick={handleRecalculate}
                   loading={recalculating}
-                  disabled={details.length === 0 || !header.total_cost}
+                  disabled={
+                    details.length === 0 ||
+                    !header.total_cost ||
+                    !kmContinuity.valid
+                  } // ← tambah !kmContinuity.valid
                 >
                   <Calculator size={14} /> Kalkulasi Ulang
                 </Button>
               </div>
             </div>
 
-{/* ── INLINE FORM TAMBAH BARIS ── */}
+            {/* ── INLINE FORM TAMBAH BARIS ── */}
             <div ref={inlineFormWrapRef} className={styles.inlineFormCard}>
               <div className={styles.inlineFormHeader}>
                 <Plus size={14} />
@@ -677,7 +700,23 @@ export default function VehicleLogbookPage() {
                 onCancel={() => {}}
               />
             </div>
-         
+            {/* ── KM CONTINUITY WARNING ── */}
+            {!kmContinuity.valid && (
+              <div className={styles.continuityWarning}>
+                <AlertCircle size={16} />
+                <div>
+                  <strong>KM belum tersambung — kalkulasi diblokir</strong>
+                  <ul className={styles.continuityIssues}>
+                    {kmContinuity.issues.map((issue, i) => (
+                      <li key={i} className={styles[`issue_${issue.type}`]}>
+                        {issue.msg}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
             {/* ── TABEL LOGBOOK ── */}
             <div className={styles.tableCard}>
               {details.length === 0 ? (
@@ -787,10 +826,6 @@ export default function VehicleLogbookPage() {
                 </div>
               )}
             </div>
-
-            
-         
-         
           </>
         )}
       </div>

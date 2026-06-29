@@ -219,12 +219,11 @@ end_km:   parseKm(form.end_km),
               setForm((p) => ({ ...p, start_km: e.target.value }))
             }
             error={errors.start_km}
-            readOnly={!isEdit && lastKm !== null}
             hint={
-              !isEdit && lastKm !== null
-                ? "Otomatis dari baris sebelumnya"
-                : undefined
-            }
+    !isEdit && lastKm !== null
+      ? `KM terakhir: ${new Intl.NumberFormat("id-ID").format(lastKm)}`  // ← ubah jadi info saja
+      : undefined
+  }
             required
           />
           <Input

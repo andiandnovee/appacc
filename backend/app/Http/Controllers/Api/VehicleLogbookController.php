@@ -71,10 +71,12 @@ class VehicleLogbookController extends Controller
                 ]);
             });
 
-        return response()->json([
-            'header'  => $header,
-            'details' => $details,
-        ]);
+       // Ganti baris return response()->json di method index():
+return response()->json([
+    'header'         => $header,
+    'details'        => $details,
+    'km_continuity'  => $this->checkContinuity($header->id), // ← tambah ini
+]);
         }
 
         // VehicleLogbookController.php — tambah method baru
@@ -146,49 +148,44 @@ public function bebanSearch(Request $request)
      * Tambah satu baris logbook.
      */
     public function storeDetail(Request $request)
-    {
-        $request->validate([
-            'vehicle_cost_header_id' => 'required|integer|exists:vehicle_cost_headers,id',
-            'start_km'               => 'required|integer|min:0',
-            'end_km'                 => 'required|integer|gt:start_km',
-            'description'            => 'required|string|max:255',
-            'cost_center'            => 'nullable|string',
-            'customer_code'          => 'nullable|string',
-        ]);
+{
+    $request->validate([
+        'vehicle_cost_header_id' => 'required|integer|exists:vehicle_cost_headers,id',
+        'start_km'               => 'required|integer|min:0',
+        'end_km'                 => 'required|integer|gt:start_km',
+        'description'            => 'required|string|max:255',
+        'cost_center'            => 'nullable|string',
+        'customer_code'          => 'nullable|string',
+    ]);
 
-        // Validasi kontinuitas KM
-        $this->validateKmContinuity(
-            $request->vehicle_cost_header_id,
-            $request->start_km,
-        );
+    // ← HAPUS baris validateKmContinuity() yang lama
 
-        // Pastikan hanya satu dari cost_center / customer_code
-        if ($request->cost_center && $request->customer_code) {
-            return response()->json([
-                'message' => 'Hanya boleh satu: cost_center ATAU customer_code.',
-            ], 422);
-        }
-        if (!$request->cost_center && !$request->customer_code) {
-            return response()->json([
-                'message' => 'Wajib mengisi salah satu: cost_center atau customer_code.',
-            ], 422);
-        }
-
-        $detail = VehicleCostDetail::create([
-            'vehicle_cost_header_id' => $request->vehicle_cost_header_id,
-            'start_km'               => $request->start_km,
-            'end_km'                 => $request->end_km,
-            'description'            => $request->description,
-            'cost_center'            => $request->cost_center,
-            'customer_code'          => $request->customer_code,
-            'is_carryover'           => false,
-        ]);
-
-        // Auto-recalculate setelah insert
-        $this->recalculate($request->vehicle_cost_header_id);
-
-        return response()->json($detail, 201);
+    if ($request->cost_center && $request->customer_code) {
+        return response()->json([
+            'message' => 'Hanya boleh satu: cost_center ATAU customer_code.',
+        ], 422);
     }
+    if (!$request->cost_center && !$request->customer_code) {
+        return response()->json([
+            'message' => 'Wajib mengisi salah satu: cost_center atau customer_code.',
+        ], 422);
+    }
+
+    $detail = VehicleCostDetail::create([
+        'vehicle_cost_header_id' => $request->vehicle_cost_header_id,
+        'start_km'               => $request->start_km,
+        'end_km'                 => $request->end_km,
+        'description'            => $request->description,
+        'cost_center'            => $request->cost_center,
+        'customer_code'          => $request->customer_code,
+        'is_carryover'           => false,
+    ]);
+
+    // Auto-recalculate tetap jalan — frontend yang block tombolnya
+    $this->recalculate($request->vehicle_cost_header_id);
+
+    return response()->json($detail, 201);
+}
 
     /**
      * PUT /vehicles/logbook/detail/{id}
@@ -251,6 +248,45 @@ public function bebanSearch(Request $request)
      *
      * Request: { source_detail_ids: [1, 2, 3] }
      */
+
+    /**
+ * Cek gap & overlap antar detail setelah diurutkan by start_km.
+ * Return: ['valid' => bool, 'issues' => [['type','msg'],...]]
+ */
+private function checkContinuity(int $headerId): array
+{
+    $details = VehicleCostDetail::where('vehicle_cost_header_id', $headerId)
+        ->whereNull('deleted_at')
+        ->orderBy('start_km')
+        ->get(['id', 'start_km', 'end_km']);
+
+    if ($details->count() <= 1) {
+        return ['valid' => true, 'issues' => []];
+    }
+
+    $issues = [];
+    for ($i = 0; $i < $details->count() - 1; $i++) {
+        $curr = $details[$i];
+        $next = $details[$i + 1];
+
+        if ($next->start_km > $curr->end_km) {
+            $issues[] = [
+                'type' => 'gap',
+                'msg'  => "Gap: KM {$curr->end_km} → {$next->start_km} tidak ada yang menanggung.",
+            ];
+        } elseif ($next->start_km < $curr->end_km) {
+            $issues[] = [
+                'type'    => 'overlap',
+                'msg'     => "Overlap: KM {$next->start_km} → {$curr->end_km} dihitung dua kali.",
+            ];
+        }
+    }
+
+    return [
+        'valid'  => empty($issues),
+        'issues' => $issues,
+    ];
+}
     public function carryover(Request $request, int $headerId)
     {
         $request->validate([
@@ -322,17 +358,17 @@ public function bebanSearch(Request $request)
     /**
      * Validasi KM awal row baru harus = KM akhir row terakhir.
      */
-    private function validateKmContinuity(int $headerId, int $startKm): void
-    {
-        $last = VehicleCostDetail::where('vehicle_cost_header_id', $headerId)
-            ->whereNull('deleted_at')
-            ->orderByDesc('end_km')
-            ->first();
+    // private function validateKmContinuity(int $headerId, int $startKm): void
+    // {
+    //     $last = VehicleCostDetail::where('vehicle_cost_header_id', $headerId)
+    //         ->whereNull('deleted_at')
+    //         ->orderByDesc('end_km')
+    //         ->first();
 
-        if ($last && $last->end_km !== $startKm) {
-            abort(422, "KM tidak menyambung: KM awal harus {$last->end_km}, bukan {$startKm}.");
-        }
-    }
+    //     if ($last && $last->end_km !== $startKm) {
+    //         abort(422, "KM tidak menyambung: KM awal harus {$last->end_km}, bukan {$startKm}.");
+    //     }
+    // }
 
     /**
      * Recalculate cost_amount semua details.
