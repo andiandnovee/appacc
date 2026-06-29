@@ -261,10 +261,16 @@ private function checkContinuity(int $headerId): array
         ->get(['id', 'start_km', 'end_km']);
 
     if ($details->count() <= 1) {
-        return ['valid' => true, 'issues' => []];
+        return [
+            'valid'         => true,
+            'issues'        => [],
+            'next_start_km' => $details->last()?->end_km ?? null, // ← tambah
+        ];
     }
 
-    $issues = [];
+    $issues        = [];
+    $next_start_km = $details->last()->end_km; // default: KM terbesar
+
     for ($i = 0; $i < $details->count() - 1; $i++) {
         $curr = $details[$i];
         $next = $details[$i + 1];
@@ -274,17 +280,22 @@ private function checkContinuity(int $headerId): array
                 'type' => 'gap',
                 'msg'  => "Gap: KM {$curr->end_km} → {$next->start_km} tidak ada yang menanggung.",
             ];
+            // Gap pertama ditemukan → next_start_km = ujung baris sebelum gap
+            if ($next_start_km === $details->last()->end_km) {
+                $next_start_km = $curr->end_km;
+            }
         } elseif ($next->start_km < $curr->end_km) {
             $issues[] = [
-                'type'    => 'overlap',
-                'msg'     => "Overlap: KM {$next->start_km} → {$curr->end_km} dihitung dua kali.",
+                'type' => 'overlap',
+                'msg'  => "Overlap: KM {$next->start_km} → {$curr->end_km} dihitung dua kali.",
             ];
         }
     }
 
     return [
-        'valid'  => empty($issues),
-        'issues' => $issues,
+        'valid'         => empty($issues),
+        'issues'        => $issues,
+        'next_start_km' => $next_start_km, // ← selalu ada
     ];
 }
     public function carryover(Request $request, int $headerId)

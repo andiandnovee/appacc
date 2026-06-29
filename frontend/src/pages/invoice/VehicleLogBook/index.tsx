@@ -88,9 +88,11 @@ interface LastKmInfo {
 }
 
 // Tambah di bagian TYPES (atas file)
+// Update type
 interface KmContinuity {
   valid: boolean;
   issues: { type: "gap" | "overlap"; msg: string }[];
+  next_start_km: number | null; // ← tambah
 }
 // ─────────────────────────────────────────────
 // HELPERS
@@ -184,9 +186,12 @@ export default function VehicleLogbookPage() {
   });
 
   // Tambah di bagian state (bawah lastKmInfo)
+  // Semua useState dan fallback, tambah next_start_km: null
+
   const [kmContinuity, setKmContinuity] = useState<KmContinuity>({
     valid: true,
     issues: [],
+    next_start_km: null, // ← tambah
   });
 
   // Drawers
@@ -245,7 +250,7 @@ export default function VehicleLogbookPage() {
     setHeader(null);
     setDetails([]);
     setLastKmInfo({ last_km: null, month: null, year: null });
-    setKmContinuity({ valid: true, issues: [] }); // ←
+    setKmContinuity({ valid: true, issues: [], next_start_km: null });
   }, [selectedBusArea, month, year]);
 
   // ── Fetch last KM ────────────────────────────
@@ -266,7 +271,7 @@ export default function VehicleLogbookPage() {
     if (!selectedVehicle || !month || !year) {
       setHeader(null);
       setDetails([]);
-      setKmContinuity({ valid: true, issues: [] });
+      setKmContinuity({ valid: true, issues: [], next_start_km: null });
       return null;
     }
     setLoading(true);
@@ -284,7 +289,7 @@ export default function VehicleLogbookPage() {
       setError(e?.response?.data?.message ?? "Gagal memuat data logbook.");
       setHeader(null);
       setDetails([]);
-      setKmContinuity({ valid: true, issues: [] }); // ← tambah
+      setKmContinuity({ valid: true, issues: [], next_start_km: null }); // ← tambah
       return null;
     } finally {
       setLoading(false);
@@ -684,13 +689,17 @@ export default function VehicleLogbookPage() {
               <LogbookDetailForm
                 ref={inlineFormRef}
                 headerId={header.id}
-                lastKm={lastKm}
+                lastKm={kmContinuity.next_start_km ?? lastKm}
                 detail={null}
                 inline
                 onSuccess={async (submittedEndKm?: number) => {
-                  await fetchData();
+                  const data = await fetchData();
                   summaryRef.current?.refresh();
-                  inlineFormRef.current?.resetAndFocus(submittedEndKm ?? null);
+                  // Pakai next_start_km dari continuity hasil fetch terbaru
+                  const continuity = data?.km_continuity;
+                  const nextKm =
+                    continuity?.next_start_km ?? submittedEndKm ?? null;
+                  inlineFormRef.current?.resetAndFocus(nextKm);
                 }}
                 onCancel={() => {}}
               />
@@ -866,7 +875,7 @@ export default function VehicleLogbookPage() {
           {editDetail && header && (
             <LogbookDetailForm
               headerId={header.id}
-              lastKm={lastKm}
+              lastKm={kmContinuity.next_start_km ?? lastKm}
               detail={editDetail}
               onSuccess={() => {
                 setEditDetail(null);
@@ -896,7 +905,7 @@ export default function VehicleLogbookPage() {
               vehicleId={header.vehicle_id}
               currentMonth={Number(month)}
               currentYear={Number(year)}
-              lastKm={lastKm}
+              lastKm={kmContinuity.next_start_km ?? lastKm}
               onSuccess={() => {
                 setCarryoverOpen(false);
                 fetchData();
