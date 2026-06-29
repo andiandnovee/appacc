@@ -687,15 +687,10 @@ export default function VehicleLogbookPage() {
                 lastKm={lastKm}
                 detail={null}
                 inline
-                onSuccess={async () => {
-                  const data = await fetchData();
+                onSuccess={async (submittedEndKm?: number) => {
+                  await fetchData();
                   summaryRef.current?.refresh();
-                  const newDetails: CostDetail[] = data?.details ?? [];
-                  const newLastKm =
-                    newDetails.length > 0
-                      ? newDetails[newDetails.length - 1].end_km
-                      : (header?.start_km ?? null);
-                  inlineFormRef.current?.resetAndFocus(newLastKm);
+                  inlineFormRef.current?.resetAndFocus(submittedEndKm ?? null);
                 }}
                 onCancel={() => {}}
               />

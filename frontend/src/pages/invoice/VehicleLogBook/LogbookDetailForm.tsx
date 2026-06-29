@@ -36,7 +36,7 @@ interface Props {
   headerId: number;
   lastKm: number | null;
   detail?: CostDetail | null;
-  onSuccess: () => void;
+  onSuccess: (submittedEndKm?: number) => void;
   onCancel: () => void;
   inline?: boolean; // optional, used by parent
 }
@@ -176,7 +176,13 @@ const LogbookDetailForm = forwardRef<LogbookDetailFormRef, Props>(
           await api.post("/vehicles/logbook/detail", payload);
         }
 
-        onSuccess();
+        if (isEdit && detail?.id) {
+  await api.put(`/vehicles/logbook/detail/${detail.id}`, payload);
+  onSuccess();
+} else {
+  await api.post("/vehicles/logbook/detail", payload);
+  onSuccess(payload.end_km); // ← kirim end_km baris yang baru disimpan
+}
       } catch (e: any) {
         const msg = e?.response?.data?.message;
         const errs = e?.response?.data?.errors;
