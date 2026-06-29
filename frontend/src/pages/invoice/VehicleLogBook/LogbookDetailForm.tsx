@@ -98,10 +98,10 @@ const LogbookDetailForm = forwardRef<LogbookDetailFormRef, Props>(
     }, [detail, lastKm]);
 
     // Helper — taruh di atas komponen
-function parseKm(val: string): number {
-  // Hapus pemisah ribuan (titik atau koma), lalu parse
-  return parseInt(val.replace(/[.,]/g, ""), 10);
-}
+    function parseKm(val: string): number {
+      // Hapus pemisah ribuan (titik atau koma), lalu parse
+      return parseInt(val.replace(/[.,]/g, ""), 10);
+    }
 
     useEffect(() => {
       setForm(makeInitial());
@@ -130,7 +130,7 @@ function parseKm(val: string): number {
     // ── Derived ──────────────────────────────────
     const kmDiff = useMemo(() => {
       const s = parseKm(form.start_km);
-const e = parseKm(form.end_km);
+      const e = parseKm(form.end_km);
       if (!isNaN(s) && !isNaN(e) && e > s) return e - s;
       return null;
     }, [form.start_km, form.end_km]);
@@ -139,7 +139,7 @@ const e = parseKm(form.end_km);
     const validate = (): boolean => {
       const errs: FormErrors = {};
       const s = parseKm(form.start_km);
-const e = parseKm(form.end_km);
+      const e = parseKm(form.end_km);
 
       if (!form.start_km) errs.start_km = "KM awal wajib diisi.";
       if (!form.end_km) errs.end_km = "KM akhir wajib diisi.";
@@ -164,12 +164,12 @@ const e = parseKm(form.end_km);
         const payload = {
           vehicle_cost_header_id: headerId,
           start_km: parseKm(form.start_km),
-end_km:   parseKm(form.end_km),
+          end_km: parseKm(form.end_km),
           description: form.description.trim().toUpperCase(),
           cost_center: beban?.type === "cost_center" ? beban.sap_id : null,
           customer_code: beban?.type === "customer" ? beban.sap_id : null,
         };
-        console.log("payload:", payload)
+        console.log("payload:", payload);
         if (isEdit && detail?.id) {
           await api.put(`/vehicles/logbook/detail/${detail.id}`, payload);
         } else {
@@ -211,22 +211,21 @@ end_km:   parseKm(form.end_km),
       <div className={styles.form}>
         {/* KM Range */}
         <div className={styles.kmRow}>
-          // SESUDAH
-<Input
-  label="KM Awal"
-  type="number"
-  value={form.start_km}
-  onChange={(e) =>
-    setForm((p) => ({ ...p, start_km: e.target.value }))
-  }
-  error={errors.start_km}
-  hint={
-    lastKm !== null
-      ? `KM terakhir: ${new Intl.NumberFormat("id-ID").format(lastKm)}`
-      : undefined
-  }
-  required
-/>
+          <Input
+            label="KM Awal"
+            type="number"
+            value={form.start_km}
+            onChange={(e) =>
+              setForm((p) => ({ ...p, start_km: e.target.value }))
+            }
+            error={errors.start_km}
+            hint={
+              lastKm !== null
+                ? `KM terakhir: ${new Intl.NumberFormat("id-ID").format(lastKm)}`
+                : undefined
+            }
+            required
+          />
           <Input
             ref={endKmInputRef}
             label="KM Akhir"
