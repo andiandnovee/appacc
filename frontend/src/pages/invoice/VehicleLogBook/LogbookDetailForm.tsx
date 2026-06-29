@@ -80,7 +80,8 @@ const LogbookDetailForm = forwardRef<LogbookDetailFormRef, Props>(
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [errors, setErrors] = useState<FormErrors>({});
-
+    // Tambah di bawah const endKmInputRef
+const isSavingRef = useRef(false);
     // ── Init / reset ──────────────────────────
     const makeInitial = useCallback((): FormState => {
       if (detail) {
@@ -155,51 +156,48 @@ const LogbookDetailForm = forwardRef<LogbookDetailFormRef, Props>(
 
     // ── Submit ───────────────────────────────────
     // ── Submit ───────────────────────────────────
-    const handleSave = useCallback(async () => {
-      if (!validate()) return;
-      setSaving(true);
-      setError(null);
+ const handleSave = useCallback(async () => {
+  if (isSavingRef.current) return; // ← guard double submit
+  if (!validate()) return;
+  
+  isSavingRef.current = true; // ← lock
+  setSaving(true);
+  setError(null);
 
-      try {
-        const payload = {
-          vehicle_cost_header_id: headerId,
-          start_km: parseKm(form.start_km),
-          end_km: parseKm(form.end_km),
-          description: form.description.trim().toUpperCase(),
-          cost_center: beban?.type === "cost_center" ? beban.sap_id : null,
-          customer_code: beban?.type === "customer" ? beban.sap_id : null,
-        };
-        console.log("payload:", payload);
-        if (isEdit && detail?.id) {
-          await api.put(`/vehicles/logbook/detail/${detail.id}`, payload);
-        } else {
-          await api.post("/vehicles/logbook/detail", payload);
-        }
+  try {
+    const payload = {
+      vehicle_cost_header_id: headerId,
+      start_km: parseKm(form.start_km),
+      end_km:   parseKm(form.end_km),
+      description: form.description.trim().toUpperCase(),
+      cost_center: beban?.type === "cost_center" ? beban.sap_id : null,
+      customer_code: beban?.type === "customer" ? beban.sap_id : null,
+    };
 
-        if (isEdit && detail?.id) {
-  await api.put(`/vehicles/logbook/detail/${detail.id}`, payload);
-  onSuccess();
-} else {
-  await api.post("/vehicles/logbook/detail", payload);
-  onSuccess(payload.end_km); // ← kirim end_km baris yang baru disimpan
-}
-      } catch (e: any) {
-        const msg = e?.response?.data?.message;
-        const errs = e?.response?.data?.errors;
-        if (errs) {
-          const mapped: FormErrors = {};
-          Object.entries(errs).forEach(([k, v]) => {
-            (mapped as any)[k] = Array.isArray(v) ? v[0] : v;
-          });
-          setErrors(mapped);
-        } else {
-          setError(msg ?? "Gagal menyimpan data.");
-        }
-      } finally {
-        setSaving(false);
-      }
-    }, [headerId, form, beban, isEdit, detail, onSuccess]);
-
+    if (isEdit && detail?.id) {
+      await api.put(`/vehicles/logbook/detail/${detail.id}`, payload);
+      onSuccess();
+    } else {
+      await api.post("/vehicles/logbook/detail", payload);
+      onSuccess(payload.end_km);
+    }
+  } catch (e: any) {
+    const msg = e?.response?.data?.message;
+    const errs = e?.response?.data?.errors;
+    if (errs) {
+      const mapped: FormErrors = {};
+      Object.entries(errs).forEach(([k, v]) => {
+        (mapped as any)[k] = Array.isArray(v) ? v[0] : v;
+      });
+      setErrors(mapped);
+    } else {
+      setError(msg ?? "Gagal menyimpan data.");
+    }
+  } finally {
+    setSaving(false);
+    isSavingRef.current = false; // ← unlock
+  }
+}, [headerId, form, beban, isEdit, detail, onSuccess]);
     // ── Keyboard shortcut ────────────────────────
     useEffect(() => {
       const handler = (e: KeyboardEvent) => {
