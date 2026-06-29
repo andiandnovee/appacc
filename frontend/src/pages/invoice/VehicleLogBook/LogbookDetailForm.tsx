@@ -211,21 +211,22 @@ end_km:   parseKm(form.end_km),
       <div className={styles.form}>
         {/* KM Range */}
         <div className={styles.kmRow}>
-          <Input
-            label="KM Awal"
-            type="number"
-            value={form.start_km}
-            onChange={(e) =>
-              setForm((p) => ({ ...p, start_km: e.target.value }))
-            }
-            error={errors.start_km}
-            hint={
-    !isEdit && lastKm !== null
-      ? `KM terakhir: ${new Intl.NumberFormat("id-ID").format(lastKm)}`  // ← ubah jadi info saja
+          // SESUDAH
+<Input
+  label="KM Awal"
+  type="number"
+  value={form.start_km}
+  onChange={(e) =>
+    setForm((p) => ({ ...p, start_km: e.target.value }))
+  }
+  error={errors.start_km}
+  hint={
+    lastKm !== null
+      ? `KM terakhir: ${new Intl.NumberFormat("id-ID").format(lastKm)}`
       : undefined
   }
-            required
-          />
+  required
+/>
           <Input
             ref={endKmInputRef}
             label="KM Akhir"
