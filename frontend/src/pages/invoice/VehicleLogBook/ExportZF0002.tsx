@@ -55,12 +55,35 @@ type ZfCell = string | number | null;
 type ZfRow = ZfCell[];
 
 export const ZF0002_HEADERS = [
-  "No", "Company Code", "Posting Date", "Period", "Document Date",
-  "Document Type", "Currency", "Exchange Rate", "Reference", "Document Header Text",
-  "Debet/Credit", "GL Account", "Vendor Account", "Customer Account", "SP GL Ind",
-  "Amount in Doc", "Business Area", "Cost Center", "Profit Center", "WBS",
-  "Assignment", "Text", "Tax Code", "Trading Partner", "Term of Payment",
-  "Base Line Date", "Number of Days", "Value Date", "Transaction type",
+  "No",
+  "Company Code",
+  "Posting Date",
+  "Period",
+  "Document Date",
+  "Document Type",
+  "Currency",
+  "Exchange Rate",
+  "Reference",
+  "Document Header Text",
+  "Debet/Credit",
+  "GL Account",
+  "Vendor Account",
+  "Customer Account",
+  "SP GL Ind",
+  "Amount in Doc",
+  "Business Area",
+  "Cost Center",
+  "Profit Center",
+  "WBS",
+  "Assignment",
+  "Text",
+  "Tax Code",
+  "Trading Partner",
+  "Term of Payment",
+  "Base Line Date",
+  "Number of Days",
+  "Value Date",
+  "Transaction type",
 ];
 
 // ─────────────────────────────────────────────
@@ -81,7 +104,12 @@ function periodStr(month: number): string {
   return String(month).padStart(2, "0");
 }
 
-function buildFileBaseName(companyCode: string, month: number, year: number, mode: ZfMode): string {
+function buildFileBaseName(
+  companyCode: string,
+  month: number,
+  year: number,
+  mode: ZfMode,
+): string {
   const suffix = mode === "customer" ? "-CUST" : mode === "cc" ? "-CC" : "";
   return `ZF0002_AGRI-${companyCode}-${periodStr(month)}-${year}${suffix}`;
 }
@@ -116,11 +144,12 @@ export function buildZf0002Rows({
 
     // Filter details sesuai mode
     const allDetails = payload.details;
-    const filteredDetails = mode === "customer"
-      ? allDetails.filter((d) => d.customer_code)
-      : mode === "cc"
-        ? allDetails.filter((d) => d.cost_center)
-        : allDetails; // "all" — tidak difilter
+    const filteredDetails =
+      mode === "customer"
+        ? allDetails.filter((d) => d.customer_code)
+        : mode === "cc"
+          ? allDetails.filter((d) => d.cost_center)
+          : allDetails; // "all" — tidak difilter
 
     if (filteredDetails.length === 0) return;
 
@@ -136,59 +165,69 @@ export function buildZf0002Rows({
         // ── Debet ke CUSTOMER ──
         const text50 = `ALK ${plate}-${d.description}`;
         rows.push([
-          no,                        // A
-          Number(companyCode),       // B
-          postingDateStr,            // C
-          periodVal,                 // D
-          postingDateStr,            // E
-          "YA",                      // F
-          "IDR",                     // G
-          null,                      // H
-          noVoucher,                 // I
-          headerText,                // J
-          "D",                       // K
-          null,                      // L - kosong untuk customer
-          null,                      // M
-          Number(d.customer_code),   // N - customer account
-          null,                      // O
-          amount,                    // P
-          Number(businessArea),      // Q
-          null,                      // R - kosong untuk customer
-          Number(businessArea),      // S
-          null,                      // T
-          "DN",                      // U
-          text50,                    // V
-          null,                      // W
-          null, null, null, null, null, null, // X-AC
+          no, // A
+          Number(companyCode), // B
+          postingDateStr, // C
+          periodVal, // D
+          postingDateStr, // E
+          "YA", // F
+          "IDR", // G
+          null, // H
+          noVoucher, // I
+          headerText, // J
+          "D", // K
+          null, // L - kosong untuk customer
+          null, // M
+          Number(d.customer_code), // N - customer account
+          null, // O
+          amount, // P
+          Number(businessArea), // Q
+          null, // R - kosong untuk customer
+          Number(businessArea), // S
+          null, // T
+          "DN", // U
+          text50, // V
+          null, // W
+          null,
+          null,
+          null,
+          null,
+          null,
+          null, // X-AC
         ]);
       } else {
         // ── Debet ke COST CENTER (perjalanan dinas) ──
         const text50 = `ALK ${plate}-${d.description}`;
         rows.push([
-          no,                        // A
-          Number(companyCode),       // B
-          postingDateStr,            // C
-          periodVal,                 // D
-          postingDateStr,            // E
-          "YA",                      // F
-          "IDR",                     // G
-          null,                      // H
-          noVoucher,                 // I
-          headerText,                // J
-          "D",                       // K
-          70920001,                  // L - akun perjalanan dinas
-          null,                      // M
-          null,                      // N - kosong (beda dari customer)
-          null,                      // O
-          amount,                    // P
-          Number(businessArea),      // Q
-          Number(d.cost_center),     // R - cost center pengguna
-          Number(businessArea),      // S
-          null,                      // T
-          "DN",                      // U
-          text50,                    // V
-          null,                      // W
-          null, null, null, null, null, null, // X-AC
+          no, // A
+          Number(companyCode), // B
+          postingDateStr, // C
+          periodVal, // D
+          postingDateStr, // E
+          "YA", // F
+          "IDR", // G
+          null, // H
+          noVoucher, // I
+          headerText, // J
+          "D", // K
+          70920001, // L - akun perjalanan dinas
+          null, // M
+          null, // N - kosong (beda dari customer)
+          null, // O
+          amount, // P
+          Number(businessArea), // Q
+          Number(d.cost_center), // R - cost center pengguna
+          Number(businessArea), // S
+          null, // T
+          null, // U
+          text50, // V
+          null, // W
+          null,
+          null,
+          null,
+          null,
+          null,
+          null, // X-AC
         ]);
       }
     }
@@ -199,30 +238,35 @@ export function buildZf0002Rows({
     const text50Credit = `ALK ${plate}-${totalKmAlloc}KM`;
 
     rows.push([
-      no,                                    // A
-      Number(companyCode),                   // B
-      postingDateStr,                        // C
-      periodVal,                             // D
-      postingDateStr,                        // E
-      "YA",                                  // F
-      "IDR",                                 // G
-      null,                                  // H
-      noVoucher,                             // I
-      headerText,                            // J
-      "C",                                   // K
-      73730001,                              // L
-      null,                                  // M
-      null,                                  // N
-      null,                                  // O
-      debetTotal,                            // P - total semua debet (gabung)
-      Number(businessArea),                  // Q
-      Number(payload.vehicle.cost_center),   // R
-      Number(businessArea),                  // S
-      null,                                  // T
-      assignmentCredit,                      // U
-      text50Credit,                          // V
-      "I0",                                  // W
-      null, null, null, null, null, null,    // X-AC
+      no, // A
+      Number(companyCode), // B
+      postingDateStr, // C
+      periodVal, // D
+      postingDateStr, // E
+      "YA", // F
+      "IDR", // G
+      null, // H
+      noVoucher, // I
+      headerText, // J
+      "C", // K
+      73730001, // L
+      null, // M
+      null, // N
+      null, // O
+      debetTotal, // P - total semua debet (gabung)
+      Number(businessArea), // Q
+      Number(payload.vehicle.cost_center), // R
+      Number(businessArea), // S
+      null, // T
+      assignmentCredit, // U
+      text50Credit, // V
+      "I0", // W
+      null,
+      null,
+      null,
+      null,
+      null,
+      null, // X-AC
     ]);
   });
 
@@ -232,7 +276,9 @@ export function buildZf0002Rows({
 // ─────────────────────────────────────────────
 // EXPORT: Excel (.xlsx)
 // ─────────────────────────────────────────────
-export async function exportZf0002Excel(params: ExportZf0002Params): Promise<void> {
+export async function exportZf0002Excel(
+  params: ExportZf0002Params,
+): Promise<void> {
   const { companyCode, month, year, mode = "all" } = params;
   const rows = buildZf0002Rows(params);
 
@@ -274,10 +320,7 @@ export function exportZf0002Text(params: ExportZf0002Params): void {
 
   const content = lines.join("\r\n") + "\r\n";
   const fileName = `${buildFileBaseName(companyCode, month, year, mode)}.txt`;
-  saveAs(
-    new Blob([content], { type: "text/plain;charset=utf-8" }),
-    fileName,
-  );
+  saveAs(new Blob([content], { type: "text/plain;charset=utf-8" }), fileName);
 }
 
 export const exportZf0002Customer = exportZf0002Excel;
