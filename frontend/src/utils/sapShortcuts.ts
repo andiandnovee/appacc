@@ -98,6 +98,7 @@ interface F53Params {
   augtxOverride?: string;
   sgtxtOverride?: string;
   xblnrOverride?: string;
+  sZUONR?: string;
   /**
    * skipScreen: true  → /n*F-53 (langsung eksekusi, lewati konfirmasi SAP)
    *             false → /nF-53  (buka form biasa)
@@ -136,7 +137,7 @@ export function downloadF53({
   sapUser, sapServer, companyCode, businessArea, bankAccount,
   vendorName, vendorSapId, docDate, postingDate,
   headerText, stageText, totalAmount,
-  augtxOverride, sgtxtOverride, xblnrOverride,
+  augtxOverride, sgtxtOverride, xblnrOverride, sZUONR,
   skipScreen = false,
   skipDoc = false,
 }: F53Params): void {
@@ -163,7 +164,7 @@ export function downloadF53({
     `BSEG-VALUT=${sapPostDate}`,
     `RF05A-AUGTX=${augtx}`,
     `BSEG-SGTXT=${sgtxt}`,
-    `BSEG-ZUONR=PO`,
+    `BSEG-ZUONR=${sZUONR || "PO"}`,
     `RF05A-AGKON=${vendorSapId}`,
     ...(skipDoc ? ["RF05A-XPOS1=X"] : []),
     `RF05A-XAUTS=X`,

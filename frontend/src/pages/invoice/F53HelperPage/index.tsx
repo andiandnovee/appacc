@@ -369,6 +369,7 @@ export default function F53HelperPage() {
           ? `U.SAKU/MKN ${group.xblnr}`
           : `BYR TAG ${stageText}/${group.vendorName}`;
         const xblnr = group.isPerdin ? group.xblnr : group.vendorName;
+        const sZUONR = group.isPerdin ? group.xblnr : "PO";
 
         downloadF53({
           sapUser: user?.sap_user ?? "",
@@ -386,6 +387,7 @@ export default function F53HelperPage() {
           augtxOverride: augtx,
           sgtxtOverride: sgtxt,
           xblnrOverride: xblnr,
+          sZUONR: sZUONR,
           skipScreen: screenSkip,
           skipDoc: docSkip,
         });
@@ -515,16 +517,20 @@ export default function F53HelperPage() {
         </Button>
       </div>
 
-      <Drawer isOpen={importOpen} onClose={() => setImportOpen(false)} size="md">
-  <Drawer.Header
-    title="Import Data F53"
-    subtitle="Upload file Excel hasil ekspor SAP"
-    onClose={() => setImportOpen(false)}
-  />
-  <Drawer.Body>
-    <F53ImportForm onSuccess={() => fetchRows()} />
-  </Drawer.Body>
-</Drawer>
+      <Drawer
+        isOpen={importOpen}
+        onClose={() => setImportOpen(false)}
+        size="md"
+      >
+        <Drawer.Header
+          title="Import Data F53"
+          subtitle="Upload file Excel hasil ekspor SAP"
+          onClose={() => setImportOpen(false)}
+        />
+        <Drawer.Body>
+          <F53ImportForm onSuccess={() => fetchRows()} />
+        </Drawer.Body>
+      </Drawer>
 
       {/* ── STEP 1: FILTER ─────────────────────── */}
       <Card variant="outlined">
