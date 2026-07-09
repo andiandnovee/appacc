@@ -18,8 +18,6 @@ import { useAuth } from "../../../hooks/useAuth";
 import Drawer from "../../../components/ui/Drawer";
 import ImportDispatcher from "./ImportDispatcher";
 
-
-
 const IS_PROD = import.meta.env.PROD;
 
 // ── Interfaces ────────────────────────────────────────────────
@@ -228,6 +226,16 @@ export default function InvoiceReceiptManagement() {
         cardRole: "title",
       },
       {
+        key: "business_area_code",
+        label: "Business Area Code",
+        sortable: true,
+        collapsible: false,
+        collapseOrder: 0,
+        render: (row: any) => (
+          <span className={styles.code}>{row.business_area_code || "—"}</span>
+        ),
+      },
+      {
         key: "invoice_number",
         label: "Invoice Number",
         sortable: true,
@@ -406,18 +414,18 @@ export default function InvoiceReceiptManagement() {
               })}
             </p>
           )}
-
-        
         </div>
 
         {/* ── Auto-refresh control ── */}
         <div className={styles.autoRefreshControl}>
-
-          <Button variant="outline" size="sm" onClick={() => setImportDrawerOpen(true)}>
-      <Upload size={14} />
-      Import SAP PO
-    </Button>
-
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setImportDrawerOpen(true)}
+          >
+            <Upload size={14} />
+            Import SAP PO
+          </Button>
 
           <label className={styles.autoRefreshLabel}>
             <input
@@ -508,7 +516,7 @@ export default function InvoiceReceiptManagement() {
           onClose={() => setImportDrawerOpen(false)}
         />
         <Drawer.Body>
-           <ImportDispatcher onSuccess={() => tableRef.current?.refetch()} />
+          <ImportDispatcher onSuccess={() => tableRef.current?.refetch()} />
         </Drawer.Body>
       </Drawer>
 
