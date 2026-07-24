@@ -134,7 +134,7 @@ const StageFormModal: FC<StageFormModalProps> = ({ stage, onClose, onSaved }) =>
           <Input
             label="Tahun"
             value={form.year}
-            type="number"
+            type="text"
             onChange={handleChange("year")}
             placeholder="Contoh: 2025"
             error={errors.year}
