@@ -193,13 +193,15 @@ const VendorFormModal: FC<VendorFormModalProps> = ({
             error={errors.pph_type}
           />
           <Input
-            label="Tarif PPh (%)"
-            type="number"
-            step="0.01"
-            value={form.pph_rate}
-            onChange={set("pph_rate")}
-            error={errors.pph_rate}
-          />
+  label="Tarif PPh (%)"
+  type="number"
+  step="0.01"          // ← tambah ini
+  min="0"
+  max="100"
+  value={form.pph_rate}
+  onChange={set("pph_rate")}
+  error={errors.pph_rate}
+/>
           <div className={`${styles.formField} ${styles.fullWidth}`}>
             <label className={styles.label}>Alamat</label>
             <textarea
