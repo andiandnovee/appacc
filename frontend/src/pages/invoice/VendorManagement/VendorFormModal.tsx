@@ -195,6 +195,7 @@ const VendorFormModal: FC<VendorFormModalProps> = ({
           <Input
             label="Tarif PPh (%)"
             type="number"
+            step="0.01"
             value={form.pph_rate}
             onChange={set("pph_rate")}
             error={errors.pph_rate}
