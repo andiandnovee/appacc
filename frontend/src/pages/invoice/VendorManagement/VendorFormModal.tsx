@@ -33,7 +33,7 @@ interface FormErrors {
 
 interface VendorFormModalProps {
   vendor?: any;
-  onClose: () => void; // Sebaiknya gunakan tipe fungsi yang jelas
+  onClose: () => void;
   onSaved: (data: any, isEdit: boolean) => void;
   api: any;
 }
@@ -62,7 +62,6 @@ const VendorFormModal: FC<VendorFormModalProps> = ({
 }) => {
   const isEdit = Boolean(vendor);
 
-  // Gunakan Generic <VendorFormData>
   const [form, setForm] = useState<VendorFormData>({
     sap_id: vendor?.sap_id ?? "",
     name: vendor?.name ?? "",
@@ -70,7 +69,8 @@ const VendorFormModal: FC<VendorFormModalProps> = ({
     address: vendor?.address ?? "",
     service_type: vendor?.service_type ?? "",
     pph_type: vendor?.pph_type ?? "23",
-    pph_rate: vendor?.pph_rate ?? "2",
+    // Pastikan nilai awal sudah string agar desimal tampil benar saat edit
+    pph_rate: vendor?.pph_rate != null ? String(vendor.pph_rate) : "2",
     is_pkp: vendor?.is_pkp ?? false,
   });
 
@@ -78,14 +78,10 @@ const VendorFormModal: FC<VendorFormModalProps> = ({
     vendor ? vendor.deleted_at === null : true,
   );
 
-  //const [isPkp, setIsPkp] = useState(vendor ? vendor.is_pkp : false);
-
   const [loading, setLoading] = useState(false);
 
-  // Gunakan Generic <FormErrors>
   const [errors, setErrors] = useState<FormErrors>({});
 
-  // Tambahkan tipe pada parameter field dan event
   const set =
     (field: keyof VendorFormData) =>
     (
@@ -95,10 +91,29 @@ const VendorFormModal: FC<VendorFormModalProps> = ({
     ) =>
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
+  // Handler khusus pph_rate — izinkan desimal dengan titik/koma
+  const handlePphRateChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    // Izinkan: kosong, angka bulat, atau angka dengan 1 titik/koma desimal
+    if (val === "" || /^(\d+)?([.,]\d*)?$/.test(val)) {
+      setForm((prev) => ({
+        ...prev,
+        // Normalisasi koma → titik sebelum disimpan ke state
+        pph_rate: val.replace(",", "."),
+      }));
+    }
+  };
+
   const validate = () => {
     const err: FormErrors = {};
     if (!form.sap_id?.toString().trim()) err.sap_id = "SAP ID wajib diisi.";
     if (!form.name?.trim?.()) err.name = "Nama vendor wajib diisi.";
+
+    const rate = parseFloat(form.pph_rate.toString());
+    if (isNaN(rate) || rate < 0 || rate > 100) {
+      err.pph_rate = "Tarif PPh harus angka antara 0 – 100.";
+    }
+
     return err;
   };
 
@@ -112,9 +127,15 @@ const VendorFormModal: FC<VendorFormModalProps> = ({
     setLoading(true);
     setErrors({});
     try {
+      // Kirim pph_rate sebagai float, bukan string
+      const payload: VendorFormData = {
+        ...form,
+        pph_rate: parseFloat(form.pph_rate.toString()) || 0,
+      };
+
       const res = isEdit
-        ? await api.put(`/vendors/${vendor.id}`, form)
-        : await api.post("/vendors", form);
+        ? await api.put(`/vendors/${vendor.id}`, payload)
+        : await api.post("/vendors", payload);
 
       if (isEdit && vendor.deleted_at === null && !isActive) {
         await api.delete(`/vendors/${vendor.id}`);
@@ -151,7 +172,6 @@ const VendorFormModal: FC<VendorFormModalProps> = ({
         subtitle={
           isEdit ? `SAP ID: ${vendor.sap_id}` : "Isi data vendor dengan lengkap"
         }
-        // Tambahkan properti actions dan children jika dibutuhkan oleh komponen Modal Anda
         actions={null}
       >
         {null}
@@ -192,16 +212,19 @@ const VendorFormModal: FC<VendorFormModalProps> = ({
             options={PPH_TYPES}
             error={errors.pph_type}
           />
+          {/* 
+            type="text" + inputMode="decimal" → bypass NumberInput formatter
+            yang strip karakter non-digit. Handler manual di handlePphRateChange.
+          */}
           <Input
-  label="Tarif PPh (%)"
-  type="number"
-  step="0.01"          // ← tambah ini
-  min="0"
-  max="100"
-  value={form.pph_rate}
-  onChange={set("pph_rate")}
-  error={errors.pph_rate}
-/>
+            label="Tarif PPh (%)"
+            type="text"
+            inputMode="decimal"
+            placeholder="contoh: 2.65"
+            value={form.pph_rate}
+            onChange={handlePphRateChange}
+            error={errors.pph_rate}
+          />
           <div className={`${styles.formField} ${styles.fullWidth}`}>
             <label className={styles.label}>Alamat</label>
             <textarea
@@ -223,7 +246,6 @@ const VendorFormModal: FC<VendorFormModalProps> = ({
               />
             </div>
           )}
-
           {isEdit && (
             <div className={`${styles.formField} ${styles.fullWidth}`}>
               <Toggle
