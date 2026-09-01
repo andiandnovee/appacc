@@ -31,7 +31,7 @@ class UpdateVendorRequest extends FormRequest
             ],
             'address'      => 'nullable|string|max:500',
             'service_type' => 'nullable',
-            'pph_type'     => 'nullable|in:21,23,26',
+            'pph_type'     => 'nullable',
             'pph_rate'     => 'nullable|numeric|min:0|max:100',
             'is_pkp'       => 'nullable|boolean',
         ];
