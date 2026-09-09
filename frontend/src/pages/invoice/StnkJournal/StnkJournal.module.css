@@ -1,0 +1,495 @@
+/* Path: src/pages/sap/StnkJournal/StnkJournal.module.css */
+
+/* ── Page Layout ── */
+.page {
+  padding: var(--space-6);
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* ── Page Header ── */
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.pageHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.pageIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-lg);
+  background: var(--color-primary-subtle, rgba(59, 130, 246, 0.1));
+  color: var(--color-primary, #3b82f6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pageTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.pageSubtitle {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  margin: 2px 0 0;
+}
+
+/* ── Filter / Header Card (inside Collapsible) ── */
+.filterCard {
+  padding: var(--space-4);
+}
+
+.headerGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-3) var(--space-4);
+  align-items: end;
+}
+
+/* ── Field wrappers (mirrors VehicleLogbook pattern) ── */
+.fieldWrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.filterLabel {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.textInput,
+.dateInput {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-input, var(--bg-surface));
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.textInput:focus,
+.dateInput:focus {
+  border-color: var(--color-primary, #3b82f6);
+}
+
+.textInput:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Items Section ── */
+.itemsSection {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.addItemBar {
+  display: flex;
+  justify-content: flex-start;
+  padding-top: var(--space-2);
+}
+
+/* ── Draft Card ── */
+.draftCard {
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.draftHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  padding: var(--space-2) var(--space-4);
+  background: var(--bg-muted, rgba(0, 0, 0, 0.03));
+  border-bottom: 1px solid var(--border-default);
+  min-height: 40px;
+}
+
+.draftNo {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  min-width: 28px;
+}
+
+.vehicleDesc {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btnRemove {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--color-danger, #dc2626);
+  cursor: pointer;
+  padding: var(--space-1);
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-sm);
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+
+.btnRemove:hover {
+  opacity: 1;
+  background: var(--color-danger-subtle, #fee2e2);
+}
+
+.draftBody {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* ── Plate Group ── */
+.plateGroup {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.plateInputWrap {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-end;
+}
+
+/* ── Biaya Grid ── */
+.biayaGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+}
+
+@media (max-width: 768px) {
+  .biayaGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .biayaGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Item Summary ── */
+.itemSummary {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-muted, rgba(0, 0, 0, 0.03));
+  border-radius: var(--radius-sm);
+  align-items: center;
+}
+
+/* ── Summary Layout ── */
+.summaryLayout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-5);
+  padding: var(--space-4);
+}
+
+@media (max-width: 640px) {
+  .summaryLayout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.summaryTable {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.summaryDivider {
+  border-top: 1px solid var(--border-default);
+  margin: var(--space-2) 0;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-2) var(--space-1);
+  font-size: 0.875rem;
+  border-radius: var(--radius-sm);
+}
+
+.summaryPrimary {
+  background: var(--color-primary-subtle, rgba(59, 130, 246, 0.08));
+  padding: var(--space-2) var(--space-3);
+}
+
+.summaryWarning {
+  background: var(--color-warning-subtle, #fef9c3);
+  padding: var(--space-2) var(--space-3);
+}
+
+.summaryBold .summaryLabel,
+.summaryBold .summaryValue {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.summaryLabel {
+  color: var(--text-secondary);
+}
+
+.summaryValue {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* ── BusArea Panel ── */
+.busAreaPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.busAreaTitle {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 var(--space-1);
+}
+
+.busAreaRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-muted, rgba(0, 0, 0, 0.03));
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  flex-wrap: wrap;
+}
+
+.busAreaCode {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+}
+
+.busAreaName {
+  color: var(--text-secondary);
+  flex: 1;
+}
+
+.busAreaCount {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+
+.busAreaTotal {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-left: auto;
+}
+
+/* ── Export Card ── */
+.exportCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  flex-wrap: wrap;
+}
+
+.exportLeft {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.exportIcon {
+  color: var(--color-primary, #3b82f6);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.exportTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 var(--space-1);
+}
+
+.exportNote {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.exportBtns {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+/* ── APPEND ke StnkJournal.module.css ── */
+
+/* ── Vendor Manager ── */
+.vendorList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.vendorRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-base, var(--bg-surface));
+  flex-wrap: wrap;
+}
+
+.vendorRowActive {
+  border-color: var(--color-primary, #3b82f6);
+  background: var(--color-primary-subtle, rgba(59,130,246,0.06));
+}
+
+.vendorInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.vendorCode {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.vendorName {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.vendorMeta {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.vendorActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.vendorEditGrid,
+.vendorAddGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--space-2) var(--space-3);
+  width: 100%;
+  align-items: end;
+}
+
+.vendorEditActions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-end;
+  padding-bottom: 1px;
+}
+
+.emptyHint {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin: 0;
+}
+
+/* ── Current BusArea info ── */
+.currentBaInfo {
+  margin-top: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ── Export Groups ── */
+.exportGroups {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.exportGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.exportGroupLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.deleteBtn {
+  color: var(--color-danger, #dc2626);
+}
+
+.warnText {
+  color: var(--color-warning, #ca8a04);
+  font-style: italic;
+}

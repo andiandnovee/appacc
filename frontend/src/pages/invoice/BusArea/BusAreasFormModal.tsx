@@ -10,12 +10,13 @@ import api from "../../../api/axios"; // ← ganti ke import api
 
 interface BusA {
   id: number;
-  sap_id: string;
+  sap_id: number; // ← ganti string → number (ikut index.tsx)
   company_id: string;
   name: string;
   name_long: string;
   sap_customer_code: string | null;
   sap_vendor_code: string | null;
+  current_bus_area: boolean; // ← tambah ini
 }
 
 interface BusAreaFormModalProps {
@@ -53,14 +54,18 @@ const BusAreaFormModal: FC<BusAreaFormModalProps> = ({
   const isEdit = Boolean(busArea);
 
   const [form, setForm] = useState<FormData>({
-  id: busArea?.id ?? 0,
-  sap_id: busArea?.sap_id.toString() ?? "",
-  company_id: busArea?.company_id != null ? String(busArea.company_id) : "",
-  name: busArea?.name != null ? String(busArea.name) : "",
-  name_long: busArea?.name_long != null ? String(busArea.name_long) : "",
-  sap_vendor_code: busArea?.sap_vendor_code != null ? String(busArea.sap_vendor_code) : "",
-  sap_customer_code: busArea?.sap_customer_code != null ? String(busArea.sap_customer_code) : "",
-});
+    id: busArea?.id ?? 0,
+    sap_id: busArea?.sap_id != null ? String(busArea.sap_id) : "",
+    company_id: busArea?.company_id != null ? String(busArea.company_id) : "",
+    name: busArea?.name != null ? String(busArea.name) : "",
+    name_long: busArea?.name_long != null ? String(busArea.name_long) : "",
+    sap_vendor_code:
+      busArea?.sap_vendor_code != null ? String(busArea.sap_vendor_code) : "",
+    sap_customer_code:
+      busArea?.sap_customer_code != null
+        ? String(busArea.sap_customer_code)
+        : "",
+  });
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -71,14 +76,13 @@ const BusAreaFormModal: FC<BusAreaFormModalProps> = ({
     };
 
   const handleSelectChange =
-    (field: keyof FormData) =>
-    (event: { target: { value: any } }) => {
+    (field: keyof FormData) => (event: { target: { value: any } }) => {
       setForm((prev) => ({ ...prev, [field]: event.target.value }));
     };
 
   const companyFetchOptions = useMemo<FetchOptions>(
     () => ({ endpoint: "/companies", searchParam: "search", limit: 5 }),
-    []
+    [],
   );
 
   const validate = (): FormErrors => {

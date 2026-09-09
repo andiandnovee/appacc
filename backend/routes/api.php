@@ -123,6 +123,7 @@ Route::middleware('auth:api')->group(function () {
 
         Route::get('busa/search', [BusinessAreaController::class, 'search']);
         Route::apiResource('busa', BusinessAreaController::class)->parameters(['busa' => 'businessArea']);;
+        Route::patch('busa/{businessArea}/set-current', [BusinessAreaController::class, 'setCurrent']);
 
         Route::get('invoice-receipts/{invoiceReceipt}/statuses', [InvoiceReceiptController::class, 'statuses']);
         Route::post('invoice-receipts/{invoiceReceipt}/statuses', [InvoiceReceiptController::class, 'addStatus']);
@@ -148,6 +149,7 @@ Route::middleware('auth:api')->group(function () {
             // Dropdown kendaraan — dipakai di VehicleLogbookPage filter
             Route::get('select-options', [VehicleSelectController::class, 'selectOptions']);
             // routes/api.php
+            Route::get('plate-lookup', [VehicleController::class, 'plateLookup']);
 
             // Cost center lookup + import biaya SAP
             Route::post('cost-center-lookup', [VehicleCostImportController::class, 'lookup']);

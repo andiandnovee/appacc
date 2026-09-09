@@ -25,6 +25,7 @@ import F53HelperPage from "./pages/invoice/F53HelperPage";
 import VehicleLogbookPage from "./pages/invoice/VehicleLogBook";
 import VehicleManagement from "./pages/invoice/VehicleManagementPage";
 import CostCenterManagement from "./pages/invoice/CostCenterManagementPage";
+import StnkJournal from "./pages/invoice/StnkJournal";
 
 const App: FC = (): ReactElement => {
   return (
@@ -69,6 +70,11 @@ const App: FC = (): ReactElement => {
                 <Route
                   path="/vehicles/manage"
                   element={<VehicleManagement />}
+                />
+
+                <Route
+                  path="/vehicles/stnk-journal"
+                  element={<StnkJournal />}
                 />
               </Route>
             </Route>

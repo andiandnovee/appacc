@@ -193,3 +193,24 @@
   align-items: center;
   gap: var(--space-2);
 }
+
+/* ── Current BusArea ── */
+.busAreaCell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.currentBtn {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.setCurrentBtn {
+  color: var(--color-warning, #ca8a04);
+  border-color: var(--color-warning, #ca8a04);
+}
+
+.setCurrentBtn:hover {
+  background: var(--color-warning-subtle, #fef9c3);
+}

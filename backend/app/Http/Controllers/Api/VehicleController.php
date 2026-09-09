@@ -68,6 +68,57 @@ class VehicleController extends Controller
         return VehicleResource::collection($query->paginate($perPage));
     }
 
+/**
+ * GET /api/vehicles/plate-lookup?plate=BM1002JQ&company_code=3500
+ * Flexible: "BM 1718 LL" / "BM1718LL" / "1718" / partial description
+ */
+public function plateLookup(Request $request): JsonResponse
+{
+    $raw         = trim($request->input('plate', ''));
+    $companyCode = $request->input('company_code');
+
+    if (!$raw || !$companyCode) {
+        return response()->json(['found' => false, 'vehicle' => null]);
+    }
+
+    // Strip semua spasi untuk compare plate
+    $plateStripped = strtoupper(preg_replace('/\s+/', '', $raw));
+    // Untuk LIKE partial (nomor tengah, misal "1718")
+    $plateLike     = '%' . $plateStripped . '%';
+    // Untuk description LIKE (pakai raw input dengan spasi)
+    $descLike      = '%' . strtoupper($raw) . '%';
+
+    $vehicle = Vehicle::where('company_code', $companyCode)
+        ->where(function ($q) use ($plateStripped, $plateLike, $descLike) {
+            // exact match tanpa spasi (prioritas tertinggi via orWhere urutan)
+            $q->whereRaw("REPLACE(UPPER(plate_number), ' ', '') = ?", [$plateStripped])
+              ->orWhereRaw("REPLACE(UPPER(plate_number_old), ' ', '') = ?", [$plateStripped])
+              // partial match — nomor tengah saja, misal "1718"
+              ->orWhereRaw("REPLACE(UPPER(plate_number), ' ', '') LIKE ?", [$plateLike])
+              ->orWhereRaw("REPLACE(UPPER(plate_number_old), ' ', '') LIKE ?", [$plateLike])
+              // description
+              ->orWhereRaw("UPPER(description) LIKE ?", [$descLike]);
+        })
+        ->orderByRaw("
+            CASE
+                WHEN REPLACE(UPPER(plate_number), ' ', '') = ?     THEN 1
+                WHEN REPLACE(UPPER(plate_number_old), ' ', '') = ? THEN 2
+                WHEN REPLACE(UPPER(plate_number), ' ', '') LIKE ?  THEN 3
+                WHEN REPLACE(UPPER(plate_number_old), ' ', '') LIKE ? THEN 4
+                ELSE 5
+            END
+        ", [$plateStripped, $plateStripped, $plateLike, $plateLike])
+        ->first();
+
+    if (!$vehicle) {
+        return response()->json(['found' => false, 'vehicle' => null]);
+    }
+
+    return response()->json([
+        'found'   => true,
+        'vehicle' => new VehicleResource($vehicle),
+    ]);
+}
     /**
      * POST /vehicles
      */

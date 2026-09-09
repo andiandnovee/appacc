@@ -41,6 +41,20 @@ class BusinessAreaController extends Controller
         return new BusinessAreaResource($businessArea);
     }
 
+    /**
+ * PATCH /api/busa/{businessArea}/set-current
+ * Set BusArea ini sebagai pembayar jurnal RO untuk company-nya.
+ * Otomatis unset BusArea lain di company yang sama.
+ */
+public function setCurrent(BusinessArea $businessArea): \Illuminate\Http\JsonResponse
+{
+    $businessArea->setAsCurrent();
+    $businessArea->load('company');
+    return response()->json([
+        'message'      => "BusArea {$businessArea->name} ditetapkan sebagai Current.",
+        'business_area' => new BusinessAreaResource($businessArea),
+    ]);
+}
 
 Public function store(BusinessAreaRequest $request)
     {

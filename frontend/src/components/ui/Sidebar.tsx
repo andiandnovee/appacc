@@ -35,6 +35,7 @@ const NAV_GROUPS = [
       { to: "/invoice/receipts", icon: FileText, label: "Monitor Invoice" },
       { to: "/invoice/pph", icon: Percent, label: "Rekap PPh" },
       { to: "/invoice/f53-helper", icon: DollarSign, label: "F53 Helper" },
+    
     ],
   },
   {
@@ -42,6 +43,7 @@ const NAV_GROUPS = [
     items: [
       { to: "/vehicles/logbook", icon: BookOpen, label: "Logbook & Biaya" },
       { to: "/vehicles/manage", icon: Car, label: "Master Kendaraan" },
+      { to: "/vehicles/stnk-journal", icon: BookOpen, label: "STNK Journal" },
     ],
   },
   {
