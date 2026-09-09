@@ -260,9 +260,11 @@
 }
 
 .summaryWarning {
-  background: var(--color-warning-subtle, #fef9c3);
+  background: var(--color-warning-subtle, #363204);
+  
   padding: var(--space-2) var(--space-3);
 }
+
 
 .summaryBold .summaryLabel,
 .summaryBold .summaryValue {
