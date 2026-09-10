@@ -253,8 +253,13 @@ export function buildStnkRoRows(
 
   const currentMeta = busAreaMetaList.find((m) => m.isCurrent);
   const currentBaId = currentMeta?.sapId ?? "";
-  const currentCustomerCode = currentMeta?.sapCustomerCode ?? "";
   const currentBaSapId = currentMeta?.sapId ?? "";
+
+  // Helper: ambil sap_customer_code dari BusArea item (bukan current)
+  const getCustomerCode = (businessAreaCode: string): number | null => {
+    const meta = busAreaMetaList.find((m) => m.sapId === businessAreaCode);
+    return meta?.sapCustomerCode ? Number(meta.sapCustomerCode) : null;
+  };
 
   // Reference = nama_vendor Zustand
   const reference = vendorRO.nama_vendor;
@@ -281,12 +286,11 @@ export function buildStnkRoRows(
 
     // GL Account debet:
     // - current BusArea item → 71830001, customer = null
-    // - item biasa (busAreaKendaraan true) → null (kosong), customer = current
-    // - no CC item → null (kosong), customer = current
+    // - item lain → null, customer = sap_customer_code dari BusArea item itu sendiri
     const glDebet = isCurrentBaItem ? 71830001 : null;
     const customerDebet = isCurrentBaItem
       ? null
-      : (currentCustomerCode ? Number(currentCustomerCode) : null);
+      : getCustomerCode(item.businessAreaCode);
 
     // Assignment:
     // - tanpa cost_center (not_found / no_cc) → "DN"
