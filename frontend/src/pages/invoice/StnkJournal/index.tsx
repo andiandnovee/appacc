@@ -1,11 +1,11 @@
 // Path: src/pages/invoice/StnkJournal/index.tsx
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import {
   FileText, Plus, Search, Trash2, Download,
   AlertCircle, CheckCircle, AlertTriangle,
-  Pencil, Save, X, Star,
+  Pencil, Save, X, Star, RotateCcw,
 } from "lucide-react";
 
 import api from "../../../api/axios";
@@ -16,6 +16,7 @@ import Collapsible from "../../../components/ui/Collapsible";
 import { useToast } from "../../../components/ui/Toast";
 
 import { useStnkVendors, StnkVendorEntry } from "../../../stores/stnkVendors";
+import { useStnkDraft, emptyDraftItem, DraftItem } from "../../../stores/stnkDraft";
 
 import {
   StnkItem, StnkHeader, BusAreaMeta, VendorRO,
@@ -59,7 +60,11 @@ interface VehicleFound {
 
 type LookupState = "idle" | "loading" | "found" | "not_found";
 
-interface InputItemDraft {
+// InputItemDraft = DraftItem dari store
+type InputItemDraft = DraftItem;
+
+// (keep interface for reference)
+interface _InputItemDraft_unused {
   id: string;
   plateInput: string;
   lookupState: LookupState;
@@ -161,19 +166,28 @@ export default function StnkJournalPage() {
     addVendor, updateVendor, removeVendor, selectVendor,
   } = useStnkVendors();
 
+  // ── Zustand draft store ─────────────────────
+  const {
+    header: draftHeader,
+    drafts,
+    setHeader,
+    addDraft: addDraftStore,
+    updateDraft,
+    removeDraft,
+    resetAll,
+  } = useStnkDraft();
+
+  const companyCode   = draftHeader.companyCode;
+  const postingDate   = draftHeader.postingDate;
+  const documentDate  = draftHeader.documentDate;
+  const noInvoice     = draftHeader.noInvoice;
+  const docHeaderText = draftHeader.docHeaderText;
+  const period        = draftHeader.period;
+
+  // ── Master data ──────────────────────────────
   const [companies, setCompanies] = useState<Company[]>([]);
   const [busAreas, setBusAreas] = useState<BusinessArea[]>([]);
   const [masterLoaded, setMasterLoaded] = useState(false);
-
-  // ── Header — namaVendor diganti noInvoice ────
-  const [companyCode, setCompanyCode] = useState("");
-  const [postingDate, setPostingDate] = useState("");
-  const [documentDate, setDocumentDate] = useState("");
-  const [noInvoice, setNoInvoice] = useState("");       // ← ex-namaVendor
-  const [docHeaderText, setDocHeaderText] = useState("");
-  const [period, setPeriod] = useState("");
-
-  const [drafts, setDrafts] = useState<InputItemDraft[]>([emptyDraft()]);
   const [exporting, setExporting] = useState(false);
 
   // vendor edit state
@@ -196,13 +210,17 @@ export default function StnkJournalPage() {
     }
   }, [masterLoaded, addToast]);
 
-  useState(() => { loadMaster(); });
-
   const loadBusAreas = useCallback(async (cId: number) => {
     try {
       const res = await api.get("/busa", { params: { company_id: cId, per_page: 999 } });
       setBusAreas(res.data?.data ?? []);
     } catch { setBusAreas([]); }
+  }, []);
+
+  useEffect(() => {
+    loadMaster();
+    if (draftHeader.companyId) loadBusAreas(draftHeader.companyId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ── Derived ──────────────────────────────────
@@ -277,39 +295,21 @@ export default function StnkJournalPage() {
         addToast({ variant: "warning", title: "Pilih Company Code terlebih dahulu." });
         return;
       }
-      setDrafts((prev) =>
-        prev.map((d) => d.id === draftId ? { ...d, lookupState: "loading" } : d),
-      );
+      updateDraft(draftId, { lookupState: "loading" });
       try {
         const res = await api.get("/vehicles/plate-lookup", {
           params: { plate: plate.trim(), company_code: companyCode },
         });
         const { found, vehicle } = res.data;
-        setDrafts((prev) =>
-          prev.map((d) =>
-            d.id === draftId
-              ? { ...d, lookupState: found ? "found" : "not_found", vehicle: found ? vehicle : null }
-              : d,
-          ),
-        );
+        updateDraft(draftId, { lookupState: found ? "found" : "not_found", vehicle: found ? vehicle : null });
       } catch {
-        setDrafts((prev) =>
-          prev.map((d) =>
-            d.id === draftId ? { ...d, lookupState: "not_found", vehicle: null } : d,
-          ),
-        );
+        updateDraft(draftId, { lookupState: "not_found", vehicle: null });
       }
     },
     [companyCode, addToast],
   );
 
-  const updateDraft = useCallback(
-    (id: string, patch: Partial<InputItemDraft>) =>
-      setDrafts((prev) => prev.map((d) => (d.id === id ? { ...d, ...patch } : d))),
-    [],
-  );
-  const addDraft = () => setDrafts((prev) => [...prev, emptyDraft()]);
-  const removeDraft = (id: string) => setDrafts((prev) => prev.filter((d) => d.id !== id));
+  const addDraft = addDraftStore;
 
   // ── Build objs ───────────────────────────────
   const buildHeaderObj = (): StnkHeader => ({
@@ -373,6 +373,13 @@ export default function StnkJournalPage() {
             <p className={styles.pageSubtitle}>Generate ZF0002 BusArea Kendaraan + BusArea RO</p>
           </div>
         </div>
+        <Button variant="ghost" size="sm"
+          onClick={() => {
+            if (confirm("Reset semua data draft? Semua input akan dihapus.")) resetAll();
+          }}
+        >
+          <RotateCcw size={14} /> Invoice Baru
+        </Button>
       </div>
 
       {/* ── VENDOR RO MANAGER ── */}
@@ -552,9 +559,8 @@ export default function StnkJournalPage() {
               value={companyCode}
               onChange={(e) => {
                 const opt = companies.find((c) => c.id === e.target.value);
-                setCompanyCode(e.target.value);
+                setHeader({ companyCode: e.target.value, companyId: opt?.company_id ?? null });
                 if (opt?.company_id) loadBusAreas(opt.company_id);
-                setDrafts([emptyDraft()]);
               }}
               options={companyOptions}
             />
@@ -562,19 +568,19 @@ export default function StnkJournalPage() {
             <div className={styles.fieldWrap}>
               <label className={styles.filterLabel}>Posting Date</label>
               <input type="date" className={styles.dateInput} value={postingDate}
-                onChange={(e) => setPostingDate(e.target.value)} />
+                onChange={(e) => setHeader({ postingDate: e.target.value })} />
             </div>
 
             <div className={styles.fieldWrap}>
               <label className={styles.filterLabel}>Document Date</label>
               <input type="date" className={styles.dateInput} value={documentDate}
-                onChange={(e) => setDocumentDate(e.target.value)} />
+                onChange={(e) => setHeader({ documentDate: e.target.value })} />
             </div>
 
             <div className={styles.fieldWrap}>
               <label className={styles.filterLabel}>No. Invoice</label>
               <input className={styles.textInput} value={noInvoice}
-                onChange={(e) => setNoInvoice(e.target.value.toUpperCase())}
+                onChange={(e) => setHeader({ noInvoice: e.target.value.toUpperCase() })}
                 placeholder="INV/2026/001"
               />
             </div>
@@ -582,7 +588,7 @@ export default function StnkJournalPage() {
             <div className={styles.fieldWrap}>
               <label className={styles.filterLabel}>Periode</label>
               <input className={styles.textInput} value={period}
-                onChange={(e) => setPeriod(e.target.value.toUpperCase())}
+                onChange={(e) => setHeader({ period: e.target.value.toUpperCase() })}
                 placeholder="01"
               />
             </div>
@@ -590,7 +596,7 @@ export default function StnkJournalPage() {
             <div className={styles.fieldWrap}>
               <label className={styles.filterLabel}>Document Header Text</label>
               <input className={styles.textInput} value={docHeaderText}
-                onChange={(e) => setDocHeaderText(e.target.value.toUpperCase())}
+                onChange={(e) => setHeader({ docHeaderText: e.target.value.toUpperCase() })}
                 placeholder="BY PERPJ STNK BLN ..."
               />
             </div>
