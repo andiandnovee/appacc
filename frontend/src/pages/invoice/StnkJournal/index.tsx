@@ -815,7 +815,7 @@ function AccumInput({ label, value, onChange }: {
         value={buffer}
         onChange={(e) => setBuffer(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === "Tab") {
+          if (e.key === "Enter") {
             e.preventDefault();
             commit();
           }
