@@ -427,7 +427,7 @@ export async function exportStnkKendaraanExcel(
   busAreaMetaList: BusAreaMeta[], vendorRO: VendorRO,
 ): Promise<void> {
   const { rows } = buildStnkKendaraanRows(header, items, busAreaMetaList, vendorRO, 1);
-  await _writeExcel(rows, header, "KEND");
+  await _writeExcel(rows, header, `KEND-${vendorRO.jenis}`);
 }
 
 export function exportStnkKendaraanText(
@@ -435,7 +435,7 @@ export function exportStnkKendaraanText(
   busAreaMetaList: BusAreaMeta[], vendorRO: VendorRO,
 ): void {
   const { rows } = buildStnkKendaraanRows(header, items, busAreaMetaList, vendorRO, 1);
-  _writeText(rows, header, "KEND");
+  _writeText(rows, header, `KEND-${vendorRO.jenis}`);
 }
 
 export async function exportStnkRoExcel(
@@ -459,7 +459,7 @@ export async function exportStnkAllExcel(
   busAreaMetaList: BusAreaMeta[], vendorRO: VendorRO,
 ): Promise<void> {
   const rows = buildAllStnkRows(header, items, busAreaMetaList, vendorRO);
-  await _writeExcel(rows, header, "ALL");
+  await _writeExcel(rows, header, `ALL-${vendorRO.jenis}`);
 }
 
 export function exportStnkAllText(
@@ -467,12 +467,19 @@ export function exportStnkAllText(
   busAreaMetaList: BusAreaMeta[], vendorRO: VendorRO,
 ): void {
   const rows = buildAllStnkRows(header, items, busAreaMetaList, vendorRO);
-  _writeText(rows, header, "ALL");
+  _writeText(rows, header, `ALL-${vendorRO.jenis}`);
 }
 
 // ─────────────────────────────────────────────
 // INTERNAL WRITERS
 // ─────────────────────────────────────────────
+function _buildFileName(header: StnkHeader, vendorJenis: string, ext: string): string {
+  const month = String(header.postingDate.getMonth() + 1).padStart(2, "0");
+  const year  = header.postingDate.getFullYear();
+  const inv   = header.noInvoice ? `_${header.noInvoice}` : "";
+  return `upload_ZF0002_${vendorJenis}_${header.companyCode}_${month}_${year}${inv}.${ext}`;
+}
+
 async function _writeExcel(rows: ZfRow[], header: StnkHeader, suffix: string) {
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet("Sheet1");
@@ -483,13 +490,11 @@ async function _writeExcel(rows: ZfRow[], header: StnkHeader, suffix: string) {
     col.width = [9, 10, 14, 22].includes(i + 1) ? 28 : 12;
   });
   const buf = await wb.xlsx.writeBuffer();
-  const month = String(header.postingDate.getMonth() + 1).padStart(2, "0");
-  const year = header.postingDate.getFullYear();
   saveAs(
     new Blob([buf], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     }),
-    `ZF0002_STNK-${header.companyCode}-${month}-${year}-${suffix}.xlsx`,
+    _buildFileName(header, suffix, "xlsx"),
   );
 }
 
@@ -498,10 +503,8 @@ function _writeText(rows: ZfRow[], header: StnkHeader, suffix: string) {
     row.map((c) => (c === null || c === undefined ? "" : String(c))).join("\t"),
   );
   const content = lines.join("\r\n") + "\r\n";
-  const month = String(header.postingDate.getMonth() + 1).padStart(2, "0");
-  const year = header.postingDate.getFullYear();
   saveAs(
     new Blob([content], { type: "text/plain;charset=utf-8" }),
-    `ZF0002_STNK-${header.companyCode}-${month}-${year}-${suffix}.txt`,
+    _buildFileName(header, suffix, "txt"),
   );
 }
