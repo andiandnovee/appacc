@@ -140,13 +140,6 @@ function groupRows(rows: F53Row[], checked: CheckedMap) {
 
   return Array.from(map.values());
 }
-function getTodayIsoString(): string {
-  const today = new Date();
-  const offset = today.getTimezoneOffset();
-  const localToday = new Date(today.getTime() - offset * 60 * 1000);
-  return localToday.toISOString().split("T")[0];
-}
-
 async function copyToClipboard(text: string): Promise<void> {
   if (navigator.clipboard && window.isSecureContext) {
     try {
@@ -253,13 +246,6 @@ export default function F53HelperPage() {
       })
       .then((r) => setBusAreas(r.data?.data ?? r.data ?? []));
   }, [selectedCompany, companies]);
-
-  // ── Set default posting date ke hari ini jika kosong ───
-  useEffect(() => {
-    if (!postingDate) {
-      setPostingDate(getTodayIsoString());
-    }
-  }, [postingDate, setPostingDate]);
 
   useEffect(() => {
     setSelectedVendor("");

@@ -50,7 +50,12 @@ export const useFilterF53Store = create<FilterF53State>()(
           selectedBusArea: "",
           selectedVendor: "",
         }),
-      setSelectedStage: (value) => set({ selectedStage: value }),
+      setSelectedStage: (value) =>
+        set((state) => ({
+          selectedStage: value,
+          postingDate:
+            value === state.selectedStage ? state.postingDate : "",
+        })),
       setSelectedBusArea: (value) =>
         set({ selectedBusArea: value, selectedVendor: "" }),
       setSelectedVendor: (value) => set({ selectedVendor: value }),
