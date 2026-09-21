@@ -25,9 +25,9 @@ export interface StnkHeader {
   companyCode: string;
   postingDate: Date;
   documentDate: Date;
-  noInvoice: string;     // ← dulu namaVendor, sekarang No. Invoice
+  noInvoice: string; // ← dulu namaVendor, sekarang No. Invoice
   docHeaderText: string;
-  period: string;        // ← input manual, misal "01" atau "JANUARI 2026"
+  period: string; // ← input manual, misal "01" atau "JANUARI 2026"
   tarifPph: number;
 }
 
@@ -40,7 +40,7 @@ export interface BusAreaMeta {
 
 export interface VendorRO {
   kode_vendor: string;
-  nama_vendor: string;   // ← dipakai sebagai Reference & Assignment
+  nama_vendor: string; // ← dipakai sebagai Reference & Assignment
   jenis: "STNK" | "KIER";
   tarif_pph: number;
   gl_account_pph: string;
@@ -78,7 +78,7 @@ function makeRow(fields: {
   assignment: string;
   text: string;
   taxCode: string;
-  reference: string;   // kolom I — selalu nama_vendor dari Zustand
+  reference: string; // kolom I — selalu nama_vendor dari Zustand
   headerText: string;
 }): ZfRow {
   return [
@@ -90,7 +90,7 @@ function makeRow(fields: {
     "YA",
     "IDR",
     null,
-    fields.reference,          // Reference = nama_vendor Zustand
+    fields.reference, // Reference = nama_vendor Zustand
     fields.headerText,
     fields.dc,
     fields.glAccount,
@@ -118,7 +118,10 @@ function makeRow(fields: {
 // CLASSIFIER — apakah item masuk BusAreaKendaraan
 // Syarat: punya costCenter DAN costCenter != current BusArea sap_id
 // ─────────────────────────────────────────────
-export function isKendaraanItem(item: StnkItem, currentBaSapId: string): boolean {
+export function isKendaraanItem(
+  item: StnkItem,
+  currentBaSapId: string,
+): boolean {
   return !!item.costCenter && item.costCenter !== currentBaSapId;
 }
 
@@ -137,7 +140,7 @@ export function buildStnkKendaraanRows(
   const rows: ZfRow[] = [];
   const postingDateStr = formatDateSAP(header.postingDate);
   const documentDateStr = formatDateSAP(header.documentDate);
-  const period = header.period;  // ← dari input manual
+  const period = header.period; // ← dari input manual
 
   const currentMeta = busAreaMetaList.find((m) => m.isCurrent);
   const currentVendorCode = currentMeta?.sapVendorCode ?? "";
@@ -188,19 +191,23 @@ export function buildStnkKendaraanRows(
       };
 
       if (biayaAdm > 0) {
-        rows.push(makeRow({
-          ...base,
-          amount: biayaAdm,
-          text: `BY PERPJ ${vendorRO.jenis} ${item.textItem}`,
-        }));
+        rows.push(
+          makeRow({
+            ...base,
+            amount: biayaAdm,
+            text: `BY PERPJ ${vendorRO.jenis} ${item.textItem}`,
+          }),
+        );
       }
 
       if (jasa > 0) {
-        rows.push(makeRow({
-          ...base,
-          amount: jasa,
-          text: `JASA PERPJ ${vendorRO.jenis} ${item.textItem}`,
-        }));
+        rows.push(
+          makeRow({
+            ...base,
+            amount: jasa,
+            text: `JASA PERPJ ${vendorRO.jenis} ${item.textItem}`,
+          }),
+        );
       }
     }
 
@@ -208,25 +215,27 @@ export function buildStnkKendaraanRows(
     const itemCount = baItems.length;
 
     // C — vendor dari current BusArea
-    rows.push(makeRow({
-      no: docNo,
-      companyCode: header.companyCode,
-      postingDateStr,
-      period,
-      documentDateStr,
-      dc: "C",
-      glAccount: null,
-      vendorAccount: currentVendorCode ? Number(currentVendorCode) : null,
-      customerAccount: null,
-      amount: totalDebet,
-      businessArea: baCode,
-      costCenter: null,
-      assignment: vendorRO.nama_vendor,
-      text: `BY PERPJ ${vendorRO.jenis} ${itemCount} KENDARAAN`,
-      taxCode: "**",
-      reference,
-      headerText: header.docHeaderText,
-    }));
+    rows.push(
+      makeRow({
+        no: docNo,
+        companyCode: header.companyCode,
+        postingDateStr,
+        period,
+        documentDateStr,
+        dc: "C",
+        glAccount: null,
+        vendorAccount: currentVendorCode ? Number(currentVendorCode) : null,
+        customerAccount: null,
+        amount: totalDebet,
+        businessArea: baCode,
+        costCenter: null,
+        assignment: vendorRO.nama_vendor,
+        text: `BY PERPJ ${vendorRO.jenis} ${itemCount} KENDARAAN`,
+        taxCode: "**",
+        reference,
+        headerText: header.docHeaderText,
+      }),
+    );
 
     docNo++;
   }
@@ -249,7 +258,7 @@ export function buildStnkRoRows(
   const rows: ZfRow[] = [];
   const postingDateStr = formatDateSAP(header.postingDate);
   const documentDateStr = formatDateSAP(header.documentDate);
-  const period = header.period;  // ← dari input manual
+  const period = header.period; // ← dari input manual
 
   const currentMeta = busAreaMetaList.find((m) => m.isCurrent);
   const currentBaId = currentMeta?.sapId ?? "";
@@ -280,7 +289,8 @@ export function buildStnkRoRows(
     grandTotalDenda += denda;
 
     // Tentukan apakah item ini adalah "current BusArea item"
-    const isCurrentBaItem = !!item.costCenter && item.costCenter === currentBaSapId;
+    const isCurrentBaItem =
+      !!item.costCenter && item.costCenter === currentBaSapId;
     // Tanpa cost_center = not_found/no_cc item
     const isNoCcItem = !item.costCenter;
 
@@ -315,87 +325,103 @@ export function buildStnkRoRows(
 
     // D1 — Biaya + Adm
     if (biayaAdm > 0) {
-      rows.push(makeRow({
-        ...baseDebet,
-        glAccount: glDebet,
-        customerAccount: customerDebet,
-        amount: biayaAdm,
-        text: `BY PERPJ ${jenis} ${item.textItem}`,
-      }));
+      rows.push(
+        makeRow({
+          ...baseDebet,
+          glAccount: glDebet,
+          customerAccount: customerDebet,
+          taxCode: "I0",
+          amount: biayaAdm,
+          text: `BY PERPJ ${jenis} ${item.textItem}`,
+        }),
+      );
     }
 
     // D2 — Jasa
     if (jasa > 0) {
-      rows.push(makeRow({
-        ...baseDebet,
-        glAccount: glDebet,
-        customerAccount: customerDebet,
-        amount: jasa,
-        text: `JASA PERPJ ${jenis} ${item.textItem}`,
-      }));
+      rows.push(
+        makeRow({
+          ...baseDebet,
+          glAccount: glDebet,
+          customerAccount: customerDebet,
+          taxCode: "I0",
+          amount: jasa,
+          text: `JASA PERPJ ${jenis} ${item.textItem}`,
+        }),
+      );
     }
 
     // D3 — Denda: GL 11494001, customer = null selalu
     if (denda > 0) {
-      rows.push(makeRow({
-        ...baseDebet,
-        glAccount: 11494001,
-        customerAccount: null,          // ← selalu null untuk denda
-        amount: denda,
-        text: `DENDA ${jenis} ${item.textItem}`,
-      }));
+      rows.push(
+        makeRow({
+          ...baseDebet,
+          glAccount: 11494001,
+          customerAccount: null, // ← selalu null untuk denda
+          amount: denda,
+          taxCode: "",
+          text: `DENDA ${jenis} ${item.textItem}`,
+        }),
+      );
     }
   }
 
   // ── Kredit ──
   const pph = Math.round((grandTotalJasa * vendorRO.tarif_pph) / 100);
   // Total bayar = biaya+adm+jasa+denda - pph
-  const totalBayar = grandTotalBiayaAdm + grandTotalJasa + grandTotalDenda - pph;
+  const totalBayar =
+    grandTotalBiayaAdm + grandTotalJasa + grandTotalDenda - pph;
   const totalItems = items.length;
 
   // C1 — Bayar ke vendor (net)
-  rows.push(makeRow({
-    no: docNo,
-    companyCode: header.companyCode,
-    postingDateStr,
-    period,
-    documentDateStr,
-    dc: "C",
-    glAccount: null,
-    vendorAccount: vendorRO.kode_vendor ? Number(vendorRO.kode_vendor) : null,
-    customerAccount: null,
-    amount: totalBayar,
-    businessArea: currentBaId,
-    costCenter: null,
-    assignment: vendorRO.nama_vendor,
-    // text: PERPJ STNK/KIER {count} KEND {no_invoice}
-    text: `PERPJ ${jenis} ${totalItems} KEND ${header.noInvoice}`,
-    taxCode: "**",
-    reference,
-    headerText: header.docHeaderText,
-  }));
-
-  // C2 — PPh (GL PPh, vendor & customer kosong)
-  if (pph > 0) {
-    rows.push(makeRow({
+  rows.push(
+    makeRow({
       no: docNo,
       companyCode: header.companyCode,
       postingDateStr,
       period,
       documentDateStr,
       dc: "C",
-      glAccount: vendorRO.gl_account_pph ? Number(vendorRO.gl_account_pph) : null,
-      vendorAccount: null,
+      glAccount: null,
+      vendorAccount: vendorRO.kode_vendor ? Number(vendorRO.kode_vendor) : null,
       customerAccount: null,
-      amount: pph,
+      amount: totalBayar,
       businessArea: currentBaId,
       costCenter: null,
       assignment: vendorRO.nama_vendor,
-      text: `PPH PERPJ ${jenis} ${totalItems} KEND`,
+      // text: PERPJ STNK/KIER {count} KEND {no_invoice}
+      text: `PERPJ ${jenis} ${totalItems} KEND ${header.noInvoice}`,
       taxCode: "**",
       reference,
       headerText: header.docHeaderText,
-    }));
+    }),
+  );
+
+  // C2 — PPh (GL PPh, vendor & customer kosong)
+  if (pph > 0) {
+    rows.push(
+      makeRow({
+        no: docNo,
+        companyCode: header.companyCode,
+        postingDateStr,
+        period,
+        documentDateStr,
+        dc: "C",
+        glAccount: vendorRO.gl_account_pph
+          ? Number(vendorRO.gl_account_pph)
+          : null,
+        vendorAccount: null,
+        customerAccount: null,
+        amount: pph,
+        businessArea: currentBaId,
+        costCenter: null,
+        assignment: vendorRO.nama_vendor,
+        text: `PPH PERPJ ${jenis} ${totalItems} KEND`,
+        taxCode: "",
+        reference,
+        headerText: header.docHeaderText,
+      }),
+    );
   }
 
   return rows;
@@ -411,10 +437,18 @@ export function buildAllStnkRows(
   vendorRO: VendorRO,
 ): ZfRow[] {
   const { rows: kendRows, docCount } = buildStnkKendaraanRows(
-    header, items, busAreaMetaList, vendorRO, 1,
+    header,
+    items,
+    busAreaMetaList,
+    vendorRO,
+    1,
   );
   const roRows = buildStnkRoRows(
-    header, items, busAreaMetaList, vendorRO, docCount + 1,
+    header,
+    items,
+    busAreaMetaList,
+    vendorRO,
+    docCount + 1,
   );
   return [...kendRows, ...roRows];
 }
@@ -423,48 +457,86 @@ export function buildAllStnkRows(
 // EXPORTS
 // ─────────────────────────────────────────────
 export async function exportStnkKendaraanExcel(
-  header: StnkHeader, items: StnkItem[],
-  busAreaMetaList: BusAreaMeta[], vendorRO: VendorRO,
+  header: StnkHeader,
+  items: StnkItem[],
+  busAreaMetaList: BusAreaMeta[],
+  vendorRO: VendorRO,
 ): Promise<void> {
-  const { rows } = buildStnkKendaraanRows(header, items, busAreaMetaList, vendorRO, 1);
+  const { rows } = buildStnkKendaraanRows(
+    header,
+    items,
+    busAreaMetaList,
+    vendorRO,
+    1,
+  );
   await _writeExcel(rows, header, `KEND-${vendorRO.jenis}`);
 }
 
 export function exportStnkKendaraanText(
-  header: StnkHeader, items: StnkItem[],
-  busAreaMetaList: BusAreaMeta[], vendorRO: VendorRO,
+  header: StnkHeader,
+  items: StnkItem[],
+  busAreaMetaList: BusAreaMeta[],
+  vendorRO: VendorRO,
 ): void {
-  const { rows } = buildStnkKendaraanRows(header, items, busAreaMetaList, vendorRO, 1);
+  const { rows } = buildStnkKendaraanRows(
+    header,
+    items,
+    busAreaMetaList,
+    vendorRO,
+    1,
+  );
   _writeText(rows, header, `KEND-${vendorRO.jenis}`);
 }
 
 export async function exportStnkRoExcel(
-  header: StnkHeader, items: StnkItem[],
-  busAreaMetaList: BusAreaMeta[], vendorRO: VendorRO, startNo: number,
+  header: StnkHeader,
+  items: StnkItem[],
+  busAreaMetaList: BusAreaMeta[],
+  vendorRO: VendorRO,
+  startNo: number,
 ): Promise<void> {
-  const rows = buildStnkRoRows(header, items, busAreaMetaList, vendorRO, startNo);
+  const rows = buildStnkRoRows(
+    header,
+    items,
+    busAreaMetaList,
+    vendorRO,
+    startNo,
+  );
   await _writeExcel(rows, header, `RO-${vendorRO.jenis}`);
 }
 
 export function exportStnkRoText(
-  header: StnkHeader, items: StnkItem[],
-  busAreaMetaList: BusAreaMeta[], vendorRO: VendorRO, startNo: number,
+  header: StnkHeader,
+  items: StnkItem[],
+  busAreaMetaList: BusAreaMeta[],
+  vendorRO: VendorRO,
+  startNo: number,
 ): void {
-  const rows = buildStnkRoRows(header, items, busAreaMetaList, vendorRO, startNo);
+  const rows = buildStnkRoRows(
+    header,
+    items,
+    busAreaMetaList,
+    vendorRO,
+    startNo,
+  );
   _writeText(rows, header, `RO-${vendorRO.jenis}`);
 }
 
 export async function exportStnkAllExcel(
-  header: StnkHeader, items: StnkItem[],
-  busAreaMetaList: BusAreaMeta[], vendorRO: VendorRO,
+  header: StnkHeader,
+  items: StnkItem[],
+  busAreaMetaList: BusAreaMeta[],
+  vendorRO: VendorRO,
 ): Promise<void> {
   const rows = buildAllStnkRows(header, items, busAreaMetaList, vendorRO);
   await _writeExcel(rows, header, `ALL-${vendorRO.jenis}`);
 }
 
 export function exportStnkAllText(
-  header: StnkHeader, items: StnkItem[],
-  busAreaMetaList: BusAreaMeta[], vendorRO: VendorRO,
+  header: StnkHeader,
+  items: StnkItem[],
+  busAreaMetaList: BusAreaMeta[],
+  vendorRO: VendorRO,
 ): void {
   const rows = buildAllStnkRows(header, items, busAreaMetaList, vendorRO);
   _writeText(rows, header, `ALL-${vendorRO.jenis}`);
@@ -473,10 +545,14 @@ export function exportStnkAllText(
 // ─────────────────────────────────────────────
 // INTERNAL WRITERS
 // ─────────────────────────────────────────────
-function _buildFileName(header: StnkHeader, vendorJenis: string, ext: string): string {
+function _buildFileName(
+  header: StnkHeader,
+  vendorJenis: string,
+  ext: string,
+): string {
   const month = String(header.postingDate.getMonth() + 1).padStart(2, "0");
-  const year  = header.postingDate.getFullYear();
-  const inv   = header.noInvoice ? `_${header.noInvoice}` : "";
+  const year = header.postingDate.getFullYear();
+  const inv = header.noInvoice ? `_${header.noInvoice}` : "";
   return `upload_ZF0002_${vendorJenis}_${header.companyCode}_${month}_${year}${inv}.${ext}`;
 }
 
