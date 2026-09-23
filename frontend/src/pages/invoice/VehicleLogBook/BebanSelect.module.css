@@ -165,16 +165,13 @@
 
 /* ── Dropdown ────────────────────────────────────────────── */
 .dropdown {
-  position: absolute;
-  top: calc(100% + var(--space-1));
-  left: 0;
-  right: 0;
-  z-index: var(--z-dropdown);
+  position: fixed;
+  z-index: calc(var(--z-modal) + 1);
+  font-family: var(--font-sans);
   background: var(--bg-surface);
   border: 1.5px solid var(--border-default);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
-  max-height: 280px;
   overflow-y: auto;
 
   scrollbar-width: thin;

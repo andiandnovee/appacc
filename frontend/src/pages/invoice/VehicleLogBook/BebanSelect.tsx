@@ -6,7 +6,14 @@
  * Mengembalikan { sap_id, type, name } ke parent.
  */
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import {
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+} from "react";
+import { createPortal } from "react-dom";
 import { Building2, Users } from "lucide-react";
 import api from "../../../api/axios";
 import styles from "./BebanSelect.module.css";
@@ -27,6 +34,14 @@ interface Props {
   placeholder?: string;
 }
 
+interface DropdownPosition {
+  top?: number;
+  bottom?: number;
+  left: number;
+  width: number;
+  maxHeight: number;
+}
+
 // ─────────────────────────────────────────────
 export default function BebanSelect({
   value,
@@ -40,10 +55,49 @@ export default function BebanSelect({
   const [isOpen, setIsOpen]           = useState(false);
   const [isLoading, setIsLoading]     = useState(false);
   const [highlightedIdx, setHighlightedIdx] = useState<number | null>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<DropdownPosition | null>(null);
 
   const inputRef    = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const updateDropdownPosition = useCallback(() => {
+    const anchor = inputRef.current?.parentElement;
+    if (!anchor) return;
+
+    const rect = anchor.getBoundingClientRect();
+    const viewportPadding = 12;
+    const dropdownGap = 4;
+    const preferredHeight = 420;
+    const spaceBelow = window.innerHeight - rect.bottom - viewportPadding - dropdownGap;
+    const spaceAbove = rect.top - viewportPadding - dropdownGap;
+    const openAbove = spaceBelow < 180 && spaceAbove > spaceBelow;
+    const availableHeight = openAbove ? spaceAbove : spaceBelow;
+
+    setDropdownPosition({
+      ...(openAbove
+        ? { bottom: window.innerHeight - rect.top + dropdownGap }
+        : { top: rect.bottom + dropdownGap }),
+      left: Math.max(viewportPadding, Math.min(rect.left, window.innerWidth - rect.width - viewportPadding)),
+      width: Math.min(rect.width, window.innerWidth - viewportPadding * 2),
+      maxHeight: Math.max(120, Math.min(preferredHeight, availableHeight)),
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!isOpen) {
+      setDropdownPosition(null);
+      return;
+    }
+
+    updateDropdownPosition();
+    window.addEventListener("resize", updateDropdownPosition);
+    window.addEventListener("scroll", updateDropdownPosition, true);
+    return () => {
+      window.removeEventListener("resize", updateDropdownPosition);
+      window.removeEventListener("scroll", updateDropdownPosition, true);
+    };
+  }, [isOpen, updateDropdownPosition]);
 
   // ── Fetch ────────────────────────────────────
   const fetchOptions = useCallback(async (q: string) => {
@@ -174,8 +228,12 @@ export default function BebanSelect({
       </div>
 
       {/* Dropdown */}
-      {isOpen && (
-        <div ref={dropdownRef} className={styles.dropdown}>
+      {isOpen && dropdownPosition && createPortal(
+        <div
+          ref={dropdownRef}
+          className={styles.dropdown}
+          style={dropdownPosition}
+        >
           {isLoading && (
             <div className={styles.skeletonWrap}>
               {[...Array(4)].map((_, i) => <div key={i} className={styles.skeleton} />)}
@@ -194,7 +252,8 @@ export default function BebanSelect({
               {renderGrouped(options, value, highlightedIdx, handleSelect, setHighlightedIdx)}
             </>
           )}
-        </div>
+        </div>,
+        document.body,
       )}
 
       {error && <p className={styles.errorMsg}>{error}</p>}
