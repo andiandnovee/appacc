@@ -183,13 +183,20 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
       fetchSummary();
     }, [fetchSummary]);
 
+    useEffect(() => {
+      setOpen(selectedVehicleId === null);
+    }, [selectedVehicleId]);
+
     const hasVehicles = (data?.with_cost.length ?? 0) > 0;
     const allBalanced =
       hasVehicles && data!.with_cost.every((v) => v.is_balanced);
+    const selectedVehicle =
+      data?.with_cost.find((v) => v.vehicle_id === selectedVehicleId) ?? null;
 
     // ── Handle klik row → pilih kendaraan ──────
     const handleRowClick = useCallback(
       (v: VehicleWithCost) => {
+        setOpen(false);
         onVehicleSelect({
           id: v.vehicle_id,
           plate_number: v.plate_number,
@@ -713,6 +720,40 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
                 Ya, Hapus Sekarang
               </Button>
             </div>
+          </div>
+        )}
+
+        {!open && selectedVehicle && (
+          <div className={styles.selectedSummary}>
+            <div className={styles.selectedVehicleIdentity}>
+              <Car size={16} className={styles.selectedVehicleIcon} />
+              <div>
+                <span className={styles.plate}>
+                  {selectedVehicle.plate_number}
+                </span>
+                <span className={styles.vDesc}>
+                  {selectedVehicle.description}
+                </span>
+              </div>
+            </div>
+            <div className={styles.selectedMetric}>
+              <span className={styles.selectedMetricLabel}>Biaya SAP</span>
+              <strong>{formatRupiah(selectedVehicle.total_cost)}</strong>
+            </div>
+            <div className={styles.selectedMetric}>
+              <span className={styles.selectedMetricLabel}>Total KM</span>
+              <strong>
+                {selectedVehicle.total_km
+                  ? `${formatKm(selectedVehicle.total_km)} km`
+                  : "—"}
+              </strong>
+            </div>
+            <Badge
+              variant={selectedVehicle.is_balanced ? "success" : "warning"}
+              size="sm"
+            >
+              {selectedVehicle.is_balanced ? "Balance" : "Belum Balance"}
+            </Badge>
           </div>
         )}
 
