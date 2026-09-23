@@ -748,6 +748,26 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
                   : "—"}
               </strong>
             </div>
+            <div className={styles.selectedMetric}>
+              <span className={styles.selectedMetricLabel}>
+                Last KM (All Time)
+              </span>
+              <div className={styles.selectedLastKm}>
+                <strong>
+                  {selectedVehicle.last_km !== null
+                    ? formatKm(selectedVehicle.last_km)
+                    : "—"}
+                </strong>
+                {selectedVehicle.last_km !== null && (
+                  <Badge variant="info" size="sm">
+                    {formatPeriode(
+                      selectedVehicle.last_km_month,
+                      selectedVehicle.last_km_year,
+                    )}
+                  </Badge>
+                )}
+              </div>
+            </div>
             <Badge
               variant={selectedVehicle.is_balanced ? "success" : "warning"}
               size="sm"
