@@ -49,6 +49,33 @@ export interface ExportZf0002Params {
   year: number;
   postingDate: Date;
   mode?: ZfMode; // default: "all"
+  mergeDuplicates?: boolean; // default: true
+}
+
+export interface ZfPreviewGroup {
+  type: "customer" | "cost_center";
+  account: string;
+  description: string;
+  source_count: number;
+  km: number;
+  cost_amount: number;
+}
+
+export interface ZfPreviewVehicle {
+  plate_number: string;
+  original_count: number;
+  result_count: number;
+  original_km: number;
+  result_km: number;
+  original_cost: number;
+  result_cost: number;
+  is_valid: boolean;
+  groups: ZfPreviewGroup[];
+}
+
+export interface ZfExportPreview {
+  vehicles: ZfPreviewVehicle[];
+  all_valid: boolean;
 }
 
 type ZfCell = string | number | null;
@@ -114,6 +141,98 @@ function buildFileBaseName(
   return `ZF0002_AGRI-${companyCode}-${periodStr(month)}-${year}${suffix}`;
 }
 
+function filterDetails(details: ZfDetailRow[], mode: ZfMode): ZfDetailRow[] {
+  return mode === "customer"
+    ? details.filter((d) => d.customer_code)
+    : mode === "cc"
+      ? details.filter((d) => d.cost_center)
+      : details;
+}
+
+function prepareDetails(
+  details: ZfDetailRow[],
+  mergeDuplicates: boolean,
+): Array<ZfDetailRow & { source_count: number }> {
+  if (!mergeDuplicates) {
+    return details.map((detail) => ({
+      ...detail,
+      cost_amount: toIntAmount(detail.cost_amount),
+      source_count: 1,
+    }));
+  }
+
+  const grouped = new Map<string, ZfDetailRow & { source_count: number }>();
+
+  details.forEach((detail) => {
+    const type = detail.customer_code ? "customer" : "cost_center";
+    const account = detail.customer_code ?? detail.cost_center ?? "";
+    const key = JSON.stringify([type, account, detail.description]);
+    const current = grouped.get(key);
+
+    if (current) {
+      current.km += detail.km;
+      current.cost_amount += toIntAmount(detail.cost_amount);
+      current.source_count += 1;
+      return;
+    }
+
+    grouped.set(key, {
+      ...detail,
+      cost_amount: toIntAmount(detail.cost_amount),
+      source_count: 1,
+    });
+  });
+
+  return Array.from(grouped.values());
+}
+
+export function buildZf0002Preview(
+  payloads: ZfPayload[],
+  mode: ZfMode = "all",
+  mergeDuplicates = true,
+): ZfExportPreview {
+  const vehicles = payloads.flatMap((payload) => {
+    const original = filterDetails(payload.details, mode);
+    if (original.length === 0) return [];
+
+    const result = prepareDetails(original, mergeDuplicates);
+    const originalKm = original.reduce((sum, detail) => sum + detail.km, 0);
+    const resultKm = result.reduce((sum, detail) => sum + detail.km, 0);
+    const originalCost = original.reduce(
+      (sum, detail) => sum + toIntAmount(detail.cost_amount),
+      0,
+    );
+    const resultCost = result.reduce(
+      (sum, detail) => sum + detail.cost_amount,
+      0,
+    );
+
+    return [{
+      plate_number: payload.vehicle.plate_number,
+      original_count: original.length,
+      result_count: result.length,
+      original_km: originalKm,
+      result_km: resultKm,
+      original_cost: originalCost,
+      result_cost: resultCost,
+      is_valid: originalKm === resultKm && originalCost === resultCost,
+      groups: result.map((detail) => ({
+        type: detail.customer_code ? "customer" : "cost_center",
+        account: detail.customer_code ?? detail.cost_center ?? "",
+        description: detail.description,
+        source_count: detail.source_count,
+        km: detail.km,
+        cost_amount: detail.cost_amount,
+      })),
+    }];
+  });
+
+  return {
+    vehicles,
+    all_valid: vehicles.length > 0 && vehicles.every((vehicle) => vehicle.is_valid),
+  };
+}
+
 // ─────────────────────────────────────────────
 // SHARED ROW BUILDER
 // mode:
@@ -128,6 +247,7 @@ export function buildZf0002Rows({
   month,
   postingDate,
   mode = "all",
+  mergeDuplicates = true,
 }: Omit<ExportZf0002Params, "year">): ZfRow[] {
   const rows: ZfRow[] = [];
   const postingDateStr = formatDateSAP(postingDate);
@@ -143,15 +263,26 @@ export function buildZf0002Rows({
     const noVoucher = payload.header.no_voucher;
 
     // Filter details sesuai mode
-    const allDetails = payload.details;
-    const filteredDetails =
-      mode === "customer"
-        ? allDetails.filter((d) => d.customer_code)
-        : mode === "cc"
-          ? allDetails.filter((d) => d.cost_center)
-          : allDetails; // "all" — tidak difilter
+    const originalDetails = filterDetails(payload.details, mode);
+    const filteredDetails = prepareDetails(originalDetails, mergeDuplicates);
 
     if (filteredDetails.length === 0) return;
+
+    const originalKm = originalDetails.reduce((sum, d) => sum + d.km, 0);
+    const resultKm = filteredDetails.reduce((sum, d) => sum + d.km, 0);
+    const originalCost = originalDetails.reduce(
+      (sum, d) => sum + toIntAmount(d.cost_amount),
+      0,
+    );
+    const resultCost = filteredDetails.reduce(
+      (sum, d) => sum + d.cost_amount,
+      0,
+    );
+    if (originalKm !== resultKm || originalCost !== resultCost) {
+      throw new Error(
+        `Validasi penggabungan gagal untuk kendaraan ${plate}. Export dibatalkan.`,
+      );
+    }
 
     let debetTotal = 0;
 

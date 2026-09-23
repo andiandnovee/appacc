@@ -1,7 +1,7 @@
 // LogbookSummarySection.tsx
 // Path: frontend/src/pages/vehicles/LogbookSummarySection.tsx
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   ChevronDown,
   ChevronUp,
@@ -18,6 +18,7 @@ import api from "../../../api/axios";
 import Button from "../../../components/ui/Button";
 import { SplitButton } from "../../../components/ui/Button";
 import Badge from "../../../components/ui/Badge";
+import Modal from "../../../components/ui/Modal";
 import { useToast } from "../../../components/ui/Toast";
 import {
   openPrintSingle,
@@ -29,6 +30,7 @@ import {
 import {
   exportZf0002Excel,
   exportZf0002Text,
+  buildZf0002Preview,
   type ZfPayload,
   type ZfMode,
 } from "./ExportZF0002";
@@ -76,6 +78,12 @@ interface SummaryData {
   bus_area_label: string;
   total_cost_all: number;
   total_km_all: number;
+}
+
+interface PendingZfExport {
+  type: "excel" | "text";
+  mode: ZfMode;
+  payloads: ZfPayload[];
 }
 
 interface Props {
@@ -152,6 +160,9 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
     const [printingId, setPrintingId] = useState<number | null>(null);
     const [printingAll, setPrintingAll] = useState(false);
     const [exportingZf, setExportingZf] = useState(false);
+    const [pendingZfExport, setPendingZfExport] =
+      useState<PendingZfExport | null>(null);
+    const [mergeZfDuplicates, setMergeZfDuplicates] = useState(true);
     const [exportingSkf, setExportingSkf] = useState(false);
     const [postingDate, setPostingDate] = useState<string>("");
 
@@ -192,6 +203,17 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
       hasVehicles && data!.with_cost.every((v) => v.is_balanced);
     const selectedVehicle =
       data?.with_cost.find((v) => v.vehicle_id === selectedVehicleId) ?? null;
+    const zfPreview = useMemo(
+      () =>
+        pendingZfExport
+          ? buildZf0002Preview(
+              pendingZfExport.payloads,
+              pendingZfExport.mode,
+              mergeZfDuplicates,
+            )
+          : null,
+      [pendingZfExport, mergeZfDuplicates],
+    );
 
     // ── Handle klik row → pilih kendaraan ──────
     const handleRowClick = useCallback(
@@ -393,28 +415,8 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
             return;
           }
 
-          const exportParams = {
-            payloads: res.vehicles,
-            companyCode,
-            businessArea: busAreaSapId,
-            month,
-            year,
-            postingDate: new Date(postingDate + "T00:00:00"),
-            mode,
-          };
-
-          if (type === "excel") {
-            await exportZf0002Excel(exportParams);
-          } else {
-            exportZf0002Text(exportParams);
-          }
-
-          const modeLabel =
-            mode === "customer" ? "Customer" : mode === "cc" ? "CC" : "Gabung";
-          addToast({
-            variant: "success",
-            title: `File ZF0002_AGRI (${modeLabel}) berhasil dibuat (${res.vehicles.length} kendaraan).`,
-          });
+          setMergeZfDuplicates(true);
+          setPendingZfExport({ type, mode, payloads: res.vehicles });
         } catch (e: any) {
           addToast({
             variant: "danger",
@@ -428,6 +430,59 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
       },
       [busAreaSapId, companyCode, month, year, postingDate, addToast],
     );
+
+    const handleConfirmZfExport = useCallback(async () => {
+      if (!pendingZfExport || !zfPreview?.all_valid) return;
+
+      setExportingZf(true);
+      try {
+        const exportParams = {
+          payloads: pendingZfExport.payloads,
+          companyCode,
+          businessArea: busAreaSapId,
+          month,
+          year,
+          postingDate: new Date(postingDate + "T00:00:00"),
+          mode: pendingZfExport.mode,
+          mergeDuplicates: mergeZfDuplicates,
+        };
+
+        if (pendingZfExport.type === "excel") {
+          await exportZf0002Excel(exportParams);
+        } else {
+          exportZf0002Text(exportParams);
+        }
+
+        const modeLabel =
+          pendingZfExport.mode === "customer"
+            ? "Customer"
+            : pendingZfExport.mode === "cc"
+              ? "CC"
+              : "ALL";
+        addToast({
+          variant: "success",
+          title: `File ZF0002_AGRI (${modeLabel}, ${mergeZfDuplicates ? "digabung" : "tanpa penggabungan"}) berhasil dibuat.`,
+        });
+        setPendingZfExport(null);
+      } catch (e: any) {
+        addToast({
+          variant: "danger",
+          title: e?.message ?? "Validasi export gagal.",
+        });
+      } finally {
+        setExportingZf(false);
+      }
+    }, [
+      pendingZfExport,
+      zfPreview,
+      companyCode,
+      busAreaSapId,
+      month,
+      year,
+      postingDate,
+      mergeZfDuplicates,
+      addToast,
+    ]);
 
     // ── Export SKF ─────────────────────────────
     const handleCopySkf = useCallback(async () => {
@@ -1011,6 +1066,153 @@ const LogbookSummarySection = forwardRef<LogbookSummarySectionRef, Props>(
             )}
           </div>
         )}
+
+        <Modal
+          isOpen={pendingZfExport !== null}
+          onClose={() => !exportingZf && setPendingZfExport(null)}
+          size="xl"
+        >
+          <Modal.Header
+            title="Preview & Validasi Export ZF0002"
+            subtitle="Periksa hasil sebelum file dibuat."
+            onClose={() => !exportingZf && setPendingZfExport(null)}
+          />
+          <Modal.Body>
+            <label className={styles.mergeChoice}>
+              <input
+                type="checkbox"
+                checked={mergeZfDuplicates}
+                onChange={(event) =>
+                  setMergeZfDuplicates(event.target.checked)
+                }
+                disabled={exportingZf}
+              />
+              <span>
+                <strong>Gabungkan data yang sama</strong>
+                <small>
+                  Default aktif. Penggabungan dilakukan per kendaraan, jenis
+                  pemakai, kode CC/customer, dan keterangan.
+                </small>
+              </span>
+            </label>
+
+            {zfPreview && (
+              <div className={styles.previewContent}>
+                <div className={styles.previewSummary}>
+                  <Badge
+                    variant={zfPreview.all_valid ? "success" : "warning"}
+                    size="sm"
+                  >
+                    {zfPreview.all_valid
+                      ? "Validasi sesuai"
+                      : "Validasi tidak sesuai"}
+                  </Badge>
+                  <span>{zfPreview.vehicles.length} kendaraan</span>
+                  <span>
+                    {zfPreview.vehicles.reduce(
+                      (sum, vehicle) => sum + vehicle.original_count,
+                      0,
+                    )}{" "}
+                    baris asli → {" "}
+                    {zfPreview.vehicles.reduce(
+                      (sum, vehicle) => sum + vehicle.result_count,
+                      0,
+                    )}{" "}
+                    baris export
+                  </span>
+                </div>
+
+                {zfPreview.vehicles.map((vehicle) => (
+                  <section
+                    key={vehicle.plate_number}
+                    className={styles.previewVehicle}
+                  >
+                    <div className={styles.previewVehicleHeader}>
+                      <strong>{vehicle.plate_number}</strong>
+                      <span>
+                        Baris: {vehicle.original_count} → {vehicle.result_count}
+                      </span>
+                      <span>
+                        KM: {formatKm(vehicle.original_km)} → {" "}
+                        {formatKm(vehicle.result_km)}
+                      </span>
+                      <span>
+                        Rupiah: {formatRupiah(vehicle.original_cost)} → {" "}
+                        {formatRupiah(vehicle.result_cost)}
+                      </span>
+                      <Badge
+                        variant={vehicle.is_valid ? "success" : "warning"}
+                        size="sm"
+                      >
+                        {vehicle.is_valid ? "Sesuai" : "Tidak sesuai"}
+                      </Badge>
+                    </div>
+                    <div className={styles.previewTableWrap}>
+                      <table className={styles.previewTable}>
+                        <thead>
+                          <tr>
+                            <th>Jenis</th>
+                            <th>Kode</th>
+                            <th>Keterangan</th>
+                            <th className={styles.thRight}>Asal</th>
+                            <th className={styles.thRight}>KM</th>
+                            <th className={styles.thRight}>Rupiah</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {vehicle.groups.map((group, index) => (
+                            <tr
+                              key={`${group.type}-${group.account}-${group.description}-${index}`}
+                            >
+                              <td>
+                                {group.type === "customer"
+                                  ? "Customer"
+                                  : "Cost Center"}
+                              </td>
+                              <td>{group.account}</td>
+                              <td>{group.description}</td>
+                              <td className={styles.tdRight}>
+                                {group.source_count} baris
+                              </td>
+                              <td className={styles.tdRight}>
+                                {formatKm(group.km)}
+                              </td>
+                              <td className={styles.tdRight}>
+                                {formatRupiah(group.cost_amount)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </section>
+                ))}
+              </div>
+            )}
+          </Modal.Body>
+          <Modal.Footer align="between">
+            <span className={styles.previewFooterStatus}>
+              {!zfPreview?.all_valid &&
+                "Export diblokir karena total KM atau Rupiah tidak sesuai."}
+            </span>
+            <div className={styles.previewActions}>
+              <Button
+                variant="ghost"
+                onClick={() => setPendingZfExport(null)}
+                disabled={exportingZf}
+              >
+                Batal
+              </Button>
+              <Button
+                onClick={handleConfirmZfExport}
+                loading={exportingZf}
+                disabled={!zfPreview?.all_valid}
+              >
+                Export {pendingZfExport?.type === "excel" ? "Excel" : "TXT"}
+              </Button>
+            </div>
+          </Modal.Footer>
+        </Modal>
       </div>
     );
   },

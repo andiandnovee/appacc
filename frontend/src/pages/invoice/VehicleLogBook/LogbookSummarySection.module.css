@@ -433,3 +433,107 @@
   gap: var(--space-3);
   align-items: end;
 }
+
+/* ── Preview export ZF0002 ── */
+.mergeChoice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface-2);
+  cursor: pointer;
+}
+
+.mergeChoice input {
+  margin-top: 3px;
+}
+
+.mergeChoice span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+}
+
+.mergeChoice small {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: var(--font-normal);
+}
+
+.previewContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.previewSummary,
+.previewVehicleHeader {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.previewVehicle {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.previewVehicleHeader {
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-surface-2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.previewVehicleHeader strong {
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  margin-right: auto;
+}
+
+.previewTableWrap {
+  overflow-x: auto;
+}
+
+.previewTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-xs);
+}
+
+.previewTable th,
+.previewTable td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.previewTable th {
+  color: var(--text-secondary);
+  font-weight: var(--font-medium);
+  background: var(--bg-surface);
+}
+
+.previewTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.previewFooterStatus {
+  color: var(--color-danger);
+  font-size: var(--text-xs);
+}
+
+.previewActions {
+  display: flex;
+  gap: var(--space-2);
+  margin-left: auto;
+}

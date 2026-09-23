@@ -10,6 +10,14 @@ Arah signifikan sebelumnya adalah pematangan logbook/biaya kendaraan, kesinambun
 
 # Perubahan Utama
 
+## 2026-09-23 — Preview, penggabungan, dan validasi export logbook ZF0002
+
+- **Ringkasan:** export ZF0002 logbook dapat menggabungkan baris dalam kendaraan yang sama berdasarkan jenis pemakai, kode cost center/customer, dan keterangan. Penggabungan aktif secara default tetapi dapat dimatikan user dari modal preview sebelum download.
+- **Validasi:** preview membandingkan jumlah baris, total KM, dan total Rupiah sebelum/sesudah pemrosesan untuk setiap kendaraan. Export diblokir jika total KM atau Rupiah berubah.
+- **Modul/file:** `frontend/src/pages/invoice/VehicleLogBook/ExportZF0002.tsx`, `LogbookSummarySection.tsx`, dan `LogbookSummarySection.module.css`.
+- **Dampak API/database:** tidak ada; endpoint tetap mengirim detail asli dan agregasi hanya terjadi di browser saat export. Print logbook tetap memakai detail asli tanpa penggabungan.
+- **Status:** aktif; build frontend berhasil dan lint file terkait tidak menghasilkan error.
+
 ## 2026-09-09–2026-09-10 — Jurnal biaya STNK/KIR dan ekspor ZF0002
 
 - **Ringkasan:** menambahkan halaman `/vehicles/stnk-journal`, UI input biaya per kendaraan, pemisahan baris kendaraan vs RO, vendor STNK/KIR lokal, draft persisten, dan export `.txt`/`.xlsx`.
