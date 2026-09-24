@@ -13,6 +13,12 @@
   gap: var(--space-3);
 }
 
+/* Tampilkan keterangan sebagai uppercase tanpa mengubah value saat mengetik.
+   Transformasi value pada tiap onChange membuat caret meloncat ke akhir. */
+.form textarea {
+  text-transform: uppercase;
+}
+
 /* ── Alokasi Toggle ── */
 .allocTypeRow {
   display: flex;

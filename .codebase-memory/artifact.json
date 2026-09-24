@@ -1,0 +1,11 @@
+{
+    "schema_version": 2,
+    "commit": "e5b3a61e842e2d977b896d9a6ccb2eef22c3a1f2",
+    "indexed_at": "2026-09-24T01:54:46Z",
+    "project": "appacc",
+    "nodes": 2044,
+    "edges": 4459,
+    "original_size": 4980736,
+    "compressed_size": 1148671,
+    "compression_level": 9
+}

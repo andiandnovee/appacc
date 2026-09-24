@@ -265,7 +265,7 @@ const LogbookDetailForm = forwardRef<LogbookDetailFormRef, Props>(
           onChange={(e) =>
             setForm((p) => ({
               ...p,
-              description: e.target.value.toUpperCase(),
+              description: e.target.value,
             }))
           }
           error={errors.description}
