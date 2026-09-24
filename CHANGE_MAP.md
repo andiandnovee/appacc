@@ -10,6 +10,14 @@ Arah signifikan sebelumnya adalah pematangan logbook/biaya kendaraan, kesinambun
 
 # Perubahan Utama
 
+## 2026-09-24 — CRUD master customer
+
+- **Ringkasan:** menambahkan halaman manajemen customer dengan pencarian, sorting, pagination, export, tambah, edit, dan soft delete, beserta API resource Laravel.
+- **Modul/file:** `frontend/src/pages/invoice/CustomerManagementPage/*`, router/sidebar frontend, `CustomerController`, `CustomerRequest`, `CustomerResource`, model `Customer`, dan route API.
+- **Dampak API:** menambahkan resource endpoint `/api/customers`; field payload/response utama adalah `sap_id`, `name`, dan `short_name`.
+- **Dampak database/dependency:** tidak ada migration atau dependency baru; memakai tabel `customers` yang sudah dikonsumsi pencarian beban logbook.
+- **Status:** implementasi selesai; verifikasi build/lint/backend dicatat pada hasil pengerjaan.
+
 ## 2026-09-23 — Preview, penggabungan, dan validasi export logbook ZF0002
 
 - **Ringkasan:** export ZF0002 logbook dapat menggabungkan baris dalam kendaraan yang sama berdasarkan jenis pemakai, kode cost center/customer, dan keterangan. Penggabungan aktif secara default tetapi dapat dimatikan user dari modal preview sebelum download.

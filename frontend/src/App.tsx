@@ -25,6 +25,7 @@ import F53HelperPage from "./pages/invoice/F53HelperPage";
 import VehicleLogbookPage from "./pages/invoice/VehicleLogBook";
 import VehicleManagement from "./pages/invoice/VehicleManagementPage";
 import CostCenterManagement from "./pages/invoice/CostCenterManagementPage";
+import CustomerManagement from "./pages/invoice/CustomerManagementPage";
 import StnkJournal from "./pages/invoice/StnkJournal";
 
 const App: FC = (): ReactElement => {
@@ -61,6 +62,7 @@ const App: FC = (): ReactElement => {
                   path="/ref/cost-centers"
                   element={<CostCenterManagement />}
                 />
+                <Route path="/ref/customers" element={<CustomerManagement />} />
 
                 {/* ── Kendaraan ── */}
                 <Route

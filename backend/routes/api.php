@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BusinessAreaController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\CostCenterController;
+use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\F53ImportController;
 use App\Http\Controllers\Api\InvoiceReceiptController;
 use App\Http\Controllers\Api\PgrController;
@@ -122,7 +123,7 @@ Route::middleware('auth:api')->group(function () {
         // Business Areas
 
         Route::get('busa/search', [BusinessAreaController::class, 'search']);
-        Route::apiResource('busa', BusinessAreaController::class)->parameters(['busa' => 'businessArea']);;
+        Route::apiResource('busa', BusinessAreaController::class)->parameters(['busa' => 'businessArea']);
         Route::patch('busa/{businessArea}/set-current', [BusinessAreaController::class, 'setCurrent']);
 
         Route::get('invoice-receipts/{invoiceReceipt}/statuses', [InvoiceReceiptController::class, 'statuses']);
@@ -132,6 +133,7 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/receipts/import-icat-chunk', [InvoiceReceiptController::class, 'importIcatChunk']);
 
         Route::apiResource('cost-centers', CostCenterController::class);
+        Route::apiResource('customers', CustomerController::class);
 
         // SAP PO Import
         // SAP PO Import

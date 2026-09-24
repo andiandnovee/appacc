@@ -254,7 +254,7 @@ function exportToPdf(
       <tbody>${tableRows}</tbody>
     </table>
     <p class="meta">Diekspor pada: ${new Date().toLocaleString("id-ID")} · Total: ${rows.length} data</p>
-    <script>window.onload=function(){setTimeout(function(){window.print();window.onafterprint=function(){window.close();};},300);};<\/script>
+    <script>window.onload=function(){setTimeout(function(){window.print();window.onafterprint=function(){window.close();};},300);};</script>
     </body></html>
   `;
   const win = window.open("", "_blank");

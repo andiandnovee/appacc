@@ -53,6 +53,7 @@ const NAV_GROUPS = [
       { to: "/ref/busa", icon: MapPin, label: "Business Area" },
       { to: "/ref/stages", icon: Star, label: "Periode " },
       { to: "/ref/cost-centers", icon: DollarSign, label: "Cost Centers" },
+      { to: "/ref/customers", icon: Users, label: "Customers" },
     ],
   },
   // {
