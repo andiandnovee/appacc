@@ -1,0 +1,998 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Navigator & Kalkulator PPh · Training Center Kayangan</title></head><body>
+<style>
+/* ==========================================================
+   PPh Navigator — Styled UI
+   Data & JavaScript tetap sama; bagian ini hanya presentasi.
+   ========================================================== */
+*{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --pph-navy:#1f2d5c;
+  --pph-blue:#3b82f6;
+  --pph-teal:#13a184;
+  --pph-gold:#d6a619;
+  --pph-purple:#7357d6;
+  --pph-red:#cc5267;
+  --pph-shadow:0 10px 28px rgba(25,42,80,.08),0 2px 6px rgba(25,42,80,.05);
+  --pph-shadow-hover:0 16px 38px rgba(25,42,80,.14),0 5px 12px rgba(25,42,80,.08);
+}
+
+body{font-family:var(--font-sans,Inter,"Segoe UI",Arial,sans-serif)}
+
+.wrap{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  padding:1.25rem 1.15rem 2rem;
+  border:1px solid var(--border,#e1e6ef);
+  border-radius:20px;
+  background:
+    radial-gradient(circle at 93% 3%,rgba(59,130,246,.13),transparent 22%),
+    radial-gradient(circle at 3% 96%,rgba(214,166,25,.10),transparent 19%),
+    linear-gradient(180deg,var(--surface-1,#fff) 0%,var(--surface-2,#f7f9fc) 100%);
+  box-shadow:0 18px 50px rgba(28,44,84,.06);
+}
+.wrap::before{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  top:-74px;right:-72px;
+  width:190px;height:190px;
+  border-radius:50%;
+  border:28px solid rgba(59,130,246,.055);
+}
+.wrap::after{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  left:-36px;bottom:-44px;
+  width:125px;height:125px;
+  border-radius:34px;
+  transform:rotate(22deg);
+  background:linear-gradient(135deg,rgba(214,166,25,.08),rgba(59,130,246,.05));
+}
+
+/* Header */
+h2.title{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  gap:9px;
+  font-size:18px;
+  font-weight:750;
+  letter-spacing:-.02em;
+  color:var(--text-primary,#172033);
+  margin-bottom:5px;
+}
+h2.title::before{
+  content:"";
+  width:9px;height:26px;
+  border-radius:8px;
+  background:linear-gradient(180deg,var(--pph-gold),#f2c94c);
+  box-shadow:0 4px 12px rgba(214,166,25,.25);
+}
+h2.title::after{
+  content:"";
+  position:absolute;
+  left:18px;right:0;bottom:-8px;
+  height:2px;
+  border-radius:2px;
+  background:linear-gradient(90deg,var(--pph-blue),rgba(59,130,246,0));
+}
+.sub{
+  font-size:12px;
+  line-height:1.55;
+  color:var(--text-secondary,#667085);
+  margin:9px 0 1.1rem 18px;
+  max-width:760px;
+}
+
+/* Legend */
+.legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  margin-bottom:1rem;
+  padding:9px 10px;
+  border-radius:13px;
+  border:1px solid var(--border,#e2e7f0);
+  background:color-mix(in srgb,var(--surface-1,#fff) 88%,transparent);
+  box-shadow:0 4px 15px rgba(30,45,85,.04);
+}
+.legend-item{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 8px;
+  border-radius:999px;
+  font-size:10.5px;
+  font-weight:550;
+  color:var(--text-secondary,#667085);
+  background:var(--surface-2,#f7f9fc);
+  border:1px solid var(--border,#e4e8f0);
+}
+.legend-dot{
+  width:9px;height:9px;
+  border-radius:50%;
+  box-shadow:0 0 0 3px rgba(255,255,255,.65);
+}
+
+/* Breadcrumb */
+.crumb{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:11.5px;
+  color:var(--text-secondary,#667085);
+  margin-bottom:1rem;
+  min-height:25px;
+  flex-wrap:wrap;
+}
+.crumb span{color:var(--text-muted,#98a2b3)}
+.crumb .crumb-item{
+  color:var(--text-accent,#3267d6);
+  cursor:pointer;
+  padding:5px 9px;
+  border-radius:999px;
+  border:1px solid var(--border-accent,#cbd9f7);
+  background:linear-gradient(180deg,#fff,var(--bg-accent,#f1f5ff));
+  box-shadow:0 2px 5px rgba(40,65,115,.05);
+  transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease;
+}
+.crumb .crumb-item:hover{
+  transform:translateY(-1px);
+  border-color:var(--pph-blue);
+  box-shadow:0 6px 14px rgba(59,130,246,.12);
+}
+
+/* Section header */
+.sec-hd{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:10.5px;
+  font-weight:750;
+  color:var(--text-muted,#7d8798);
+  letter-spacing:.075em;
+  text-transform:uppercase;
+  margin:.65rem 0 9px;
+}
+.sec-hd::before{
+  content:"";
+  width:20px;height:3px;
+  border-radius:3px;
+  background:linear-gradient(90deg,var(--pph-gold),#f0c64d);
+}
+.sec-hd::after{
+  content:"";
+  flex:1;
+  height:1px;
+  background:linear-gradient(90deg,var(--border,#e4e8ef),transparent);
+}
+
+/* Dimension / decision cards */
+.dim-row{
+  display:flex;
+  gap:11px;
+  margin-bottom:1rem;
+  flex-wrap:wrap;
+}
+.dim-btn{
+  --card-accent:var(--pph-blue);
+  position:relative;
+  overflow:hidden;
+  flex:1;
+  min-width:150px;
+  min-height:92px;
+  padding:13px 14px 12px 16px;
+  border-radius:15px;
+  border:1px solid var(--border,#dfe5ee);
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.93),rgba(247,249,252,.88));
+  cursor:pointer;
+  text-align:left;
+  box-shadow:var(--pph-shadow);
+  transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease,background .18s ease;
+}
+.dim-btn:nth-child(4n+2){--card-accent:var(--pph-teal)}
+.dim-btn:nth-child(4n+3){--card-accent:var(--pph-purple)}
+.dim-btn:nth-child(4n+4){--card-accent:var(--pph-gold)}
+.dim-btn::before{
+  content:"";
+  position:absolute;
+  left:0;top:0;bottom:0;
+  width:4px;
+  background:linear-gradient(180deg,var(--card-accent),color-mix(in srgb,var(--card-accent) 55%,white));
+}
+.dim-btn::after{
+  content:"→";
+  position:absolute;
+  right:12px;top:10px;
+  display:grid;
+  place-items:center;
+  width:24px;height:24px;
+  border-radius:50%;
+  color:var(--card-accent);
+  background:color-mix(in srgb,var(--card-accent) 10%,white);
+  border:1px solid color-mix(in srgb,var(--card-accent) 25%,white);
+  font-size:12px;
+  transform:translateX(3px);
+  opacity:.72;
+  transition:transform .18s ease,opacity .18s ease;
+}
+.dim-btn:hover{
+  transform:translateY(-3px);
+  border-color:color-mix(in srgb,var(--card-accent) 50%,var(--border,#dfe5ee));
+  box-shadow:var(--pph-shadow-hover);
+  background:linear-gradient(145deg,#fff,color-mix(in srgb,var(--card-accent) 5%,#fff));
+}
+.dim-btn:hover::after{transform:translateX(0);opacity:1}
+.dim-btn:active{transform:translateY(-1px) scale(.995)}
+.dim-btn.active{
+  border-color:var(--card-accent);
+  background:color-mix(in srgb,var(--card-accent) 7%,white);
+}
+.dim-btn .icon{
+  display:grid;
+  place-items:center;
+  width:34px;height:34px;
+  margin-bottom:8px;
+  border-radius:10px;
+  font-size:18px;
+  color:var(--card-accent);
+  background:color-mix(in srgb,var(--card-accent) 10%,white);
+  border:1px solid color-mix(in srgb,var(--card-accent) 22%,white);
+}
+.dim-btn .label{
+  padding-right:26px;
+  font-size:12.5px;
+  font-weight:720;
+  color:var(--text-primary,#172033);
+}
+.dim-btn .desc{
+  padding-right:16px;
+  font-size:10.5px;
+  color:var(--text-secondary,#667085);
+  margin-top:4px;
+  line-height:1.45;
+}
+
+/* Results */
+.cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(215px,1fr));
+  gap:12px;
+}
+.card{
+  --accent:var(--pph-blue);
+  position:relative;
+  overflow:hidden;
+  min-height:150px;
+  background:linear-gradient(150deg,var(--surface-1,#fff),var(--surface-2,#f8fafc));
+  border:1px solid var(--border,#e0e5ee);
+  border-radius:16px;
+  padding:15px 16px 15px 18px;
+  cursor:pointer;
+  box-shadow:var(--pph-shadow);
+  transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;
+}
+.card::before{
+  content:"";
+  position:absolute;
+  left:0;top:0;bottom:0;
+  width:4px;
+  background:var(--accent);
+}
+.card::after{
+  content:"";
+  position:absolute;
+  width:82px;height:82px;
+  right:-31px;top:-34px;
+  border-radius:50%;
+  background:color-mix(in srgb,var(--accent) 11%,transparent);
+  border:13px solid color-mix(in srgb,var(--accent) 5%,transparent);
+}
+.card:has(.p21){--accent:#2774bd}
+.card:has(.p22){--accent:#15906f}
+.card:has(.p23){--accent:#b8750a}
+.card:has(.p4){--accent:#bd4a65}
+.card:has(.p15){--accent:#6a59c8}
+.card:has(.pbadan){--accent:#68675f}
+.card:hover{
+  transform:translateY(-4px);
+  border-color:color-mix(in srgb,var(--accent) 38%,var(--border,#e0e5ee));
+  box-shadow:var(--pph-shadow-hover);
+}
+.card .pasal-badge{
+  position:relative;
+  z-index:1;
+  display:inline-block;
+  font-size:9.5px;
+  font-weight:720;
+  padding:4px 9px;
+  border-radius:999px;
+  margin-bottom:9px;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);
+}
+.card .obj-name{
+  position:relative;
+  z-index:1;
+  font-size:12.8px;
+  font-weight:720;
+  color:var(--text-primary,#172033);
+  margin-bottom:7px;
+  line-height:1.38;
+}
+.card .tarif{
+  position:relative;
+  z-index:1;
+  font-size:11.5px;
+  color:var(--text-secondary,#667085);
+  margin-bottom:6px;
+  line-height:1.45;
+}
+.card .tarif strong{color:var(--text-primary,#172033);font-weight:720}
+.card .note{
+  position:relative;
+  z-index:1;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  font-size:10.5px;
+  color:var(--text-muted,#7d8798);
+  line-height:1.35;
+}
+.card .note::before{
+  content:"";
+  width:6px;height:6px;
+  border-radius:50%;
+  background:var(--accent);
+  opacity:.75;
+}
+.card .warn{
+  position:relative;
+  z-index:1;
+  margin-top:8px;
+  padding:6px 8px;
+  border-radius:8px;
+  font-size:9.5px;
+  line-height:1.35;
+  color:var(--text-warning,#8a5a00);
+  background:#fff7df;
+  border:1px solid #f1d98e;
+}
+
+/* Detail panel */
+.detail-panel{
+  position:relative;
+  overflow:hidden;
+  background:linear-gradient(145deg,var(--surface-1,#fff),var(--surface-2,#f7f9fc));
+  border:1px solid var(--border,#dfe5ee);
+  border-radius:18px;
+  padding:18px 19px 16px;
+  margin-top:1rem;
+  box-shadow:0 16px 38px rgba(25,42,80,.10);
+}
+.detail-panel::before{
+  content:"DETAIL OBJEK";
+  position:absolute;
+  right:16px;top:14px;
+  font-size:8px;
+  font-weight:800;
+  letter-spacing:.12em;
+  color:var(--text-muted,#98a2b3);
+}
+.detail-panel::after{
+  content:"";
+  position:absolute;
+  right:-42px;bottom:-44px;
+  width:130px;height:130px;
+  border-radius:50%;
+  border:18px solid rgba(59,130,246,.05);
+}
+.detail-panel h3{
+  position:relative;
+  z-index:1;
+  font-size:15px;
+  font-weight:760;
+  color:var(--text-primary,#172033);
+  margin:2px 0 13px;
+  padding-right:100px;
+}
+.detail-row{
+  position:relative;
+  z-index:1;
+  display:grid;
+  grid-template-columns:112px 1fr;
+  gap:10px;
+  padding:7px 0;
+  margin:0;
+  font-size:11.5px;
+  border-top:1px dashed var(--border,#e4e8ef);
+}
+.detail-row:first-of-type{border-top:none}
+.detail-label{color:var(--text-secondary,#667085);font-weight:650;min-width:0}
+.detail-val{color:var(--text-primary,#172033);line-height:1.5}
+.detail-val.tarif-big{font-size:17px;font-weight:780;color:var(--text-accent,#3267d6)}
+.close-btn{
+  position:relative;
+  z-index:1;
+  font-size:11px;
+  font-weight:700;
+  color:var(--text-accent,#3267d6);
+  cursor:pointer;
+  border:1px solid var(--border-accent,#cbd9f7);
+  background:var(--bg-accent,#f1f5ff);
+  padding:7px 10px;
+  border-radius:9px;
+  margin-top:12px;
+  transition:transform .15s ease,box-shadow .15s ease;
+}
+.close-btn:hover{transform:translateY(-1px);box-shadow:0 5px 13px rgba(50,103,214,.12);text-decoration:none}
+
+/* Pasal colors */
+.p21{background:#E6F1FB;color:#0C447C}
+.p22{background:#E1F5EE;color:#085041}
+.p23{background:#FAEEDA;color:#633806}
+.p4{background:#FBEAF0;color:#4B1528}
+.p15{background:#EEEDFE;color:#3C3489}
+.pbadan{background:#F1EFE8;color:#444441}
+
+[data-mode="dark"] .wrap{
+  background:
+    radial-gradient(circle at 93% 3%,rgba(88,128,255,.12),transparent 22%),
+    radial-gradient(circle at 3% 96%,rgba(214,166,25,.07),transparent 19%),
+    linear-gradient(180deg,var(--surface-1),var(--surface-2));
+}
+[data-mode="dark"] .dim-btn,
+[data-mode="dark"] .card,
+[data-mode="dark"] .legend,
+[data-mode="dark"] .detail-panel{
+  background:linear-gradient(145deg,var(--surface-1),var(--surface-2));
+}
+[data-mode="dark"] .p21{background:#0C447C;color:#B5D4F4}
+[data-mode="dark"] .p22{background:#085041;color:#9FE1CB}
+[data-mode="dark"] .p23{background:#633806;color:#FAC775}
+[data-mode="dark"] .p4{background:#4B1528;color:#F4C0D1}
+[data-mode="dark"] .p15{background:#3C3489;color:#CECBF6}
+[data-mode="dark"] .pbadan{background:#444441;color:#D3D1C7}
+
+.empty{font-size:13px;color:var(--text-muted,#98a2b3);padding:20px 0}
+
+@media (max-width:760px){
+  .wrap{padding:1rem .8rem 1.5rem;border-radius:14px}
+  .dim-btn{min-width:calc(50% - 6px)}
+  .cards{grid-template-columns:1fr}
+  .detail-row{grid-template-columns:95px 1fr}
+  h2.title{font-size:16px}
+}
+@media (max-width:480px){
+  .dim-btn{min-width:100%}
+  .legend{gap:5px}
+  .legend-item{font-size:10px;padding:3px 6px}
+  .detail-row{grid-template-columns:1fr;gap:3px}
+  .detail-panel h3{padding-right:0;margin-top:22px}
+}
+</style>
+
+<div class="wrap">
+<p style="color:#1f2d5c;font-size:12px;font-weight:700;margin-bottom:12px">PT SALIM IVOMAS PRATAMA · TRAINING CENTER KAYANGAN</p><a href="#taxapp" style="display:inline-block;margin-bottom:16px;color:#087f70">Buka kalkulator pajak ↓</a><h2 class="title">Navigasi Klasifikasi PPh</h2>
+<p class="sub">Mulai dari siapa Wajib Pajak-nya → apa yang terjadi → temukan Pasal & tarif yang berlaku</p>
+
+<div class="legend" id="legend">
+  <span class="legend-item"><span class="legend-dot p21"></span>PPh 21</span>
+  <span class="legend-item"><span class="legend-dot p22"></span>PPh 22</span>
+  <span class="legend-item"><span class="legend-dot p23"></span>PPh 23</span>
+  <span class="legend-item"><span class="legend-dot p4"></span>PPh 4(2) Final</span>
+  <span class="legend-item"><span class="legend-dot p15"></span>PPh 15</span>
+  <span class="legend-item"><span class="legend-dot pbadan"></span>PPh Badan</span>
+</div>
+
+<div class="crumb" id="crumb"></div>
+
+<div id="step1">
+  <div class="sec-hd">Siapa Wajib Pajak yang menerima/melakukan transaksi?</div>
+  <div class="dim-row">
+    <button class="dim-btn" onclick="selectWP('op_dn')">
+      <div class="icon"><i class="ti ti-user" aria-hidden="true"></i></div>
+      <div class="label">Orang Pribadi DN</div>
+      <div class="desc">Penduduk / SPDN — karyawan, pekerja lepas, pengusaha</div>
+    </button>
+    <button class="dim-btn" onclick="selectWP('badan_dn')">
+      <div class="icon"><i class="ti ti-building" aria-hidden="true"></i></div>
+      <div class="label">Badan Usaha DN</div>
+      <div class="desc">PT, CV, Koperasi, BUMN — wajib pajak badan dalam negeri</div>
+    </button>
+    <button class="dim-btn" onclick="selectWP('ln')">
+      <div class="icon"><i class="ti ti-world" aria-hidden="true"></i></div>
+      <div class="label">WP Luar Negeri</div>
+      <div class="desc">SPLN, BUT, perusahaan asing — menerima penghasilan dari Indonesia</div>
+    </button>
+    <button class="dim-btn" onclick="selectWP('badan_pungut')">
+      <div class="icon"><i class="ti ti-building-bank" aria-hidden="true"></i></div>
+      <div class="label">Pemungut / Bendahara</div>
+      <div class="desc">BUMN, importir, bendahara pemerintah — sebagai pihak pemotong</div>
+    </button>
+  </div>
+</div>
+
+<div id="step2" style="display:none">
+  <div class="sec-hd" id="step2-hd">Apa jenis penghasilan atau transaksinya?</div>
+  <div class="dim-row" id="step2-btns"></div>
+</div>
+
+<div id="step3" style="display:none">
+  <div class="sec-hd" id="step3-hd">Pilih objek yang lebih spesifik</div>
+  <div class="dim-row" id="step3-btns"></div>
+</div>
+
+<div id="results" style="display:none">
+  <div class="sec-hd" id="results-hd">Objek pajak yang relevan</div>
+  <div class="cards" id="cards-container"></div>
+</div>
+
+<div id="detail" style="display:none"></div>
+</div>
+
+<script>
+const DATA = {
+  op_dn: {
+    label: "OP Dalam Negeri (SPDN)",
+    cats: {
+      kerja: {
+        label: "Penghasilan dari pekerjaan / jasa",
+        subs: {
+          tetap: {
+            label: "Karyawan / pegawai tetap",
+            items: [
+              {kode:"21-100-01",pasal:"21",cls:"p21",name:"Pegawai Tetap",tarif:"TER bulanan (A/B/C) → rekonsiliasi Pasal 17 tahunan (5%–35%)",nature:"Tidak final",keterangan:"Dipotong oleh pemberi kerja setiap bulan. Akhir tahun dihitung ulang dengan tarif Pasal 17 progresif.",dasar:"PP 58/2023, PMK 168/2023"},
+              {kode:"21-401-01",pasal:"21",cls:"p21",name:"Uang Pesangon (sekaligus)",tarif:"0% s.d. Rp50 jt / 5% (>50–100 jt) / 15% (>100–500 jt) / 25% (>500 jt)",nature:"Final",keterangan:"Dibayar sekaligus saat PHK. Tarif berlapis tapi bersifat final.",dasar:"PP 68/2009"},
+              {kode:"21-401-02",pasal:"21",cls:"p21",name:"Uang Manfaat Pensiun / JHT (sekaligus)",tarif:"0% s.d. Rp50 jt / 5% di atas Rp50 jt",nature:"Final",keterangan:"Penarikan sekaligus dari dana pensiun atau BPJS TK.",dasar:"PP 68/2009"},
+            ]
+          },
+          lepas: {
+            label: "Pekerja lepas / bukan pegawai",
+            items: [
+              {kode:"21-100-07",pasal:"21",cls:"p21",name:"Tenaga Ahli (konsultan, dokter, notaris, dll)",tarif:"Pasal 17 × 50% penghasilan bruto",nature:"Tidak final",keterangan:"DPP hanya 50% dari bruto (norma penghapus). Tarif progresif Ps.17 diterapkan atas 50% tersebut.",dasar:"PMK 168/2023"},
+              {kode:"21-100-05",pasal:"21",cls:"p21",name:"Agen Asuransi",tarif:"Pasal 17 × 50% penghasilan bruto",nature:"Tidak final",keterangan:"Komisi agen dihitung dengan DPP 50%.",dasar:"PMK 168/2023"},
+              {kode:"21-100-09",pasal:"21",cls:"p21",name:"Bukan Pegawai Lainnya",tarif:"Pasal 17 × 50% penghasilan bruto",nature:"Tidak final",keterangan:"Berlaku untuk jasa yang tidak masuk PPh 23 (mis. honorarium perorangan).",dasar:"PMK 168/2023"},
+              {kode:"21-100-13",pasal:"21",cls:"p21",name:"Peserta Kegiatan (seminar, lomba, dll)",tarif:"Pasal 17 × penghasilan bruto",nature:"Tidak final",keterangan:"Tidak ada pengurang 50% untuk peserta kegiatan.",dasar:"PMK 168/2023"},
+            ]
+          },
+          pns: {
+            label: "PNS / TNI / POLRI (honorarium APBN/APBD)",
+            items: [
+              {kode:"21-402-01",pasal:"21",cls:"p21",name:"Honor PNS Gol. I/II, Tamtama/Bintara",tarif:"0%",nature:"Final",keterangan:"Dikecualikan dari pemotongan PPh.",dasar:"PP 80/2010"},
+              {kode:"21-402-01",pasal:"21",cls:"p21",name:"Honor PNS Gol. III, Perwira Pertama",tarif:"5%",nature:"Final",keterangan:"Final atas honorarium dari APBN/APBD.",dasar:"PP 80/2010"},
+              {kode:"21-402-01",pasal:"21",cls:"p21",name:"Honor PNS Gol. IV, Perwira Menengah/Tinggi, Pejabat Negara",tarif:"15%",nature:"Final",keterangan:"Final atas honorarium dari APBN/APBD.",dasar:"PP 80/2010"},
+            ]
+          }
+        }
+      },
+      pasif: {
+        label: "Penghasilan pasif (investasi / simpanan)",
+        subs: {
+          dividen: {
+            label: "Dividen dari saham",
+            items: [
+              {kode:"28-419-01",pasal:"4(2)",cls:"p4",name:"Dividen diterima Orang Pribadi DN",tarif:"10% (final) — atau 0% jika diinvestasikan kembali",nature:"Final",keterangan:"Sejak UU HPP: dividen OP DN dikenakan 10% final. Bisa 0% jika diinvestasikan di instrumen yang ditetapkan (reksa dana, SBN, dll) selama min. 3 tahun.",dasar:"UU HPP Ps. 4(3) huruf f & PMK terkait"},
+            ]
+          },
+          bunga: {
+            label: "Bunga tabungan / deposito / obligasi",
+            items: [
+              {kode:"28-404-01",pasal:"4(2)",cls:"p4",name:"Bunga Deposito / Tabungan (dana umum)",tarif:"20% dari bruto bunga",nature:"Final",keterangan:"Berlaku untuk dana selain DHE. Bank sebagai pemotong.",dasar:"PP 131/2000"},
+              {kode:"28-404-11",pasal:"4(2)",cls:"p4",name:"Jasa Giro",tarif:"20% dari bruto",nature:"Final",keterangan:"Sama seperti bunga deposito.",dasar:"PP 131/2000"},
+              {kode:"28-401-01",pasal:"4(2)",cls:"p4",name:"Bunga Obligasi / SBN (WP DN)",tarif:"10% dari bruto bunga",nature:"Final",keterangan:"Obligasi korporasi maupun SBN. Lebih rendah dari deposito karena dimaksudkan mendorong pasar obligasi.",dasar:"UU HPP"},
+              {kode:"28-417-02",pasal:"4(2)",cls:"p4",name:"Bunga Simpanan Koperasi (>Rp240.000/bulan)",tarif:"10% dari seluruh jumlah bunga",nature:"Final",keterangan:"Di bawah Rp240.000/bulan = 0%.",dasar:"UU PPh"},
+            ]
+          },
+          saham: {
+            label: "Jual saham di bursa / modal ventura",
+            items: [
+              {kode:"28-406-01",pasal:"4(2)",cls:"p4",name:"Penjualan Saham Biasa di Bursa Efek",tarif:"0,1% dari nilai transaksi bruto",nature:"Final",keterangan:"Dipungut langsung oleh bursa (KPEI) dari setiap transaksi jual. Tidak tergantung untung/rugi.",dasar:"PP 41/1994 & revisi"},
+              {kode:"28-407-01",pasal:"4(2)",cls:"p4",name:"Penjualan Saham Pendiri (saat IPO/setelah)",tarif:"0,1% (umum) + tambahan 0,5% dari nilai saat IPO",nature:"Final",keterangan:"Saham pendiri dikenakan tambahan 0,5% atas nilai saham saat go public. Bisa dibayar sekaligus saat IPO.",dasar:"PP 14/1997"},
+              {kode:"28-408-01",pasal:"4(2)",cls:"p4",name:"Penjualan Saham Modal Ventura (luar bursa)",tarif:"0,1% dari nilai transaksi",nature:"Final",keterangan:"Berlaku jika memenuhi syarat PP 4/1995 (investasi ke perusahaan pasangan usaha).",dasar:"PP 4/1995",warn:"⚠️ Perlu cek status perusahaan pasangan usaha"},
+            ]
+          },
+          prop: {
+            label: "Jual / sewa properti",
+            items: [
+              {kode:"28-402-01",pasal:"4(2)",cls:"p4",name:"Pengalihan / Jual Tanah dan/atau Bangunan",tarif:"2,5% dari nilai bruto pengalihan",nature:"Final",keterangan:"Berlaku untuk semua pengalihan (jual, hibah, warisan dikecualikan kondisi tertentu). Dasar pengenaan = harga jual atau NJOP, mana yang lebih tinggi.",dasar:"PP 34/2016"},
+              {kode:"28-402-02",pasal:"4(2)",cls:"p4",name:"Jual Rumah Sederhana / Rusun Sederhana",tarif:"1% dari nilai bruto",nature:"Final",keterangan:"Tarif lebih rendah untuk WP yang usaha pokoknya pengalihan tanah/bangunan (developer). Rumah sederhana / rusun sesuai kriteria pemerintah.",dasar:"PP 34/2016"},
+              {kode:"28-403-01",pasal:"4(2)",cls:"p4",name:"Sewa Tanah dan/atau Bangunan",tarif:"10% dari nilai bruto sewa",nature:"Final",keterangan:"Penyewa memotong jika penyewa adalah badan/OP yang usahanya berkaitan. Pemilik setor sendiri jika penyewa OP/bukan pemotong.",dasar:"PP 34/2017"},
+            ]
+          },
+          undian: {
+            label: "Hadiah / undian",
+            items: [
+              {kode:"28-405-01",pasal:"4(2)",cls:"p4",name:"Hadiah Undian (WP DN)",tarif:"25% dari nilai hadiah",nature:"Final",keterangan:"Dipotong oleh penyelenggara undian.",dasar:"UU PPh"},
+            ]
+          }
+        }
+      },
+      umkm: {
+        label: "Penghasilan usaha UMKM (omzet tertentu)",
+        subs: {
+          pp55: {
+            label: "WP dengan peredaran bruto tertentu",
+            items: [
+              {kode:"28-423-01",pasal:"4(2)",cls:"p4",name:"PPh Final UMKM — WP OP / Badan (omzet s.d. Rp4,8 M)",tarif:"0,5% dari peredaran bruto",nature:"Final",keterangan:"Berlaku maksimal 7 tahun (OP), 4 tahun (PT/koperasi), 3 tahun (CV/firma) sejak terdaftar. Basis peredaran bruto per bulan.",dasar:"PP 55/2022"},
+              {kode:"28-423-03",pasal:"4(2)",cls:"p4",name:"OP peredaran bruto s.d. Rp500 juta/tahun",tarif:"0% (dikecualikan dari PPh Final)",nature:"Final (0%)",keterangan:"Ambang batas tidak kena pajak UMKM OP. Bagian omzet di atas Rp500 jt baru kena 0,5%.",dasar:"UU HPP & PP 55/2022"},
+            ]
+          }
+        }
+      }
+    }
+  },
+  badan_dn: {
+    label: "Badan Usaha DN",
+    cats: {
+      badan_umum: {
+        label: "Penghasilan usaha / laba badan",
+        subs: {
+          ps17: {
+            label: "Tarif umum PPh Badan",
+            items: [
+              {kode:"-",pasal:"Badan",cls:"pbadan",name:"PPh Badan Umum — Tarif Pasal 17(1)(b)",tarif:"22% dari Penghasilan Kena Pajak (PKP)",nature:"Tidak final (self-assessment)",keterangan:"Berlaku untuk semua WP badan DN. Tarif 20% yang semula direncanakan (UU HPP) batal — tetap 22% sejak TA 2022. Dibayar angsuran bulanan (PPh 25) + pelunasan akhir tahun (PPh 29).",dasar:"UU HPP Ps. 17"},
+              {kode:"-",pasal:"Badan",cls:"pbadan",name:"Fasilitas Pasal 31E — Badan Peredaran Bruto s.d. Rp50 M",tarif:"Diskon 50% → efektif 11% untuk PKP dari porsi bruto s.d. Rp4,8 M",nature:"Fasilitas",keterangan:"Hanya bagian PKP yang bersumber dari peredaran bruto s.d. Rp4,8 M yang dapat diskon 50%. Selebihnya tetap 22%.",dasar:"UU PPh Ps. 31E"},
+              {kode:"-",pasal:"Badan",cls:"pbadan",name:"Perusahaan Terbuka (go public) — Pasal 17(2)(b)",tarif:"Diskon 3% → efektif ±19%",nature:"Fasilitas",keterangan:"Syarat: min. 40% saham diperdagangkan di bursa, dipegang min. 300 pihak, dan memenuhi syarat lain (PP 56/2015).",dasar:"PP 56/2015",warn:"⚠️ Cek detail persyaratan sebelum klaim fasilitas"},
+            ]
+          }
+        }
+      },
+      pot_pungut: {
+        label: "Dipotong / dipungut pihak lain (PPh 23)",
+        subs: {
+          ph23: {
+            label: "Penghasilan yang dipotong PPh 23",
+            items: [
+              {kode:"24-101-01",pasal:"23",cls:"p23",name:"Dividen diterima Badan DN",tarif:"15% dari bruto",nature:"Tidak final",keterangan:"Berbeda dengan dividen OP (PPh 4(2) final). Dividen antar badan dapat dikecualikan jika memenuhi syarat UU HPP (kepemilikan ≥25%).",dasar:"UU HPP"},
+              {kode:"24-102-01",pasal:"23",cls:"p23",name:"Bunga (selain dari lembaga keuangan / obligasi)",tarif:"15% dari bruto",nature:"Tidak final",keterangan:"Bunga pinjaman dari badan non-bank. Bunga deposito masuk PPh 4(2).",dasar:"UU PPh"},
+              {kode:"24-103-01",pasal:"23",cls:"p23",name:"Royalti",tarif:"15% dari bruto",nature:"Tidak final",keterangan:"Imbalan atas hak kekayaan intelektual, hak paten, merek dagang, dll.",dasar:"PMK 141/2015"},
+              {kode:"24-100-02",pasal:"23",cls:"p23",name:"Sewa Harta (bukan tanah/bangunan)",tarif:"2% dari bruto",nature:"Tidak final",keterangan:"Sewa kendaraan, peralatan, mesin, dll. Sewa tanah/bangunan masuk PPh 4(2).",dasar:"PMK 141/2015"},
+              {kode:"24-104-xx",pasal:"23",cls:"p23",name:"Jasa Teknik / Manajemen / Konsultan / dan 60+ jenis jasa lain",tarif:"2% dari bruto (tidak termasuk PPN)",nature:"Tidak final",keterangan:"Semua kode 24-104-xx tarif seragam 2%. Beda kode hanya untuk identifikasi jenis jasa dalam pelaporan e-Bupot.",dasar:"PMK 141/2015"},
+            ]
+          }
+        }
+      },
+      konstruksi: {
+        label: "Jasa konstruksi",
+        subs: {
+          konst: {
+            label: "PPh final jasa konstruksi",
+            items: [
+              {kode:"28-409-15",pasal:"4(2)",cls:"p4",name:"Konstruksi — sertifikat kualifikasi kecil / kompetensi perorangan",tarif:"1,75% dari nilai kontrak",nature:"Final",keterangan:"Tarif paling rendah untuk kontraktor kecil bersertifikat. Final — tidak perlu lapor di SPT Tahunan.",dasar:"PP 9/2022"},
+              {kode:"28-409-xx",pasal:"4(2)",cls:"p4",name:"Konstruksi — tanpa SBU / sertifikat kompetensi",tarif:"4% dari nilai kontrak",nature:"Final",keterangan:"Tarif paling tinggi — penalti untuk tidak memiliki sertifikat.",dasar:"PP 9/2022"},
+              {kode:"28-409-xx",pasal:"4(2)",cls:"p4",name:"Konstruksi — sertifikat selain kualifikasi kecil",tarif:"2,65% dari nilai kontrak",nature:"Final",keterangan:"Kontraktor menengah/besar bersertifikat.",dasar:"PP 9/2022"},
+              {kode:"28-409-xx",pasal:"4(2)",cls:"p4",name:"Konsultansi konstruksi — bersertifikat",tarif:"3,5% dari nilai kontrak",nature:"Final",keterangan:"Jasa konsultan perencana/pengawas konstruksi dengan SBU.",dasar:"PP 9/2022"},
+              {kode:"28-409-xx",pasal:"4(2)",cls:"p4",name:"Konsultansi konstruksi — tanpa sertifikat",tarif:"6% dari nilai kontrak",nature:"Final",keterangan:"Tarif tertinggi.",dasar:"PP 9/2022",warn:"⚠️ Selalu verifikasi status SBU sebelum penerapan tarif"},
+            ]
+          }
+        }
+      }
+    }
+  },
+  ln: {
+    label: "WP / Badan Luar Negeri (SPLN / BUT)",
+    cats: {
+      pasif_ln: {
+        label: "Penghasilan pasif dari Indonesia",
+        subs: {
+          divln: {
+            label: "Dividen, bunga, royalti, jasa",
+            items: [
+              {kode:"-",pasal:"26",cls:"p4",name:"Dividen / Bunga / Royalti / Jasa — WP LN",tarif:"20% dari bruto (atau tarif P3B jika ada tax treaty)",nature:"Final (withholding tax)",keterangan:"PPh Pasal 26 = mekanisme pemotongan untuk SPLN. Tarif 20% adalah tarif domestik. Jika ada P3B (tax treaty), gunakan tarif lebih rendah dari P3B dengan syarat SKD (Surat Keterangan Domisili).",dasar:"UU PPh Ps. 26"},
+              {kode:"28-401-02",pasal:"4(2)",cls:"p4",name:"Bunga Obligasi / SBN diterima WP LN",tarif:"20% (atau tarif P3B)",nature:"Final",keterangan:"Sama dengan SPLN lainnya — dipotong oleh emiten/kustodian.",dasar:"UU HPP"},
+            ]
+          },
+          but: {
+            label: "BUT (Bentuk Usaha Tetap)",
+            items: [
+              {kode:"-",pasal:"Badan",cls:"pbadan",name:"BUT — Penghasilan laba usaha",tarif:"22% (tarif PPh Badan)",nature:"Tidak final",keterangan:"BUT diperlakukan seperti WP Badan DN untuk penghasilan yang attributable ke Indonesia.",dasar:"UU PPh"},
+              {kode:"-",pasal:"26",cls:"p4",name:"Branch Profit Tax (BPT) — remittance laba BUT ke kantor pusat LN",tarif:"20% (atau tarif P3B) dari laba setelah PPh",nature:"Final",keterangan:"Setelah BUT bayar PPh Badan, laba yang dikirim ke kantor pusat LN kena BPT 20%. Total beban efektif: 22% + 20% × (1−22%) = ±37,6%.",dasar:"UU PPh Ps. 26 ayat (4)"},
+            ]
+          },
+          pelayaran: {
+            label: "Pengiriman / pelayaran / charter LN",
+            items: [
+              {kode:"28-411-01",pasal:"15",cls:"p15",name:"Imbalan Pelayaran / Penerbangan Luar Negeri",tarif:"2,64% dari peredaran bruto",nature:"Final",keterangan:"Norma Penghasilan Neto 6% × 44% (tarif khusus). Berlaku untuk maskapai/perusahaan pelayaran asing.",dasar:"KMK / PMK terkait PPh 15"},
+              {kode:"28-413-01",pasal:"15",cls:"p15",name:"Kantor Perwakilan Dagang Asing di Indonesia",tarif:"0,44% dari nilai ekspor bruto",nature:"Final",keterangan:"Norma khusus representative office perdagangan.",dasar:"KMK 434/KMK.04/1999"},
+            ]
+          }
+        }
+      }
+    }
+  },
+  badan_pungut: {
+    label: "Pemungut / Bendahara (PPh 22)",
+    cats: {
+      impor: {
+        label: "Kegiatan impor barang",
+        subs: {
+          imp: {
+            label: "Tarif impor berdasarkan status importir",
+            items: [
+              {kode:"22-100-01",pasal:"22",cls:"p22",name:"Impor — Tarif 10% (barang tertentu)",tarif:"10% dari nilai impor",nature:"Tidak final (dapat dikreditkan)",keterangan:"Barang yang ditetapkan pemerintah — mewah atau strategis tertentu.",dasar:"PMK 34/2017"},
+              {kode:"22-100-04",pasal:"22",cls:"p22",name:"Impor — Importir ber-API",tarif:"2,5% dari nilai impor",nature:"Tidak final",keterangan:"API = Angka Pengenal Importir. Tarif lebih rendah karena importir teridentifikasi.",dasar:"PMK 34/2017"},
+              {kode:"22-100-05",pasal:"22",cls:"p22",name:"Impor — Importir tanpa API",tarif:"7,5% dari nilai impor",nature:"Tidak final",keterangan:"Tarif lebih tinggi karena risiko kepatuhan lebih besar.",dasar:"PMK 34/2017"},
+            ]
+          }
+        }
+      },
+      pembelian: {
+        label: "Pembelian barang oleh instansi/BUMN",
+        subs: {
+          bumn: {
+            label: "Transaksi BUMN dan pemerintah",
+            items: [
+              {kode:"22-100-06",pasal:"22",cls:"p22",name:"Pembelian Barang/Bahan oleh BUMN",tarif:"1,5% dari harga pembelian (tidak termasuk PPN)",nature:"Tidak final",keterangan:"BUMN sebagai pemungut PPh 22 atas pembelian barang dari rekanannya.",dasar:"PMK 34/2017"},
+              {kode:"22-100-13",pasal:"22",cls:"p22",name:"Pembelian Komoditas Tambang dari Pemegang IUP",tarif:"1,5% dari harga pembelian",nature:"Tidak final",keterangan:"Batubara, mineral logam, dan mineral bukan logam.",dasar:"PMK 34/2017"},
+            ]
+          }
+        }
+      },
+      industri: {
+        label: "Penjualan hasil produksi industri tertentu",
+        subs: {
+          ind: {
+            label: "Industri strategis (semen, baja, otomotif, dll)",
+            items: [
+              {kode:"22-100-07",pasal:"22",cls:"p22",name:"Industri Semen",tarif:"0,25% dari DPP PPN",nature:"Tidak final",keterangan:"Dipungut oleh produsen semen.",dasar:"PMK 34/2017"},
+              {kode:"22-100-08",pasal:"22",cls:"p22",name:"Industri Baja",tarif:"0,3% dari DPP PPN",nature:"Tidak final",keterangan:"Dipungut oleh produsen baja.",dasar:"PMK 34/2017"},
+              {kode:"22-100-09",pasal:"22",cls:"p22",name:"Industri Otomotif (ATPM/APM)",tarif:"0,45% dari DPP PPN",nature:"Tidak final",keterangan:"Penjualan kendaraan bermotor dalam negeri.",dasar:"PMK 34/2017"},
+              {kode:"22-100-10",pasal:"22",cls:"p22",name:"Industri Farmasi",tarif:"0,3% dari DPP PPN",nature:"Tidak final",keterangan:"Dipungut oleh produsen farmasi kepada distributor.",dasar:"PMK 34/2017"},
+            ]
+          }
+        }
+      },
+      mewah: {
+        label: "Barang sangat mewah",
+        subs: {
+          luxury: {
+            label: "Objek PPh 22 final barang mewah",
+            items: [
+              {kode:"22-403-01",pasal:"22",cls:"p22",name:"Pesawat / Helikopter / Kapal Pesiar / Yacht / Kendaraan Mewah",tarif:"5% dari harga jual (tidak termasuk PPN/PPnBM)",nature:"Final",keterangan:"Dipungut oleh penjual/importir. Barang sangat mewah dikenakan tarif lebih tinggi dan bersifat final.",dasar:"PMK 92/2019"},
+              {kode:"22-403-02",pasal:"22",cls:"p22",name:"Rumah Mewah / Apartemen / Kondominium",tarif:"1% dari harga jual (tidak termasuk PPN/PPnBM)",nature:"Final",keterangan:"Untuk properti mewah di atas ambang harga tertentu.",dasar:"PMK 92/2019"},
+            ]
+          }
+        }
+      },
+      pelayaran_dn: {
+        label: "Pelayaran / charter dalam negeri",
+        subs: {
+          pel: {
+            label: "PPh 15 — penghasilan pelayaran DN",
+            items: [
+              {kode:"28-410-01",pasal:"15",cls:"p15",name:"Imbalan Pelayaran Dalam Negeri",tarif:"1,2% dari peredaran bruto",nature:"Final",keterangan:"Norma Penghasilan Neto 4% × 22% (tarif badan). Berlaku untuk perusahaan pelayaran DN.",dasar:"PMK terkait PPh 15"},
+              {kode:"29-101-01",pasal:"15",cls:"p15",name:"Charter Pesawat ke Perusahaan Penerbangan DN",tarif:"1,8% dari peredaran bruto",nature:"Final",keterangan:"Khusus penyewaan pesawat udara kepada maskapai dalam negeri.",dasar:"KMK 475/KMK.04/1996"},
+            ]
+          }
+        }
+      }
+    }
+  }
+};
+
+let state = {wp:null,cat:null,sub:null};
+
+function updateCrumb(){
+  const el = document.getElementById('crumb');
+  let parts = [];
+  if(state.wp) parts.push({label: DATA[state.wp].label, fn:'resetTo(1)'});
+  if(state.cat){
+    const cats = DATA[state.wp].cats;
+    parts.push({label: cats[state.cat].label, fn:'resetTo(2)'});
+  }
+  if(state.sub && state.cat){
+    const subs = DATA[state.wp].cats[state.cat].subs;
+    parts.push({label: subs[state.sub].label, fn:'resetTo(3)'});
+  }
+  if(!parts.length){el.innerHTML='';return;}
+  el.innerHTML = parts.map((p,i)=>
+    `<span class="crumb-item" onclick="${p.fn}">${p.label}</span>${i<parts.length-1?'<span>›</span>':''}`
+  ).join('');
+}
+
+function resetTo(step){
+  if(step===1){state={wp:null,cat:null,sub:null};showStep(1);}
+  else if(step===2){state.cat=null;state.sub=null;showStep(2);}
+  else if(step===3){state.sub=null;showStep(3);}
+}
+
+function showStep(n){
+  document.getElementById('step1').style.display=n===1?'':'none';
+  document.getElementById('step2').style.display=n>=2?'':'none';
+  document.getElementById('step3').style.display=n>=3?'':'none';
+  document.getElementById('results').style.display='none';
+  document.getElementById('detail').style.display='none';
+  updateCrumb();
+}
+
+function selectWP(wp){
+  state.wp=wp; state.cat=null; state.sub=null;
+  document.getElementById('step1').style.display='none';
+  buildStep2();
+  document.getElementById('step2').style.display='';
+  document.getElementById('step3').style.display='none';
+  document.getElementById('results').style.display='none';
+  document.getElementById('detail').style.display='none';
+  updateCrumb();
+}
+
+function buildStep2(){
+  const cats = DATA[state.wp].cats;
+  const hd = document.getElementById('step2-hd');
+  hd.textContent = 'Apa jenis penghasilan atau kegiatannya? ('+DATA[state.wp].label+')';
+  const btns = document.getElementById('step2-btns');
+  btns.innerHTML='';
+  Object.entries(cats).forEach(([k,v])=>{
+    const b=document.createElement('button');
+    b.className='dim-btn';
+    b.innerHTML=`<div class="label">${v.label}</div>`;
+    b.onclick=()=>selectCat(k);
+    btns.appendChild(b);
+  });
+}
+
+function selectCat(cat){
+  state.cat=cat; state.sub=null;
+  const subs = DATA[state.wp].cats[cat].subs;
+  const keys = Object.keys(subs);
+  if(keys.length===1){
+    selectSub(keys[0]);
+    return;
+  }
+  buildStep3();
+  document.getElementById('step3').style.display='';
+  document.getElementById('results').style.display='none';
+  document.getElementById('detail').style.display='none';
+  updateCrumb();
+}
+
+function buildStep3(){
+  const subs = DATA[state.wp].cats[state.cat].subs;
+  const hd = document.getElementById('step3-hd');
+  hd.textContent = 'Spesifikasi lebih lanjut';
+  const btns = document.getElementById('step3-btns');
+  btns.innerHTML='';
+  Object.entries(subs).forEach(([k,v])=>{
+    const b=document.createElement('button');
+    b.className='dim-btn';
+    b.innerHTML=`<div class="label">${v.label}</div>`;
+    b.onclick=()=>selectSub(k);
+    btns.appendChild(b);
+  });
+}
+
+function selectSub(sub){
+  state.sub=sub;
+  const items = DATA[state.wp].cats[state.cat].subs[sub].items;
+  const hd = document.getElementById('results-hd');
+  hd.textContent = `Objek PPh yang relevan (${items.length} objek ditemukan)`;
+  const container = document.getElementById('cards-container');
+  container.innerHTML='';
+  items.forEach((item,idx)=>{
+    const card=document.createElement('div');
+    card.className='card';
+    card.innerHTML=`
+      <span class="pasal-badge ${item.cls}">PPh ${item.pasal}</span>
+      <div class="obj-name">${item.name}</div>
+      <div class="tarif">Tarif: <strong>${item.tarif}</strong></div>
+      <div class="note">${item.nature}</div>
+      ${item.warn?`<div class="warn">${item.warn}</div>`:''}
+    `;
+    card.onclick=()=>showDetail(item);
+    container.appendChild(card);
+  });
+  document.getElementById('results').style.display='';
+  document.getElementById('detail').style.display='none';
+  updateCrumb();
+}
+
+function showDetail(item){
+  const el = document.getElementById('detail');
+  el.style.display='';
+  el.innerHTML=`
+    <div class="detail-panel">
+      <h3>${item.name}</h3>
+      <div class="detail-row"><span class="detail-label">Pasal</span><span class="detail-val"><span class="pasal-badge ${item.cls}" style="font-size:11px;padding:2px 8px">PPh ${item.pasal}</span></span></div>
+      <div class="detail-row"><span class="detail-label">Kode Objek</span><span class="detail-val">${item.kode}</span></div>
+      <div class="detail-row"><span class="detail-label">Tarif</span><span class="detail-val tarif-big">${item.tarif}</span></div>
+      <div class="detail-row"><span class="detail-label">Sifat</span><span class="detail-val">${item.nature}</span></div>
+      <div class="detail-row"><span class="detail-label">Keterangan</span><span class="detail-val">${item.keterangan}</span></div>
+      <div class="detail-row"><span class="detail-label">Dasar Hukum</span><span class="detail-val">${item.dasar}</span></div>
+      <button class="close-btn" onclick="document.getElementById('detail').style.display='none'">↑ Tutup detail</button>
+    </div>
+  `;
+  el.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+</script>
+<section id="taxapp" class="taxapp">
+<header><small>PT SALIM IVOMAS PRATAMA · TRAINING CENTER KAYANGAN</small><h2>Kalkulator Pajak</h2><p>Navigator untuk memahami objek pajak. Kalkulator untuk mencoba angkanya.</p></header>
+<nav id="taxnav" aria-label="Pilihan kalkulator"></nav><main id="taxmain"></main>
+<details><summary>Rujukan, istilah, dan batas penggunaan</summary><p>Rujukan: <a href="https://kalkulator.pajak.go.id/" target="_blank" rel="noopener">Kalkulator Pajak DJP</a> dan <a href="https://static.pajak.go.id/download/kalkulator/Buku_PPh2126_Release_20240108.pdf" target="_blank" rel="noopener">Buku panduan PPh 21/26 DJP</a> (tabel TER A/B/C halaman cetak 40–42). Katalog dan rumus situs diperiksa 18 September 2026. Ini alat latihan lokal, bukan aplikasi resmi DJP.</p><p>PPh = Pajak Penghasilan; PPN = Pajak Pertambahan Nilai; PPnBM = Pajak Penjualan atas Barang Mewah; DJP = Direktorat Jenderal Pajak; TER = Tarif Efektif Rata-rata; PTKP = Penghasilan Tidak Kena Pajak; PKP = Penghasilan Kena Pajak (pada kalkulator PPh); DPP = Dasar Pengenaan Pajak; bruto = sebelum pengurang; neto = setelah pengurang yang diperkenankan.</p><p>BPJS = Badan Penyelenggara Jaminan Sosial; TK = Ketenagakerjaan; JKK = Jaminan Kecelakaan Kerja; JKM = Jaminan Kematian; JHT = Jaminan Hari Tua; JP = Jaminan Pensiun; Kes = Kesehatan; THR = Tunjangan Hari Raya. TK pada status PTKP berarti Tidak Kawin, K berarti Kawin; angka setelah garis miring menunjukkan jumlah tanggungan.</p><p>Katalog objek dan tarif PPh 22/23/4(2)/15 disalin lengkap dari pilihan situs rujukan. Pemilihan tarif tidak membuktikan suatu transaksi wajib dipotong: periksa pengecualian, fasilitas, dokumen, dan ketentuan yang berlaku. Materi Navigator asli tetap dipertahankan; bila terdapat perbedaan, periksa sumber resminya.</p><p>PPh 21 bulanan dihitung lokal dari tabel resmi. Pencocokan otomatis langsung dengan layanan PPh 21 DJP belum dilakukan karena menggunakan kode keamanan. Pembulatan tampilan ke rupiah terdekat mengikuti contoh slip. Masa pajak terakhir menggunakan rekonsiliasi tahunan, bukan TER bulanan. Fasilitas khusus seperti PPh ditanggung pemerintah tidak dimodelkan.</p><p>Data tidak dikirim ke server dan tidak disimpan otomatis. Muat ulang untuk kembali ke contoh slip.</p></details>
+</section>
+<style>
+.taxapp{max-width:1120px;margin:30px auto;padding:28px;background:#f6f8fc;color:#213252;border:1px solid #dce4ef;border-radius:22px;font:15px/1.55 'Segoe UI',Arial,sans-serif}.taxapp header{background:#1f2d5c;color:white;padding:26px;border-radius:16px}.taxapp h2{font-size:28px;margin:8px 0}.taxapp h3{font-size:20px;margin:16px 0}.taxapp p{margin:10px 0}.taxapp small{font-size:11px;letter-spacing:1px}.taxapp nav{display:flex;gap:8px;flex-wrap:wrap;margin:22px 0}.taxapp button{border:1px solid #ccd7e5;border-radius:9px;padding:10px 14px;background:white;color:#213252;cursor:pointer;font:inherit}.taxapp button.active{background:#13a184;color:white;border-color:#13a184}.taxapp .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.taxapp label{display:block;font-weight:600;margin:8px 0}.taxapp input,.taxapp select{display:block;min-width:0;width:100%;padding:10px;border:1px solid #bccbdc;border-radius:7px;background:white;color:#172844;font:inherit}.taxapp input:read-only{background:#edf2f8}.taxapp .note{background:#fff6d9;padding:12px 16px;border-left:4px solid #d6a619;border-radius:7px;margin:14px 0}.taxapp .result{background:#e7f5f1;padding:20px;border-radius:12px;margin:18px 0}.taxapp .result strong{font-size:25px;color:#096c5c}.taxapp .row{display:grid;grid-template-columns:1.5fr 1fr .7fr;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #dce4ef}.taxapp .row label{font-size:13px;font-weight:500}.taxapp .row input{text-align:right}.taxapp details{background:white;padding:15px;margin-top:16px;border-radius:10px}.taxapp summary{cursor:pointer;font-weight:700}.taxapp a{color:#2367b4}.taxapp output{display:block}.taxapp .muted{font-size:13px;color:#5a6a82}.taxapp .error{color:#b32636;font-weight:bold}.taxapp :focus-visible{outline:3px solid #3b82f6;outline-offset:2px}@media(max-width:650px){.taxapp{margin:14px 6px;padding:14px}.taxapp .grid{grid-template-columns:1fr}.taxapp .row{grid-template-columns:1.2fr 1fr .65fr;gap:6px}.taxapp .row input{padding:8px 4px;font-size:13px}.taxapp header{padding:18px}.taxapp h2{font-size:24px}}@media print{.taxapp nav,.taxapp button{display:none}.taxapp{border:0;margin:0}.taxapp details{break-inside:avoid}}
+</style>
+<script>const CATALOG={"22":[{"code":"22-100-01","label":"22-100-01 - Impor yang Dipungut Ditjen Bea dan Cukai yang Dikenakan tarif 10%","rate":10.0},{"code":"22-100-02","label":"22-100-02 - Impor yang Dipungut Ditjen Bea dan Cukai yang Dikenakan tarif 7,5%","rate":7.5},{"code":"22-100-03","label":"22-100-03 - Impor yang Dipungut Ditjen Bea dan Cukai yang Dikenakan tarif 0,5%","rate":0.5},{"code":"22-100-04","label":"22-100-04 - Impor yang Dipungut Ditjen Bea dan Cukai atas Importir/Pemilik Barang yang Memiliki API","rate":2.5},{"code":"22-100-05","label":"22-100-05 - Impor yang Dipungut Ditjen Bea dan Cukai atas Importir/Pemilik Barang yang Tidak Memiliki API","rate":7.5},{"code":"22-100-06","label":"22-100-06 - Pembayaran atas Pembelian Barang dan/atau Bahan untuk Kegiatan Usahanya oleh BUMN/Badan Usaha Tertentu","rate":1.5},{"code":"22-100-07","label":"22-100-07 - Penjualan Hasil Produksi Kepada Distributor di Dalam Negeri oleh Badan Usaha/Industri Tertentu (Industri Semen)","rate":0.25},{"code":"22-100-08","label":"22-100-08 - Penjualan Hasil Produksi Kepada Distributor di Dalam Negeri oleh Badan Usaha/Industri Tertentu (Industri Baja)","rate":0.3},{"code":"22-100-09","label":"22-100-09 - Penjualan Hasil Produksi Kepada Distributor di Dalam Negeri oleh Badan Usaha/Industri Tertentu (Industri Otomotif)","rate":0.45},{"code":"22-100-10","label":"22-100-10 - Penjualan Hasil Produksi Kepada Distributor di Dalam Negeri oleh Badan Usaha/Industri Tertentu (Industri Farmasi)","rate":0.3},{"code":"22-100-11","label":"22-100-11 - Penjualan Hasil Produksi Kepada Distributor di Dalam Negeri oleh Badan Usaha/Industri Tertentu (industri Kertas)","rate":0.1},{"code":"22-100-12","label":"22-100-12 - Penjualan Kendaraan Bermotor di Dalam Negeri oleh ATPM, APM dan Importir Umum Kendaraan Bermotor","rate":0.45},{"code":"22-100-13","label":"22-100-13 - Pembelian oleh Badan Usaha Berupa Komoditas Tambang Batubara, Mineral Logam dan Mineral Bukan Logam dari Badan atau Orang Pribadi Pemegang IUP","rate":1.5},{"code":"22-100-14","label":"22-100-14 - Penjualan Emas Batangan di Dalam Negeri oleh Badan Usaha","rate":0.25,"conditional":"PMK 52/2025 mengecualikan penjualan kepada konsumen akhir dan transaksi lain yang memenuhi syarat; tentukan apakah pemungutan memang terutang."},{"code":"22-100-15","label":"22-100-15 - Pembelian Bahan Hasil Kehutanan yang Belum Melalui Proses Industri Manufaktur, untuk Keperluan Industrinya/Ekspornya oleh Badan Usaha Industri/Eksportir","rate":0.25},{"code":"22-100-16","label":"22-100-16 - Pembelian Bahan Hasil Perkebunan yang Belum Melalui Proses Industri Manufaktur, untuk Keperluan Industrinya/Ekspornya Oleh Badan Usaha Industri/Eksportir","rate":0.25},{"code":"22-100-17","label":"22-100-17 - Pembelian Bahan Hasil Pertanian yang Belum Melalui Proses Industri Manufaktur, untuk Keperluan Industrinya/Ekspornya Oleh Badan Usaha Industri/Eksportir","rate":0.25},{"code":"22-100-18","label":"22-100-18 - Pembelian Bahan Hasil Peternakan yang Belum Melalui Proses Industri Manufaktur, untuk Keperluan Industrinya/Ekspornya Oleh Badan Usaha Industri/Eksportir","rate":0.25},{"code":"22-100-19","label":"22-100-19 - Pembelian Bahan Hasil Perikanan yang Belum Melalui Proses Industri Manufaktur, untuk Keperluan Industrinya/Ekspornya Oleh Badan Usaha Industri/Eksportir","rate":0.25},{"code":"22-100-20","label":"22-100-20 - Penjualan BBM oleh Pertamina atau Anak Perusahaan Pertamina Kepada Selain SPBU/Agen/Penyalur (Tidak Final)","rate":0.3},{"code":"22-100-21","label":"22-100-21 - Penjualan BBM oleh Badan Usaha Selain Pertamina atau Anak Perusahaan Pertamina Kepada Selain SPBU/Agen/Penyalur (Tidak Final)","rate":0.3},{"code":"22-100-22","label":"22-100-22 - Penjualan Pelumas oleh Importir/Produsen","rate":0.3},{"code":"22-100-23","label":"22-100-23 - Penjualan Pulsa dan Kartu Perdana oleh Penyelenggara Distribusi Tingkat Kedua","rate":0.5},{"code":"22-100-24","label":"22-100-24 - Penjualan BBG oleh Produsen/Importir Kepada Selain SPBU/Agen/Penyalur (Tidak Final)","rate":0.3},{"code":"22-101-01","label":"22-101-01 - Penghasilan Sehubungan dengan Transaksi Penjualan Barang, Penyerahan Jasa, dan/atau Persewaan serta Penghasilan Lain Sehubungan dengan Penggunaan Harta yang Dilakukan Melalui Pihak Lain dalam SI Pengadaan","rate":0.5,"conditional":"Pemungutan marketplace bergantung penunjukan pemungut dan tanggal penerapan. Tarif 0,5% tidak otomatis berlaku untuk setiap transaksi."},{"code":"22-401-01","label":"22-401-01 - Penjualan BBM oleh Pertamina atau Anak Perusahaan Pertamina Kepada SPBU/Agen/Penyalur (Final)","rate":0.25},{"code":"22-401-02","label":"22-401-02 - Penjualan BBM oleh Badan Usaha Selain Pertamina atau Anak Perusahaan Pertamina Kepada SPBU/Agen/Penyalur (Final)","rate":0.3},{"code":"22-401-03","label":"22-401-03 - Penjualan BBG oleh produsen/importir Kepada SPBU/Agen/Penyalur (Final)","rate":0.3},{"code":"22-403-01","label":"22-403-01 - Penjualan Barang yang Tergolong Sangat Mewah Untuk Pesawat Terbang Pribadi, Helikopter Pribadi, Kapal Pesiar, Yacht, dan Kendaraan Bermotor","rate":5.0},{"code":"22-403-02","label":"22-403-02 - Penjualan Barang yang Tergolong Sangat Mewah Untuk Rumah Beserta Tanahnya, Apartemen, Kondominium dan Sejenisnya","rate":1.0},{"code":"22-404-01","label":"22-404-01 - Ekspor Komoditas Tambang Batubara, Mineral Logam, dan Mineral Bukan Logam yang Dilakukan Oleh Eksportir, Kecuali WP yang Terikat Dalam PKP2B dan KK","rate":1.5},{"code":"22-405-02","label":"22-405-02 - Penghasilan Sehubungan dengan Aset Kripto yang dipungut oleh Penyelenggara Perdagangan Melalui Sistem Elektronik yang Bukan Merupakan Pedagang Fisik Aset Kripto — periksa kesesuaian kode objek di Coretax","rate":0.21},{"code":"22-405-03","label":"22-405-03 - Penghasilan Sehubungan dengan Aset Kripto (Setor Sendiri) — periksa kesesuaian kode objek di Coretax","rate":1},{"code":"22-900-01","label":"22-900-01 - Pembayaran atas Pembelian Barang dan/atau Bahan untuk Kegiatan Usahanya oleh BUMN/Badan Usaha Tertentu","rate":1.5},{"code":"23-100-01","label":"23-100-01 - Impor yang Dipungut Ditjen Bea dan Cukai yang Dikenakan tarif 10%","rate":10.0},{"code":"23-100-02","label":"23-100-02 - Impor yang Dipungut Ditjen Bea dan Cukai yang Dikenakan tarif 7,5%","rate":7.5},{"code":"23-100-03","label":"23-100-03 - Impor yang Dipungut Ditjen Bea dan Cukai yang Dikenakan tarif 0,5%","rate":0.5},{"code":"23-100-04","label":"23-100-04 - Impor yang Dipungut Ditjen Bea dan Cukai atas Importir/Pemilik Barang yang Memiliki API","rate":2.5},{"code":"23-100-05","label":"23-100-05 - Impor yang Dipungut Ditjen Bea dan Cukai atas Importir/Pemilik Barang yang Tidak Memiliki API","rate":7.5}],"23":[{"code":"24-100-01","label":"24-100-01 - Hadiah, Penghargaan, Bonus dan Lainnya Selain yang Telah Dipotong PPh Pasal 21 Ayat (1) Huruf E UU PPh","rate":15.0},{"code":"24-100-02","label":"24-100-02 - Sewa dan Penghasilan Lain Sehubungan dengan Penggunaan Harta Kecuali Sewa Tanah dan/atau Bangunan yang Telah Dikenai PPh Pasal 4 Ayat (2) UU PPh.","rate":2.0},{"code":"24-101-01","label":"24-101-01 - Dividen","rate":15.0},{"code":"24-102-01","label":"24-102-01 - Bunga Selain yang Dikenakan PPh Pasal 4 ayat (2)","rate":15.0},{"code":"24-103-01","label":"24-103-01 - Royalti","rate":15.0,"conditional":"Royalti orang pribadi yang menggunakan Norma Penghitungan Penghasilan Neto dapat memakai dasar pemotongan 40% dari royalti, jika memenuhi PER-1/PJ/2023."},{"code":"24-104-01","label":"24-104-01 - Jasa Teknik","rate":2.0},{"code":"24-104-02","label":"24-104-02 - Jasa Manajemen","rate":2.0},{"code":"24-104-03","label":"24-104-03 - Jasa Konsultan","rate":2.0},{"code":"24-104-04","label":"24-104-04 - Jasa Penilai (Appraisal)","rate":2.0},{"code":"24-104-05","label":"24-104-05 - Jasa Aktuaris","rate":2.0},{"code":"24-104-06","label":"24-104-06 - Jasa Akuntansi, Pembukuan, dan Atestasi Laporan Keuangan","rate":2.0},{"code":"24-104-07","label":"24-104-07 - Jasa Hukum","rate":2.0},{"code":"24-104-08","label":"24-104-08 - Jasa Arsitektur","rate":2.0},{"code":"24-104-09","label":"24-104-09 - Jasa Perencanaan Kota dan Arsitektur Landscape;","rate":2.0},{"code":"24-104-10","label":"24-104-10 - Jasa Perancang (Design)","rate":2.0},{"code":"24-104-11","label":"24-104-11 - Jasa Pengeboran (Drilling) di Bidang Penambangan Minyak dan Gas Bumi (Migas) Kecuali yang Dilakukan oleh Badan Usaha Tetap (BUT)","rate":2.0},{"code":"24-104-12","label":"24-104-12 - Jasa Penunjang di Bidang Usaha Panas Bumi dan Penambangan Minyak dan Gas Bumi (Migas)","rate":2.0},{"code":"24-104-13","label":"24-104-13 - Jasa Penambangan dan Jasa Penunjang di Bidang Usaha Panas Bumi dan Penambangan Minyak dan Gas Bumi (Migas)","rate":2.0},{"code":"24-104-14","label":"24-104-14 - Jasa Penunjang di Bidang Penerbangan dan Bandar Udara","rate":2.0},{"code":"24-104-15","label":"24-104-15 - Jasa Penebangan Hutan","rate":2.0},{"code":"24-104-16","label":"24-104-16 - Jasa Pengolahan Limbah","rate":2.0},{"code":"24-104-17","label":"24-104-17 - Jasa Penyedia Tenaga Kerja dan/atau Tenaga Ahli (Outsourcing Services)","rate":2.0},{"code":"24-104-18","label":"24-104-18 - Jasa Perantara dan/atau Keagenan","rate":2.0},{"code":"24-104-19","label":"24-104-19 - Jasa Bidang Perdagangan Surat-Surat Berharga, Kecuali yang Dilakukan Bursa Efek, Kustodian Sentral Efek Indonesia (KSEI) dan Kliring Penjaminan Efek Indonesia (KPEI)","rate":2.0},{"code":"24-104-20","label":"24-104-20 - Jasa Kustodian/Penyimpanan/Penitipan, Kecuali yang Dilakukan Oleh KSEI","rate":2.0},{"code":"24-104-21","label":"24-104-21 - Jasa Pengisian Suara (Dubbing) dan/atau Sulih Suara","rate":2.0},{"code":"24-104-22","label":"24-104-22 - Jasa Mixing Film","rate":2.0},{"code":"24-104-23","label":"24-104-23 - Jasa Pembuatan Sarana Promosi Film, Iklan, Poster, Foto, Slide, Klise, Banner, Pamphlet, Baliho dan Folder","rate":2.0},{"code":"24-104-24","label":"24-104-24 - Jasa Sehubungan Dengan Software Atau Hardware Atau Sistem Komputer, Termasuk Perawatan, Pemeliharaan dan Perbaikan.","rate":2.0},{"code":"24-104-25","label":"24-104-25 - Jasa Pembuatan dan/atau Pengelolaan Website","rate":2.0},{"code":"24-104-26","label":"24-104-26 - Jasa Internet Termasuk Sambungannya","rate":2.0},{"code":"24-104-27","label":"24-104-27 - Jasa Penyimpanan, Pengolahan dan/atau Penyaluran Data, Informasi, dan/atau Program","rate":2.0},{"code":"24-104-28","label":"24-104-28 - Jasa Instalasi/Pemasangan Mesin, Peralatan, Listrik, Telepon, Air, Gas, Ac dan/atau Tv Kabel, Selain Yang Dilakukan Oleh Wajib Pajak Yang Ruang Lingkupnya Di Bidang Konstruksi dan Mempunyai Izin dan/atau Sertifikasi Sebagai Pengusaha Konstruksi;","rate":2.0},{"code":"24-104-29","label":"24-104-29 - Jasa Perawatan/Perbaikan/Pemeliharaan Mesin, Peralatan, Listrik, Telepon, Air, Gas, Ac dan/atau Tv Kabel, Selain Yang Dilakukan Oleh WP Yang Ruang Lingkupnya di Bidang Konstruksi dan Mempunyai Izin dan/atau Sertifikasi Sebagai Pengusaha Konstruksi","rate":2.0},{"code":"24-104-30","label":"24-104-30 - Jasa Perawatan Kendaraan dan/atau Alat Transportasi Darat, Laut dan Udara","rate":2.0},{"code":"24-104-31","label":"24-104-31 - Jasa Maklon","rate":2.0},{"code":"24-104-32","label":"24-104-32 - Jasa Penyelidikan dan Keamanan","rate":2.0},{"code":"24-104-33","label":"24-104-33 - Jasa Penyelenggara Kegiatan Atau Event Organizer","rate":2.0},{"code":"24-104-34","label":"24-104-34 - Jasa Penyediaan Tempat dan/atau Waktu Dalam Media Massa, Media Luar Ruang Atau Media Lain Untuk Penyampaian Informasi, dan/atau Jasa Periklanan","rate":2.0},{"code":"24-104-35","label":"24-104-35 - Jasa Pembasmian Hama","rate":2.0},{"code":"24-104-36","label":"24-104-36 - Jasa Kebersihan Atau Cleaning Service","rate":2.0},{"code":"24-104-37","label":"24-104-37 - Jasa Sedot Septic Tank","rate":2.0},{"code":"24-104-38","label":"24-104-38 - Jasa Pemeliharaan Kolam","rate":2.0},{"code":"24-104-39","label":"24-104-39 - Jasa Katering Atau Tata Boga","rate":2.0},{"code":"24-104-40","label":"24-104-40 - Jasa Freight Forwarding","rate":2.0},{"code":"24-104-41","label":"24-104-41 - Jasa Logistik","rate":2.0},{"code":"24-104-42","label":"24-104-42 - Jasa Pengurusan Dokumen","rate":2.0},{"code":"24-104-43","label":"24-104-43 - Jasa Pengepakan","rate":2.0},{"code":"24-104-44","label":"24-104-44 - Jasa Loading dan Unloading","rate":2.0},{"code":"24-104-45","label":"24-104-45 - Jasa Laboratorium dan/atau Pengujian Kecuali yang Dilakukan Oleh Lembaga atau Institusi Pendidikan Dalam Rangka Penelitian Akademis","rate":2.0},{"code":"24-104-46","label":"24-104-46 - Jasa Pengelolaan Parkir","rate":2.0},{"code":"24-104-47","label":"24-104-47 - Jasa Penyondiran Tanah","rate":2.0},{"code":"24-104-48","label":"24-104-48 - Jasa Penyiapan dan/atau Pengolahan Lahan","rate":2.0},{"code":"24-104-49","label":"24-104-49 - Jasa Pembibitan dan/atau Penanaman Bibit","rate":2.0},{"code":"24-104-50","label":"24-104-50 - Jasa Pemeliharaan Tanaman","rate":2.0},{"code":"24-104-51","label":"24-104-51 - Jasa Pemanenan","rate":2.0},{"code":"24-104-52","label":"24-104-52 - Jasa Pengolahan Hasil Pertanian, Perkebunan, Perikanan, Peternakan dan/atau Perhutanan","rate":2.0},{"code":"24-104-53","label":"24-104-53 - Jasa Dekorasi","rate":2.0},{"code":"24-104-54","label":"24-104-54 - Jasa Pencetakan/Penerbitan","rate":2.0},{"code":"24-104-55","label":"24-104-55 - Jasa Penerjemahan","rate":2.0},{"code":"24-104-56","label":"24-104-56 - Jasa Pengangkutan/Ekspedisi Kecuali Yang Telah Diatur Dalam Pasal 15 Undang-Undang Pajak Penghasilan","rate":2.0},{"code":"24-104-57","label":"24-104-57 - Jasa Pelayanan Pelabuhan","rate":2.0},{"code":"24-104-58","label":"24-104-58 - Jasa Pengangkutan Melalui Jalur Pipa","rate":2.0},{"code":"24-104-59","label":"24-104-59 - Jasa Pengelolaan Penitipan Anak","rate":2.0},{"code":"24-104-60","label":"24-104-60 - Jasa Pelatihan dan/atau Kursus","rate":2.0},{"code":"24-104-61","label":"24-104-61 - Jasa Pengiriman dan Pengisian Uang Ke ATM","rate":2.0},{"code":"24-104-62","label":"24-104-62 - Jasa Sertifikasi","rate":2.0},{"code":"24-104-63","label":"24-104-63 - Jasa Survey","rate":2.0},{"code":"24-104-64","label":"24-104-64 - Jasa Tester","rate":2.0},{"code":"24-104-65","label":"24-104-65 - Jasa Selain Jasa-Jasa Tersebut di Atas yang Pembayarannya Dibebankan pada APBN (Anggaran Pendapatan dan Belanja Negara) Atau APBD (Anggaran Pendapatan dan Belanja Daerah).","rate":2.0},{"code":"24-104-66","label":"24-104-66 - Jasa Penyelenggaraan Layanan Transaksi Pembayaran Terkait dengan Distribusi Token Oleh Penyelenggara Distribusi","rate":2.0},{"code":"24-104-67","label":"24-104-67 - Jasa Pemasaran dengan Media Voucer Oleh Penyelenggara Voucer","rate":2.0},{"code":"24-104-68","label":"24-104-68 - Jasa Penyelenggaraan Layanan Transaksi Pembayaran Terkait dengan Distribusi Voucer Oleh Penyelenggara Voucer dan Penyelenggara Distribusi","rate":2.0},{"code":"24-104-69","label":"24-104-69 - Jasa Penyelenggaraan Program Loyalitas dan Penghargaan Pelanggan (Consumer Loyalty/Reward Program) Oleh Penyelenggara Voucer","rate":2.0}],"42":[{"code":"28-401-01","label":"28-401-01 - Bunga Obligasi, Surat Utang Negara, atau Obligasi Daerah yang Diterima Wajib Pajak Dalam Negeri dan Bentuk Usaha Tetap. — tarif berlaku 10% (PP 91/2021)","rate":10},{"code":"28-401-02","label":"28-401-02 - Bunga Obligasi yang Diterima Wajib Pajak Luar Negeri — tarif lama; validasi sesuai PP 91/2021 dan P3B","rate":20.0,"legacy":true},{"code":"28-401-03","label":"28-401-03 - Bunga Obligasi yang Diterima Wajib Pajak Dalam Negeri dan Bentuk Usaha Tetap","rate":10.0},{"code":"28-401-04","label":"28-401-04 - Diskonto Surat Perbendaharaan Negara yang diterima Wajib Pajak Dalam Negeri dan Bentuk Usaha Tetap — entri tarif lama; perlu validasi objek sebelum digunakan","rate":20.0,"legacy":true},{"code":"28-401-05","label":"28-401-05 - Diskonto Surat Perbendaharaan Negara yang Diterima Wajib Pajak Penduduk/Berkedudukan di Luar Negeri — entri tarif lama; perlu validasi objek sebelum digunakan","rate":20.0,"legacy":true},{"code":"28-401-06","label":"28-401-06 - Bunga Obligasi yang Diterima Wajib Pajak Dalam Negeri dan Bentuk Usaha Tetap","rate":10.0},{"code":"28-401-XX","label":"28-401-XX - Bunga/Diskonto Obligasi dan Surat Berharga Negara — kode penampung, bukan tarif 0% otomatis","rate":0.0,"legacy":true},{"code":"28-402-01","label":"28-402-01 - Pengalihan Hak atas Tanah dan/atau Bangunan","rate":2.5},{"code":"28-402-02","label":"28-402-02 - Pengalihan Rumah Sederhana dan Rumah Susun Sederhana yang Dilakukan oleh WP yang Usaha Pokoknya Mengalihkan Hak atas Tanah dan/atau Bangunan","rate":1.0},{"code":"28-402-03","label":"28-402-03 - Pengalihan Hak atas Tanah dan/atau Bangunan kepada Pemerintah, BUMN yang Mendapat Penugasan dari Pemerintah, atau BUMD yang Mendapat Penugasan dari Kepala Daerah, sesuai UU Pengadaan Tanah bagi Pembangunan untuk Kepentingan Umum","rate":0.0},{"code":"28-403-01","label":"28-403-01 - Persewaan Tanah dan/atau Bangunan","rate":10.0},{"code":"28-403-02","label":"28-403-02 - Persewaan Tanah dan/atau Bangunan","rate":10.0},{"code":"28-404-01","label":"28-404-01 - Bunga Tabungan dan Bunga Diskonto yang Ditempatkan di Dalam Negeri yang Dananya Bersumber Selain dari Devisa Hasil Ekspor (DHE)","rate":20.0},{"code":"28-404-02","label":"28-404-02 - Bunga Deposito yang Ditempatkan di Dalam Negeri (mata uang IDR bersumber dari DHE tenor 1 bulan)","rate":7.5},{"code":"28-404-03","label":"28-404-03 - Bunga Deposito yang Ditempatkan di Dalam Negeri (mata uang IDR bersumber dari DHE tenor 3 bulan)","rate":5.0},{"code":"28-404-04","label":"28-404-04 - Bunga Deposito yang Ditempatkan di Dalam Negeri (mata uang IDR bersumber dari DHE tenor 6 bulan atau lebih)","rate":0.0},{"code":"28-404-05","label":"28-404-05 - Bunga Deposito yang Ditempatkan di Dalam Negeri (mata uang USD bersumber dari DHE tenor 1 bulan)","rate":10.0},{"code":"28-404-06","label":"28-404-06 - Bunga Deposito yang Ditempatkan di Dalam Negeri (mata uang USD bersumber dari DHE tenor 3 bulan)","rate":7.5},{"code":"28-404-07","label":"28-404-07 - Bunga Deposito yang Ditempatkan di Dalam Negeri (mata uang USD bersumber dari DHE tenor 6 bulan)","rate":2.5},{"code":"28-404-08","label":"28-404-08 - Bunga Deposito yang Ditempatkan di Dalam Negeri (mata uang USD bersumber dari DHE tenor lebih 6 bulan)","rate":0.0},{"code":"28-404-09","label":"28-404-09 - Bunga Deposito/Tabungan yang Ditempatkan di Luar Negeri Melalui Bank yang Didirikan atau Bertempat Kedudukan di Indonesia atau Cabang Bank Luar Negeri di Indonesia","rate":20.0},{"code":"28-404-10","label":"28-404-10 - Diskonto Sertifikat Bank Indonesia","rate":20.0},{"code":"28-404-11","label":"28-404-11 - Jasa Giro","rate":20.0},{"code":"28-404-XX","label":"28-404-XX - Bunga Deposito/Tabungan, Diskonto SBI dan Jasa Giro — kode penampung, bukan tarif 0% otomatis","rate":0.0,"legacy":true},{"code":"28-405-01","label":"28-405-01 - Hadiah Undian (yang diterima Wajib Pajak dalam negeri)","rate":25.0},{"code":"28-405-02","label":"28-405-02 - Hadiah Undian (yang diterima Wajib Pajak luar negeri)","rate":25.0},{"code":"28-406-01","label":"28-406-01 - Transaksi Penjualan Saham di Bursa Efek (Bukan Saham Pendiri)","rate":0.1},{"code":"28-407-01","label":"28-407-01 - Transaksi Penjualan Saham di Bursa Efek (Saham Pendiri)","rate":0.5},{"code":"28-408-01","label":"28-408-01 - Transaksi Penjualan Saham Milik Perusahaan Modal Ventura Tidak di Bursa Efek","rate":0.1},{"code":"28-409-15","label":"28-409-15 - Pekerjaan Konstruksi yang Dilakukan oleh Penyedia Jasa yang Memiliki Sertifikat Badan Usaha Kualifikasi Kecil atau Sertifikat Kompetensi Kerja untuk Usaha Orang Perseorangan (Disetor Sendiri)","rate":1.75},{"code":"28-409-16","label":"28-409-16 - Pekerjaan Konstruksi yang Dilakukan oleh Penyedia Jasa yang Tidak Memiliki Sertifikat Badan Usaha Atau Sertifikat Kompetensi Kerja untuk Usaha Orang Perseorangan (Disetor Sendiri)","rate":4.0},{"code":"28-409-17","label":"28-409-17 - Pekerjaan Konstruksi yang Dilakukan oleh Penyedia Jasa yang Memiliki Sertifikat Selain Sertifikat Badan Usaha Kualifikasi Kecil atau Sertifikat Kompetensi Kerja untuk Usaha Orang Perseorangan (Disetor Sendiri)","rate":2.65},{"code":"28-409-18","label":"28-409-18 - Pekerjaan Konstruksi Terintegrasi yang Dilakukan oleh Penyedia Jasa yang Memiliki Sertifikat Badan Usaha (Disetor Sendiri)","rate":2.65},{"code":"28-409-19","label":"28-409-19 - Pekerjaan Konstruksi Terintegrasi yang Dilakukan oleh Penyedia Jasa yang Tidak Memiliki Sertifikat Badan Usaha (Disetor Sendiri)","rate":4.0},{"code":"28-409-20","label":"28-409-20 - Jasa Konsultansi Konstruksi yang Dilakukan oleh Penyedia Jasa yang Memiliki Sertifikat Badan Usaha atau Sertifikat Kompetensi Kerja untuk Usaha Orang Perseorangan (Disetor Sendiri)","rate":3.5},{"code":"28-409-21","label":"28-409-21 - Jasa Konsultansi Konstruksi yang Dilakukan oleh Penyedia Jasa yang Tidak Memiliki Sertifikat Badan Usaha atau Sertifikat Kompetensi Kerja untuk Usaha Orang Perseorangan (Disetor Sendiri)","rate":6.0},{"code":"28-409-22","label":"28-409-22 - Pekerjaan Konstruksi yang Dilakukan oleh Penyedia Jasa yang Memiliki Sertifikat Badan Usaha Kualifikasi Kecil atau Sertifikat Kompetensi Kerja untuk Usaha Orang Perseorangan","rate":1.75},{"code":"28-409-23","label":"28-409-23 - Pekerjaan Konstruksi yang Dilakukan oleh Penyedia Jasa yang Tidak Memiliki Sertifikat Badan Usaha Atau Sertifikat Kompetensi Kerja untuk Usaha Orang Perseorangan","rate":4.0},{"code":"28-409-24","label":"28-409-24 - Pekerjaan Konstruksi yang Dilakukan oleh Penyedia Jasa yang Memiliki Sertifikat Selain Sertifikat Badan Usaha Kualifikasi Kecil atau Sertifikat Kompetensi Kerja untuk Usaha Orang Perseorangan","rate":2.65},{"code":"28-409-25","label":"28-409-25 - Pekerjaan Konstruksi Terintegrasi yang Dilakukan oleh Penyedia Jasa yang Memiliki Sertifikat Badan Usaha","rate":2.65},{"code":"28-409-26","label":"28-409-26 - Pekerjaan Konstruksi Terintegrasi yang Dilakukan oleh Penyedia Jasa yang Tidak Memiliki Sertifikat Badan Usaha","rate":4.0},{"code":"28-409-27","label":"28-409-27 - Jasa Konsultansi Konstruksi yang Dilakukan oleh Penyedia Jasa yang Memiliki Sertifikat Badan Usaha atau Sertifikat Kompetensi Kerja untuk Usaha Orang Perseorangan","rate":3.5},{"code":"28-409-28","label":"28-409-28 - Jasa Konsultansi Konstruksi yang Dilakukan oleh Penyedia Jasa yang Tidak Memiliki Sertifikat Badan Usaha atau Sertifikat Kompetensi Kerja untuk Usaha Orang Perseorangan","rate":6.0},{"code":"28-417-01","label":"28-417-01 - Bunga Simpanan yang Dibayarkan oleh Koperasi kepada Anggota Wajib Pajak Orang Pribadi (bunga sampai dengan Rp240.000,00)","rate":0.0,"conditional":"Tarif 0% hanya ketika bunga simpanan koperasi tidak lebih dari Rp240.000 sebulan."},{"code":"28-417-02","label":"28-417-02 - Bunga Simpanan yang Dibayarkan oleh Koperasi kepada Anggota Wajib Pajak Orang Pribadi (bunga di atas Rp240.000,00)","rate":10.0},{"code":"28-419-01","label":"28-419-01 - Dividen yang Diterima/Diperoleh Wajib Pajak Orang Pribadi Dalam Negeri","rate":10.0},{"code":"28-421-01","label":"28-421-01 - Uplift Hulu Migas","rate":20.0},{"code":"28-421-02","label":"28-421-02 - Participating Interest Eksplorasi Hulu Migas","rate":5.0},{"code":"28-421-03","label":"28-421-03 - Participating Interest Eksploitasi Hulu Migas","rate":7.0},{"code":"28-421-04","label":"28-421-04 - Participating Interest Ekplorasi Hulu Migas","rate":5.0},{"code":"28-421-05","label":"28-421-05 - Participating Interest Eksploitasi Hulu Migas","rate":7.0},{"code":"28-423-01","label":"28-423-01 - Transaksi dengan Wajib Pajak yang menggunakan tarif Peraturan Pemerintah Nomor 23 Tahun 2018 dan/atau Peraturan Pemerintah Nomor 55 Tahun 2022","rate":0.5},{"code":"28-423-02","label":"28-423-02 - Pemotongan atau pemungutan PPh atas transaksi pembelian yang dilakukan oleh Wajib Pajak dengan peredaran bruto tertentu sesuai dengan Peraturan Pemerintah Nomor 55 Tahun 2022","rate":0.0},{"code":"28-423-03","label":"28-423-03 - Transaksi dengan Wajib Pajak orang pribadi yang memiliki peredaran bruto tertentu sesuai dengan PP 55 Tahun 2022 dengan peredaran usaha s.d 500 juta","rate":0.0,"conditional":"Tarif 0% hanya untuk bagian peredaran bruto orang pribadi sampai Rp500 juta setahun dan sepanjang syarat PP 55/2022 terpenuhi."},{"code":"28-423-12","label":"28-423-12 - Pemotongan/Pemungutan PPh atas transaksi penjualan atau penyerahan jasa yang dilakukan oleh Wajib Pajak yang memenuhi persyaratan tertentu untuk dikenai PPh yang bersifat final dengan tarif 0% di IKN (PPh UMKM di IKN)","rate":0.0},{"code":"28-423-13","label":"28-423-13 - Pemotongan/pemungutan PPh atas transaksi pembelian yang dilakukan oleh Wajib Pajak yang memanfaatkan fasilitas PPh final dengan tarif 0% di IKN (PPh UMKM di IKN).","rate":0.0},{"code":"28-499-02","label":"28-499-02 - Penghasilan yang Diterima atau Diperoleh Sehubungan dengan Kerja Sama dengan Lembaga Pengelola Investasi (LPI)","rate":7.5}],"15":[{"code":"28-410-01","label":"28-410-01 - Imbalan yang Diterima/Diperoleh Sehubungan dengan Pengangkutan Orang dan/atau Barang Termasuk Penyewaan Kapal Laut Oleh Perusahaan Pelayaran Dalam Negeri","rate":1.2},{"code":"28-410-02","label":"28-410-02 - Imbalan yang Dibayarkan/Terutang kepada Perusahaan Pelayaran Dalam Negeri","rate":1.2},{"code":"28-411-01","label":"28-411-01 - Imbalan yang Dibayarkan/Terutang kepada Perusahaan Pelayaran dan/atau Penerbangan Luar Negeri Sehubungan dengan Pengangkutan Orang dan/atau Barang (Selain Berdasarkan Perjanjian Charter)","rate":2.64},{"code":"28-411-02","label":"28-411-02 - Imbalan Charter Kapal Laut dan/atau Pesawat Udara yang Dibayarkan/Terutang kepada Perusahaan Pelayaran dan/atau Penerbangan Luar Negeri melalui BUT di Indonesia","rate":2.64},{"code":"28-413-01","label":"28-413-01 - Penghasilan Wajib Pajak Luar Negeri yang Mempunyai Kantor Perwakilan Dagang di Indonesia","rate":0.44},{"code":"28-499-01","label":"28-499-01 - Penghasilan Wajib Pajak yang Melakukan Kegiatan Usaha Jasa Maklon (Contract Manufacturing) Internasional di Bidang Produksi Mainan Anak-Anak","rate":2.1},{"code":"29-101-01","label":"29-101-01 - Imbalan Charter Pesawat Udara yang Dibayarkan/Terutang kepada Perusahaan Penerbangan Dalam Negeri oleh Pemotong Pajak","rate":1.8}]};
+const TER={"A": [[5400000, 0], [5650000, 0.25], [5950000, 0.5], [6300000, 0.75], [6750000, 1], [7500000, 1.25], [8550000, 1.5], [9650000, 1.75], [10050000, 2], [10350000, 2.25], [10700000, 2.5], [11050000, 3], [11600000, 3.5], [12500000, 4], [13750000, 5], [15100000, 6], [16950000, 7], [19750000, 8], [24150000, 9], [26450000, 10], [28000000, 11], [30050000, 12], [32400000, 13], [35400000, 14], [39100000, 15], [43850000, 16], [47800000, 17], [51400000, 18], [56300000, 19], [62200000, 20], [68600000, 21], [77500000, 22], [89000000, 23], [103000000, 24], [125000000, 25], [157000000, 26], [206000000, 27], [337000000, 28], [454000000, 29], [550000000, 30], [695000000, 31], [910000000, 32], [1400000000, 33], [null, 34]], "B": [[6200000, 0], [6500000, 0.25], [6850000, 0.5], [7300000, 0.75], [9200000, 1], [10750000, 1.5], [11250000, 2], [11600000, 2.5], [12600000, 3], [13600000, 4], [14950000, 5], [16400000, 6], [18450000, 7], [21850000, 8], [26000000, 9], [27700000, 10], [29350000, 11], [31450000, 12], [33950000, 13], [37100000, 14], [41100000, 15], [45800000, 16], [49500000, 17], [53800000, 18], [58500000, 19], [64000000, 20], [71000000, 21], [80000000, 22], [93000000, 23], [109000000, 24], [129000000, 25], [163000000, 26], [211000000, 27], [374000000, 28], [459000000, 29], [555000000, 30], [704000000, 31], [957000000, 32], [1405000000, 33], [null, 34]], "C": [[6600000, 0], [6950000, 0.25], [7350000, 0.5], [7800000, 0.75], [8850000, 1], [9800000, 1.25], [10950000, 1.5], [11200000, 1.75], [12050000, 2], [12950000, 3], [14150000, 4], [15550000, 5], [17050000, 6], [19500000, 7], [22700000, 8], [26600000, 9], [28100000, 10], [30100000, 11], [32600000, 12], [35400000, 13], [38900000, 14], [43000000, 15], [47400000, 16], [51200000, 17], [55800000, 18], [60400000, 19], [66700000, 20], [74500000, 21], [83200000, 22], [95600000, 23], [110000000, 24], [134000000, 25], [169000000, 26], [221000000, 27], [390000000, 28], [463000000, 29], [561000000, 30], [709000000, 31], [965000000, 32], [1419000000, 33], [null, 34]]};
+const TaxMath={
+ rate(g,c){return TER[c].find(([u])=>u===null||g<=u)[1]},
+ ter(g,c){return Math.round(g*this.rate(g,c)/100)},
+ progressive(n){let t=0,last=0;for(const [cap,r] of [[6e7,.05],[25e7,.15],[5e8,.25],[5e9,.30],[Infinity,.35]]){t+=Math.max(0,Math.min(n,cap)-last)*r;last=cap}return t},
+ badan(turn,pkp,mode){if(mode==='0'&&(turn>5e10||pkp>turn))throw Error('Fasilitas 31E: peredaran bruto maksimum Rp50 miliar dan PKP tidak boleh melebihi peredaran bruto.');let facility=mode==='0'?Math.min(1,4.8e9/(turn||1))*pkp:0;return{facility,tax:mode==='0'?facility*.11+(pkp-facility)*.22:pkp*(mode==='1'?.22:.19)}},
+ grossup(base,c){for(const [u,r] of TER[c]){let g=base/(1-r/100);if((u===null||g<=u)&&this.rate(g,c)===r)return Math.round(g-base)}throw Error('Gross up tidak ditemukan')}
+};
+const idNumber = value => Number(String(value).replace(/\./g,'').replace(',','.'));
+const idFormat = value => Number(value).toLocaleString('id-ID',{maximumFractionDigits:10});
+function formatTypedNumber(input){
+  const raw=input.value, caret=input.selectionStart??raw.length;
+  const count=(raw.slice(0,caret).match(/[0-9,]/g)||[]).length;
+  let clean=raw.replace(/[^0-9,]/g,'');
+  const comma=clean.indexOf(',');
+  if(comma>=0)clean=clean.slice(0,comma+1)+clean.slice(comma+1).replace(/,/g,'');
+  const parts=clean.split(',');
+  parts[0]=parts[0].replace(/^0+(?=\d)/,'');
+  if(parts.length>1&&!parts[0])parts[0]='0';
+  input.value=parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.')+(parts.length>1?','+parts[1]:'');
+  let pos=0,seen=0;
+  while(pos<input.value.length&&seen<count){if(/[0-9,]/.test(input.value[pos]))seen++;pos++}
+  input.setSelectionRange(pos,pos);
+}
+document.getElementById('taxmain').addEventListener('input',event=>{
+  if(event.target.matches('input[data-id-number]'))formatTypedNumber(event.target);
+},true);
+
+(()=>{
+const $=id=>document.getElementById(id),money=n=>'Rp '+Math.round(n).toLocaleString('id-ID'),num=id=>{const e=$(id),v=idNumber(e.value);if(!Number.isFinite(v)||v<0)throw Error('Isi angka nol atau positif pada semua kolom.');return v},field=(id,label,value=0)=>`<label for="${id}">${label}</label><input id="${id}" type="text" inputmode="decimal" data-id-number autocomplete="off" value="${idFormat(value)}">`,option=(v,t)=>`<option value="${v}">${t}</option>`;
+const tabs=[['21','PPh 21 · Slip gaji'],['annual','PPh 21 · Tahunan'],['22','PPh 22'],['23','PPh 23'],['42','PPh 4(2)'],['15','PPh 15'],['badan','PPh Badan'],['ppn','PPN'],['ppnbm','PPnBM']];let active='21';
+$('taxnav').innerHTML=tabs.map(([v,t])=>`<button data-tab="${v}" type="button">${t}</button>`).join('');$('taxnav').addEventListener('click',e=>{if(e.target.dataset.tab)render(e.target.dataset.tab)});
+function result(label,tax,extra=''){return `<div class="result">${label}<br><strong>${money(tax)}</strong>${extra}</div>`}
+function watch(fn){const run=()=>{try{fn()}catch(e){$('calcresult').innerHTML=`<p class="error" role="alert">${e.message}</p>`}};$('taxmain').oninput=run;$('taxmain').onchange=run;run()}
+function render(tab){active=tab;document.querySelectorAll('#taxnav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));$('taxmain').oninput=null;$('taxmain').onchange=null;
+if(tab==='21')return payroll();if(tab==='annual')return annual();
+if(CATALOG[tab]){const rows=CATALOG[tab];$('taxmain').innerHTML=`<h3>${tabs.find(x=>x[0]===tab)[1]}</h3><p class="muted">${rows.length} objek · objek yang tersedia; cek syarat dan tanggal berlakunya</p><label for="object">Kode objek pajak</label><select id="object">${rows.map((x,i)=>option(i,x.label)).join('')}</select><div class="grid"><div>${field('gross','Penghasilan bruto (Rp)')}</div><div><label for="rate">Tarif (%)</label><input id="rate" readonly></div></div><div id="calcresult" aria-live="polite"></div><p class="muted">Pajak = penghasilan bruto × tarif. Gunakan dasar yang diminta untuk objek terpilih; periksa syarat pengecualian/fasilitas pada sumber resmi.</p>`;watch(()=>{const r=rows[$('object').value];$('rate').value=idFormat(r.rate);if(r.legacy)throw Error('Entri historis/kode penampung: tarif tidak dapat dihitung otomatis. Pilih objek spesifik dan cek aturan berlaku.');$('calcresult').innerHTML=result('PPh terutang',num('gross')*r.rate/100,`<p>Kode objek: ${r.code} · Tarif ${r.rate}%</p>${r.conditional?'<p class="note">'+r.conditional+'</p>':''}`)});return}
+if(tab==='badan'){$('taxmain').innerHTML=`<h3>PPh Badan</h3><label for="mode">Jenis perhitungan</label><select id="mode">${option('0','Pasal 31E ayat (1) — fasilitas 50% tarif')+option('1','Pasal 17 ayat (1) huruf b — 22%')+option('2','Pasal 17 ayat (2) huruf b — 19%')}</select><div class="grid"><div id="turnwrap">${field('turn','Peredaran bruto setahun (Rp)')}</div><div>${field('pkp','Penghasilan kena pajak setahun (Rp)')}</div></div><p id="bn" class="note"></p><div id="calcresult" aria-live="polite"></div>`;watch(()=>{let m=$('mode').value;$('turnwrap').hidden=m!=='0';$('bn').textContent=m==='0'?'Peredaran bruto sampai Rp50 miliar. Bagian PKP terkait omzet hingga Rp4,8 miliar dikenai 11%; sisanya 22%.':m==='1'?'Tarif umum 22% dari PKP.':'Tarif 19% hanya untuk perseroan terbuka yang memenuhi seluruh persyaratan, termasuk saham diperdagangkan minimal 40%.';const x=TaxMath.badan(num('turn'),num('pkp'),m);$('calcresult').innerHTML=result('PPh Badan terutang',x.tax,m==='0'?`<p>PKP fasilitas: ${money(x.facility)}<br>PKP nonfasilitas: ${money(num('pkp')-x.facility)}</p>`:'')});return}
+if(tab==='ppn'){$('taxmain').innerHTML=`<h3>PPN · aturan 2026</h3><label for="vatmode">Jenis transaksi</label><select id="vatmode">${option('general','Barang nonmewah / jasa umum — DPP nilai lain 11/12')+option('luxury','Barang mewah yang dikenai PPnBM — DPP penuh')+option('delivery','Jasa pengiriman paket — besaran tertentu 1,1%')+option('travel','Jasa biro/agen perjalanan wisata — besaran tertentu 1,1%')+option('forwarding','Jasa freight forwarding — besaran tertentu 1,1%')+option('air','Tiket pesawat domestik — ketentuan umum, periksa fasilitas periode')+option('hotel','Kamar/ruang acara hotel — bukan objek PPN jika memenuhi kriteria')+option('rental','Sewa ruangan/gedung di luar jasa hotel — ketentuan umum')+option('entertainment','Tiket hiburan/kesenian tertentu — bukan objek PPN')+option('advertising','Jasa reklame/periklanan — ketentuan umum')+option('catering','Jasa boga/katering tertentu — bukan objek PPN')+option('construction','Jasa konstruksi — ketentuan umum')+option('export','Ekspor yang memenuhi syarat — tarif 0%')+option('custom','DPP sudah diketahui — tarif 12%')}</select>${field('dpp','Harga jual / penggantian / ongkos jasa sebelum PPN (Rp)')}<p id="vatnote" class="note"></p><div id="calcresult" aria-live="polite"></div><p class="muted">Sumber: PMK 131/2024, PMK 11/2025 sebagaimana diubah PMK 53/2025, dan PMK 70/2022. Jasa pengiriman paket berarti ongkos layanan kurir, bukan harga barang dalam paket. Angka 4,8% untuk ballroom, 6% untuk sewa ruangan/katering/reklame, dan 40–60% untuk konstruksi pada gambar referensi bukan tarif PPN umum yang dapat langsung dipakai.</p>`;watch(()=>{const mode=$('vatmode').value,value=num('dpp');let base,description;if(['general','air','rental','advertising','construction'].includes(mode)){base=value*11/12;description='DPP = 11/12 × harga jual/penggantian; PPN efektif 11%. Untuk tiket pesawat cek masa berlakunya fasilitas PPN ditanggung pemerintah; jasa konstruksi jangan disamakan dengan tarif PPh final konstruksi.'}else if(['hotel','entertainment','catering'].includes(mode)){base=0;description='Tidak dikenai PPN sepanjang jasa ini memenuhi kriteria pengecualian menurut PMK 70/2022; kemungkinan dikenai pajak daerah. Jika layanan sebenarnya di luar kriteria, gunakan kategori umum.'}else if(mode==='luxury'||mode==='custom'){base=value;description=mode==='luxury'?'Barang mewah yang termasuk objek PPnBM: DPP = harga jual penuh. PPnBM dihitung terpisah.':'Gunakan hanya jika angka masukan memang DPP yang telah ditentukan menurut ketentuan terkait.'}else if(mode==='export'){base=value;description='Tarif 0% hanya untuk ekspor yang memenuhi syarat.'}else{base=value*11/12*0.1;description='Besaran tertentu: 12% × (10% × 11/12 × nilai jasa), efektif 1,1%. Untuk pengiriman paket, masukkan ongkos kirim, bukan nilai barang.'}const excluded=['export','hotel','entertainment','catering'].includes(mode),rate=excluded?0:12,tax=excluded?0:Math.floor(['general','air','rental','advertising','construction'].includes(mode)?value*11/100:mode==='luxury'||mode==='custom'?value*12/100:value*11/1000);$('vatnote').textContent=description;$('calcresult').innerHTML=result(['hotel','entertainment','catering'].includes(mode)?'Bukan objek PPN (bila memenuhi kriteria)':'PPN',tax,`<p>DPP perhitungan: ${money(base)} · tarif ${rate}%<br>Total tagihan termasuk PPN: ${money(value+tax)}</p>`)});return}
+$('taxmain').innerHTML=`<h3>PPnBM</h3><div class="grid"><div>${field('dpp','Dasar pengenaan pajak (Rp)')}</div><div>${field('vat','Tarif PPnBM (%)',0)}</div></div><div id="calcresult" aria-live="polite"></div><p class="muted">Tarif PPnBM bergantung kelompok barang dan peraturan pelaksana; cek sebelum memasukkan tarif. PPN atas barang mewah dihitung terpisah.</p>`;watch(()=>{let r=num('vat');if(r>200)throw Error('Tarif PPnBM maksimum 200%.');$('calcresult').innerHTML=result('PPnBM',num('dpp')*r/100)});
+}
+const defaults=[['Gaji pokok',5490000,'income'],['BPJS TK (JKK/JKM) perusahaan',65331,'income'],['Bantuan transport',400000,'income'],['Tunjangan uang makan',350000,'income'],['THR',0,'income'],['Tunjangan pengobatan',0,'income'],['Tunjangan PPh 21',32789,'income'],['BPJS Kesehatan perusahaan',219600,'income'],['PPh 21 dipotong',32789,'deduction'],['BPJS TK (JKK/JKM) — penyeimbang',65331,'deduction'],['JHT karyawan',109800,'deduction'],['JP karyawan',54900,'deduction'],['BPJS Kesehatan karyawan',54900,'deduction'],['BPJS Kesehatan perusahaan — penyeimbang',219600,'deduction']];
+function payroll(){
+$('taxmain').innerHTML=`<h3>PPh 21 bulanan · model slip gaji</h3><p>Ubah nominal atau persentase di sebelahnya. Titik otomatis memisahkan ribuan (5.490.000); gunakan koma untuk desimal (1,19). Semua persentase memakai basis iuran di bawah, bukan persentase tarif pajak.</p><div class="grid"><div>${field('basis','Basis persentase / upah iuran (Rp)',5490000)}</div><div><label for="category">Kategori TER</label><select id="category">${option('B','B — TK/2, TK/3, K/1, K/2 (asumsi slip)')+option('A','A — TK/0, TK/1, K/0')+option('C','C — K/3')}</select></div></div><label for="grossup">Tunjangan pajak</label><select id="grossup">${option('manual','Manual — mengikuti nominal slip')+option('auto','Gross up otomatis — tunjangan = PPh 21')}</select><p class="note">Status PTKP tidak tercantum pada slip. Default kategori B dipilih karena cocok dengan pajak slip, bukan sebagai konfirmasi status karyawan. TER digunakan untuk masa selain masa pajak terakhir.</p><div class="grid">${['income','deduction'].map((kind)=>`<div><h3>${kind==='income'?'Pendapatan':'Pemotongan'}</h3><div class="row muted"><span>Komponen</span><span>Nominal (Rp)</span><span>% basis</span></div>${defaults.map((r,i)=>r[2]===kind?`<div class="row"><label for="n${i}">${r[0]}</label><input aria-label="${r[0]} nominal" id="n${i}" type="text" inputmode="decimal" data-id-number autocomplete="off" value="${idFormat(r[1])}"><input aria-label="${r[0]} persen" id="p${i}" type="text" inputmode="decimal" data-id-number autocomplete="off" value="${idFormat(Number((r[1]/5490000*100).toFixed(6)))}"></div>`:'').join('')}</div>`).join('')}</div><div id="calcresult" aria-live="polite"></div><button id="resetSlip" type="button">Kembalikan contoh slip</button><details open><summary>Cara membaca slip & pengurang pajak</summary><p>JKK/JKM dan BPJS Kesehatan perusahaan dicatat sebagai pendapatan lalu dipotong kembali agar tidak menambah uang tunai. Nominal penyeimbang disinkronkan. Potongan PPh 21 dihitung otomatis. Persentase pajak pada baris slip adalah ekuivalen terhadap basis upah; tarif TER ditampilkan terpisah.</p><p>JHT dan JP karyawan dapat menjadi pengurang dalam penghitungan tahunan sesuai ketentuan; iuran kesehatan karyawan bukan pengurang fiskal. Pada masa TER, pajak dihitung dari bruto tanpa mengurangi JHT/JP atau PTKP terlebih dahulu. Batas upah iuran BPJS tidak dipaksakan oleh alat ini; sesuaikan basis dengan ketentuan periode dan data perusahaan.</p><p>Persen transport, makan, dan tunjangan pajak adalah hasil pembagian nominal slip dengan basis upah, bukan tarif wajib. Mengubah basis menghitung ulang semua baris berdasarkan persentase yang sedang tampil.</p></details>`;
+[8,9,13].forEach(i=>{$('n'+i).readOnly=true;$('p'+i).readOnly=true});
+const sync=i=>{$('p'+i).value=idFormat(Number((num('basis')?num('n'+i)/num('basis')*100:0).toFixed(6)))};
+function calc(e){try{let id=e?.target?.id||'',base=num('basis');if(id==='basis'){defaults.forEach((_,i)=>{if(![8,9,13].includes(i))$('n'+i).value=idFormat(Math.round(base*num('p'+i)/100))})}else if(/^p\d+$/.test(id)){$('n'+id.slice(1)).value=idFormat(Math.round(base*num(id)/100))}else if(/^n\d+$/.test(id))sync(Number(id.slice(1)));
+const auto=$('grossup').value==='auto';$('n6').readOnly=auto;$('p6').readOnly=auto;let pre=defaults.slice(0,8).reduce((s,_,i)=>s+(i===6?0:num('n'+i)),0);if(auto){$('n6').value=idFormat(TaxMath.grossup(pre,$('category').value));sync(6)}let gross=pre+num('n6'),tax=TaxMath.ter(gross,$('category').value);$('n8').value=idFormat(tax);$('n9').value=idFormat(num('n1'));$('n13').value=idFormat(num('n7'));[8,9,13].forEach(sync);let deduction=defaults.slice(8).reduce((s,_,j)=>s+num('n'+(j+8)),0);$('calcresult').innerHTML=`<div class="grid">${result('Total pendapatan',gross)+result('Total pemotongan',deduction)}</div>`+result('Penghasilan yang diterima',gross-deduction,`<p>PPh 21: <b>${money(tax)}</b> = ${money(gross)} × TER ${TaxMath.rate(gross,$('category').value)}% (dibulatkan rupiah).<br>JHT + JP karyawan: ${money(num('n10')+num('n11'))} per bulan.</p>`);
+}catch(e){$('calcresult').innerHTML=`<p class="error">${e.message}</p>`}}
+$('taxmain').oninput=calc;$('taxmain').onchange=calc;$('resetSlip').onclick=payroll;calc();}
+function annual(){const statuses=[['','Pilih status PTKP yang sebenarnya'],['54000000','TK/0'],['58500000','TK/1 atau K/0'],['63000000','TK/2 atau K/1'],['67500000','TK/3 atau K/2'],['72000000','K/3']];$('taxmain').innerHTML=`<h3>PPh 21 · rekonsiliasi masa terakhir</h3><p>Untuk pegawai tetap yang menjadi subjek pajak dalam negeri sepanjang tahun. Isi jumlah kumulatif tahun berjalan; jangan memakai angka satu bulan sebagai angka setahun. Kasus kewajiban subjektif mulai/berakhir di tengah tahun dan formulir khusus P3K gunakan <a href="https://kalkulator.pajak.go.id/" target="_blank" rel="noopener">kalkulator resmi</a>.</p><div class="grid"><div>${field('agross','Bruto kumulatif termasuk THR, bonus, tunjangan (Rp)')}</div><div>${field('months','Jumlah bulan bekerja (1–12)',12)}</div><div>${field('pension','Iuran pensiun/JHT/JP karyawan yang boleh dikurangkan (Rp)')}</div><div>${field('zakat','Zakat/sumbangan wajib melalui pemberi kerja yang memenuhi syarat (Rp)')}</div><div>${field('priornet','Neto dari pemberi kerja sebelumnya (bukti potong) (Rp)')}</div><div>${field('priortax','PPh 21 pemberi kerja sebelumnya (Rp)')}</div><div>${field('withheld','PPh 21 dipotong sebelum masa terakhir di pemberi kerja ini (Rp)')}</div><div><label for="ptkp">Status PTKP</label><select id="ptkp">${statuses.map(x=>option(...x)).join('')}</select></div></div><div id="calcresult" aria-live="polite"></div>`;watch(()=>{if(!$('ptkp').value){$('calcresult').innerHTML='<p class="note">Pilih status PTKP untuk menghitung. Status tidak ditebak dari slip.</p>';return}let months=num('months');if(months<1||months>12||!Number.isInteger(months))throw Error('Jumlah bulan harus bilangan bulat 1–12.');let g=num('agross'),cost=Math.min(g*.05,months*500000),net=Math.max(0,g-cost-num('pension')-num('zakat'))+num('priornet'),pkp=Math.floor(Math.max(0,net-num('ptkp'))/1000)*1000,tax=TaxMath.progressive(pkp),balance=tax-num('priortax')-num('withheld');$('calcresult').innerHTML=result('PPh 21 setahun',tax,`<p>Biaya jabatan: ${money(cost)}<br>Penghasilan neto gabungan: ${money(net)}<br>PKP (dibulatkan ke bawah ribuan): ${money(pkp)}</p>`)+result(balance<0?'Kelebihan pemotongan untuk dikembalikan':'PPh 21 masa terakhir',Math.abs(balance))})}
+render('21');
+})();
+</script>
+<style>
+/* Tabel TER di bawah Navigator dan Kalkulator */
+.ter-reference{max-width:1120px;margin:28px auto 42px;padding:25px;border:1px solid #e1e6ef;border-radius:20px;background:radial-gradient(circle at 94% 0%,#eaf2ff,transparent 26%),linear-gradient(180deg,#fff,#f7f9fc);box-shadow:0 18px 50px #1c2c540f;color:#172033;font:15px/1.55 Inter,"Segoe UI",Arial,sans-serif;box-sizing:border-box}.ter-reference *{box-sizing:border-box}.ter-reference h2{font-size:clamp(23px,3vw,35px);line-height:1.2;letter-spacing:-.035em;margin:8px 0 10px}.ter-reference h2:before{content:"";display:inline-block;width:9px;height:29px;margin-right:12px;border-radius:9px;vertical-align:-4px;background:linear-gradient(#d6a619,#f3d25e)}.ter-reference p{margin:0}.ter-reference .ter-eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:800;color:#13a184}.ter-reference .ter-lead{color:#667085;max-width:820px}.ter-reference .ter-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:24px 0}.ter-reference .ter-card{border:1px solid #e1e6ef;border-radius:15px;background:#fff;padding:15px 18px;box-shadow:0 5px 18px #1e2d500a}.ter-reference .ter-card strong{font-size:20px;color:#1f2d5c}.ter-reference .ter-card p{color:#667085;font-size:13px}.ter-reference .ter-card small{color:#13a184;font-weight:700}.ter-reference .ter-controls{display:flex;align-items:end;gap:13px;flex-wrap:wrap;background:#fff;border:1px solid #e1e6ef;border-radius:16px;padding:15px;margin-bottom:15px}.ter-reference .ter-field{display:grid;gap:5px;min-width:210px;flex:1}.ter-reference .ter-field label{font-weight:700;font-size:12px;color:#1f2d5c}.ter-reference select,.ter-reference input{width:100%;border:1px solid #ccd6e5;border-radius:10px;padding:10px 12px;background:#fff;color:#172033;font:inherit}.ter-reference select:focus,.ter-reference input:focus{outline:2px solid #3b82f6;outline-offset:2px}.ter-reference .ter-count{color:#667085;font-size:12px;margin-bottom:7px}.ter-reference .ter-tablebox{border:1px solid #e1e6ef;border-radius:15px;overflow:auto;background:#fff;max-height:68vh}.ter-reference table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;min-width:600px}.ter-reference thead th{position:sticky;top:0;background:#1f2d5c;color:#fff;text-align:left;font-size:12px;padding:12px 16px;z-index:1}.ter-reference thead th:last-child,.ter-reference td:last-child{text-align:right}.ter-reference tbody td{padding:10px 16px;border-bottom:1px solid #edf0f5}.ter-reference tbody tr:hover,.ter-reference tbody tr.ter-selected{background:#e2f5ef}.ter-reference tbody tr:last-child td{border-bottom:0}.ter-reference .ter-num{color:#8590a4;font-size:12px;width:56px}.ter-reference .ter-rate{font-weight:800;color:#13a184}.ter-reference .ter-zero .ter-rate{color:#1f2d5c}.ter-reference .ter-notes{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}.ter-reference .ter-note{background:#fff;border:1px solid #e1e6ef;border-left:4px solid #d6a619;border-radius:12px;padding:14px 16px;font-size:13px;color:#41506a}.ter-reference .ter-note strong{color:#1f2d5c}.ter-reference .ter-source{margin-top:20px!important;color:#667085;font-size:12px}.ter-reference .ter-source a{color:#3267d6}.ter-reference .ter-result{flex:2;min-width:230px;background:#f0f8f6;border:1px solid #cee6df;padding:10px 13px;border-radius:11px;color:#24483f;font-size:13px}.ter-reference .ter-result strong{font-size:17px;color:#087c65}@media(max-width:700px){.ter-reference{margin:20px 0;padding:18px}.ter-reference .ter-cards,.ter-reference .ter-notes{grid-template-columns:1fr}.ter-reference .ter-card{padding:12px 15px}.ter-reference .ter-controls{display:grid}.ter-reference .ter-tablebox{max-height:62vh}.ter-reference tbody td,.ter-reference thead th{padding:9px 11px}}
+</style>
+<section class="ter-reference" id="tabel-ter" aria-labelledby="ter-title">
+<div class="ter-eyebrow">Referensi PPh Pasal 21 · Training Perpajakan 2026</div>
+<h2 id="ter-title">Tarif Efektif Rata-rata (TER) Bulanan</h2>
+<p class="ter-lead">Pilih status Penghasilan Tidak Kena Pajak (PTKP), lalu lihat seluruh rentang penghasilan bruto bulanan dari tarif 0% sampai tarif tertinggi. Angka batas adalah rupiah per bulan.</p>
+<div class="ter-cards" aria-label="Kategori PTKP"><div class="ter-card"><strong>A</strong><p>TK/0 · TK/1 · K/0</p><small>0% hingga 34%</small></div><div class="ter-card"><strong>B</strong><p>TK/2 · TK/3 · K/1 · K/2</p><small>0% hingga 34%</small></div><div class="ter-card"><strong>C</strong><p>K/3</p><small>0% hingga 34%</small></div></div>
+<div class="ter-controls"><div class="ter-field"><label for="ter-ptkp">Status PTKP</label><select id="ter-ptkp"><option value="TK/0">TK/0 — tidak kawin, 0 tanggungan</option><option value="TK/1">TK/1 — tidak kawin, 1 tanggungan</option><option value="K/0">K/0 — kawin, 0 tanggungan</option><option value="TK/2">TK/2 — tidak kawin, 2 tanggungan</option><option value="TK/3">TK/3 — tidak kawin, 3 tanggungan</option><option value="K/1">K/1 — kawin, 1 tanggungan</option><option value="K/2">K/2 — kawin, 2 tanggungan</option><option value="K/3">K/3 — kawin, 3 tanggungan</option></select></div><div class="ter-field"><label for="ter-bruto">Cek penghasilan bruto bulanan (opsional)</label><input id="ter-bruto" inputmode="numeric" autocomplete="off" placeholder="Contoh: 10.000.000"></div><div class="ter-result" id="ter-hasil" aria-live="polite">Kategori <strong>A</strong> · masukkan bruto untuk menemukan baris tarif.</div></div>
+<div class="ter-count" id="ter-count"></div><div class="ter-tablebox"><table><thead><tr><th scope="col">No.</th><th scope="col">Penghasilan bruto bulanan</th><th scope="col">Tarif TER</th></tr></thead><tbody id="ter-rows"></tbody></table></div>
+<div class="ter-notes"><div class="ter-note"><strong>Cara membaca batas:</strong> “Di atas Rp5.400.000 sampai dengan Rp5.650.000” berarti Rp5.400.000 tidak termasuk dan Rp5.650.000 termasuk. Seluruh nilai mulai Rp0 tercakup.</div><div class="ter-note"><strong>Penerapan:</strong> untuk pegawai tetap, tarif efektif bulanan dipakai pada masa pajak selain masa pajak terakhir. Pada masa pajak terakhir, PPh 21 dihitung kembali memakai tarif Pasal 17, lalu dikurangi pemotongan masa sebelumnya. Kategori mengikuti status PTKP pada awal tahun pajak.</div></div>
+<p class="ter-source">Sumber: <a href="https://jdih.kemenkeu.go.id/api/download/e47c3fc4-a912-4bf1-bcad-335fee3f71f8/2023pp058.pdf" target="_blank" rel="noopener">PP Nomor 58 Tahun 2023, Pasal 2 dan Lampiran A–C</a>; <a href="https://jdih.kemenkeu.go.id/api/download/e60a82e0-b218-40f5-9d18-b924aa1e11ce/2023pmkeuangan168.pdf" target="_blank" rel="noopener">PMK Nomor 168 Tahun 2023</a>. TK = tidak kawin; K = kawin; angka setelah garis miring = jumlah tanggungan. TER merupakan tarif pemotongan bulanan, bukan tarif pajak tahunan final.</p>
+</section>
+<script>
+(()=>{
+const categoryByStatus={"TK/0":"A","TK/1":"A","K/0":"A","TK/2":"B","TK/3":"B","K/1":"B","K/2":"B","K/3":"C"};
+const moneyTer=n=>'Rp'+new Intl.NumberFormat('id-ID').format(n);
+const rateTer=n=>new Intl.NumberFormat('id-ID',{maximumFractionDigits:2}).format(n)+'%';
+const status=document.getElementById('ter-ptkp'),bruto=document.getElementById('ter-bruto'),rows=document.getElementById('ter-rows'),hasil=document.getElementById('ter-hasil'),count=document.getElementById('ter-count');
+function draw(){const cat=categoryByStatus[status.value],list=TER[cat],digits=bruto.value.replace(/\D/g,''),value=digits?Number(digits):null,selected=value===null?-1:list.findIndex(([max])=>max===null||value<=max);rows.replaceChildren();list.forEach(([max,rate],i)=>{const min=i?list[i-1][0]:null;const tr=document.createElement('tr');if(rate===0)tr.classList.add('ter-zero');if(i===selected)tr.classList.add('ter-selected');const range=max===null?'Di atas '+moneyTer(min):min===null?'Rp0 sampai dengan '+moneyTer(max):'Di atas '+moneyTer(min)+' sampai dengan '+moneyTer(max);tr.innerHTML='<td class="ter-num">'+(i+1)+'</td><td>'+range+'</td><td class="ter-rate">'+rateTer(rate)+'</td>';rows.append(tr)});count.textContent='Kategori '+cat+' · '+list.length+' lapisan tarif · status '+status.value;if(selected<0){hasil.innerHTML='Kategori <strong>'+cat+'</strong> · masukkan bruto untuk menemukan baris tarif.'}else{const rate=list[selected][1];hasil.innerHTML='Kategori <strong>'+cat+'</strong> · tarif <strong>'+rateTer(rate)+'</strong> · estimasi potongan <strong>'+moneyTer(Math.round(value*rate/100))+'</strong> (bruto × TER).'}}
+bruto.addEventListener('input',()=>{const digits=bruto.value.replace(/\D/g,'');bruto.value=digits?new Intl.NumberFormat('id-ID').format(Number(digits)):'';draw()});status.addEventListener('change',draw);draw();
+})();
+</script>
+</body></html>

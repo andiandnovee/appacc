@@ -10,6 +10,13 @@ Arah signifikan sebelumnya adalah pematangan logbook/biaya kendaraan, kesinambun
 
 # Perubahan Utama
 
+## 2026-10-01 — Kalkulator pajak publik
+
+- **Ringkasan:** halaman kalkulator pajak statis tersedia tanpa autentikasi pada `/pajak/calc` di host frontend dan backend.
+- **Modul/file:** `backend/public/pajak.html`, `backend/routes/web.php`, `frontend/public/pajak/calc/index.html`, serta artefak build `frontend/dist/pajak/calc/index.html`.
+- **Dampak API/database/dependency:** tidak ada perubahan database atau dependency; endpoint backend menggunakan route web publik karena route API otomatis memiliki prefix `/api`.
+- **Status:** route backend dan aset frontend telah diverifikasi; build frontend berhasil.
+
 ## 2026-09-24 — CRUD master customer
 
 - **Ringkasan:** menambahkan halaman manajemen customer dengan pencarian, sorting, pagination, export, tambah, edit, dan soft delete, beserta API resource Laravel.
