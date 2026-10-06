@@ -22,23 +22,40 @@
 .label {
   font-size: var(--text-sm);
   font-weight: var(--font-medium);
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 .select {
+  width: 100%;
   height: 38px;
   padding: 0 var(--space-3);
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border-default);
   border-radius: var(--radius-md);
-  background: var(--surface);
+  background-color: var(--bg-surface);
   color: var(--text-primary);
+  color-scheme: light;
+  font-family: var(--font-sans);
   font-size: var(--text-sm);
   cursor: pointer;
+  outline: none;
+  transition:
+    border-color var(--duration-normal) var(--ease-default),
+    box-shadow var(--duration-normal) var(--ease-default),
+    background-color var(--duration-fast) var(--ease-default);
+}
+
+.select option {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
 }
 
 .select:focus {
-  outline: none;
-  border-color: var(--color-primary);
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(84, 112, 239, 0.15);
+}
+
+:global(.dark) .select {
+  color-scheme: dark;
 }
 
 /* ── Info Bar ── */
