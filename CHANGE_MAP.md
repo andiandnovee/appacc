@@ -10,11 +10,11 @@ Arah signifikan sebelumnya adalah pematangan logbook/biaya kendaraan, kesinambun
 
 # Perubahan Utama
 
-## 2026-10-06 — Carryover logbook dapat disisipkan sebelum baris existing
+## 2026-10-06 — Carryover logbook dapat disisipkan di awal atau akhir
 
-- **Ringkasan:** pemilihan carryover kini membangun rantai KM mundur dari KM awal baris pertama bulan berjalan, sehingga baris bulan sebelumnya dapat disisipkan sebelum data yang sudah ada.
+- **Ringkasan:** pemilihan carryover menerima rantai KM yang tersambung ke KM awal atau KM akhir bulan berjalan, sehingga baris dapat disisipkan sebelum atau ditambahkan setelah data yang sudah ada.
 - **Modul/file:** `CarryoverPicker.tsx`, halaman `VehicleLogBook/index.tsx`, dan `VehicleLogbookController.php`.
-- **Dampak API/database/dependency:** endpoint carryover tetap memakai payload yang sama, tetapi validasinya berubah dari append setelah KM terakhir menjadi prepend sebelum KM pertama; tidak ada perubahan database atau dependency.
+- **Dampak API/database/dependency:** endpoint carryover tetap memakai payload yang sama, tetapi validasinya menerima prepend sebelum KM pertama maupun append setelah KM terakhir; tidak ada perubahan database atau dependency.
 - **Status:** implementasi selesai; lint/build frontend dan pemeriksaan sintaks controller backend berhasil.
 
 ## 2026-10-01 — Kalkulator pajak publik

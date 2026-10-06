@@ -911,6 +911,7 @@ export default function VehicleLogbookPage() {
               currentMonth={Number(month)}
               currentYear={Number(year)}
               firstKm={firstKm}
+              lastKm={lastKm}
               onSuccess={() => {
                 setCarryoverOpen(false);
                 fetchData();

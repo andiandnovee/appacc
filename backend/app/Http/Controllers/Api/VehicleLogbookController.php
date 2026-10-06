@@ -307,19 +307,19 @@ private function checkContinuity(int $headerId): array
 
         $header = VehicleCostHeader::findOrFail($headerId);
 
-        // Carryover disisipkan sebelum baris pertama bulan ini.
-        $firstDetail = VehicleCostDetail::where('vehicle_cost_header_id', $headerId)
+        $currentDetails = VehicleCostDetail::where('vehicle_cost_header_id', $headerId)
             ->whereNull('deleted_at')
             ->orderBy('start_km')
-            ->first();
+            ->get(['start_km', 'end_km']);
 
-        $targetStartKm = $firstDetail?->start_km ?? $header->start_km;
+        $targetStartKm = $currentDetails->first()?->start_km ?? $header->start_km;
+        $targetEndKm = $currentDetails->last()?->end_km ?? $header->start_km;
 
         $sources = VehicleCostDetail::whereIn('id', $request->source_detail_ids)
             ->orderBy('start_km')
             ->get();
 
-        // Pastikan source membentuk satu rantai dan ujungnya bertemu baris bulan ini.
+        // Pastikan semua source membentuk satu rantai KM.
         foreach ($sources as $index => $source) {
             $nextSource = $sources->get($index + 1);
             if ($nextSource && (int) $source->end_km !== (int) $nextSource->start_km) {
@@ -329,10 +329,14 @@ private function checkContinuity(int $headerId): array
             }
         }
 
+        $sourceStartKm = $sources->first()?->start_km;
         $sourceEndKm = $sources->last()?->end_km;
-        if ($targetStartKm !== null && (int) $sourceEndKm !== (int) $targetStartKm) {
+        $canPrepend = $targetStartKm !== null && (int) $sourceEndKm === (int) $targetStartKm;
+        $canAppend = $targetEndKm !== null && (int) $sourceStartKm === (int) $targetEndKm;
+
+        if ($targetStartKm !== null && ! $canPrepend && ! $canAppend) {
             return response()->json([
-                'message' => "KM sebelumnya harus berakhir di {$targetStartKm}, bukan {$sourceEndKm}.",
+                'message' => "KM sumber harus berakhir di {$targetStartKm} atau dimulai dari {$targetEndKm}.",
             ], 422);
         }
 

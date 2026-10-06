@@ -6,7 +6,7 @@
  *
  * Rules:
  * - Tampilkan semua details bulan sebelumnya untuk kendaraan ini
- * - Row hanya bisa dipilih kalau km_akhir menyambung ke km_awal row pertama
+ * - Row bisa disisipkan sebelum KM awal atau ditambahkan setelah KM akhir
  *   bulan ini (kontinuitas km — tidak boleh loncat)
  * - Multiple select diperbolehkan asalkan km nyambung secara berurutan
  */
@@ -41,6 +41,7 @@ interface Props {
   currentMonth: number;
   currentYear: number;
   firstKm: number | null;      // km awal row pertama bulan ini
+  lastKm: number | null;       // km akhir row terakhir bulan ini
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -56,6 +57,10 @@ function formatKm(val: number) {
   return new Intl.NumberFormat("id-ID").format(val);
 }
 
+function sameKm(left: number | null, right: number | null) {
+  return left !== null && right !== null && Number(left) === Number(right);
+}
+
 // ─────────────────────────────────────────────
 export default function CarryoverPicker({
   headerId,
@@ -63,6 +68,7 @@ export default function CarryoverPicker({
   currentMonth,
   currentYear,
   firstKm,
+  lastKm,
   onSuccess,
   onCancel,
 }: Props) {
@@ -100,32 +106,56 @@ export default function CarryoverPicker({
   useEffect(() => { fetchPrev(); }, [fetchPrev]);
 
   // ── Tentukan row mana yang bisa dipilih ──────
-  // Pilihan dibangun mundur dari KM awal baris pertama bulan ini.
-  // Setelah satu row dipilih, row sebelumnya harus berakhir di KM awal row tersebut.
+  const selectedDetails = useMemo(
+    () => prevDetails.filter((d) => selectedIds.has(d.id)),
+    [prevDetails, selectedIds],
+  );
+
+  const selectionDirection = useMemo<"prepend" | "append" | null>(() => {
+    if (selectedDetails.length === 0) return null;
+    if (sameKm(selectedDetails[selectedDetails.length - 1].end_km, firstKm)) {
+      return "prepend";
+    }
+    if (sameKm(selectedDetails[0].start_km, lastKm)) return "append";
+    return null;
+  }, [selectedDetails, firstKm, lastKm]);
+
+  // Pilihan pertama boleh menempel ke batas awal atau akhir bulan ini.
+  // Setelah itu, pilihan berikutnya harus meneruskan rantai pada arah yang sama.
   const rowEligibility = useMemo(() => {
     const map = new Map<number, { canSelect: boolean; reason?: string }>();
 
-    let expectedEndKm = firstKm;
+    const prependKm = selectedDetails[0]?.start_km ?? firstKm;
+    const appendKm = selectedDetails[selectedDetails.length - 1]?.end_km ?? lastKm;
 
-    for (let i = prevDetails.length - 1; i >= 0; i -= 1) {
-      const d = prevDetails[i];
+    for (const d of prevDetails) {
       if (selectedIds.has(d.id)) {
         map.set(d.id, { canSelect: true });
-        expectedEndKm = d.start_km;
-      } else if (expectedEndKm === null) {
+      } else if (firstKm === null && lastKm === null) {
         map.set(d.id, { canSelect: true });
-      } else if (d.end_km === expectedEndKm) {
+      } else if (
+        selectionDirection === "prepend" && sameKm(d.end_km, prependKm)
+      ) {
+        map.set(d.id, { canSelect: true });
+      } else if (
+        selectionDirection === "append" && sameKm(d.start_km, appendKm)
+      ) {
+        map.set(d.id, { canSelect: true });
+      } else if (
+        selectionDirection === null &&
+        (sameKm(d.end_km, firstKm) || sameKm(d.start_km, lastKm))
+      ) {
         map.set(d.id, { canSelect: true });
       } else {
         map.set(d.id, {
           canSelect: false,
-          reason: `KM akhir (${formatKm(d.end_km)}) tidak menyambung ke ${formatKm(expectedEndKm)}`,
+          reason: `Rentang ${formatKm(d.start_km)}–${formatKm(d.end_km)} tidak menyambung ke batas KM bulan ini`,
         });
       }
     }
 
     return map;
-  }, [prevDetails, selectedIds, firstKm]);
+  }, [prevDetails, selectedDetails, selectedIds, selectionDirection, firstKm, lastKm]);
 
   // ── Toggle row ───────────────────────────────
   const toggleRow = useCallback((id: number, canSelect: boolean) => {
@@ -133,16 +163,17 @@ export default function CarryoverPicker({
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
-        // Hapus row terpilih yang lebih awal agar rantai ke bulan ini tetap utuh.
         const idx = prevDetails.findIndex((d) => d.id === id);
-        const toRemove = prevDetails.slice(0, idx + 1).map((d) => d.id);
+        const toRemove = selectionDirection === "append"
+          ? prevDetails.slice(idx).map((d) => d.id)
+          : prevDetails.slice(0, idx + 1).map((d) => d.id);
         toRemove.forEach((rid) => next.delete(rid));
       } else {
         next.add(id);
       }
       return next;
     });
-  }, [prevDetails]);
+  }, [prevDetails, selectionDirection]);
 
   // ── Carry ke bulan ini ───────────────────────
   const handleCarry = async () => {
@@ -207,9 +238,13 @@ export default function CarryoverPicker({
       <div className={styles.infoBar}>
         <History size={13} />
         <span>
-          KM awal bulan ini:{" "}
-          <strong>{firstKm !== null ? formatKm(firstKm) : "belum ditentukan"}</strong>
-          {" "}— pilih baris sebelumnya yang berakhir di KM ini.
+          Batas KM bulan ini:{" "}
+          <strong>
+            {firstKm !== null ? formatKm(firstKm) : "—"}
+            {" → "}
+            {lastKm !== null ? formatKm(lastKm) : "—"}
+          </strong>
+          {" "}— baris dapat disisipkan di awal atau ditambahkan di akhir.
         </span>
       </div>
 
