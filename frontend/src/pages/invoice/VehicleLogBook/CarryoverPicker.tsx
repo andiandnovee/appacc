@@ -6,13 +6,13 @@
  *
  * Rules:
  * - Tampilkan semua details bulan sebelumnya untuk kendaraan ini
- * - Row hanya bisa dipilih kalau km_awal = km_akhir_row_terakhir_bulan_ini
- *   (kontinuitas km — tidak boleh loncat)
+ * - Row hanya bisa dipilih kalau km_akhir menyambung ke km_awal row pertama
+ *   bulan ini (kontinuitas km — tidak boleh loncat)
  * - Multiple select diperbolehkan asalkan km nyambung secara berurutan
  */
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { History, AlertTriangle, CheckCircle, Lock } from "lucide-react";
+import { History, CheckCircle, Lock } from "lucide-react";
 import Button from "../../../components/ui/Button";
 import Badge from "../../../components/ui/Badge";
 import Alert from "../../../components/ui/Alert";
@@ -40,7 +40,7 @@ interface Props {
   vehicleId: number;
   currentMonth: number;
   currentYear: number;
-  lastKm: number | null;       // km akhir row terakhir bulan ini
+  firstKm: number | null;      // km awal row pertama bulan ini
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -56,20 +56,13 @@ function formatKm(val: number) {
   return new Intl.NumberFormat("id-ID").format(val);
 }
 
-function formatRupiah(val: number | null) {
-  if (!val) return "—";
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency", currency: "IDR", minimumFractionDigits: 0,
-  }).format(val);
-}
-
 // ─────────────────────────────────────────────
 export default function CarryoverPicker({
   headerId,
   vehicleId,
   currentMonth,
   currentYear,
-  lastKm,
+  firstKm,
   onSuccess,
   onCancel,
 }: Props) {
@@ -107,37 +100,32 @@ export default function CarryoverPicker({
   useEffect(() => { fetchPrev(); }, [fetchPrev]);
 
   // ── Tentukan row mana yang bisa dipilih ──────
-  // Aturan: km harus menyambung dengan lastKm bulan ini
-  // Setelah row dipilih, row berikutnya harus menyambung dengan km akhir row yang dipilih
+  // Pilihan dibangun mundur dari KM awal baris pertama bulan ini.
+  // Setelah satu row dipilih, row sebelumnya harus berakhir di KM awal row tersebut.
   const rowEligibility = useMemo(() => {
     const map = new Map<number, { canSelect: boolean; reason?: string }>();
 
-    // Hitung "km akhir efektif" — dimulai dari lastKm bulan ini,
-    // lalu bergerak sesuai row yang sudah dipilih (secara urutan)
-    let expectedKm = lastKm;
+    let expectedEndKm = firstKm;
 
-    for (const d of prevDetails) {
+    for (let i = prevDetails.length - 1; i >= 0; i -= 1) {
+      const d = prevDetails[i];
       if (selectedIds.has(d.id)) {
-        // Row ini sudah dipilih — km akhirnya jadi expectedKm berikutnya
         map.set(d.id, { canSelect: true });
-        expectedKm = d.end_km;
-      } else if (expectedKm === null) {
-        // Belum ada km referensi sama sekali — semua bisa dipilih sebagai awal
+        expectedEndKm = d.start_km;
+      } else if (expectedEndKm === null) {
         map.set(d.id, { canSelect: true });
-      } else if (d.start_km === expectedKm) {
-        // Nyambung
+      } else if (d.end_km === expectedEndKm) {
         map.set(d.id, { canSelect: true });
       } else {
-        // Loncat — tidak bisa dipilih
         map.set(d.id, {
           canSelect: false,
-          reason: `KM awal (${formatKm(d.start_km)}) tidak menyambung dari ${formatKm(expectedKm)}`,
+          reason: `KM akhir (${formatKm(d.end_km)}) tidak menyambung ke ${formatKm(expectedEndKm)}`,
         });
       }
     }
 
     return map;
-  }, [prevDetails, selectedIds, lastKm]);
+  }, [prevDetails, selectedIds, firstKm]);
 
   // ── Toggle row ───────────────────────────────
   const toggleRow = useCallback((id: number, canSelect: boolean) => {
@@ -145,10 +133,9 @@ export default function CarryoverPicker({
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
-        // Deselect — harus deselect semua yang di belakangnya juga
-        // (karena chain bisa putus)
+        // Hapus row terpilih yang lebih awal agar rantai ke bulan ini tetap utuh.
         const idx = prevDetails.findIndex((d) => d.id === id);
-        const toRemove = prevDetails.slice(idx).map((d) => d.id);
+        const toRemove = prevDetails.slice(0, idx + 1).map((d) => d.id);
         toRemove.forEach((rid) => next.delete(rid));
       } else {
         next.add(id);
@@ -216,13 +203,13 @@ export default function CarryoverPicker({
         </div>
       </div>
 
-      {/* Info lastKm */}
+      {/* Info anchor KM */}
       <div className={styles.infoBar}>
         <History size={13} />
         <span>
-          KM terakhir bulan ini:{" "}
-          <strong>{lastKm !== null ? formatKm(lastKm) : "belum ada baris"}</strong>
-          {" "}— row hanya bisa dipilih jika km menyambung.
+          KM awal bulan ini:{" "}
+          <strong>{firstKm !== null ? formatKm(firstKm) : "belum ditentukan"}</strong>
+          {" "}— pilih baris sebelumnya yang berakhir di KM ini.
         </span>
       </div>
 

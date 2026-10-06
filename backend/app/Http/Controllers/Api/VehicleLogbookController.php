@@ -307,31 +307,39 @@ private function checkContinuity(int $headerId): array
 
         $header = VehicleCostHeader::findOrFail($headerId);
 
-        // Ambil km akhir terakhir di bulan ini
-        $lastDetail = VehicleCostDetail::where('vehicle_cost_header_id', $headerId)
+        // Carryover disisipkan sebelum baris pertama bulan ini.
+        $firstDetail = VehicleCostDetail::where('vehicle_cost_header_id', $headerId)
             ->whereNull('deleted_at')
-            ->orderByDesc('end_km')
+            ->orderBy('start_km')
             ->first();
 
-        $expectedKm = $lastDetail?->end_km ?? $header->start_km;
+        $targetStartKm = $firstDetail?->start_km ?? $header->start_km;
 
-        // Ambil source details, ordered by start_km
         $sources = VehicleCostDetail::whereIn('id', $request->source_detail_ids)
             ->orderBy('start_km')
             ->get();
+
+        // Pastikan source membentuk satu rantai dan ujungnya bertemu baris bulan ini.
+        foreach ($sources as $index => $source) {
+            $nextSource = $sources->get($index + 1);
+            if ($nextSource && (int) $source->end_km !== (int) $nextSource->start_km) {
+                return response()->json([
+                    'message' => "KM sumber tidak menyambung: {$source->end_km} ke {$nextSource->start_km}.",
+                ], 422);
+            }
+        }
+
+        $sourceEndKm = $sources->last()?->end_km;
+        if ($targetStartKm !== null && (int) $sourceEndKm !== (int) $targetStartKm) {
+            return response()->json([
+                'message' => "KM sebelumnya harus berakhir di {$targetStartKm}, bukan {$sourceEndKm}.",
+            ], 422);
+        }
 
         DB::beginTransaction();
         try {
             $created = 0;
             foreach ($sources as $src) {
-                // Validasi kontinuitas — km harus menyambung
-                if ($expectedKm !== null && $src->start_km !== $expectedKm) {
-                    DB::rollBack();
-                    return response()->json([
-                        'message' => "KM tidak menyambung: expected {$expectedKm}, got {$src->start_km} (baris ID {$src->id}).",
-                    ], 422);
-                }
-
                 VehicleCostDetail::create([
                     'vehicle_cost_header_id' => $headerId,
                     'start_km'               => $src->start_km,
@@ -342,8 +350,6 @@ private function checkContinuity(int $headerId): array
                     'is_carryover'           => true,
                     'source_detail_id'       => $src->id,
                 ]);
-
-                $expectedKm = $src->end_km;
                 $created++;
             }
 

@@ -392,6 +392,11 @@ export default function VehicleLogbookPage() {
     return details[details.length - 1].end_km;
   }, [details, header]);
 
+  const firstKm = useMemo(() => {
+    if (details.length === 0) return header?.start_km ?? null;
+    return details[0].start_km;
+  }, [details, header]);
+
   const totalKm = useMemo(
     () => details.reduce((s, d) => s + (d.end_km - d.start_km), 0),
     [details],
@@ -905,7 +910,7 @@ export default function VehicleLogbookPage() {
               vehicleId={header.vehicle_id}
               currentMonth={Number(month)}
               currentYear={Number(year)}
-              lastKm={kmContinuity.next_start_km ?? lastKm}
+              firstKm={firstKm}
               onSuccess={() => {
                 setCarryoverOpen(false);
                 fetchData();
