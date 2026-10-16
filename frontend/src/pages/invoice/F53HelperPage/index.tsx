@@ -47,6 +47,7 @@ interface Company {
 interface Stage {
   id: number;
   name: string;
+  year: number;
   stage_text?: string;
 }
 
@@ -73,6 +74,9 @@ interface F53Row {
 }
 
 type CheckedMap = Record<number, boolean>;
+
+const CURRENT_YEAR = new Date().getFullYear();
+const YEAR_OPTIONS = Array.from({ length: 12 }, (_, i) => CURRENT_YEAR - i);
 
 // ─────────────────────────────────────────────
 // HELPERS
@@ -193,6 +197,7 @@ export default function F53HelperPage() {
 
   const [companies, setCompanies] = useState<Company[]>([]);
   const [stages, setStages] = useState<Stage[]>([]);
+  const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR);
   const [busAreas, setBusAreas] = useState<BusArea[]>([]);
   const [selectedVendorName, setSelectedVendorName] = useState<string>("");
   const [rows, setRows] = useState<F53Row[]>([]);
@@ -226,8 +231,19 @@ export default function F53HelperPage() {
     api
       .get("/companies/select-options")
       .then((r) => setCompanies(r.data?.data ?? r.data ?? []));
-    api.get("/stages").then((r) => setStages(r.data?.data ?? r.data ?? []));
   }, []);
+
+  useEffect(() => {
+    api
+      .get("/stages", { params: { year: selectedYear } })
+      .then((r) => setStages(r.data?.data ?? r.data ?? []));
+  }, [selectedYear]);
+
+  useEffect(() => {
+    if (selectedStage && !stages.some((stage) => String(stage.id) === String(selectedStage))) {
+      setSelectedStage("");
+    }
+  }, [selectedStage, setSelectedStage, stages]);
 
   useEffect(() => {
     if (!selectedCompany || companies.length === 0) {
@@ -554,6 +570,15 @@ export default function F53HelperPage() {
         />
         <Card.Body>
           <div className={styles.filterGrid}>
+            <Select
+              label="Tahun"
+              value={String(selectedYear)}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              options={YEAR_OPTIONS.map((year) => ({
+                value: String(year),
+                label: String(year),
+              }))}
+            />
             <Select
               label="Company"
               placeholder="Pilih company..."
