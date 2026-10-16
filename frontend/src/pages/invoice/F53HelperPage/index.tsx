@@ -197,7 +197,7 @@ export default function F53HelperPage() {
 
   const [companies, setCompanies] = useState<Company[]>([]);
   const [stages, setStages] = useState<Stage[]>([]);
-  const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR);
+  const [selectedYear, setSelectedYear] = useState(String(CURRENT_YEAR));
   const [busAreas, setBusAreas] = useState<BusArea[]>([]);
   const [selectedVendorName, setSelectedVendorName] = useState<string>("");
   const [rows, setRows] = useState<F53Row[]>([]);
@@ -234,8 +234,13 @@ export default function F53HelperPage() {
   }, []);
 
   useEffect(() => {
+    if (!/^\d{4}$/.test(selectedYear)) {
+      setStages([]);
+      return;
+    }
+
     api
-      .get("/stages", { params: { year: selectedYear } })
+      .get("/stages", { params: { year: Number(selectedYear) } })
       .then((r) => setStages(r.data?.data ?? r.data ?? []));
   }, [selectedYear]);
 
@@ -570,15 +575,20 @@ export default function F53HelperPage() {
         />
         <Card.Body>
           <div className={styles.filterGrid}>
-            <Select
+            <Input
               label="Tahun"
-              value={String(selectedYear)}
-              onChange={(e) => setSelectedYear(Number(e.target.value))}
-              options={YEAR_OPTIONS.map((year) => ({
-                value: String(year),
-                label: String(year),
-              }))}
+              type="text"
+              inputMode="numeric"
+              list="f53-year-options"
+              placeholder="Ketik atau pilih tahun..."
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
             />
+            <datalist id="f53-year-options">
+              {YEAR_OPTIONS.map((year) => (
+                <option key={year} value={String(year)} />
+              ))}
+            </datalist>
             <Select
               label="Company"
               placeholder="Pilih company..."
