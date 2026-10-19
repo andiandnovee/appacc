@@ -73,7 +73,7 @@ interface _InputItemDraft_unused {
   lookupState: LookupState;
   vehicle: VehicleFound | null;
   manualBusArea: string;
-  manualType: "R4" | "R2";
+  manualType: "" | "R4" | "R2";
   biayaPerpj: number;
   admPerpj: number;
   jasaPerpj: number;
@@ -90,7 +90,7 @@ function emptyDraft(): InputItemDraft {
     lookupState: "idle",
     vehicle: null,
     manualBusArea: "",
-    manualType: "R4",
+    manualType: "",
     biayaPerpj: 0,
     admPerpj: 0,
     jasaPerpj: 0,
@@ -110,8 +110,7 @@ function formatRupiah(val: number): string {
   }).format(val);
 }
 
-// currentBaSapId dibutuhkan untuk classifier
-function buildStnkItem(draft: InputItemDraft, currentBaSapId: string): StnkItem {
+function buildStnkItem(draft: InputItemDraft): StnkItem {
   const hasCostCenter = draft.lookupState === "found" && !!draft.vehicle?.cost_center;
   const costCenter = draft.vehicle?.cost_center ?? null;
 
@@ -120,8 +119,9 @@ function buildStnkItem(draft: InputItemDraft, currentBaSapId: string): StnkItem 
 
   const vehicleType: "R4" | "R2" =
     draft.lookupState === "found"
+      && draft.vehicle?.cost_center
       ? (draft.vehicle?.vehicle_type ?? "R4")
-      : draft.manualType;
+      : (draft.manualType || "R4");
 
   const businessAreaCode = hasCostCenter
     ? (draft.vehicle?.business_area_code ?? "")
@@ -145,6 +145,12 @@ function buildStnkItem(draft: InputItemDraft, currentBaSapId: string): StnkItem 
     jasaPerpj: draft.jasaPerpj,
     dendaPerpj: draft.dendaPerpj,
   };
+}
+
+function isDraftValid(draft: InputItemDraft): boolean {
+  if (draft.lookupState === "loading" || draft.lookupState === "idle") return false;
+  if (draft.lookupState === "found" && draft.vehicle?.cost_center) return true;
+  return !!draft.manualType && !!draft.manualBusArea;
 }
 
 const VEHICLE_TYPE_OPTIONS = [
@@ -249,9 +255,10 @@ export default function StnkJournalPage() {
 
   // allItems — butuh currentBaSapId untuk classifier
   const allItems = useMemo(
-    () => drafts.map((d) => buildStnkItem(d, currentBaSapId)),
-    [drafts, currentBaSapId],
+    () => drafts.map((d) => buildStnkItem(d)),
+    [drafts],
   );
+  const allDraftsValid = drafts.length > 0 && drafts.every(isDraftValid);
 
   const kendDocCount = useMemo(() => {
     const groups = new Set(
@@ -336,11 +343,11 @@ export default function StnkJournalPage() {
 
   const canExportKend =
     !!companyCode && !!postingDate && !!documentDate &&
-    allItems.some((i) => i.busAreaKendaraan) && !!currentBusArea && !!selectedVendor;
+    allDraftsValid && allItems.some((i) => i.busAreaKendaraan) && !!currentBusArea && !!selectedVendor;
 
   const canExportRO =
     !!companyCode && !!postingDate && !!documentDate && !!noInvoice &&
-    !!selectedVendor && !!currentBusArea && allItems.length > 0;
+    !!selectedVendor && !!currentBusArea && allItems.length > 0 && allDraftsValid;
 
   const accountIssues = useMemo(() => {
     if (!selectedVendor) return { kendaraan: 0, ro: 0, all: 0 };
@@ -666,7 +673,7 @@ export default function StnkJournalPage() {
             />
           ))}
           <div className={styles.addItemBar}>
-            <Button variant="outline" size="sm" onClick={addDraft}>
+            <Button variant="outline" size="sm" onClick={addDraft} disabled={!allDraftsValid}>
               <Plus size={14} /> Tambah Kendaraan
             </Button>
           </div>
@@ -865,14 +872,14 @@ function DraftRow({
   draft, idx, busAreaOptions, companyCode, currentBaSapId,
   onUpdate, onLookup, onRemove, canRemove,
 }: DraftRowProps) {
-  const item = buildStnkItem(draft, currentBaSapId);
+  const item = buildStnkItem(draft);
   const isCurrentBaItem = !!draft.vehicle?.cost_center &&
     draft.vehicle.cost_center === currentBaSapId;
 
   const needsManualBusArea =
     draft.lookupState === "not_found" ||
     (draft.lookupState === "found" && !draft.vehicle?.cost_center);
-  const needsManualType = draft.lookupState === "not_found";
+  const needsManualType = needsManualBusArea;
 
   const totalItem = draft.biayaPerpj + draft.admPerpj + draft.jasaPerpj + draft.dendaPerpj;
 
@@ -923,7 +930,13 @@ function DraftRow({
                 className={styles.textInput}
                 value={draft.plateInput}
                 onChange={(e) =>
-                  onUpdate(draft.id, { plateInput: e.target.value, lookupState: "idle", vehicle: null })
+                  onUpdate(draft.id, {
+                    plateInput: e.target.value,
+                    lookupState: "idle",
+                    vehicle: null,
+                    manualType: "",
+                    manualBusArea: "",
+                  })
                 }
                 onKeyDown={(e) => { if (e.key === "Enter") onLookup(draft.id, draft.plateInput); }}
                 placeholder="BM 1234 AB"
@@ -941,6 +954,9 @@ function DraftRow({
 
           {needsManualType && (
             <Select label="Jenis Kendaraan" value={draft.manualType}
+              placeholder="-- Pilih Jenis Kendaraan --"
+              required
+              error={!draft.manualType ? "Pilih jenis kendaraan secara manual." : undefined}
               onChange={(e) => onUpdate(draft.id, { manualType: e.target.value as "R4" | "R2" })}
               options={VEHICLE_TYPE_OPTIONS}
             />
@@ -948,6 +964,8 @@ function DraftRow({
 
           {needsManualBusArea && (
             <Select label="Business Area (Manual)" placeholder="-- Pilih BusArea --"
+              required
+              error={!draft.manualBusArea ? "Pilih Business Area secara manual." : undefined}
               value={draft.manualBusArea}
               onChange={(e) => onUpdate(draft.id, { manualBusArea: e.target.value })}
               options={busAreaOptions}

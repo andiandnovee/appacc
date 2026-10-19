@@ -19,7 +19,7 @@ export interface DraftItem {
     description: string;
   } | null;
   manualBusArea: string;
-  manualType: "R4" | "R2";
+  manualType: "" | "R4" | "R2";
   biayaPerpj: number;
   admPerpj: number;
   jasaPerpj: number;
@@ -64,7 +64,7 @@ export const emptyDraftItem = (): DraftItem => ({
   lookupState: "idle",
   vehicle: null,
   manualBusArea: "",
-  manualType: "R4",
+  manualType: "",
   biayaPerpj: 0,
   admPerpj: 0,
   jasaPerpj: 0,
@@ -109,6 +109,9 @@ export const useStnkDraft = create<StnkDraftState>()(
           state.drafts = state.drafts.map((d) => ({
             ...d,
             lookupState: d.vehicle ? "found" : "idle",
+            ...(d.vehicle?.cost_center
+              ? {}
+              : { manualType: "" as const, manualBusArea: "" }),
           }));
         }
       },
