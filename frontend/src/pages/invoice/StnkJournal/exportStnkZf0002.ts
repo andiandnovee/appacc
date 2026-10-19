@@ -62,6 +62,28 @@ function toInt(v: number) {
 type ZfCell = string | number | null;
 type ZfRow = ZfCell[];
 
+const ACCOUNT_COLUMNS = [11, 12, 13] as const;
+
+/** Every ZF0002 line must identify exactly one GL, vendor, or customer account. */
+export function findInvalidStnkAccountRows(rows: ZfRow[]): number[] {
+  return rows.flatMap((row, index) => {
+    const populatedAccounts = ACCOUNT_COLUMNS.filter((column) => {
+      const value = row[column];
+      return value !== null && value !== undefined && String(value).trim() !== "";
+    }).length;
+    return populatedAccounts === 1 ? [] : [index + 1];
+  });
+}
+
+function assertValidStnkAccountRows(rows: ZfRow[]): void {
+  const invalidRows = findInvalidStnkAccountRows(rows);
+  if (invalidRows.length > 0) {
+    throw new Error(
+      `Akun GL, Vendor, atau Customer harus tepat satu per baris. Periksa baris: ${invalidRows.join(", ")}.`,
+    );
+  }
+}
+
 function makeRow(fields: {
   no: number;
   companyCode: string;
@@ -144,13 +166,12 @@ export function buildStnkKendaraanRows(
 
   const currentMeta = busAreaMetaList.find((m) => m.isCurrent);
   const currentVendorCode = currentMeta?.sapVendorCode ?? "";
-  const currentBaSapId = currentMeta?.sapId ?? "";
 
   // Reference = nama_vendor dari Zustand
   const reference = vendorRO.nama_vendor;
 
-  // Filter: hanya item yang BUKAN current BusArea
-  const eligible = items.filter((i) => isKendaraanItem(i, currentBaSapId));
+  // Semua item yang punya cost center menjadi baris jurnal kendaraan.
+  const eligible = items.filter((i) => !!i.costCenter);
 
   // Group per businessAreaCode
   const grouped = new Map<string, StnkItem[]>();
@@ -209,6 +230,7 @@ export function buildStnkKendaraanRows(
           }),
         );
       }
+
     }
 
     const totalDebet = totalBiayaAdm + totalJasa;
@@ -224,7 +246,11 @@ export function buildStnkKendaraanRows(
         documentDateStr,
         dc: "C",
         glAccount: null,
-        vendorAccount: currentVendorCode ? Number(currentVendorCode) : null,
+        vendorAccount: vendorRO.kode_vendor
+          ? Number(vendorRO.kode_vendor)
+          : currentVendorCode
+            ? Number(currentVendorCode)
+            : null,
         customerAccount: null,
         amount: totalDebet,
         businessArea: baCode,
@@ -245,7 +271,8 @@ export function buildStnkKendaraanRows(
 
 // ─────────────────────────────────────────────
 // BUILDER 2 — Jurnal BusAreaRO
-// Semua item masuk (termasuk yg costCenter = current BusArea)
+  // Semua item memiliki baris debit customer di RO. PPh hanya dari item tanpa
+  // cost center (biaya RO), lalu dicatat hanya di RO.
 // Satu dokumen, No = startNo
 // ─────────────────────────────────────────────
 export function buildStnkRoRows(
@@ -262,9 +289,8 @@ export function buildStnkRoRows(
 
   const currentMeta = busAreaMetaList.find((m) => m.isCurrent);
   const currentBaId = currentMeta?.sapId ?? "";
-  const currentBaSapId = currentMeta?.sapId ?? "";
 
-  // Helper: ambil sap_customer_code dari BusArea item (bukan current)
+  // Customer account untuk debit RO berasal dari business area item.
   const getCustomerCode = (businessAreaCode: string): number | null => {
     const meta = busAreaMetaList.find((m) => m.sapId === businessAreaCode);
     return meta?.sapCustomerCode ? Number(meta.sapCustomerCode) : null;
@@ -275,37 +301,23 @@ export function buildStnkRoRows(
   const jenis = vendorRO.jenis;
   const docNo = startNo;
 
-  let grandTotalBiayaAdm = 0;
-  let grandTotalJasa = 0;
-  let grandTotalDenda = 0;
+  let totalBiayaAdm = 0;
+  let totalJasa = 0;
+  let totalDenda = 0;
 
-  for (const item of items) {
+  const roItems = items;
+
+  for (const item of roItems) {
     const biayaAdm = toInt(item.biayaPerpj + item.admPerpj);
     const jasa = toInt(item.jasaPerpj);
     const denda = toInt(item.dendaPerpj);
 
-    grandTotalBiayaAdm += biayaAdm;
-    grandTotalJasa += jasa;
-    grandTotalDenda += denda;
+    totalBiayaAdm += biayaAdm;
+    totalJasa += jasa;
+    totalDenda += denda;
 
-    // Tentukan apakah item ini adalah "current BusArea item"
-    const isCurrentBaItem =
-      !!item.costCenter && item.costCenter === currentBaSapId;
-    // Tanpa cost_center = not_found/no_cc item
-    const isNoCcItem = !item.costCenter;
-
-    // GL Account debet:
-    // - current BusArea item → 71830001, customer = null
-    // - item lain → null, customer = sap_customer_code dari BusArea item itu sendiri
-    const glDebet = isCurrentBaItem ? 71830001 : null;
-    const customerDebet = isCurrentBaItem
-      ? null
-      : getCustomerCode(item.businessAreaCode);
-
-    // Assignment:
-    // - tanpa cost_center (not_found / no_cc) → "DN"
-    // - lainnya → nama_vendor
-    const assignment = isNoCcItem ? "DN" : vendorRO.nama_vendor;
+    const customerDebet = getCustomerCode(item.businessAreaCode);
+    const assignment = "DN";
 
     const baseDebet = {
       no: docNo,
@@ -317,7 +329,7 @@ export function buildStnkRoRows(
       vendorAccount: null,
       businessArea: currentBaId,
       costCenter: null,
-      taxCode: "I0",
+      taxCode: "",
       reference,
       headerText: header.docHeaderText,
       assignment,
@@ -328,9 +340,9 @@ export function buildStnkRoRows(
       rows.push(
         makeRow({
           ...baseDebet,
-          glAccount: glDebet,
+          glAccount: null,
           customerAccount: customerDebet,
-          taxCode: glDebet === 71830001 ? "I0" : "",
+          taxCode: "",
           amount: biayaAdm,
           text: `BY PERPJ ${jenis} ${item.textItem}`,
         }),
@@ -342,22 +354,22 @@ export function buildStnkRoRows(
       rows.push(
         makeRow({
           ...baseDebet,
-          glAccount: glDebet,
+          glAccount: null,
           customerAccount: customerDebet,
-          taxCode: glDebet === 71830001 ? "I0" : "",
+          taxCode: "",
           amount: jasa,
           text: `JASA PERPJ ${jenis} ${item.textItem}`,
         }),
       );
     }
 
-    // D3 — Denda: GL 11494001, customer = null selalu
+    // D3 — Denda tetap didebit ke customer account RO.
     if (denda > 0) {
       rows.push(
         makeRow({
           ...baseDebet,
-          glAccount: 11494001,
-          customerAccount: null, // ← selalu null untuk denda
+          glAccount: null,
+          customerAccount: customerDebet,
           amount: denda,
           taxCode: "",
           text: `DENDA ${jenis} ${item.textItem}`,
@@ -367,11 +379,13 @@ export function buildStnkRoRows(
   }
 
   // ── Kredit ──
-  const pph = Math.round((grandTotalJasa * vendorRO.tarif_pph) / 100);
-  // Total bayar = biaya+adm+jasa+denda - pph
+  const roJasa = items.filter((item) => !item.costCenter)
+    .reduce((sum, item) => sum + toInt(item.jasaPerpj), 0);
+  const pph = Math.round((roJasa * vendorRO.tarif_pph) / 100);
+  // RO mengkredit vendor untuk seluruh debit customer, dikurangi PPh.
   const totalBayar =
-    grandTotalBiayaAdm + grandTotalJasa + grandTotalDenda - pph;
-  const totalItems = items.length;
+    totalBiayaAdm + totalJasa + totalDenda - pph;
+  const totalItems = roItems.length;
 
   // C1 — Bayar ke vendor (net)
   rows.push(
@@ -407,7 +421,7 @@ export function buildStnkRoRows(
         period,
         documentDateStr,
         dc: "C",
-        glAccount: vendorRO.gl_account_pph
+      glAccount: vendorRO.gl_account_pph
           ? Number(vendorRO.gl_account_pph)
           : null,
         vendorAccount: null,
@@ -443,9 +457,10 @@ export function buildAllStnkRows(
     vendorRO,
     1,
   );
+  const roItems = items;
   const roRows = buildStnkRoRows(
     header,
-    items,
+    roItems,
     busAreaMetaList,
     vendorRO,
     docCount + 1,
@@ -469,6 +484,7 @@ export async function exportStnkKendaraanExcel(
     vendorRO,
     1,
   );
+  assertValidStnkAccountRows(rows);
   await _writeExcel(rows, header, `KEND-${vendorRO.jenis}`);
 }
 
@@ -485,6 +501,7 @@ export function exportStnkKendaraanText(
     vendorRO,
     1,
   );
+  assertValidStnkAccountRows(rows);
   _writeText(rows, header, `KEND-${vendorRO.jenis}`);
 }
 
@@ -502,6 +519,7 @@ export async function exportStnkRoExcel(
     vendorRO,
     startNo,
   );
+  assertValidStnkAccountRows(rows);
   await _writeExcel(rows, header, `RO-${vendorRO.jenis}`);
 }
 
@@ -519,6 +537,7 @@ export function exportStnkRoText(
     vendorRO,
     startNo,
   );
+  assertValidStnkAccountRows(rows);
   _writeText(rows, header, `RO-${vendorRO.jenis}`);
 }
 
@@ -529,6 +548,7 @@ export async function exportStnkAllExcel(
   vendorRO: VendorRO,
 ): Promise<void> {
   const rows = buildAllStnkRows(header, items, busAreaMetaList, vendorRO);
+  assertValidStnkAccountRows(rows);
   await _writeExcel(rows, header, `ALL-${vendorRO.jenis}`);
 }
 
@@ -539,6 +559,7 @@ export function exportStnkAllText(
   vendorRO: VendorRO,
 ): void {
   const rows = buildAllStnkRows(header, items, busAreaMetaList, vendorRO);
+  assertValidStnkAccountRows(rows);
   _writeText(rows, header, `ALL-${vendorRO.jenis}`);
 }
 

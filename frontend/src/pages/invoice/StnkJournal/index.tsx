@@ -22,9 +22,12 @@ import {
   StnkItem, StnkHeader, BusAreaMeta, VendorRO,
   isKendaraanItem,
   buildStnkKendaraanRows,
+  buildStnkRoRows,
+  findInvalidStnkAccountRows,
   exportStnkKendaraanExcel, exportStnkKendaraanText,
   exportStnkRoExcel, exportStnkRoText,
   exportStnkAllExcel, exportStnkAllText,
+  buildAllStnkRows,
 } from "./exportStnkZf0002";
 
 import styles from "./StnkJournal.module.css";
@@ -112,18 +115,17 @@ function buildStnkItem(draft: InputItemDraft, currentBaSapId: string): StnkItem 
   const hasCostCenter = draft.lookupState === "found" && !!draft.vehicle?.cost_center;
   const costCenter = draft.vehicle?.cost_center ?? null;
 
-  // busAreaKendaraan = punya CC DAN CC bukan current BusArea
-  const busAreaKendaraan = hasCostCenter && costCenter !== currentBaSapId;
+  // Semua kendaraan dengan cost center masuk ke jurnal BusArea Kendaraan.
+  const busAreaKendaraan = hasCostCenter;
 
   const vehicleType: "R4" | "R2" =
     draft.lookupState === "found"
       ? (draft.vehicle?.vehicle_type ?? "R4")
       : draft.manualType;
 
-  const businessAreaCode =
-    busAreaKendaraan
-      ? (draft.vehicle?.business_area_code ?? "")
-      : draft.manualBusArea;
+  const businessAreaCode = hasCostCenter
+    ? (draft.vehicle?.business_area_code ?? "")
+    : draft.manualBusArea;
 
   const plate =
     draft.vehicle?.plate_number ?? draft.plateInput.trim().toUpperCase();
@@ -258,6 +260,8 @@ export default function StnkJournalPage() {
     return groups.size;
   }, [allItems]);
 
+  const roItems = allItems;
+
   const roStartNo = kendDocCount + 1;
 
   const totals = useMemo(() => {
@@ -337,6 +341,21 @@ export default function StnkJournalPage() {
   const canExportRO =
     !!companyCode && !!postingDate && !!documentDate && !!noInvoice &&
     !!selectedVendor && !!currentBusArea && allItems.length > 0;
+
+  const accountIssues = useMemo(() => {
+    if (!selectedVendor) return { kendaraan: 0, ro: 0, all: 0 };
+    const header = buildHeaderObj();
+    const vendor = buildVendorRO();
+    const meta = busAreaMetaList;
+    const kendaraanRows = buildStnkKendaraanRows(header, allItems, meta, vendor).rows;
+    const roRows = buildStnkRoRows(header, roItems, meta, vendor, roStartNo);
+    const allRows = buildAllStnkRows(header, allItems, meta, vendor);
+    return {
+      kendaraan: findInvalidStnkAccountRows(kendaraanRows).length,
+      ro: findInvalidStnkAccountRows(roRows).length,
+      all: findInvalidStnkAccountRows(allRows).length,
+    };
+  }, [selectedVendor, companyCode, postingDate, documentDate, noInvoice, docHeaderText, period, allItems, roItems, busAreaMetaList, roStartNo, kendDocCount]);
 
   // ── Export ───────────────────────────────────
   const handleExport = async (fn: () => void | Promise<void>, label: string) => {
@@ -719,17 +738,25 @@ export default function StnkJournalPage() {
         </div>
 
         <div className={styles.exportGroups}>
+          {(accountIssues.kendaraan > 0 || accountIssues.ro > 0) && (
+            <p className={styles.warnText} role="alert">
+              Ekspor diblokir: {[
+                accountIssues.kendaraan > 0 && `Kendaraan ${accountIssues.kendaraan} baris`,
+                accountIssues.ro > 0 && `RO ${accountIssues.ro} baris`,
+              ].filter(Boolean).join("; ")} tidak memiliki tepat satu akun GL, Vendor, atau Customer. Periksa kode customer business area, kode vendor, dan GL PPh.
+            </p>
+          )}
           <div className={styles.exportGroup}>
             <span className={styles.exportGroupLabel}>BusArea Kendaraan</span>
             <div className={styles.exportBtns}>
               <Button variant="primary" size="sm"
                 onClick={() => handleExport(() => exportStnkKendaraanText(h(), allItems, meta(), vro()), "File .txt Kendaraan")}
-                disabled={!canExportKend || exporting} loading={exporting}>
+                disabled={!canExportKend || accountIssues.kendaraan > 0 || exporting} loading={exporting}>
                 <Download size={14} /> .txt
               </Button>
               <Button variant="outline" size="sm"
                 onClick={() => handleExport(() => exportStnkKendaraanExcel(h(), allItems, meta(), vro()), "File .xlsx Kendaraan")}
-                disabled={!canExportKend || exporting} loading={exporting}>
+                disabled={!canExportKend || accountIssues.kendaraan > 0 || exporting} loading={exporting}>
                 <Download size={14} /> .xlsx
               </Button>
             </div>
@@ -739,13 +766,13 @@ export default function StnkJournalPage() {
             <span className={styles.exportGroupLabel}>BusArea RO</span>
             <div className={styles.exportBtns}>
               <Button variant="primary" size="sm"
-                onClick={() => handleExport(() => exportStnkRoText(h(), allItems, meta(), vro(), roStartNo), "File .txt RO")}
-                disabled={!canExportRO || exporting} loading={exporting}>
+              onClick={() => handleExport(() => exportStnkRoText(h(), roItems, meta(), vro(), roStartNo), "File .txt RO")}
+                disabled={!canExportRO || accountIssues.ro > 0 || exporting} loading={exporting}>
                 <Download size={14} /> .txt
               </Button>
               <Button variant="outline" size="sm"
-                onClick={() => handleExport(() => exportStnkRoExcel(h(), allItems, meta(), vro(), roStartNo), "File .xlsx RO")}
-                disabled={!canExportRO || exporting} loading={exporting}>
+              onClick={() => handleExport(() => exportStnkRoExcel(h(), roItems, meta(), vro(), roStartNo), "File .xlsx RO")}
+                disabled={!canExportRO || accountIssues.ro > 0 || exporting} loading={exporting}>
                 <Download size={14} /> .xlsx
               </Button>
             </div>
@@ -756,12 +783,12 @@ export default function StnkJournalPage() {
             <div className={styles.exportBtns}>
               <Button variant="primary" size="sm"
                 onClick={() => handleExport(() => exportStnkAllText(h(), allItems, meta(), vro()), "File .txt All")}
-                disabled={!canExportRO || exporting} loading={exporting}>
+                disabled={!canExportRO || accountIssues.all > 0 || exporting} loading={exporting}>
                 <Download size={14} /> .txt
               </Button>
               <Button variant="outline" size="sm"
                 onClick={() => handleExport(() => exportStnkAllExcel(h(), allItems, meta(), vro()), "File .xlsx All")}
-                disabled={!canExportRO || exporting} loading={exporting}>
+                disabled={!canExportRO || accountIssues.all > 0 || exporting} loading={exporting}>
                 <Download size={14} /> .xlsx
               </Button>
             </div>
