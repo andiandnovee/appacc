@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./hooks/useAuth";
 import { ToastProvider } from "./components/ui/Toast";
 import ProtectedRoute from "./components/ui/ProtectedRoute";
+import PageLoading from "./components/ui/PageLoading";
 
 import DashboardLayout from "./layouts/Dashboardlayout";
 
@@ -32,7 +33,7 @@ const App: FC = (): ReactElement => {
     <BrowserRouter>
       <AuthProvider>
         <ToastProvider>
-          <Suspense fallback={<div role="status" style={{ padding: 24, textAlign: "center" }}>Memuat halaman...</div>}>
+          <Suspense fallback={<PageLoading />}>
             <Routes>
             {/* ── Public ──────────────────────────────── */}
             <Route path="/login" element={<Login />} />

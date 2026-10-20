@@ -13,6 +13,7 @@ import Button from "../../../components/ui/Button";
 import Select from "../../../components/ui/Select";
 import Badge from "../../../components/ui/Badge";
 import Collapsible from "../../../components/ui/Collapsible";
+import PageLoading from "../../../components/ui/PageLoading";
 import { useToast } from "../../../components/ui/Toast";
 
 import { useStnkVendors, StnkVendorEntry } from "../../../stores/stnkVendors";
@@ -390,6 +391,12 @@ export default function StnkJournalPage() {
   // ─────────────────────────────────────────────
   return (
     <div className={styles.page}>
+
+      {!masterLoaded && (
+        <div className={styles.initialLoading}>
+          <PageLoading label="Menyiapkan data jurnal STNK / KIER" />
+        </div>
+      )}
 
       {/* ── PAGE HEADER ── */}
       <div className={styles.pageHeader}>
