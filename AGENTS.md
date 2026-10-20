@@ -72,6 +72,18 @@ Ikuti alur dari UI/client ke route, middleware, request/controller/service/model
 3. Perbarui `CHANGE_MAP.md` jika perubahan signifikan.
 4. Perbarui `README.md` hanya bila dokumentasi tingkat proyek berubah.
 
+## Build, Commit, dan Push Setelah Request
+
+Setelah setiap task/request yang menghasilkan perubahan repository selesai:
+
+1. Jalankan build yang sesuai dengan area yang diubah dan pastikan berhasil. Jika build tidak relevan (misalnya perubahan dokumentasi saja), tidak tersedia, atau gagal karena masalah lingkungan/kode yang sudah ada, catat alasannya dan hasilnya.
+2. Tinjau `git diff` dan status worktree; stage hanya file yang terkait dengan task ini, tanpa memasukkan perubahan pengguna atau file sensitif.
+3. Buat commit untuk perubahan task ini setelah verifikasi selesai.
+4. Push commit tersebut ke remote dan branch saat ini.
+5. Laporkan hasil build, commit, dan push. Jika commit atau push tidak dapat dilakukan (misalnya tidak ada perubahan untuk di-commit, tidak ada remote/akses, atau push ditolak), jelaskan kondisi yang menghalangi dan jangan mengklaimnya berhasil.
+
+Instruksi ini tidak mengizinkan force-push, mengubah branch, atau menimpa pekerjaan pengguna. Gunakan push biasa ke branch saat ini; bila ada konflik atau penolakan remote, hentikan push dan laporkan.
+
 Perubahan signifikan adalah perubahan pada:
 
 - arsitektur;
