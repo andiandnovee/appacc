@@ -313,7 +313,7 @@ export function buildStnkRoRows(
     totalDenda += denda;
 
     const customerDebet = getCustomerCode(item.businessAreaCode);
-    const assignment = "DN";
+    const assignment = item.costCenter ? vendorRO.nama_vendor : "DN";
 
     const baseDebet = {
       no: docNo,
