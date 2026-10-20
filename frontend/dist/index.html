@@ -1,14 +1,28 @@
 <!doctype html>
-<html lang="en">
+<html lang="id">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Aplikasi Accounting RO Pekanbaru</title>
-    <script type="module" crossorigin src="/assets/index-DPr6mHxc.js"></script>
+    <style>
+      #app-loading { position: fixed; inset: 0; z-index: 9999; display: grid; place-content: center; justify-items: center; gap: 16px; background: #f8fafc; color: #475569; font: 600 14px system-ui, sans-serif; transition: opacity .2s ease; }
+      #app-loading.is-hidden { opacity: 0; pointer-events: none; }
+      #app-loading .mark { position: relative; display: grid; width: 58px; height: 58px; place-items: center; border: 2px solid #dbeafe; border-radius: 50%; color: #2563eb; font-size: 20px; font-weight: 800; animation: app-pulse 1.8s ease-in-out infinite; }
+      #app-loading .dot { position: absolute; top: -5px; left: calc(50% - 4px); width: 8px; height: 8px; border-radius: 50%; background: #2563eb; transform-origin: 4px 33px; animation: app-spin 1.2s linear infinite; }
+      #app-loading .dot:nth-child(2) { animation-delay: -.4s; opacity: .65; }
+      #app-loading .dot:nth-child(3) { animation-delay: -.8s; opacity: .35; }
+      @keyframes app-spin { to { transform: rotate(360deg); } }
+      @keyframes app-pulse { 50% { box-shadow: 0 0 0 8px #eff6ff; } }
+      @media (prefers-reduced-motion: reduce) { #app-loading *, #app-loading { animation: none !important; transition: none !important; } }
+    </style>
+    <script type="module" crossorigin src="/assets/index-DCQqmVQf.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-DXNSe9uE.css">
   </head>
   <body>
+    <div id="app-loading" role="status" aria-live="polite">
+      <span class="mark" aria-hidden="true"><i class="dot"></i><i class="dot"></i><i class="dot"></i>A</span>
+      <span>Menyiapkan aplikasi...</span>
+    </div>
     <div id="root"></div>
   </body>
 </html>
