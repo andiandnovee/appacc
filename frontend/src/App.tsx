@@ -1,4 +1,4 @@
-import { FC, ReactElement, Suspense, lazy } from "react";
+import { FC, ReactElement, Suspense, lazy, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./hooks/useAuth";
 import { ToastProvider } from "./components/ui/Toast";
@@ -29,6 +29,13 @@ const CustomerManagement = lazy(() => import("./pages/invoice/CustomerManagement
 const StnkJournal = lazy(() => import("./pages/invoice/StnkJournal"));
 
 const App: FC = (): ReactElement => {
+  useEffect(() => {
+    const preloader = document.getElementById("app-loading");
+    preloader?.classList.add("is-hidden");
+    const timeout = window.setTimeout(() => preloader?.remove(), 250);
+    return () => window.clearTimeout(timeout);
+  }, []);
+
   return (
     <BrowserRouter>
       <AuthProvider>

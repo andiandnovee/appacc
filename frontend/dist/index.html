@@ -5,23 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Aplikasi Accounting RO Pekanbaru</title>
     <style>
-      #app-loading { position: fixed; inset: 0; z-index: 9999; display: grid; place-content: center; justify-items: center; gap: 16px; background: #f8fafc; color: #475569; font: 600 14px system-ui, sans-serif; transition: opacity .2s ease; }
+      #app-loading { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; overflow: hidden; padding: 24px; background: radial-gradient(ellipse at 50% 42%, #dbeafe 0, transparent 48%), linear-gradient(145deg, #f8fafc, #fff); color: #0f172a; font: 600 14px system-ui, sans-serif; transition: opacity .25s ease; }
       #app-loading.is-hidden { opacity: 0; pointer-events: none; }
-      #app-loading .mark { position: relative; display: grid; width: 58px; height: 58px; place-items: center; border: 2px solid #dbeafe; border-radius: 50%; color: #2563eb; font-size: 20px; font-weight: 800; animation: app-pulse 1.8s ease-in-out infinite; }
-      #app-loading .dot { position: absolute; top: -5px; left: calc(50% - 4px); width: 8px; height: 8px; border-radius: 50%; background: #2563eb; transform-origin: 4px 33px; animation: app-spin 1.2s linear infinite; }
-      #app-loading .dot:nth-child(2) { animation-delay: -.4s; opacity: .65; }
-      #app-loading .dot:nth-child(3) { animation-delay: -.8s; opacity: .35; }
+      #app-loading .ambient { position: absolute; width: min(72vw, 42rem); aspect-ratio: 1; border: 1px solid #dbeafe; border-radius: 50%; box-shadow: 0 0 0 3.5rem #eff6ff, 0 0 0 7rem #f0f9ff; opacity: .65; animation: app-breathe 4s ease-in-out infinite; }
+      #app-loading .panel { position: relative; display: flex; width: min(100%, 400px); flex-direction: column; align-items: center; padding: clamp(32px, 7vw, 56px) clamp(24px, 6vw, 48px); border: 1px solid #e2e8f0; border-radius: 28px; background: rgb(255 255 255 / 88%); box-shadow: 0 24px 60px rgb(15 23 42 / 12%); text-align: center; backdrop-filter: blur(14px); animation: app-enter 650ms cubic-bezier(.2, .75, .25, 1) both; }
+      #app-loading .mark { position: relative; display: grid; width: 104px; aspect-ratio: 1; place-items: center; margin-bottom: 24px; }
+      #app-loading .orbit, #app-loading .orbit-inner { position: absolute; inset: 0; border: 1px solid #93c5fd; border-radius: 50%; animation: app-spin 5s linear infinite; }
+      #app-loading .orbit::before, #app-loading .orbit-inner::before { position: absolute; top: 9px; left: 50%; width: 8px; height: 8px; border-radius: 50%; background: #0ea5e9; box-shadow: 0 0 16px #0ea5e9; content: ''; }
+      #app-loading .orbit-inner { inset: 10px; border-color: #bae6fd; animation-direction: reverse; animation-duration: 3.5s; }
+      #app-loading .orbit-inner::before { top: 2px; width: 6px; height: 6px; background: #2563eb; box-shadow: 0 0 13px #2563eb; }
+      #app-loading .core { display: grid; width: 56px; aspect-ratio: 1; place-items: center; border-radius: 18px; color: #fff; background: linear-gradient(145deg, #3b82f6, #1e40af); box-shadow: 0 12px 28px #2563eb4d; font-size: 26px; font-weight: 800; animation: app-float 2.4s ease-in-out infinite; }
+      #app-loading .brand { color: #2563eb; font-size: 12px; font-weight: 800; letter-spacing: .24em; }
+      #app-loading .title { margin: 8px 0 0; font-size: clamp(21px, 4vw, 26px); font-weight: 700; letter-spacing: -.025em; }
+      #app-loading .caption { margin: 8px 0 0; color: #64748b; font-size: 14px; }
+      #app-loading .track { width: 100%; height: 5px; overflow: hidden; margin-top: 32px; border-radius: 999px; background: #e2e8f0; }
+      #app-loading .progress { display: block; width: 42%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #3b82f6, #0ea5e9); animation: app-sweep 1.6s ease-in-out infinite; }
+      #app-loading .wait { margin-top: 12px; color: #64748b; font-size: 12px; }
       @keyframes app-spin { to { transform: rotate(360deg); } }
-      @keyframes app-pulse { 50% { box-shadow: 0 0 0 8px #eff6ff; } }
+      @keyframes app-float { 50% { transform: translateY(-4px); } }
+      @keyframes app-sweep { from { transform: translateX(-120%); } to { transform: translateX(260%); } }
+      @keyframes app-breathe { 50% { opacity: .25; transform: scale(1.05); } }
+      @keyframes app-enter { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
       @media (prefers-reduced-motion: reduce) { #app-loading *, #app-loading { animation: none !important; transition: none !important; } }
     </style>
-    <script type="module" crossorigin src="/assets/index-DCQqmVQf.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-DXNSe9uE.css">
+    <script type="module" crossorigin src="/assets/index-_-2ebNd4.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-CSr0EJgD.css">
   </head>
   <body>
-    <div id="app-loading" role="status" aria-live="polite">
-      <span class="mark" aria-hidden="true"><i class="dot"></i><i class="dot"></i><i class="dot"></i>A</span>
-      <span>Menyiapkan aplikasi...</span>
+    <div id="app-loading" role="status" aria-live="polite" aria-label="Memuat aplikasi">
+      <span class="ambient" aria-hidden="true"></span>
+      <section class="panel">
+        <span class="mark" aria-hidden="true"><i class="orbit"></i><i class="orbit-inner"></i><b class="core">A</b></span>
+        <span class="brand">APPACC</span>
+        <strong class="title">Menyiapkan aplikasi</strong>
+        <span class="caption">Sebentar, data dan tampilan sedang disiapkan.</span>
+        <span class="track" aria-hidden="true"><i class="progress"></i></span>
+        <span class="wait" aria-hidden="true">Mohon tunggu...</span>
+      </section>
     </div>
     <div id="root"></div>
   </body>
