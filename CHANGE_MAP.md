@@ -10,6 +10,13 @@ Arah signifikan sebelumnya adalah pematangan logbook/biaya kendaraan, kesinambun
 
 # Perubahan Utama
 
+## 2026-10-20 — Halaman web dimuat sesuai route
+
+- **Ringkasan:** halaman route SPA menggunakan lazy loading dengan fallback saat halaman sedang dimuat. Bundle entry build turun dari sekitar 1,98 MB (603 kB gzip) menjadi 293 kB (98 kB gzip); chunk besar Excel tetap dimuat bersama fitur yang memerlukannya.
+- **Modul/file:** `frontend/src/App.tsx` dan aset `frontend/dist/assets/*`.
+- **Dampak API/database/dependency:** tidak ada perubahan API, database, atau dependency; kode halaman dan dependency-nya dimuat saat route terkait dibuka.
+- **Status:** build frontend berhasil; Vite masih memperingatkan chunk ekspor Excel sekitar 939 kB.
+
 ## 2026-10-20 — Kredit jurnal BusArea Kendaraan memakai vendor RO
 
 - **Ringkasan:** baris kredit jurnal BusArea Kendaraan memakai SAP vendor code dari current BusArea RO; vendor STNK/KIR terpilih tetap dipakai pada jurnal BusArea RO. Aturan lain pada builder ekspor tetap mengikuti implementasi aktif setelah `60c91464`.

@@ -1,39 +1,39 @@
-import { FC, ReactElement } from "react";
+import { FC, ReactElement, Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./hooks/useAuth";
 import { ToastProvider } from "./components/ui/Toast";
 import ProtectedRoute from "./components/ui/ProtectedRoute";
 
 import DashboardLayout from "./layouts/Dashboardlayout";
-import AdminLayout from "./layouts/Adminlayout";
 
-import Login from "./pages/general/Login";
-import AuthCallback from "./pages/auth/AuthCallback";
-import Home from "./pages/general/Home";
-import Users from "./pages/general/Users";
-import Settings from "./pages/general/Settings";
-import UserManagement from "./pages/admin/UserManagement";
-import VendorManagement from "./pages/invoice/VendorManagement";
+const Login = lazy(() => import("./pages/general/Login"));
+const AuthCallback = lazy(() => import("./pages/auth/AuthCallback"));
+const Home = lazy(() => import("./pages/general/Home"));
+const Users = lazy(() => import("./pages/general/Users"));
+const Settings = lazy(() => import("./pages/general/Settings"));
+const UserManagement = lazy(() => import("./pages/admin/UserManagement"));
+const VendorManagement = lazy(() => import("./pages/invoice/VendorManagement"));
 //import SapPoImportPage from "./pages/sap/SapPoImportPage";
-import Stages from "./pages/invoice/Stage";
-import Receipt from "./pages/invoice/Receipt";
-import BusinessArea from "./pages/invoice/BusArea";
+const Stages = lazy(() => import("./pages/invoice/Stage"));
+const Receipt = lazy(() => import("./pages/invoice/Receipt"));
+const BusinessArea = lazy(() => import("./pages/invoice/BusArea"));
 //import PphImportPage from "./pages/sap/PphImportPage";
-import PphReportPage from "./pages/invoice/PphReportPage";
+const PphReportPage = lazy(() => import("./pages/invoice/PphReportPage"));
 //import F53ImportPage from "./pages/sap/F53ImportPage";
-import F53HelperPage from "./pages/invoice/F53HelperPage";
-import VehicleLogbookPage from "./pages/invoice/VehicleLogBook";
-import VehicleManagement from "./pages/invoice/VehicleManagementPage";
-import CostCenterManagement from "./pages/invoice/CostCenterManagementPage";
-import CustomerManagement from "./pages/invoice/CustomerManagementPage";
-import StnkJournal from "./pages/invoice/StnkJournal";
+const F53HelperPage = lazy(() => import("./pages/invoice/F53HelperPage"));
+const VehicleLogbookPage = lazy(() => import("./pages/invoice/VehicleLogBook"));
+const VehicleManagement = lazy(() => import("./pages/invoice/VehicleManagementPage"));
+const CostCenterManagement = lazy(() => import("./pages/invoice/CostCenterManagementPage"));
+const CustomerManagement = lazy(() => import("./pages/invoice/CustomerManagementPage"));
+const StnkJournal = lazy(() => import("./pages/invoice/StnkJournal"));
 
 const App: FC = (): ReactElement => {
   return (
     <BrowserRouter>
       <AuthProvider>
         <ToastProvider>
-          <Routes>
+          <Suspense fallback={<div role="status" style={{ padding: 24, textAlign: "center" }}>Memuat halaman...</div>}>
+            <Routes>
             {/* ── Public ──────────────────────────────── */}
             <Route path="/login" element={<Login />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
@@ -83,7 +83,8 @@ const App: FC = (): ReactElement => {
 
             {/* ── Fallback ────────────────────────────── */}
             <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+            </Routes>
+          </Suspense>
         </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
