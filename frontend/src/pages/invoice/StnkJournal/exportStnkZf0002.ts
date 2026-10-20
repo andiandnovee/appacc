@@ -70,7 +70,9 @@ export function findInvalidStnkAccountRows(rows: ZfRow[]): number[] {
   return rows.flatMap((row, index) => {
     const populatedAccounts = ACCOUNT_COLUMNS.filter((column) => {
       const value = row[column];
-      return value !== null && value !== undefined && String(value).trim() !== "";
+      return (
+        value !== null && value !== undefined && String(value).trim() !== ""
+      );
     }).length;
     return populatedAccounts === 1 ? [] : [index + 1];
   });
@@ -231,7 +233,6 @@ export function buildStnkKendaraanRows(
           }),
         );
       }
-
     }
 
     const totalDebet = totalBiayaAdm + totalJasa;
@@ -268,8 +269,8 @@ export function buildStnkKendaraanRows(
 
 // ─────────────────────────────────────────────
 // BUILDER 2 — Jurnal BusAreaRO
-  // Semua item memiliki baris debit customer di RO. PPh hanya dari item tanpa
-  // cost center (biaya RO), lalu dicatat hanya di RO.
+// Semua item memiliki baris debit customer di RO. PPh hanya dari item tanpa
+// cost center (biaya RO), lalu dicatat hanya di RO.
 // Satu dokumen, No = startNo
 // ─────────────────────────────────────────────
 export function buildStnkRoRows(
@@ -378,8 +379,7 @@ export function buildStnkRoRows(
   // ── Kredit ──
   const pph = Math.round((totalJasa * header.tarifPph) / 100);
   // RO mengkredit vendor untuk seluruh debit customer, dikurangi PPh.
-  const totalBayar =
-    totalBiayaAdm + totalJasa + totalDenda - pph;
+  const totalBayar = totalBiayaAdm + totalJasa + totalDenda - pph;
   const totalItems = roItems.length;
 
   // C1 — Bayar ke vendor (net)
@@ -416,16 +416,14 @@ export function buildStnkRoRows(
         period,
         documentDateStr,
         dc: "C",
-      glAccount: header.glAccountPph
-          ? Number(header.glAccountPph)
-          : null,
+        glAccount: header.glAccountPph ? Number(header.glAccountPph) : null,
         vendorAccount: null,
         customerAccount: null,
         amount: pph,
         businessArea: currentBaId,
         costCenter: null,
         assignment: vendorRO.nama_vendor,
-        text: `PPH PERPJ ${jenis} ${totalItems} KEND`,
+        text: `PPH PERPJ ${jenis} ${totalItems} KEND ${header.noInvoice}`,
         taxCode: "",
         reference,
         headerText: header.docHeaderText,
