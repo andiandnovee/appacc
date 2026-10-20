@@ -10,6 +10,13 @@ Arah signifikan sebelumnya adalah pematangan logbook/biaya kendaraan, kesinambun
 
 # Perubahan Utama
 
+## 2026-10-20 — Kredit jurnal BusArea Kendaraan memakai vendor RO
+
+- **Ringkasan:** baris kredit jurnal BusArea Kendaraan memakai SAP vendor code dari current BusArea RO; vendor STNK/KIR terpilih tetap dipakai pada jurnal BusArea RO. Aturan lain pada builder ekspor tetap mengikuti implementasi aktif setelah `60c91464`.
+- **Modul/file:** `frontend/src/pages/invoice/StnkJournal/exportStnkZf0002.ts`.
+- **Dampak API/database/dependency:** tidak ada perubahan API, database, atau dependency; business rule akun vendor pada kredit jurnal Kendaraan berubah.
+- **Status:** perubahan terbatas pada pemilihan vendor kredit jurnal Kendaraan; build frontend berhasil.
+
 ## 2026-10-06 — Carryover logbook dapat disisipkan di awal atau akhir
 
 - **Ringkasan:** pemilihan carryover menerima rantai KM yang tersambung ke KM awal atau KM akhir bulan berjalan, sehingga baris dapat disisipkan sebelum atau ditambahkan setelah data yang sudah ada.

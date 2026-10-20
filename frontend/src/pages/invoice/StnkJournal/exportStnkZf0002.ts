@@ -246,11 +246,7 @@ export function buildStnkKendaraanRows(
         documentDateStr,
         dc: "C",
         glAccount: null,
-        vendorAccount: vendorRO.kode_vendor
-          ? Number(vendorRO.kode_vendor)
-          : currentVendorCode
-            ? Number(currentVendorCode)
-            : null,
+        vendorAccount: currentVendorCode ? Number(currentVendorCode) : null,
         customerAccount: null,
         amount: totalDebet,
         businessArea: baCode,
