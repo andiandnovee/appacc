@@ -901,7 +901,7 @@ function DraftRow({
         )}
         {draft.lookupState === "found" && !draft.vehicle?.cost_center && (
           <Badge variant="warning" size="sm">
-            <AlertTriangle size={10} /> Tidak ada Cost Center → RO only
+            <AlertTriangle size={10} /> Kendaraan ditemukan, tetapi belum dilengkapi Cost Center → RO only
           </Badge>
         )}
         {draft.lookupState === "not_found" && (
