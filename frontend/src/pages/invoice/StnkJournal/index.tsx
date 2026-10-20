@@ -331,6 +331,7 @@ export default function StnkJournalPage() {
     docHeaderText,
     period,
     tarifPph: selectedVendor?.tarif_pph ?? 0,
+    glAccountPph: selectedVendor?.gl_account_pph ?? "",
   });
 
   const buildVendorRO = (): VendorRO => ({

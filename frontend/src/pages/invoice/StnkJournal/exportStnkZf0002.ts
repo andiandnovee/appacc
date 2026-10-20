@@ -29,6 +29,7 @@ export interface StnkHeader {
   docHeaderText: string;
   period: string; // ← input manual, misal "01" atau "JANUARI 2026"
   tarifPph: number;
+  glAccountPph: string;
 }
 
 export interface BusAreaMeta {
@@ -375,9 +376,7 @@ export function buildStnkRoRows(
   }
 
   // ── Kredit ──
-  const roJasa = items.filter((item) => !item.costCenter)
-    .reduce((sum, item) => sum + toInt(item.jasaPerpj), 0);
-  const pph = Math.round((roJasa * vendorRO.tarif_pph) / 100);
+  const pph = Math.round((totalJasa * header.tarifPph) / 100);
   // RO mengkredit vendor untuk seluruh debit customer, dikurangi PPh.
   const totalBayar =
     totalBiayaAdm + totalJasa + totalDenda - pph;
@@ -417,8 +416,8 @@ export function buildStnkRoRows(
         period,
         documentDateStr,
         dc: "C",
-      glAccount: vendorRO.gl_account_pph
-          ? Number(vendorRO.gl_account_pph)
+      glAccount: header.glAccountPph
+          ? Number(header.glAccountPph)
           : null,
         vendorAccount: null,
         customerAccount: null,

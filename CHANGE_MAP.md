@@ -14,9 +14,10 @@ Arah signifikan sebelumnya adalah pematangan logbook/biaya kendaraan, kesinambun
 
 - **Ringkasan:** baris kredit jurnal BusArea Kendaraan memakai SAP vendor code dari current BusArea RO; vendor STNK/KIR terpilih tetap dipakai pada jurnal BusArea RO. Aturan lain pada builder ekspor tetap mengikuti implementasi aktif setelah `60c91464`.
 - **Koreksi Assignment:** hanya item BusArea RO tanpa cost center memakai `DN`; item RO lain tetap memakai nama vendor STNK/KIR.
+- **Koreksi PPh RO:** PPh dihitung dari seluruh jasa BusArea RO memakai tarif dan GL PPh pada header export, lalu hanya ditulis sebagai baris kredit GL di jurnal RO.
 - **Modul/file:** `frontend/src/pages/invoice/StnkJournal/exportStnkZf0002.ts`.
-- **Dampak API/database/dependency:** tidak ada perubahan API, database, atau dependency; business rule akun vendor kredit Kendaraan dan Assignment RO diperbarui.
-- **Status:** perubahan akun vendor kredit Kendaraan dan Assignment RO selesai; build frontend berhasil.
+- **Dampak API/database/dependency:** tidak ada perubahan API, database, atau dependency; business rule akun vendor kredit Kendaraan, Assignment RO, dan basis PPh RO diperbarui.
+- **Status:** perubahan aturan jurnal kendaraan/RO selesai; build frontend berhasil.
 
 ## 2026-10-06 — Carryover logbook dapat disisipkan di awal atau akhir
 
