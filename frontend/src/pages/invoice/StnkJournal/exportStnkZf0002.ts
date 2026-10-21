@@ -361,13 +361,13 @@ export function buildStnkRoRows(
       );
     }
 
-    // D3 — Denda tetap didebit ke customer account RO.
+    // D3 — Denda hanya dicatat pada BusArea RO ke GL denda.
     if (denda > 0) {
       rows.push(
         makeRow({
           ...baseDebet,
-          glAccount: null,
-          customerAccount: customerDebet,
+          glAccount: 11494001,
+          customerAccount: null,
           amount: denda,
           taxCode: "",
           text: `DENDA ${jenis} ${item.textItem}`,
