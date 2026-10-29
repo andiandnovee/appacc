@@ -41,4 +41,11 @@ return [
         'redirect' => env('FACEBOOK_REDIRECT_URI'),
     ],
 
+    'fcm' => [
+        'enabled' => env('FIREBASE_PUSH_ENABLED', false),
+        'project_id' => env('FIREBASE_PROJECT_ID'),
+        'credentials' => env('FIREBASE_CREDENTIALS'),
+        'web_link_base' => env('FCM_WEB_LINK_BASE'),
+    ],
+
 ];

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
@@ -43,6 +44,17 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if ($user && !$user->is_active) {
+            app(AuditService::class)->record('auth.login.failed', [
+                'business_domain' => 'auth',
+                'action' => 'login',
+                'severity' => 'warning',
+                'outcome' => 'denied',
+                'actor' => $user,
+                'description' => 'Login ditolak untuk akun nonaktif.',
+                'http_status' => 403,
+                'metadata' => ['reason' => 'inactive_account'],
+            ], $request);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Akun Anda tidak aktif. Hubungi administrator.',
@@ -50,13 +62,31 @@ class AuthController extends Controller
         }
 
         if (!$token =$this->jwtGuard()->attempt($credentials)) {
+            app(AuditService::class)->record('auth.login.failed', [
+                'business_domain' => 'auth',
+                'action' => 'login',
+                'severity' => 'warning',
+                'outcome' => 'failed',
+                'description' => 'Percobaan login gagal.',
+                'http_status' => 401,
+                'metadata' => ['reason' => 'invalid_credentials'],
+            ], $request);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Email atau password salah.',
             ], 401);
         }
 
-        return $this->respondWithToken($token,$this->jwtGuard()->user());
+        $user = $this->jwtGuard()->user();
+        app(AuditService::class)->record('auth.login.success', [
+            'business_domain' => 'auth',
+            'action' => 'login',
+            'actor' => $user,
+            'description' => 'Login berhasil.',
+        ], $request);
+
+        return $this->respondWithToken($token, $user);
     }
 
     /**
@@ -77,8 +107,15 @@ class AuthController extends Controller
      */
    public function logout()
 {
+    $user = $this->jwtGuard()->user();
     try {
        $this->jwtGuard()->logout();
+        app(AuditService::class)->record('auth.logout', [
+            'business_domain' => 'auth',
+            'action' => 'logout',
+            'actor' => $user,
+            'description' => 'Logout berhasil.',
+        ], request());
         $isProd = app()->environment('production');
 
         return response()->json([

@@ -1,5 +1,14 @@
 # Peta Perubahan Aktif
 
+## 2026-10-28 — Audit Activity dan fondasi FCM web
+
+- **Ringkasan:** menambahkan audit event backend untuk auth, receipt, impor, kendaraan, dan perubahan admin; Audit Activity khusus `super-admin`; inbox notifikasi; registrasi/nonaktifkan web device token; pengirim FCM HTTP v1; dan Firebase Messaging service worker web.
+- **Role/permission:** nama role dan permission dinormalisasi lowercase saat disimpan dan oleh migration. Migration menggabungkan duplicate case variants beserta assignment pivot; jika nama sama dalam guard berbeda terdeteksi, migration berhenti sebelum perubahan.
+- **Dampak API/database:** migration menambahkan `audit_events`, `audit_notification_rules`, `audit_notifications`, `user_devices`, dan `notification_logs`; endpoint perangkat/notifikasi dan admin audit baru berada di `/api`. Event dicatat tanpa mengubah payload API domain yang ada.
+- **Keamanan/operasional:** event menyaring token, password, credential, email, serta key sensitif dari metadata/diff; token perangkat tidak diserialisasi; FCM dinonaktifkan secara default (`FIREBASE_PUSH_ENABLED=false`) dan semua rule/penerima mulai nonaktif/kosong. Tidak ada secret Firebase yang ditambahkan.
+- **Client:** web push/inbox selesai di source; mobile tidak termasuk scope sesuai arahan pengguna. iOS belum dikonfigurasi untuk FCM/APNs.
+- **Status/verifikasi:** frontend production build berhasil; ESLint selesai tanpa error (dengan warning yang sudah ada di file lain); tes fokus backend lulus (3 tes, 16 assertions); Pint lulus untuk seluruh file PHP terkait; route audit terdaftar; dan `migrate --pretend` berhasil. TypeScript check masih melaporkan error di sejumlah file lama yang tidak terkait. Migration hanya dipreview, belum diterapkan ke database aktual atau diuji terhadap salinan MySQL disposable. Push tetap default-off dan semua penerima/rule belum diaktifkan.
+
 Dokumen ini diringkas dari source dan riwayat Git sampai commit `3ac176a9` (10 September 2026), diperiksa pada 16 September 2026. Ini bukan changelog lengkap. Source code tetap menjadi sumber kebenaran utama.
 
 # Arah Pengembangan Saat Ini

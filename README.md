@@ -34,6 +34,7 @@ Versi berikut berasal dari manifest dan lock file, bukan perkiraan:
 | Mobile | React / React Native | 19.1.0 / 0.81.5 |
 | Mobile | TypeScript | 5.9.3 |
 | Mobile | Navigasi/state | React Navigation 7, Zustand 5.0.13 |
+| Push web | Firebase Cloud Messaging | HTTP v1 backend + Firebase Messaging service worker; diaktifkan melalui konfigurasi deployment |
 
 Driver database aktual sengaja tidak dicantumkan karena berasal dari `.env`. Template `backend/env.example` harus menjadi referensi konfigurasi; jangan menyalin rahasia dari `.env` ke dokumentasi.
 
@@ -155,6 +156,11 @@ Catatan skema: migration repository membuat tabel dasar, master accounting, rece
 - Development web memakai token dari local/session storage. Mobile memakai SecureStore.
 - OAuth web didukung melalui Socialite; provider ditentukan route. Google mobile menerima identitas/token Google melalui endpoint khusus.
 - Role dan permission menggunakan Spatie. Seeder mendefinisikan baseline akses, tetapi data role aktual dapat berbeda.
+- Role dan permission dinormalisasi ke lowercase melalui model dan migration; migration mempertahankan relasi pivot ketika menyatukan nama lama yang berbeda kapitalisasinya.
+- Audit Activity menyimpan event autentikasi, receipt, impor, kendaraan, dan perubahan admin. API/admin Audit Activity dibatasi role `super-admin`; inbox notifikasi terpisah dari event audit.
+- FCM web memakai token perangkat terikat ke user, HTTP v1, dan kredensial service account di luar Git. Push master dinonaktifkan secara default dan semua rules notifikasi dimulai nonaktif, menunggu penerima dipastikan.
+- Web push membutuhkan konfigurasi `VITE_FIREBASE_*`, file deployment `frontend/public/firebase-messaging-config.json` berdasarkan `.example`, HTTPS, serta service account yang memiliki izin Firebase Cloud Messaging. Isi variable server dapat disiapkan dari `backend/.env.fcm.example`. Jangan commit service-account JSON atau file environment lokal.
+- Integrasi FCM mobile tidak termasuk perubahan ini. Push iOS memerlukan konfigurasi Firebase iOS/APNs tersendiri.
 - Logout/refresh dikelola controller JWT dan penyimpanan blacklist database khusus.
 
 `AuthService::createToken()` masih memanggil API token Sanctum, sementara model tidak memakai `HasApiTokens` dan alur aktif memakai JWT. Service ini tampak sebagai sisa implementasi lama dan jangan digunakan tanpa verifikasi.

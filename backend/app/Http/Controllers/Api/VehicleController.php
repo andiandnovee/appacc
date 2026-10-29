@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\VehicleRequest;
 use App\Http\Resources\VehicleResource;
 use App\Models\Vehicle;
+use App\Services\AuditService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
@@ -125,6 +126,15 @@ public function plateLookup(Request $request): JsonResponse
     public function store(VehicleRequest $request): VehicleResource
     {
         $vehicle = Vehicle::create($request->validated());
+        app(AuditService::class)->record('vehicle.created', [
+            'business_domain' => 'vehicle',
+            'action' => 'create',
+            'auditable_type' => Vehicle::class,
+            'auditable_id' => $vehicle->id,
+            'subject_label' => $vehicle->plate_number,
+            'description' => 'Kendaraan baru dibuat.',
+            'metadata' => ['vehicle_id' => $vehicle->id],
+        ], $request);
 
         return new VehicleResource($vehicle);
     }
@@ -142,7 +152,18 @@ public function plateLookup(Request $request): JsonResponse
      */
     public function update(VehicleRequest $request, Vehicle $vehicle): VehicleResource
     {
+        $before = $vehicle->only(['plate_number', 'description', 'company_code', 'business_area_code', 'cost_center']);
         $vehicle->update($request->validated());
+        app(AuditService::class)->record('vehicle.updated', [
+            'business_domain' => 'vehicle',
+            'action' => 'update',
+            'auditable_type' => Vehicle::class,
+            'auditable_id' => $vehicle->id,
+            'subject_label' => $vehicle->plate_number,
+            'description' => 'Data kendaraan diperbarui.',
+            'changes_before' => $before,
+            'changes_after' => $vehicle->only(array_keys($before)),
+        ], $request);
 
         return new VehicleResource($vehicle);
     }
@@ -152,7 +173,18 @@ public function plateLookup(Request $request): JsonResponse
      */
     public function destroy(Vehicle $vehicle): JsonResponse
     {
+        $vehicleId = $vehicle->id;
+        $plateNumber = $vehicle->plate_number;
         $vehicle->delete();
+        app(AuditService::class)->record('vehicle.deleted', [
+            'business_domain' => 'vehicle',
+            'action' => 'delete',
+            'auditable_type' => Vehicle::class,
+            'auditable_id' => $vehicleId,
+            'subject_label' => $plateNumber,
+            'description' => 'Kendaraan dihapus.',
+            'metadata' => ['vehicle_id' => $vehicleId],
+        ]);
 
         return response()->json(['message' => 'Kendaraan berhasil dihapus.']);
     }

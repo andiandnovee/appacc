@@ -6,6 +6,7 @@
   "license": "MIT",
   "require": {
     "php": "^8.2",
+    "google/auth": "^1.49",
     "laravel/framework": "^11.0",
     "laravel/socialite": "^5.11",
     "php-open-source-saver/jwt-auth": "^2.8",

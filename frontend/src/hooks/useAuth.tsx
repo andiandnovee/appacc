@@ -7,6 +7,7 @@ import {
   ReactNode,
 } from "react";
 import api, { getToken, clearToken } from "../api/axios";
+import { disableWebPush, initializeForegroundPush } from "../lib/webPush";
 
 // ─── Types ───────────────────────────────────────────────────────
 interface User {
@@ -62,6 +63,13 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    if (!user || typeof Notification === "undefined" || Notification.permission !== "granted") return;
+    void initializeForegroundPush().catch((error) => {
+      console.error("Gagal memulihkan listener web push.", error);
+    });
+  }, [user]);
+
   // Login: simpan token + set user
   const login = (
     token: string | null,
@@ -85,6 +93,12 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
 
   // Logout: invalidate di backend + hapus token lokal
   const logout = async (): Promise<void> => {
+    try {
+      await disableWebPush();
+    } catch (error) {
+      console.warn("Gagal menonaktifkan token web push saat logout.", error);
+    }
+
     try {
       await api.post("/auth/logout");
     } catch {

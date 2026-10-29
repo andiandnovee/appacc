@@ -8,6 +8,7 @@ use App\Models\SapF53Upload;
 use App\Models\Vendor;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use App\Services\AuditService;
 
 class F53ImportController extends Controller
 {
@@ -41,6 +42,16 @@ class F53ImportController extends Controller
 
         $missing = array_diff($required, $headers);
         if (!empty($missing)) {
+            app(AuditService::class)->record('import.f53.failed', [
+                'business_domain' => 'imports',
+                'action' => 'import',
+                'outcome' => 'failed',
+                'severity' => 'warning',
+                'description' => 'Impor F53 gagal karena kolom wajib tidak tersedia.',
+                'metadata' => ['stage_sap_id' => $stageSapId, 'row_count' => count($rows)],
+                'http_status' => 422,
+            ], $request);
+
             return response()->json([
                 'success' => false,
                 'error'   => 'Kolom tidak lengkap: ' . implode(', ', $missing),
@@ -50,8 +61,25 @@ class F53ImportController extends Controller
         $result = $this->service->importData($rows, $stageSapId);
 
         if (!$result['success']) {
+            app(AuditService::class)->record('import.f53.failed', [
+                'business_domain' => 'imports',
+                'action' => 'import',
+                'outcome' => 'failed',
+                'severity' => 'warning',
+                'description' => 'Impor F53 gagal diproses.',
+                'metadata' => ['stage_sap_id' => $stageSapId, 'row_count' => count($rows)],
+                'http_status' => 500,
+            ], $request);
+
             return response()->json($result, 500);
         }
+
+        app(AuditService::class)->record('import.f53.completed', [
+            'business_domain' => 'imports',
+            'action' => 'import',
+            'description' => 'Impor F53 selesai.',
+            'metadata' => ['row_count' => count($rows), 'stage_sap_id' => $stageSapId],
+        ], $request);
 
         return response()->json($result);
     }
@@ -149,6 +177,17 @@ class F53ImportController extends Controller
                 'error'   => 'Tidak ada data untuk filter tersebut.',
             ], 404);
         }
+
+        app(AuditService::class)->record('import.f53.deleted', [
+            'business_domain' => 'imports',
+            'action' => 'delete',
+            'description' => 'Data impor F53 dihapus.',
+            'metadata' => [
+                'company_id' => (int) $request->input('company_id'),
+                'stage_id' => (int) $request->input('stage_id'),
+                'deleted_rows' => $deleted,
+            ],
+        ], $request);
 
         return response()->json([
             'success' => true,

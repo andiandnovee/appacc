@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\UserRequest;
 use App\Models\User;
+use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -99,6 +100,15 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
             'is_active' => true,
         ]);
+        app(AuditService::class)->record('admin.user.created', [
+            'business_domain' => 'admin',
+            'action' => 'create',
+            'auditable_type' => User::class,
+            'auditable_id' => $user->id,
+            'subject_label' => $user->name,
+            'description' => 'User baru dibuat.',
+            'metadata' => ['user_id' => $user->id],
+        ], $request);
 
         return response()->json([
             'success' => true,
@@ -126,12 +136,23 @@ class UserController extends Controller
         }
 
         $data = $request->only(['name', 'email', 'is_active']);
+        $before = $user->only(['name', 'is_active']);
 
         if ($request->has('password') && $request->password) {
             $data['password'] = Hash::make($request->password);
         }
 
         $user->update($data);
+        app(AuditService::class)->record('admin.user.updated', [
+            'business_domain' => 'admin',
+            'action' => 'update',
+            'auditable_type' => User::class,
+            'auditable_id' => $user->id,
+            'subject_label' => $user->name,
+            'description' => 'Data user diperbarui.',
+            'changes_before' => $before,
+            'changes_after' => $user->only(array_keys($before)),
+        ], $request);
 
         return response()->json([
             'success' => true,
@@ -183,7 +204,17 @@ public function updateSapProfile(Request $request)
             ], 404);
         }
 
+        $userName = $user->name;
         $user->delete();
+        app(AuditService::class)->record('admin.user.deleted', [
+            'business_domain' => 'admin',
+            'action' => 'delete',
+            'auditable_type' => User::class,
+            'auditable_id' => (int) $id,
+            'subject_label' => $userName,
+            'description' => 'User dihapus.',
+            'metadata' => ['user_id' => (int) $id],
+        ]);
 
         return response()->json([
             'success' => true,
@@ -205,11 +236,24 @@ public function updateSapProfile(Request $request)
             ], 404);
         }
 
+        $request->merge(['role' => strtolower(trim((string) $request->input('role')))]);
         $request->validate([
             'role' => 'required|string',
         ]);
 
+        $before = $user->getRoleNames()->values()->all();
         $user->syncRoles([$request->role]);
+        app(AuditService::class)->record('admin.user.roles.changed', [
+            'business_domain' => 'admin',
+            'action' => 'update',
+            'severity' => 'notice',
+            'auditable_type' => User::class,
+            'auditable_id' => $user->id,
+            'subject_label' => $user->name,
+            'description' => 'Role user diperbarui.',
+            'changes_before' => ['roles' => $before],
+            'changes_after' => ['roles' => $user->getRoleNames()->values()->all()],
+        ], $request);
 
         return response()->json([
             'success' => true,

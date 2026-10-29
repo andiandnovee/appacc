@@ -13,6 +13,7 @@ use App\Models\InvoiceReceipt;
 use App\Models\ReceiptStatus;
 use Illuminate\Http\Request;
 use App\Services\IcatIdImportService;
+use App\Services\AuditService;
 
 
 class InvoiceReceiptController extends Controller
@@ -135,6 +136,15 @@ if ($sortBy === 'vendor') {
     {
         $receipt = InvoiceReceipt::create($request->validated());
         $receipt->load(['vendor', 'company', 'stage', 'latestStatus']);
+        app(AuditService::class)->record('receipt.created', [
+            'business_domain' => 'receipt',
+            'action' => 'create',
+            'auditable_type' => InvoiceReceipt::class,
+            'auditable_id' => $receipt->id,
+            'subject_label' => 'Receipt #'.$receipt->id,
+            'description' => 'Receipt baru dibuat.',
+            'metadata' => ['receipt_id' => $receipt->id, 'company_id' => $receipt->company_id],
+        ], $request);
 
         return (new InvoiceReceiptResource($receipt))
             ->response()
@@ -146,10 +156,21 @@ if ($sortBy === 'vendor') {
     // -------------------------------------------------------
     public function update(InvoiceReceiptRequest $request, InvoiceReceipt $receipt)
     {
+        $before = $receipt->only(['po_number', 'invoice_number', 'amount', 'company_id', 'vendor_id', 'stage_id']);
         $receipt->update($request->validated());
      //
 
         $receipt->load(['vendor', 'company', 'stage', 'latestStatus']);
+        app(AuditService::class)->record('receipt.updated', [
+            'business_domain' => 'receipt',
+            'action' => 'update',
+            'auditable_type' => InvoiceReceipt::class,
+            'auditable_id' => $receipt->id,
+            'subject_label' => 'Receipt #'.$receipt->id,
+            'description' => 'Data receipt diperbarui.',
+            'changes_before' => $before,
+            'changes_after' => $receipt->only(array_keys($before)),
+        ], $request);
 
         return new InvoiceReceiptResource($receipt);
     }
@@ -159,7 +180,17 @@ if ($sortBy === 'vendor') {
     // -------------------------------------------------------
     public function destroy(InvoiceReceipt $receipt)
     {
+        $receiptId = $receipt->id;
         $receipt->delete();
+        app(AuditService::class)->record('receipt.deleted', [
+            'business_domain' => 'receipt',
+            'action' => 'delete',
+            'auditable_type' => InvoiceReceipt::class,
+            'auditable_id' => $receiptId,
+            'subject_label' => 'Receipt #'.$receiptId,
+            'description' => 'Receipt dihapus.',
+            'metadata' => ['receipt_id' => $receiptId],
+        ]);
 
         return response()->json(['message' => 'Invoice receipt deleted.']);
     }
@@ -180,6 +211,16 @@ if ($sortBy === 'vendor') {
     public function addStatus(ReceiptStatusRequest $request, InvoiceReceipt $receipt)
     {
         $status = $receipt->statuses()->create($request->validated());
+        app(AuditService::class)->record('receipt.status.created', [
+            'business_domain' => 'receipt',
+            'action' => 'status',
+            'auditable_type' => InvoiceReceipt::class,
+            'auditable_id' => $receipt->id,
+            'subject_label' => 'Receipt #'.$receipt->id,
+            'description' => 'Status receipt diperbarui.',
+            'metadata' => ['receipt_id' => $receipt->id, 'status_id' => $status->id],
+            'changes_after' => ['status_value' => $status->status_value],
+        ], $request);
 
         return (new ReceiptStatusResource($status))
             ->response()
@@ -193,6 +234,14 @@ if ($sortBy === 'vendor') {
     $request->validate(['rows' => 'required|array']);
 
     $service = new IcatIdImportService();
-    return response()->json($service->importChunk($request->input('rows')));
+    $result = $service->importChunk($request->input('rows'));
+    app(AuditService::class)->record('receipt.icat.imported', [
+        'business_domain' => 'receipt',
+        'action' => 'import',
+        'description' => 'Impor ICAT ID diproses.',
+        'metadata' => ['row_count' => count($request->input('rows'))],
+    ], $request);
+
+    return response()->json($result);
 }
 }

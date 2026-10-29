@@ -3,6 +3,8 @@
 use App\Http\Controllers\Admin\RoleManagementController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\AuditEventController;
+use App\Http\Controllers\Api\AuditNotificationController;
 use App\Http\Controllers\Api\BusinessAreaController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\CostCenterController;
@@ -18,6 +20,7 @@ use App\Http\Controllers\Api\VehicleCostImportController;
 use App\Http\Controllers\Api\VehicleLogbookController;
 use App\Http\Controllers\Api\VehicleSelectController;
 use App\Http\Controllers\Api\VendorController;
+use App\Http\Controllers\Api\UserDeviceController;
 use App\Http\Controllers\Auth\MobileAuthController;
 use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\DashboardController;
@@ -56,6 +59,16 @@ Route::middleware('auth:api')->group(function () {
     Route::prefix('auth')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
         Route::post('/logout', [AuthController::class, 'logout']);
+    });
+
+    Route::post('user/devices', [UserDeviceController::class, 'store']);
+    Route::delete('user/devices', [UserDeviceController::class, 'destroy']);
+
+    Route::prefix('notifications')->group(function () {
+        Route::get('/', [AuditNotificationController::class, 'index']);
+        Route::get('/unread-count', [AuditNotificationController::class, 'unreadCount']);
+        Route::post('/read-all', [AuditNotificationController::class, 'markAllRead']);
+        Route::post('/{id}/read', [AuditNotificationController::class, 'markRead']);
     });
 
     // Dashboard
@@ -198,6 +211,12 @@ Route::middleware('auth:api')->group(function () {
 
     // ── ROLE: super-admin ─────────────────────────────────────────────────
     Route::middleware('role:super-admin')->prefix('admin')->name('admin.')->group(function () {
+
+        Route::prefix('audit')->group(function () {
+            Route::get('events', [AuditEventController::class, 'index']);
+            Route::get('catalog', [AuditEventController::class, 'catalog']);
+            Route::put('rules/{rule}', [AuditEventController::class, 'updateRule']);
+        });
 
         Route::get('/users', [UserManagementController::class, 'index']);
         Route::put('/users/{user}/roles', [UserManagementController::class, 'assignRoles']);

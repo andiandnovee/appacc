@@ -13,6 +13,8 @@ const Home = lazy(() => import("./pages/general/Home"));
 const Users = lazy(() => import("./pages/general/Users"));
 const Settings = lazy(() => import("./pages/general/Settings"));
 const UserManagement = lazy(() => import("./pages/admin/UserManagement"));
+const AuditActivity = lazy(() => import("./pages/admin/AuditActivity"));
+const Notifications = lazy(() => import("./pages/notifications"));
 const VendorManagement = lazy(() => import("./pages/invoice/VendorManagement"));
 //import SapPoImportPage from "./pages/sap/SapPoImportPage";
 const Stages = lazy(() => import("./pages/invoice/Stage"));
@@ -52,9 +54,14 @@ const App: FC = (): ReactElement => {
                 <Route path="/" element={<Home />} />
                 <Route path="/users" element={<Users />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/notifications" element={<Notifications />} />
 
                 <Route path="/invoice/f53-helper" element={<F53HelperPage />} />
                 <Route path="/admin/users" element={<UserManagement />} />
+                <Route
+                  path="/admin/audit-activity"
+                  element={<AuditActivity />}
+                />
                 <Route path="/ref/vendors" element={<VendorManagement />} />
                 <Route path="/ref/busa" element={<BusinessArea />} />
                 {/* <Route

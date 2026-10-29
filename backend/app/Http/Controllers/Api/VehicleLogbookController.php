@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Vehicle;
 use App\Models\VehicleCostHeader;
 use App\Models\VehicleCostDetail;
+use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -183,6 +184,18 @@ public function bebanSearch(Request $request)
 
     // Auto-recalculate tetap jalan — frontend yang block tombolnya
     $this->recalculate($request->vehicle_cost_header_id);
+    app(AuditService::class)->record('vehicle.logbook.created', [
+        'business_domain' => 'vehicle',
+        'action' => 'create',
+        'auditable_type' => VehicleCostDetail::class,
+        'auditable_id' => $detail->id,
+        'subject_label' => 'Logbook #'.$detail->id,
+        'description' => 'Baris logbook kendaraan ditambahkan.',
+        'metadata' => [
+            'detail_id' => $detail->id,
+            'vehicle_cost_header_id' => $detail->vehicle_cost_header_id,
+        ],
+    ], $request);
 
     return response()->json($detail, 201);
 }
@@ -201,7 +214,8 @@ public function bebanSearch(Request $request)
             'customer_code'=> 'nullable|string',
         ]);
 
-        $detail->update([
+            $before = $detail->only(['start_km', 'end_km', 'description', 'cost_center', 'customer_code']);
+            $detail->update([
             'start_km'     => $request->start_km,
             'end_km'       => $request->end_km,
             'description'  => $request->description,
@@ -210,6 +224,17 @@ public function bebanSearch(Request $request)
         ]);
 
         $this->recalculate($detail->vehicle_cost_header_id);
+        app(AuditService::class)->record('vehicle.logbook.updated', [
+            'business_domain' => 'vehicle',
+            'action' => 'update',
+            'auditable_type' => VehicleCostDetail::class,
+            'auditable_id' => $detail->id,
+            'subject_label' => 'Logbook #'.$detail->id,
+            'description' => 'Baris logbook kendaraan diperbarui.',
+            'metadata' => ['vehicle_cost_header_id' => $detail->vehicle_cost_header_id],
+            'changes_before' => $before,
+            'changes_after' => $detail->only(array_keys($before)),
+        ], $request);
 
         return response()->json($detail);
     }
@@ -220,8 +245,18 @@ public function bebanSearch(Request $request)
     public function destroyDetail(VehicleCostDetail $detail)
     {
         $headerId = $detail->vehicle_cost_header_id;
+        $detailId = $detail->id;
         $detail->delete();
         $this->recalculate($headerId);
+        app(AuditService::class)->record('vehicle.logbook.deleted', [
+            'business_domain' => 'vehicle',
+            'action' => 'delete',
+            'auditable_type' => VehicleCostDetail::class,
+            'auditable_id' => $detailId,
+            'subject_label' => 'Logbook #'.$detailId,
+            'description' => 'Baris logbook kendaraan dihapus.',
+            'metadata' => ['vehicle_cost_header_id' => $headerId],
+        ]);
 
         return response()->json(['message' => 'Baris dihapus.']);
     }
@@ -365,6 +400,12 @@ private function checkContinuity(int $headerId): array
 
         // Recalculate setelah carryover
         $this->recalculate($headerId);
+        app(AuditService::class)->record('vehicle.logbook.carryover', [
+            'business_domain' => 'vehicle',
+            'action' => 'carryover',
+            'description' => 'Carry-over logbook kendaraan selesai.',
+            'metadata' => ['vehicle_cost_header_id' => $headerId, 'row_count' => $created],
+        ], $request);
 
         return response()->json([
             'message' => "{$created} baris berhasil disalin dari bulan lalu.",

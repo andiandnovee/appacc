@@ -7,6 +7,7 @@ use App\Services\SapImportService;
 use Illuminate\Http\Request;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use App\Models\SapPoImport;
+use App\Services\AuditService;
 
 class SapImportController extends Controller
 {
@@ -28,8 +29,23 @@ class SapImportController extends Controller
             $file   = $request->file('file');
             $data   = $this->parseExcel($file);
             $result = $this->importService->importPoData($data, $request->batch_id);
+            app(AuditService::class)->record('import.po.completed', [
+                'business_domain' => 'imports',
+                'action' => 'import',
+                'description' => 'Impor PO SAP selesai.',
+                'metadata' => ['row_count' => count($data)],
+            ], $request);
             return response()->json($result);
         } catch (\Exception $e) {
+            app(AuditService::class)->record('import.po.failed', [
+                'business_domain' => 'imports',
+                'action' => 'import',
+                'outcome' => 'failed',
+                'severity' => 'warning',
+                'description' => 'Impor PO SAP gagal diproses.',
+                'http_status' => 500,
+            ], $request);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal memproses file: ' . $e->getMessage(),
@@ -64,6 +80,12 @@ class SapImportController extends Controller
             $request->input('rows'),
             $request->input('batch_id')
         );
+        app(AuditService::class)->record('import.po.completed', [
+            'business_domain' => 'imports',
+            'action' => 'import',
+            'description' => 'Impor PO SAP selesai.',
+            'metadata' => ['row_count' => count($request->input('rows'))],
+        ], $request);
 
         return response()->json($result);
     }

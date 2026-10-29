@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\AuditService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
@@ -58,8 +59,14 @@ class UserManagementController extends Controller
      * PUT /api/admin/users/{user}/roles
      * Sync roles for a user. Replaces all existing roles.
      */
-    public function assignRoles(Request $request, User $user): JsonResponse
+    public function assignRoles(Request $request, User $user, AuditService $auditService): JsonResponse
     {
+        $request->merge([
+            'roles' => array_map(
+                fn ($role) => strtolower(trim($role)),
+                $request->input('roles', [])
+            ),
+        ]);
         $request->validate([
             'roles'   => ['required', 'array'],
             'roles.*' => ['string', 'exists:roles,name'],
@@ -72,7 +79,19 @@ class UserManagementController extends Controller
             $roles = $request->roles;
         }
 
+        $before = $user->getRoleNames()->values()->all();
         $user->syncRoles($roles);
+        $auditService->record('admin.user.roles.changed', [
+            'business_domain' => 'admin',
+            'action' => 'update',
+            'severity' => 'notice',
+            'auditable_type' => User::class,
+            'auditable_id' => $user->id,
+            'subject_label' => $user->name,
+            'description' => 'Role user diperbarui.',
+            'changes_before' => ['roles' => $before],
+            'changes_after' => ['roles' => $user->getRoleNames()->values()->all()],
+        ], $request);
 
         return response()->json([
             'message' => "Roles for {$user->name} updated successfully.",
@@ -88,13 +107,24 @@ class UserManagementController extends Controller
      * DELETE /api/admin/users/{user}
      * Soft delete a user (requires SoftDeletes on User model).
      */
-    public function destroy(User $user): JsonResponse
+    public function destroy(User $user, AuditService $auditService): JsonResponse
     {
         if ($user->id === auth()->id()) {
             return response()->json(['message' => 'You cannot delete your own account.'], 403);
         }
 
+        $userId = $user->id;
+        $userName = $user->name;
         $user->delete();
+        $auditService->record('admin.user.deleted', [
+            'business_domain' => 'admin',
+            'action' => 'delete',
+            'auditable_type' => User::class,
+            'auditable_id' => $userId,
+            'subject_label' => $userName,
+            'description' => 'User dihapus dari panel admin.',
+            'metadata' => ['user_id' => $userId],
+        ]);
 
         return response()->json(['message' => "{$user->name} has been removed."]);
     }

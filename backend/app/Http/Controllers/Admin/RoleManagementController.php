@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\AuditService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Spatie\Permission\Models\Role;
+use App\Models\Role;
 
 class RoleManagementController extends Controller
 {
@@ -22,8 +23,9 @@ class RoleManagementController extends Controller
         return response()->json(['data' => $roles]);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, AuditService $auditService): JsonResponse
     {
+        $request->merge(['name' => strtolower(trim((string) $request->input('name')))]);
         $request->validate([
             'name' => ['required', 'string', 'max:64', 'unique:roles,name'],
         ]);
@@ -32,6 +34,14 @@ class RoleManagementController extends Controller
             'name'       => strtolower(trim($request->name)),
             'guard_name' => 'api',
         ]);
+        $auditService->record('admin.role.created', [
+            'business_domain' => 'admin',
+            'action' => 'create',
+            'auditable_type' => Role::class,
+            'auditable_id' => $role->id,
+            'subject_label' => $role->name,
+            'description' => 'Role baru dibuat.',
+        ], $request);
 
         return response()->json([
             'message' => "Role \"{$role->name}\" berhasil dibuat.",
@@ -39,14 +49,25 @@ class RoleManagementController extends Controller
         ], 201);
     }
 
-    public function update(Request $request, Role $role): JsonResponse
+    public function update(Request $request, Role $role, AuditService $auditService): JsonResponse
     {
+        $request->merge(['name' => strtolower(trim((string) $request->input('name')))]);
         $request->validate([
             'name' => ['required', 'string', 'max:64', "unique:roles,name,{$role->id}"],
         ]);
 
         $old = $role->name;
         $role->update(['name' => strtolower(trim($request->name))]);
+        $auditService->record('admin.role.updated', [
+            'business_domain' => 'admin',
+            'action' => 'update',
+            'auditable_type' => Role::class,
+            'auditable_id' => $role->id,
+            'subject_label' => $role->name,
+            'description' => 'Role diperbarui.',
+            'changes_before' => ['name' => $old],
+            'changes_after' => ['name' => $role->name],
+        ], $request);
 
         return response()->json([
             'message' => "Role \"{$old}\" diubah menjadi \"{$role->name}\".",
@@ -54,7 +75,7 @@ class RoleManagementController extends Controller
         ]);
     }
 
-    public function destroy(Role $role): JsonResponse
+    public function destroy(Role $role, AuditService $auditService): JsonResponse
     {
         if ($role->name === 'superadmin') {
             return response()->json(['message' => 'Role superadmin tidak dapat dihapus.'], 403);
@@ -68,7 +89,16 @@ class RoleManagementController extends Controller
         }
 
         $name = $role->name;
+        $roleId = $role->id;
         $role->delete();
+        $auditService->record('admin.role.deleted', [
+            'business_domain' => 'admin',
+            'action' => 'delete',
+            'auditable_type' => Role::class,
+            'auditable_id' => $roleId,
+            'subject_label' => $name,
+            'description' => 'Role dihapus dari panel admin.',
+        ]);
 
         return response()->json(['message' => "Role \"{$name}\" berhasil dihapus."]);
     }

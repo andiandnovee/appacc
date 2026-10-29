@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Vehicle;
 use App\Models\VehicleCostHeader;
+use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -154,10 +155,37 @@ class VehicleCostImportController extends Controller
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
+            app(AuditService::class)->record('import.vehicle_cost.failed', [
+                'business_domain' => 'imports',
+                'action' => 'import',
+                'outcome' => 'failed',
+                'severity' => 'warning',
+                'description' => 'Impor biaya kendaraan gagal.',
+                'metadata' => [
+                    'year' => $year,
+                    'month' => $month,
+                ],
+            ], $request);
+
             return response()->json([
                 'message' => 'Import gagal: ' . $e->getMessage(),
             ], 500);
         }
+
+        app(AuditService::class)->record('import.vehicle_cost.completed', [
+            'business_domain' => 'imports',
+            'action' => 'import',
+            'description' => 'Impor biaya kendaraan selesai.',
+            'metadata' => [
+                'year' => $year,
+                'month' => $month,
+                'row_count' => count($rows),
+                'inserted' => $inserted,
+                'updated' => $updated,
+                'skipped' => $skipped,
+                'error_count' => count($errors),
+            ],
+        ], $request);
 
         return response()->json([
             'inserted'     => $inserted,

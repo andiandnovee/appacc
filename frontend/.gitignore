@@ -19,5 +19,6 @@
 !.gitignore
 !.env
 !.env.production
+!.env.example
 
 # .env.local tetap di-ignore (tidak masuk git)

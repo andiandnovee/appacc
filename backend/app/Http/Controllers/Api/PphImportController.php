@@ -7,6 +7,7 @@ use App\Services\PphImportService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Models\ImportPph;
+use App\Services\AuditService;
 //use App\Models\Company;
 class PphImportController extends Controller
 {
@@ -43,8 +44,31 @@ class PphImportController extends Controller
         }
 
         if (!$result['success']) {
+            app(AuditService::class)->record('import.pph.failed', [
+                'business_domain' => 'imports',
+                'action' => 'import',
+                'outcome' => 'failed',
+                'severity' => 'warning',
+                'description' => 'Impor PPh gagal diproses.',
+                'metadata' => [
+                    'row_count' => count($rows),
+                    'upload_type' => $hasGl ? 'main' : 'vendor',
+                ],
+                'http_status' => 500,
+            ], $request);
+
             return response()->json($result, 500);
         }
+
+        app(AuditService::class)->record('import.pph.completed', [
+            'business_domain' => 'imports',
+            'action' => 'import',
+            'description' => 'Impor PPh selesai.',
+            'metadata' => [
+                'row_count' => count($rows),
+                'upload_type' => $hasGl ? 'main' : 'vendor',
+            ],
+        ], $request);
 
         return response()->json($result);
     }
@@ -260,7 +284,18 @@ class PphImportController extends Controller
             return response()->json(['success' => false, 'error' => 'Vendor tidak ditemukan'], 404);
         }
 
+        $before = ['gl_cost_account' => $vendor->gl_cost_account];
         $vendor->update(['gl_cost_account' => $request->input('gl_cost_account')]);
+        app(AuditService::class)->record('import.pph.vendor_gl.updated', [
+            'business_domain' => 'imports',
+            'action' => 'update',
+            'auditable_type' => \App\Models\Vendor::class,
+            'auditable_id' => $vendor->id,
+            'subject_label' => $vendor->name,
+            'description' => 'GL biaya vendor diperbarui.',
+            'changes_before' => $before,
+            'changes_after' => ['gl_cost_account' => $vendor->gl_cost_account],
+        ], $request);
 
         return response()->json(['success' => true]);
     }
@@ -294,6 +329,18 @@ public function destroy(Request $request): JsonResponse
             'error'   => 'Tidak ada data yang ditemukan untuk kriteria tersebut.',
         ], 404);
     }
+
+    app(AuditService::class)->record('import.pph.deleted', [
+        'business_domain' => 'imports',
+        'action' => 'delete',
+        'description' => 'Data impor PPh dihapus.',
+        'metadata' => [
+            'company_code' => $companyCode,
+            'gl_account_code' => $glAccountCode,
+            'month' => $month,
+            'deleted_rows' => $deleted,
+        ],
+    ], $request);
 
     return response()->json([
         'success' => true,

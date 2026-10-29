@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\SettingRequest;
 use App\Models\Setting;
+use App\Services\AuditService;
 
 class SettingController extends Controller
 {
@@ -28,7 +29,7 @@ class SettingController extends Controller
     /**
      * Update settings
      */
-    public function update(SettingRequest $request)
+    public function update(SettingRequest $request, AuditService $auditService)
     {
         $data = $request->validated();
 
@@ -38,6 +39,12 @@ class SettingController extends Controller
                 ['value' => $value]
             );
         }
+        $auditService->record('admin.settings.updated', [
+            'business_domain' => 'admin',
+            'action' => 'update',
+            'description' => 'Pengaturan aplikasi diperbarui.',
+            'metadata' => ['setting_keys' => array_keys($data)],
+        ], $request);
 
         return response()->json([
             'success' => true,

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Http;
@@ -107,6 +108,13 @@ class MobileAuthController extends Controller
 
             // Issue JWT
             $token = auth('api')->login($user);
+            app(AuditService::class)->record('auth.google.login.success', [
+                'business_domain' => 'auth',
+                'action' => 'login',
+                'actor' => $user,
+                'description' => 'Login Google mobile berhasil.',
+                'metadata' => ['provider' => 'google', 'client' => 'mobile'],
+            ], $request);
 
             return response()->json([
                 'success' => true,

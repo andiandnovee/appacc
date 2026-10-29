@@ -14,9 +14,11 @@ import {
   Star,
   X,
   BookOpen,
+  History,
 } from "lucide-react";
 import styles from "./Sidebar.module.css";
 import { DollarSign, HatGlassesIcon } from "lucide-react";
+import { useAuth } from "../../hooks/useAuth";
 
 interface SidebarProps {
   isMobile?: boolean;
@@ -87,6 +89,20 @@ export default function Sidebar({
 }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const { user } = useAuth();
+  const userRoles = Array.isArray(user?.roles) ? user.roles.map((role: string) => role.toLowerCase()) : [];
+  const isSuperAdmin = userRoles.includes("super-admin");
+  const navGroups = NAV_GROUPS.map((group) =>
+    group.label === "Admin" && isSuperAdmin
+      ? {
+          ...group,
+          items: [
+            ...group.items,
+            { to: "/admin/audit-activity", icon: History, label: "Audit Activity", badge: "admin" },
+          ],
+        }
+      : group,
+  );
 
   useEffect(() => {
     if (isMobile) return;
@@ -156,7 +172,7 @@ export default function Sidebar({
 
       {/* Nav */}
       <nav className={styles.nav}>
-        {NAV_GROUPS.map((group, gi) => (
+        {navGroups.map((group, gi) => (
           <div key={gi} className={styles.group}>
             {group.label && (
               <div

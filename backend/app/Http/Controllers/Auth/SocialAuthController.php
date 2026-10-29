@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Api\AuthController;
 use App\Models\User;
+use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -71,6 +72,14 @@ class SocialAuthController extends Controller
             Log::error("OAuth [{$provider}] gagal issue JWT: " . $e->getMessage());
             return $this->redirectWithError('Gagal membuat token. Silakan coba lagi.');
         }
+
+        app(AuditService::class)->record('auth.oauth.login.success', [
+            'business_domain' => 'auth',
+            'action' => 'login',
+            'actor' => $user,
+            'description' => 'Login OAuth berhasil.',
+            'metadata' => ['provider' => $provider, 'client' => 'browser'],
+        ], request());
 
         $frontendUrl = config('app.frontend_url') . '/auth/callback';
         $isProd      = app()->environment('production');

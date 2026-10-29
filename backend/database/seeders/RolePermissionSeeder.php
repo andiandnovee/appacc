@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
+use App\Models\Role;
+use App\Models\Permission;
 
 class RolePermissionSeeder extends Seeder
 {
@@ -36,14 +36,14 @@ class RolePermissionSeeder extends Seeder
         ];
 
         foreach ($permissions as $permission) {
-            Permission::updateOrCreate(['name' => $permission]);
+            Permission::updateOrCreate(['name' => strtolower(trim($permission)), 'guard_name' => 'api']);
         }
 
         // Create Roles
-        $superAdminRole = Role::updateOrCreate(['name' => 'super-admin']);
-        $adminRole = Role::updateOrCreate(['name' => 'admin']);
-        $editorRole = Role::updateOrCreate(['name' => 'editor']);
-        $viewerRole = Role::updateOrCreate(['name' => 'viewer']);
+        $superAdminRole = Role::updateOrCreate(['name' => 'super-admin', 'guard_name' => 'api']);
+        $adminRole = Role::updateOrCreate(['name' => 'admin', 'guard_name' => 'api']);
+        $editorRole = Role::updateOrCreate(['name' => 'editor', 'guard_name' => 'api']);
+        $viewerRole = Role::updateOrCreate(['name' => 'viewer', 'guard_name' => 'api']);
 
         // Assign permissions to super-admin (all permissions)
         $superAdminRole->syncPermissions($permissions);

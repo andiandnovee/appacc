@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import ThemeToggle from "./Themetoggle";
 import styles from "./Navbar.module.css";
+import api from "../../api/axios";
 
 interface NavbarProps {
   onMenuClick?: () => void;
@@ -14,6 +15,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
   const navigate         = useNavigate();
   const [open, setOpen]  = useState(false);
   const [search, setSearch] = useState("");
+  const [unreadCount, setUnreadCount] = useState(0);
   const dropdownRef      = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -25,6 +27,25 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
     if (open) document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
+
+  useEffect(() => {
+    let active = true;
+    const loadUnreadCount = async () => {
+      try {
+        const response = await api.get("/notifications/unread-count");
+        if (active) setUnreadCount(Number(response.data?.data?.count ?? 0));
+      } catch (error) {
+        console.error("Gagal memuat jumlah notifikasi belum dibaca.", error);
+      }
+    };
+
+    void loadUnreadCount();
+    const timer = window.setInterval(loadUnreadCount, 60_000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, []);
 
   const handleLogout = async () => {
     setOpen(false);
@@ -64,9 +85,15 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
       <div className={styles.right}>
         <ThemeToggle />
 
-        <button className={styles.iconBtn} aria-label="Notifikasi">
+        <button
+          className={styles.iconBtn}
+          aria-label={`Notifikasi${unreadCount ? `, ${unreadCount} belum dibaca` : ""}`}
+          onClick={() => navigate("/notifications")}
+        >
           <Bell size={20} />
-          <span className={styles.badge}>3</span>
+          {unreadCount > 0 && (
+            <span className={styles.badge}>{unreadCount > 99 ? "99+" : unreadCount}</span>
+          )}
         </button>
 
         {/* Profile dropdown */}
