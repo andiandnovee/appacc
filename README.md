@@ -159,7 +159,7 @@ Catatan skema: migration repository membuat tabel dasar, master accounting, rece
 - Role dan permission dinormalisasi ke lowercase melalui model dan migration; migration mempertahankan relasi pivot ketika menyatukan nama lama yang berbeda kapitalisasinya.
 - Audit Activity menyimpan event autentikasi, receipt, impor, kendaraan, dan perubahan admin. API/admin Audit Activity dibatasi role `super-admin`; inbox notifikasi terpisah dari event audit.
 - FCM web memakai token perangkat terikat ke user, HTTP v1, dan kredensial service account di luar Git. Push master dinonaktifkan secara default dan semua rules notifikasi dimulai nonaktif, menunggu penerima dipastikan.
-- Web push membutuhkan konfigurasi `VITE_FIREBASE_*`, file deployment `frontend/public/firebase-messaging-config.json` berdasarkan `.example`, HTTPS, serta service account yang memiliki izin Firebase Cloud Messaging. Isi variable server dapat disiapkan dari `backend/.env.fcm.example`. Jangan commit service-account JSON atau file environment lokal.
+- Web push membutuhkan konfigurasi `VITE_FIREBASE_*`; proses Vite menghasilkan `firebase-messaging-config.json` dari environment untuk development dan build production, HTTPS, serta service account yang memiliki izin Firebase Cloud Messaging. Isi variable server dapat disiapkan dari `backend/.env.fcm.example`. Jangan commit service-account JSON atau file environment lokal.
 - Integrasi FCM mobile tidak termasuk perubahan ini. Push iOS memerlukan konfigurasi Firebase iOS/APNs tersendiri.
 - Logout/refresh dikelola controller JWT dan penyimpanan blacklist database khusus.
 
