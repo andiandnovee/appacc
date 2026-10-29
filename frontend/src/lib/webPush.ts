@@ -45,7 +45,8 @@ export async function enableWebPush(): Promise<"granted" | "denied" | "default" 
   const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
   if (!vapidKey) throw new Error("VITE_FIREBASE_VAPID_KEY belum dikonfigurasi.");
 
-  const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+  await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+  const registration = await navigator.serviceWorker.ready;
   const messaging = getMessaging(getFirebaseApp());
   const token = await getToken(messaging, {
     vapidKey,
@@ -70,7 +71,8 @@ export async function initializeForegroundPush(): Promise<void> {
     return;
   }
 
-  const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+  await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+  const registration = await navigator.serviceWorker.ready;
   listenForForegroundMessages(getMessaging(getFirebaseApp()), registration);
 }
 

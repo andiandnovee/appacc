@@ -10,6 +10,7 @@
 - **Status/verifikasi:** frontend production build berhasil; ESLint selesai tanpa error (dengan warning yang sudah ada di file lain); tes fokus backend lulus (3 tes, 16 assertions); Pint lulus untuk seluruh file PHP terkait; route audit terdaftar; dan `migrate --pretend` berhasil. TypeScript check masih melaporkan error di sejumlah file lama yang tidak terkait. Migration hanya dipreview, belum diterapkan ke database aktual atau diuji terhadap salinan MySQL disposable. Push tetap default-off dan semua penerima/rule belum diaktifkan.
 - **2026-10-29:** aset production web dibangun ulang memakai konfigurasi `VITE_FIREBASE_*` lokal. Konfigurasi frontend bersifat client-side dan ikut masuk ke bundle; file lokal `frontend/.env` tidak dimasukkan ke commit. Build berhasil; peringatan chunk besar yang sudah ada tetap muncul.
 - **2026-10-29:** Vite sekarang menyediakan `firebase-messaging-config.json` dari `VITE_FIREBASE_*` saat development dan memasukkannya ke hasil production build. Ini memastikan service worker dapat menginisialisasi Firebase saat install tanpa membuat file config manual; tidak mengubah API atau database.
+- **2026-10-29:** Firebase Messaging kini diinisialisasi sinkron ketika service worker dievaluasi agar handler `push` terdaftar pada waktu yang diwajibkan browser. Client menunggu registration aktif sebelum meminta FCM token.
 
 Dokumen ini diringkas dari source dan riwayat Git sampai commit `3ac176a9` (10 September 2026), diperiksa pada 16 September 2026. Ini bukan changelog lengkap. Source code tetap menjadi sumber kebenaran utama.
 

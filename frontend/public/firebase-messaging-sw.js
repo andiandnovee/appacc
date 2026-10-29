@@ -1,26 +1,13 @@
-/* global importScripts, firebase, clients */
+/* global importScripts, firebase, clients, __FIREBASE_CONFIG__ */
 
 importScripts("https://www.gstatic.com/firebasejs/12.7.0/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/12.7.0/firebase-messaging-compat.js");
 
-const configUrl = new URL("/firebase-messaging-config.json", self.location.origin);
-
-const initializeMessaging = fetch(configUrl)
-  .then((response) => {
-    if (!response.ok) throw new Error("Firebase web messaging configuration is missing.");
-    return response.json();
-  })
-  .then((config) => {
-    firebase.initializeApp(config);
-    firebase.messaging();
-  })
-  .catch((error) => {
-    console.error("Firebase messaging service worker failed to initialize.", error);
-    throw error;
-  });
+firebase.initializeApp(__FIREBASE_CONFIG__);
+firebase.messaging();
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(initializeMessaging.then(() => self.skipWaiting()));
+  event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener("activate", (event) => {
