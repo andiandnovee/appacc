@@ -81,8 +81,9 @@ function AsyncMasterSelect({ kind, receiverBusinessArea, selectedLabel, onSelect
   const listRef = useRef<HTMLDivElement>(null);
   const [dropdownPosition, setDropdownPosition] = useState<DropdownPosition | null>(null);
   const endpoint = kind === "gl" ? "/gl-accounts" : "/cost-centers";
-  const preferredGlPrefix = `${receiverBusinessArea}3`;
-  const initialQuery = kind === "gl" ? preferredGlPrefix : receiverBusinessArea;
+  const costCenterPrefix = `${receiverBusinessArea}3`;
+  const preferredGlPrefix = "7";
+  const initialQuery = kind === "gl" ? preferredGlPrefix : costCenterPrefix;
 
   const fetchOptions = useCallback(async (search: string, requestedPage = 1, append = false) => {
     const requestId = ++requestRef.current;
@@ -111,7 +112,7 @@ function AsyncMasterSelect({ kind, receiverBusinessArea, selectedLabel, onSelect
             isExpense: accountIsExpense(item),
           }))
         : (source as CostCenter[]).filter((item) =>
-            item.sap_id && item.sap_id.startsWith(receiverBusinessArea),
+            item.sap_id && item.sap_id.startsWith(costCenterPrefix),
           ).map((item) => ({
             id: item.id,
             code: item.sap_id!,
@@ -139,10 +140,10 @@ function AsyncMasterSelect({ kind, receiverBusinessArea, selectedLabel, onSelect
     } finally {
       if (requestId === requestRef.current) setLoading(false);
     }
-  }, [endpoint, kind, preferredGlPrefix, receiverBusinessArea]);
+  }, [costCenterPrefix, endpoint, kind, preferredGlPrefix]);
 
   const openAndLoad = (event: React.FocusEvent<HTMLInputElement>) => {
-    if (kind === "gl" && !receiverBusinessArea) return;
+    if ((kind === "gl" && !receiverBusinessArea) || (kind === "cost-center" && !costCenterPrefix)) return;
     const rect = event.currentTarget.getBoundingClientRect();
     const width = Math.min(Math.max(rect.width, 260), window.innerWidth - 24);
     const spaceBelow = window.innerHeight - rect.bottom - 16;
@@ -186,7 +187,7 @@ function AsyncMasterSelect({ kind, receiverBusinessArea, selectedLabel, onSelect
     setPage(1);
     setHasMore(false);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (kind === "gl" && !receiverBusinessArea) return;
+    if ((kind === "gl" && !receiverBusinessArea) || (kind === "cost-center" && !costCenterPrefix)) return;
     debounceRef.current = setTimeout(() => {
       const search = next || initialQuery;
       if (search) void fetchOptions(search);
@@ -215,7 +216,7 @@ function AsyncMasterSelect({ kind, receiverBusinessArea, selectedLabel, onSelect
         <input
           ref={inputRef}
           value={open ? query : selectedLabel}
-          placeholder={kind === "gl" ? `GL ${preferredGlPrefix}… cari kode/nama` : `Cari CC ${receiverBusinessArea}…`}
+          placeholder={kind === "gl" ? "GL biaya 7… cari kode/nama" : `Cari CC ${costCenterPrefix}…`}
           onFocus={openAndLoad}
           onChange={handleQuery}
           onBlur={() => window.setTimeout(() => { setOpen(false); setDropdownPosition(null); }, 150)}
@@ -249,8 +250,8 @@ function AsyncMasterSelect({ kind, receiverBusinessArea, selectedLabel, onSelect
               }}
             >
               <strong>{option.code}</strong><span>{option.label.slice(option.code.length + 3)}</span>
-              {kind === "gl" && option.code.startsWith(preferredGlPrefix) && <small>Prioritas BA</small>}
-              {kind === "gl" && !option.code.startsWith(preferredGlPrefix) && option.isExpense && <small>Biaya</small>}
+              {kind === "gl" && option.code.startsWith(preferredGlPrefix) && <small>Biaya</small>}
+              {kind === "cost-center" && <small>Prefix BA</small>}
             </button>
           ))}
           {loading && <div className={styles.asyncMessage}>Memuat pilihan…</div>}
@@ -437,7 +438,7 @@ export default function DebetNotaPage() {
             <div>
               <span className={styles.eyebrow}>BusArea Penerima</span>
               <strong>{receiver.receiverBusinessArea}</strong>
-              <small>Cost Center harus berawalan {centerPrefix}.</small>
+              <small>Cost Center harus berawalan {centerPrefix}3.</small>
             </div>
             <div>
               <span className={styles.eyebrow}>Referensi Pengirim</span>
@@ -461,7 +462,7 @@ export default function DebetNotaPage() {
             </div>
             <div className={styles.tableScroll}>
               <table>
-                <thead><tr><th>Description</th><th>GL Acc <span>· biaya diprioritaskan</span></th><th>CostCenter <span>· {centerPrefix}…</span></th><th className={styles.amountHead}>Jumlah</th></tr></thead>
+                <thead><tr><th>Description</th><th>GL Acc <span>· prefix 7 biaya</span></th><th>CostCenter <span>· {centerPrefix}3…</span></th><th className={styles.amountHead}>Jumlah</th></tr></thead>
                 <tbody>{rows.map((row) => (
                   <tr key={row.id}>
                     <td className={styles.descriptionCell}>{row.description}</td>
