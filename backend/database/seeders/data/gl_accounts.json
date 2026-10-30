@@ -1,0 +1,6330 @@
+[
+  [
+    "11111500",
+    "Petty cash-Local Currency-SIMP-PLT-HO Jakarta",
+    "1111 - CASH ON HAND",
+    "sheet",
+    "KAS KECIL HO",
+    null
+  ],
+  [
+    "11111501",
+    "Petty cash-Local Currency-SIMP-PLT-KYE",
+    "1111 - CASH ON HAND",
+    "sheet",
+    "KAS UNIT KYE",
+    null
+  ],
+  [
+    "11111502",
+    "Petty cash-Local Curren-SIMP-PLT-PKU",
+    "1111 - CASH ON HAND",
+    "sheet",
+    "KAS KECIL RO (PKU)",
+    null
+  ],
+  [
+    "11111503",
+    "Petty cash-Local Currency-SIMP-PLT-SDE",
+    "1111 - CASH ON HAND",
+    "sheet",
+    "KAS UNIT SDE",
+    null
+  ],
+  [
+    "11111504",
+    "Petty cash-Local Currency-SIMP-PLT-BLE",
+    "1111 - CASH ON HAND",
+    "sheet",
+    "KAS UNIT BLE",
+    null
+  ],
+  [
+    "11111505",
+    "Petty cash-Local Currency-SIMP-PLT-KCE",
+    "1111 - CASH ON HAND",
+    "sheet",
+    "KAS UNIT KCE",
+    null
+  ],
+  [
+    "11111506",
+    "Petty cash-Local Currency-SIMP-PLT-KYF",
+    "1111 - CASH ON HAND",
+    "sheet",
+    "KAS UNIT KYF",
+    null
+  ],
+  [
+    "11111507",
+    "Petty cash-Local Currency-SIMP-PLT-BLF",
+    "1111 - CASH ON HAND",
+    "sheet",
+    "KAS UNIT BLF",
+    null
+  ],
+  [
+    "11111508",
+    "Petty cash-Local Currency-SIMP-PLT-SDF",
+    "1111 - CASH ON HAND",
+    "sheet",
+    "KAS UNIT SDF",
+    null
+  ],
+  [
+    "11111509",
+    "Petty cash-Local Currency-SIMP-REF-Sales Jakarta",
+    "1111 - CASH ON HAND",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11111510",
+    "Petty cash-Local Currency-SIMP-REF-Admin Jakarta",
+    "1111 - CASH ON HAND",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11111511",
+    "Petty cash-Local Currency-SIMP-REF-Sales Surabaya",
+    "1111 - CASH ON HAND",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11111512",
+    "Petty cash-Local Currency-SIMP-REF-Admin Surabaya",
+    "1111 - CASH ON HAND",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11111513",
+    "Petty cash-Local Currency-SIMP-REF-Sales Medan",
+    "1111 - CASH ON HAND",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11111514",
+    "Petty cash-Local Currency-SIMP-REF-Admin Medan",
+    "1111 - CASH ON HAND",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11111515",
+    "Petty cash-Local Currency-SIMP-REF-Kas Besar",
+    "1111 - CASH ON HAND",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11111516",
+    "Petty cash-Local Currency-SIMP-REF-Sales Tjg Priok",
+    "1111 - CASH ON HAND",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11111517",
+    "Petty cash-Local Currency-SIMP-REF-Admin Tjg Priok",
+    "1111 - CASH ON HAND",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11111518",
+    "Petty cash-Local Currency-SIMP-PLT-KY TC",
+    "1111 - CASH ON HAND",
+    "sheet",
+    "KAS KECIL TC",
+    null
+  ],
+  [
+    "11111520",
+    "Petty cash-Local Currency-SIMP-Corporate",
+    "1111 - CASH ON HAND",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11112061",
+    "Petty cash-Forreign Currency- PLT HO",
+    "1111 - CASH ON HAND",
+    "sheet",
+    "KAS KECIL HO (FOREIGN)",
+    null
+  ],
+  [
+    "11112062",
+    "Petty cash-Forreign Currency- REF HO",
+    "1111 - CASH ON HAND",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11114001",
+    "Cash intransit",
+    "1111 - CASH ON HAND",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11121500",
+    "CIB-BCA-Collection-Wisma'46-319.308816-0-PLT",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    null,
+    "CORPORATE"
+  ],
+  [
+    "11121501",
+    "CIB-BCA-Collection-Wisma'46 -319.304448.1-REF JKT",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11121502",
+    "CIB-BCA-Collection-Indrapura -468.382121.0-REF SBY",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11121503",
+    "CIB-BCA-Collection-Medan-022.175999.0-REF MDN",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11121504",
+    "CIB-BCA-Collection-CitiTower -319.305939.9-REF TJP",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11122500",
+    "CIB-BCA-Current-Indocement-459.304300.5-PLT HO",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    "CIB-BCA-Current-Indocement-459.304300.5-PLT HO",
+    null
+  ],
+  [
+    "11122501",
+    "CIB-Bank BNI 1946-Current-Dumai-0130453247-PLT HO",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    "CIB-BNI-Current-Dumai-0130453247-PLT HO",
+    null
+  ],
+  [
+    "11121502",
+    "CIB-BCA-Current-Indocement-459.302551.1-REF TJP",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11122503",
+    "CIB-Mega-Current-Sudirman Pz-10010011997991-PLT HO",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    "CIB-Mega-Current-Sudirman Pz-10010011997991-PLT HO",
+    null
+  ],
+  [
+    "11122504",
+    "CIB-Mandiri-Current-108.0098107056-PLT Pekanbaru",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    "CIB-Mandiri-Current-108.0098107056-PLT Pekanbaru",
+    null
+  ],
+  [
+    "11122505",
+    "CIB-Mandiri-Cur-1070098138649-PLT Sungai D Factory",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    "CIB-Mandiri-Curer-1070098138649-PLT Sungai Dua Fac",
+    null
+  ],
+  [
+    "11122506",
+    "CIB-Mandiri-Curr-1070094031491-PLT Batam Factory",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    "CIB-Mandiri-Curren-1070094031491-PLT Balam Factory",
+    "Seharusnya BALAM bukan BATAM"
+  ],
+  [
+    "11122507",
+    "CIB-Mandiri-Curre-1070094031525-PLT Kencana Estate",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    "CIB-Mandiri-Curre-1070094031525-PLT Kencana Estate",
+    null
+  ],
+  [
+    "11122508",
+    "CIB-Mandiri-Cur-1070094031517-PLT Kayangan Factory",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    "CIB-Mandiri-Cur-1070094031517-PLT Kayangan Factory",
+    null
+  ],
+  [
+    "11122509",
+    "CIB-Mandiri-Current-1070094031483-PLT Batam Estate",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    "CIB-Mandiri-Current-1070094031483-PLT Balam Estate",
+    "Seharusnya BALAM bukan BATAM"
+  ],
+  [
+    "11122510",
+    "CIB-Mandiri-Cur-1070094031475-PLT Sungai D Estate",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    "CIB-Mandiri-Curr-1070094031475-PLT Sungai D Estate",
+    null
+  ],
+  [
+    "11122511",
+    "CIB-Mandiri-Curr-1070094031509-PLT Kayangan Estate",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    "CIB-Mandiri-Curr-1070094031509-PLT Kayangan Estate",
+    null
+  ],
+  [
+    "11122512",
+    "CIB-BCA-Current-Indocement-459.301271.1-REF JKT",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11122513",
+    "CIB-BCA-Current-Indocement-459.301272.0-REF JKT",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11122514",
+    "CIB-BCA-Current-Enggano (PE)-007.302033.3-REF JKT",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11122515",
+    "CIB-BCA-Current-Indrapura-468.382100.7-REF Sby",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11122516",
+    "CIB-BCA-Current-Veteran-010.165004.8-REF Sby",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11122517",
+    "CIB-BCA-Current-Medan-022.182828.2-REF Mdn",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11122518",
+    "CIB-Mayora-Current-1001006580-REF JKT",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11122519",
+    "CIB-Mandiri -Current-115000470511.9-REF JKT",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11122520",
+    "CIB-Mandiri -Current-140000505456.5-REF SBY",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11122521",
+    "CIB-BRI-Current-LubukPakam-026601000578308-REF MDN",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11122522",
+    "CIB-Permata-Current-Lubuk Pakam-8001035879-REF MDN",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11122523",
+    "CIB-Mandiri-Curren-Belawan-106.0069424383-REF MDN",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11122524",
+    "CIB-BCA-Current-Wisma 46-319.304626.2-Corporate",
+    "1112 - CASH IN BANK (IDR - CURRENT)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11123500",
+    "CIB-BCA-Foreign-CitiTower-319.381239.9-PLT HO",
+    "1112 - CASH IN BANK (FOREIGN CURRENCY)",
+    "sheet",
+    null,
+    "CORPORATE"
+  ],
+  [
+    "11123501",
+    "CIB-BCA-Foreign-Wisma BNI'46-319.382461.8-Corp",
+    "1112 - CASH IN BANK (FOREIGN CURRENCY)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11123502",
+    "CIB-BCA-Foreign-Citi Tower-319.380639.9-PLT HO",
+    "1112 - CASH IN BANK (FOREIGN CURRENCY)",
+    "sheet",
+    null,
+    "CORPORATE"
+  ],
+  [
+    "11123503",
+    "CIB-Mega-Foreign-Kuningan-10202011000117-Corporate",
+    "1112 - CASH IN BANK (FOREIGN CURRENCY)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11123504",
+    "CIB-Mizuho-Foreign-Sudirman-3078760201-Corporate",
+    "1112 - CASH IN BANK (FOREIGN CURRENCY)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11123505",
+    "CIB-SCB-Foreign-Sudirman-30606262676-Corporate",
+    "1112 - CASH IN BANK (FOREIGN CURRENCY)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11123506",
+    "CIB-ANZ Panin-Foreign-Sudirman-09922620001-Corp",
+    "1112 - CASH IN BANK (FOREIGN CURRENCY)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11123507",
+    "CIB-RBS-Foreign-JSX Tower-174000025603825-Corp",
+    "1112 - CASH IN BANK (FOREIGN CURRENCY)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11123508",
+    "CIB-BCA-Foreign-Wisma BNI'46-319.382552.1-REF JKT",
+    "1112 - CASH IN BANK (FOREIGN CURRENCY)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11123509",
+    "CIB-BCA-Foreign-Wisma BNI'46-319.382582.2-REF JKT",
+    "1112 - CASH IN BANK (FOREIGN CURRENCY)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11123510",
+    "CIB-Citi Bank-Foreign-010.5897.529-REF Jkt",
+    "1112 - CASH IN BANK (FOREIGN CURRENCY)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11123511",
+    "CIB-BCA-Foreign-Indocement-459.304530.0-PLT HO",
+    "1112 - CASH IN BANK (FOREIGN CURRENCY)",
+    "sheet",
+    "CIB-BCA-Foreign-Indocement-459.304530.0-PLT HO",
+    null
+  ],
+  [
+    "11123512",
+    "CIB-BCA-Foreign-Wisma BNI'46-319.381194.5-Corporat",
+    "1112 - CASH IN BANK (FOREIGN CURRENCY)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11123513",
+    "CIB-Bank UOB Singapore Foreign-3523326803-Corp",
+    "1112 - CASH IN BANK (FOREIGN CURRENCY)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11123514",
+    "CIB-Bank UOB Singapore Foreign-3529045288-Corp",
+    "1112 - CASH IN BANK (FOREIGN CURRENCY)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11123515",
+    "CIB-DBS Bank-Forei-Singapore-0003002856019022-Corp",
+    "1112 - CASH IN BANK (FOREIGN CURRENCY)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11123516",
+    "CIB-CIMB-Foreign-Singapore-00002000052540-Corp",
+    "1112 - CASH IN BANK (FOREIGN CURRENCY)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11123517",
+    "CIB-BCA-Foreign-Indrapura -468.389600.7-REF SBY",
+    "1112 - CASH IN BANK (FOREIGN CURRENCY)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11123518",
+    "CIB-BCA-Foreign-Medan-022.205999.1-REF MDN",
+    "1112 - CASH IN BANK (FOREIGN CURRENCY)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11123519",
+    "CIB-BCA-Foreign-Wisma BNI'46-319.381.1911-REF JKT",
+    "1112 - CASH IN BANK (FOREIGN CURRENCY)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11123520",
+    "CIB-BCA-Foreign-Wisma BNI'46-319.381211.9-REF SBY",
+    "1112 - CASH IN BANK (FOREIGN CURRENCY)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11123521",
+    "CIB-BCA-Foreign-Wisma BNI'46-319.380057.9-REF MDN",
+    "1112 - CASH IN BANK (FOREIGN CURRENCY)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11123522",
+    "CIB-BCA-Foreign-Indocement-459.303227.5-PLT HO",
+    "1112 - CASH IN BANK (FOREIGN CURRENCY)",
+    "sheet",
+    "CIB-BCA-Foreign-Indocement-459.303227.5-PLT HO",
+    "Sudah ditutup"
+  ],
+  [
+    "11123524",
+    "CIB-BCA-Foreign-CitiTower-319.383069.9-REF TJP",
+    "1112 - CASH IN BANK (FOREIGN CURRENCY)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11123525",
+    "CIB-BCA-Foreign-Indocement-459.303146.5-REF TJP",
+    "1112 - CASH IN BANK (FOREIGN CURRENCY)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11123526",
+    "CIB-BCA-Foreign-CitiTower-319.380138.9-REF TJP",
+    "1112 - CASH IN BANK (FOREIGN CURRENCY)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11125500",
+    "CIB-BCA-Control-CitiTower-319.306329.9-PLT HO",
+    "1112 - CASH IN BANK (CONTROL)",
+    "sheet",
+    "CIB-BCA-Control-CitiTower-319.306329.9-PLT HO",
+    null
+  ],
+  [
+    "11125501",
+    "CIB-BCA-Control-Kuningan-217.309400.1-PLT HO",
+    "1112 - CASH IN BANK (CONTROL)",
+    "sheet",
+    null,
+    "CORPORATE"
+  ],
+  [
+    "11125502",
+    "CIB-CIMB-Control-Jembatan Dua-203-01000-20008-Corp",
+    "1112 - CASH IN BANK (CONTROL)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11125503",
+    "CIB-Bank CIMB Niaga-Control-085.01.00719001-PLT HO",
+    "1112 - CASH IN BANK (CONTROL)",
+    "sheet",
+    null,
+    "Sudah ditutup"
+  ],
+  [
+    "11125504",
+    "CIB-ANZ Panin Bank-Control-099.226.10001-Corporate",
+    "1112 - CASH IN BANK (CONTROL)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11125505",
+    "CIB-DBS Bank-Control-Sudirman-030.156.3603-Corp",
+    "1112 - CASH IN BANK (CONTROL)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11125506",
+    "CIB-BRI-Control-0206010027463037-PLT HO",
+    "1112 - CASH IN BANK (CONTROL)",
+    "sheet",
+    null,
+    "CORPORATE"
+  ],
+  [
+    "11125507",
+    "CIB-MEGA-Control-Sudirman Pz-10200011005002-Corp",
+    "1112 - CASH IN BANK (CONTROL)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11125508",
+    "CIB-BCA-Control-Wisma'46 -319.300995.2-REF JKT",
+    "1112 - CASH IN BANK (CONTROL)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11125509",
+    "CIB-BCA-Control-Wisma46 -319.300055.6-REF SBY",
+    "1112 - CASH IN BANK (CONTROL)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11125510",
+    "CIB-BCA-Control-Wisma46 -319.301116.7-REF MDN",
+    "1112 - CASH IN BANK (CONTROL)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11125511",
+    "CIB-BCA-Control-Wisma'46 -319.308846.1-Corporaate",
+    "1112 - CASH IN BANK (CONTROL)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11125512",
+    "CIB-Mandiri-Control-Mid Plaza-1220004777267-Corp",
+    "1112 - CASH IN BANK (CONTROL)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11125513",
+    "CIB-BCA-Control-Ws Indocemet-459.301557.5-PLT HO",
+    "1112 - CASH IN BANK (CONTROL)",
+    "sheet",
+    "CIB-BCA-Control-Ws Indocemet-459.301557.5-PLT HO",
+    "Sudah ditutup"
+  ],
+  [
+    "11125514",
+    "CIB-Muamalat-Control-Arthaloka-0000180951-Corp",
+    "1112 - CASH IN BANK (CONTROL)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11125515",
+    "CIB-Citi Bank Control-Bapindo Plaza-0105897014 REF",
+    "1112 - CASH IN BANK (CONTROL)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11125517",
+    "CIB-BCA-Control-CitiTower -319.306198.9-REF TJP",
+    "1112 - CASH IN BANK (CONTROL)",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11210001",
+    "Time and Call Deposit - Local Currency - BCA",
+    "1121 - TIME AND CALL DEPOSITS - LOCAL CURRENCY",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11210002",
+    "Time and Call Deposit - Local Currency - BII",
+    "1121 - TIME AND CALL DEPOSITS - LOCAL CURRENCY",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11210003",
+    "Time and Call Deposit - Local Currency-Danamon",
+    "1121 - TIME AND CALL DEPOSITS - LOCAL CURRENCY",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11210004",
+    "Time and Call Deposit - Local Currency- Mega",
+    "1121 - TIME AND CALL DEPOSITS - LOCAL CURRENCY",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11210005",
+    "Time and Call Deposit - Local Currency- Mandiri",
+    "1121 - TIME AND CALL DEPOSITS - LOCAL CURRENCY",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11210006",
+    "Time and Call Deposit - Local Currency-Victoria",
+    "1121 - TIME AND CALL DEPOSITS - LOCAL CURRENCY",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11210007",
+    "Time and Call Deposit - Local Currency-Muamalat",
+    "1121 - TIME AND CALL DEPOSITS - LOCAL CURRENCY",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11210008",
+    "Time and Call Deposit - Local Currency-Niaga",
+    "1121 - TIME AND CALL DEPOSITS - LOCAL CURRENCY",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11210009",
+    "Time and Call Deposit - Local Currency-BTN",
+    "1121 - TIME AND CALL DEPOSITS - LOCAL CURRENCY",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11210018",
+    "Time and Call Deposit - Local Currency - DBS",
+    "1121 - TIME AND CALL DEPOSITS - LOCAL CURRENCY",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11220001",
+    "Time and Call Deposit - Foreign Currency - BCA",
+    "1122 - TIME AND CALL DEPOSITS – FOREIGN CURRENCY",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11220002",
+    "Time and Call Deposit - Foreign Currency - BII",
+    "1122 - TIME AND CALL DEPOSITS – FOREIGN CURRENCY",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11220003",
+    "Time and Call Deposit - Foreign Currency - Danamon",
+    "1122 - TIME AND CALL DEPOSITS – FOREIGN CURRENCY",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11220004",
+    "Time and Call Deposit - Foreign Currency - Mega",
+    "1122 - TIME AND CALL DEPOSITS – FOREIGN CURRENCY",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11220005",
+    "Time and Call Deposit - Foreign Currency -Mandiri",
+    "1122 - TIME AND CALL DEPOSITS – FOREIGN CURRENCY",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11220006",
+    "Time and Call Deposit - Foreign Currency -Victoria",
+    "1122 - TIME AND CALL DEPOSITS – FOREIGN CURRENCY",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11220007",
+    "Time and Call Deposit - Foreign Currency -Muamalat",
+    "1122 - TIME AND CALL DEPOSITS – FOREIGN CURRENCY",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11220008",
+    "Time and Call Deposit - Foreign Currency -Niaga",
+    "1122 - TIME AND CALL DEPOSITS – FOREIGN CURRENCY",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11220009",
+    "Time and Call Deposit - Foreign Currency -BTN",
+    "1122 - TIME AND CALL DEPOSITS – FOREIGN CURRENCY",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11310001",
+    "Marketable Securities-Bonds - Net",
+    "1131 - MARKETABLE SECURITIES-BONDS - NET",
+    "sheet",
+    "OBLIGASI",
+    null
+  ],
+  [
+    "11320001",
+    "Marketable Securities-Traded Equity Shares - Net",
+    "1131 - MARKETABLE SECURITIES-BONDS - NET",
+    "sheet",
+    "SAHAM",
+    null
+  ],
+  [
+    "11411001",
+    "Accounts Receivable-General Domestic Customer",
+    "1141 - ACCOUNTS RECEIVABLE - TRADE",
+    "sheet",
+    "PIUTANG USAHA",
+    "Menggunakan MODUL AR tidak bisa posting langsung"
+  ],
+  [
+    "11412001",
+    "Accounts Receivable-Trade-Other Domestic Customers",
+    "1141 - ACCOUNTS RECEIVABLE - TRADE",
+    "sheet",
+    null,
+    "Menggunakan MODUL AR tidak bisa posting langsung"
+  ],
+  [
+    "11413001",
+    "Accounts Receivable-Trade-Export Customers",
+    "1141 - ACCOUNTS RECEIVABLE - TRADE",
+    "sheet",
+    null,
+    "Menggunakan MODUL AR tidak bisa posting langsung"
+  ],
+  [
+    "11414001",
+    "Accounts Receivable-Trade-Related Parties",
+    "1141 - ACCOUNTS RECEIVABLE - TRADE",
+    "sheet",
+    null,
+    "Menggunakan MODUL AR tidak bisa posting langsung"
+  ],
+  [
+    "11421001",
+    "Accounts Receivable-Intercompany-Trade",
+    "1142 - ACCOUNTS RECEIVABLE - INTERCOMPANY",
+    "sheet",
+    "PIUTANG USAHA",
+    "Menggunakan MODUL AR tidak bisa posting langsung"
+  ],
+  [
+    "11422001",
+    "Accounts Receivable-Intercompany-Non Trade",
+    "1142 - ACCOUNTS RECEIVABLE - INTERCOMPANY",
+    "sheet",
+    "HUBUNGAN R/K",
+    "Menggunakan MODUL AR tidak bisa posting langsung"
+  ],
+  [
+    "11431001",
+    "Accounts Receivable-Interbranch-Trade",
+    "1143 - ACCOUNTS RECEIVABLE - INTERBRANCH",
+    "sheet",
+    "PIUTANG USAHA",
+    "Menggunakan MODUL AR tidak bisa posting langsung"
+  ],
+  [
+    "11432001",
+    "Accounts Receivable-Interbranch-Non Trade",
+    "1143 - ACCOUNTS RECEIVABLE - INTERBRANCH",
+    "sheet",
+    "HUBUNGAN R/K",
+    "Menggunakan MODUL AR tidak bisa posting langsung"
+  ],
+  [
+    "11451001",
+    "Allowance for Bad Debts",
+    "1143 - ACCOUNTS RECEIVABLE - INTERBRANCH",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11491001",
+    "Other Receivables-Related Parties",
+    "1149 - OTHER RECEIVABLES",
+    "sheet",
+    "PIUTANG AFILIASI",
+    null
+  ],
+  [
+    "11493001",
+    "Other Receivables-Claims",
+    "1149 - OTHER RECEIVABLES",
+    "sheet",
+    "PIUTANG KLAIM ASURANSI DLL",
+    null
+  ],
+  [
+    "11493002",
+    "Other Receivable-Claims Expenses",
+    "1149 - OTHER RECEIVABLES",
+    "sheet",
+    null,
+    "Rekon Account Vendor Tidak boleh langsung posting ke sini"
+  ],
+  [
+    "11493003",
+    "Others Receivable-Claims Event Promotion",
+    "1149 - OTHER RECEIVABLES",
+    "sheet",
+    null,
+    "Rekon Account Vendor Tidak boleh langsung posting ke sini"
+  ],
+  [
+    "11493004",
+    "Others Receivable-Claims Bad Goods",
+    "1149 - OTHER RECEIVABLES",
+    "sheet",
+    null,
+    "Rekon Account Vendor Tidak boleh langsung posting ke sini"
+  ],
+  [
+    "11493005",
+    "Others Receivable-Claims Freight",
+    "1149 - OTHER RECEIVABLES",
+    "sheet",
+    null,
+    "Rekon Account Vendor Tidak boleh langsung posting ke sini"
+  ],
+  [
+    "11493006",
+    "Others Receivable-Claims Expedisi",
+    "1149 - OTHER RECEIVABLES",
+    "sheet",
+    null,
+    "Rekon Account Vendor Tidak boleh langsung posting ke sini"
+  ],
+  [
+    "11493007",
+    "Others Receivable-Claims Defereed Price Promo",
+    "1149 - OTHER RECEIVABLES",
+    "sheet",
+    null,
+    "Rekon Account Vendor Tidak boleh langsung posting ke sini"
+  ],
+  [
+    "11494001",
+    "Other Receivables-Officers and Employees",
+    "1149 - OTHER RECEIVABLES",
+    "sheet",
+    "PIUTANG STAF/NON STAF/KENDARAAN",
+    "Termasuk menampung car loan jangka pendek (tidak termasuk piutang perjalan dinas non staf)"
+  ],
+  [
+    "11496001",
+    "Other Receivables-Accrued Interest Income",
+    "1149 - OTHER RECEIVABLES",
+    "sheet",
+    "PENDAPATAN BUNGA YMH DITERIMA - PHAK KE TIGA",
+    null
+  ],
+  [
+    "11496002",
+    "Other Rec. - Accrued Interest Inc.-Related Parties",
+    "1149 - OTHER RECEIVABLES",
+    "sheet",
+    "PENDAPATAN BUNGA YMH DITERIMA - RELATED",
+    null
+  ],
+  [
+    "11498001",
+    "Other Receivables-Sundry Clearing Account",
+    "1149 - OTHER RECEIVABLES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11499001",
+    "Other Receivables-Miscellaneous",
+    "1149 - OTHER RECEIVABLES",
+    "sheet",
+    "LAIN-LAIN",
+    null
+  ],
+  [
+    "11511001",
+    "Inventories-Finished Goods",
+    "1150 - INVENTORIES",
+    "sheet",
+    "STOK BARANG JADI (CPO, PK)",
+    null
+  ],
+  [
+    "11511002",
+    "Inventories-Finished Goods Mnl",
+    "1150 - INVENTORIES",
+    "sheet",
+    null,
+    "Cek Di production masih ada"
+  ],
+  [
+    "11521001",
+    "Unfinished Product-Semi Finished Goods",
+    "1150 - INVENTORIES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11521002",
+    "Unfinished Product-By Producst",
+    "1150 - INVENTORIES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11521009",
+    "Adjustment to market price - SFG By Products",
+    "1150 - INVENTORIES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11522001",
+    "Unfinished Product-Work In Process",
+    "1150 - INVENTORIES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11531001",
+    "Inventories-Raw Materials-Basic Matls & Ingredient",
+    "1150 - INVENTORIES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11531002",
+    "Inventories-Raw Materials-Fertilizers",
+    "1150 - INVENTORIES",
+    "sheet",
+    "PUPUK, kacangan",
+    null
+  ],
+  [
+    "11531003",
+    "Inventories-Raw Materials-Agrochemical",
+    "1150 - INVENTORIES",
+    "sheet",
+    "PESTISIDA",
+    "SALDO BALANCE STOCK DARI MM MODUL"
+  ],
+  [
+    "11531004",
+    "Inventories-Raw Materials-Seed",
+    "1150 - INVENTORIES",
+    "sheet",
+    "Untuk seed (kecambah)",
+    null
+  ],
+  [
+    "11532001",
+    "Inventories-Raw Materials-Packaging Materials",
+    "1150 - INVENTORIES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11549001",
+    "Inventories-In Transit-Others",
+    "1150 - INVENTORIES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11581001",
+    "Inventories-Others-Fuel",
+    "1150 - INVENTORIES",
+    "sheet",
+    "BAHAN BAKAR & PELUMAS",
+    null
+  ],
+  [
+    "11582001",
+    "Inventories-Others-Spare Parts",
+    "1150 - INVENTORIES",
+    "sheet",
+    "S'PART MESIN PABRIK,ALAT BERAT, KENDARAAN",
+    null
+  ],
+  [
+    "11583001",
+    "Inventories-Others-A & P Materials",
+    "1150 - INVENTORIES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11585001",
+    "Inventories-Others-Chemicals",
+    "1150 - INVENTORIES",
+    "sheet",
+    "CHEMICAL",
+    null
+  ],
+  [
+    "11589001",
+    "Inventories-Others-Others",
+    "1150 - INVENTORIES",
+    "sheet",
+    "BERAS",
+    null
+  ],
+  [
+    "11592001",
+    "Allowance for Bad Stocks - R.M.",
+    "1150 - INVENTORIES",
+    "sheet",
+    "CADANGAN PENYISIHAN PERSEDIAAN",
+    null
+  ],
+  [
+    "11599001",
+    "Allowance for Bad Stocks - Others",
+    "1150 - INVENTORIES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11611001",
+    "Adv for liquidation - Suppliers and Contractors",
+    "1160 - ADVANCES AND DEPOSITS",
+    "sheet",
+    "UANG MUKA PENGADAAN BARANG",
+    "Khusus yg berhubungan dengan Vendor Tidak bisa posting langsung"
+  ],
+  [
+    "11612001",
+    "Advance for liquidation - Travelling Advance",
+    "1160 - ADVANCES AND DEPOSITS",
+    "sheet",
+    "PIUTANG PERJALANAN DINAS & PENDIDIKAN",
+    "Termasuk Piutang perjalanan dinas Non staf/SKU - perlu ada kertas kerja utk memonitor"
+  ],
+  [
+    "11613001",
+    "Advance for liquidation - Advance To Intercompany",
+    "1160 - ADVANCES AND DEPOSITS",
+    "sheet",
+    null,
+    "Rekon Account Vendor"
+  ],
+  [
+    "11614001",
+    "Adv for liquidation - Advance to Interdivision",
+    "1160 - ADVANCES AND DEPOSITS",
+    "sheet",
+    null,
+    "Rekon Account Vendor"
+  ],
+  [
+    "11615001",
+    "Advance for liquidation - Recruit & Trainings",
+    "1160 - ADVANCES AND DEPOSITS",
+    "sheet",
+    "REKRUT & TRAINING",
+    "Khusus utk menampung biaya TC KYE / RAP dari WBS TC Tidak boleh utk yg lain"
+  ],
+  [
+    "11619001",
+    "Advance for liquidation - Other Advances",
+    "1160 - ADVANCES AND DEPOSITS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11621001",
+    "Deposit Paid - Import Purchases",
+    "1160 - ADVANCES AND DEPOSITS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11623001",
+    "Deposit paid - Future Stock Subscriptions",
+    "1160 - ADVANCES AND DEPOSITS",
+    "sheet",
+    "UANG MUKA PENYERTAAN",
+    null
+  ],
+  [
+    "11629001",
+    "Deposit paid -Others",
+    "1160 - ADVANCES AND DEPOSITS",
+    "sheet",
+    "UANG MUKA LAINNYA",
+    null
+  ],
+  [
+    "11711001",
+    "Prepaid taxes - Pph. Ps. 21 (Employee Income Tax)",
+    "1170 - PREPAYMENTS",
+    "sheet",
+    null,
+    "Bea Fiskal luar negeri"
+  ],
+  [
+    "11712001",
+    "Prepaid taxes - Pph. Ps. 22",
+    "1170 - PREPAYMENTS",
+    "sheet",
+    "PPH PS 22 DIBAYAR DIMUKA",
+    null
+  ],
+  [
+    "11713001",
+    "Prepaid taxes - Pph. Ps. 23",
+    "1170 - PREPAYMENTS",
+    "sheet",
+    "PPH PS 23 DIBAYAR DIMUKA",
+    null
+  ],
+  [
+    "11714001",
+    "Prepaid Taxes - Pph. Ps. 25 (Corporate Income Tax)",
+    "1170 - PREPAYMENTS",
+    "sheet",
+    "PPH PS 25 DIBAYAR DIMUKA",
+    null
+  ],
+  [
+    "11715001",
+    "Prepaid Taxes - Pph. Ps. 26",
+    "1170 - PREPAYMENTS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11716001",
+    "Prepaid taxes - Value Added Tax - In",
+    "1170 - PREPAYMENTS",
+    "sheet",
+    "PPN MASUKAN",
+    null
+  ],
+  [
+    "11717001",
+    "Prepaid tax - Value Added Tax - In Carried Forward",
+    "1170 - PREPAYMENTS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11719001",
+    "Prepaid taxes - Others",
+    "1170 - PREPAYMENTS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11721001",
+    "Prepaid Exp -Interest Expenses",
+    "1170 - PREPAYMENTS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11722001",
+    "Prepaid Exp. - Rent Expenses",
+    "1170 - PREPAYMENTS",
+    "sheet",
+    "SEWA DIBAYAR DIMUKA",
+    null
+  ],
+  [
+    "11723001",
+    "Prepaid Exp. - Insurance Expenses",
+    "1170 - PREPAYMENTS",
+    "sheet",
+    "ASURANSI KEBAKARAN",
+    "Untuk menampung asuransi kebakaran Tanaman"
+  ],
+  [
+    "11723002",
+    "Prepaid Exp. - Building Insurance Expenses",
+    "1170 - PREPAYMENTS",
+    "sheet",
+    "ASURANSI KEBAKARAN",
+    "Untuk menampung asuransi kebakaran gedung"
+  ],
+  [
+    "11723003",
+    "Prepaid Exp. - Vehicle Insurance Expenses",
+    "1170 - PREPAYMENTS",
+    "sheet",
+    "ASURANSI KENDARAAN & ALAT BERAT",
+    "Untuk menampung asuransi kendaraan & alat berat"
+  ],
+  [
+    "11723004",
+    "Prepaid Exp. - Inventory Insurance Expenses",
+    "1170 - PREPAYMENTS",
+    "sheet",
+    "ASURANSI KECURIAN",
+    "Untuk menampung asuransi persediaan"
+  ],
+  [
+    "11723005",
+    "Prepaid Exp. - Collection Insurance Expenses",
+    "1170 - PREPAYMENTS",
+    "sheet",
+    "ASURANSI UANG TUNAI",
+    "Untuk menampung asuransi uang tunai"
+  ],
+  [
+    "11723006",
+    "Prepaid Exp. - Personal Accident Insurance Expense",
+    "1170 - PREPAYMENTS",
+    "sheet",
+    "ASURANSI KECELAKAAN",
+    "Untuk menampung asuransi kecelakaan"
+  ],
+  [
+    "11724001",
+    "Prepaid exp. - Advertising & Promotion Expenses",
+    "1170 - PREPAYMENTS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "11725001",
+    "Prepaid exp - Salaries & Employee Benefits",
+    "1170 - PREPAYMENTS",
+    "sheet",
+    null,
+    "Gajian Kecil????"
+  ],
+  [
+    "11729001",
+    "Prepaid exp - Others",
+    "1170 - PREPAYMENTS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "12100001",
+    "Due from related parties- Subsidiaries",
+    "1200 - DUE FROM RELATED PARTIES",
+    "sheet",
+    "WESEL TAGIH",
+    "Menggunakan Modul Loan (Treasury) utk transaksi & rinciannya"
+  ],
+  [
+    "12200001",
+    "Due from related parties- Affiliates",
+    "1200 - DUE FROM RELATED PARTIES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "12300001",
+    "Due from related parties- Shareholders",
+    "1200 - DUE FROM RELATED PARTIES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "13110001",
+    "Invest. In Shares Of Stock - Subs.",
+    "1300 - INVESTMENTS",
+    "sheet",
+    "PENYERTAAN SAHAM",
+    null
+  ],
+  [
+    "13140001",
+    "Invest. In Shares Of Stock - Others",
+    "1300 - INVESTMENTS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "13210001",
+    "Plasma Receivables - Replanting",
+    "1320 - PLASMA RECEIVABLES",
+    "sheet",
+    null,
+    "Tidak dipakai di SIMP hanya utk PT yg punya plasma"
+  ],
+  [
+    "13210002",
+    "Plasma Receivables - Installment KKPA",
+    "1320 - PLASMA RECEIVABLES",
+    "sheet",
+    null,
+    "Tidak dipakai di SIMP hanya utk PT yg punya plasma"
+  ],
+  [
+    "13210003",
+    "Plasma Receivables - Installment Non KKPA",
+    "1320 - PLASMA RECEIVABLES",
+    "sheet",
+    null,
+    "Tidak dipakai di SIMP hanya utk PT yg punya plasma"
+  ],
+  [
+    "13210004",
+    "Plasma Receivables - Passive Farmers",
+    "1320 - PLASMA RECEIVABLES",
+    "sheet",
+    null,
+    "Tidak dipakai di SIMP hanya utk PT yg punya plasma"
+  ],
+  [
+    "13210005",
+    "Plasma Receivables - Sundry",
+    "1320 - PLASMA RECEIVABLES",
+    "sheet",
+    null,
+    "Tidak dipakai di SIMP hanya utk PT yg punya plasma"
+  ],
+  [
+    "13210006",
+    "Plasma Receivables - Development Cost",
+    "1320 - PLASMA RECEIVABLES",
+    "sheet",
+    "PROYEK PLASMA PLASMA TAHAP 1 & 2",
+    "Tidak dipakai di SIMP hanya utk PT yg punya plasma"
+  ],
+  [
+    "13210007",
+    "Plasma Receivables - Interest",
+    "1320 - PLASMA RECEIVABLES",
+    "sheet",
+    null,
+    "Tidak dipakai di SIMP hanya utk PT yg punya plasma"
+  ],
+  [
+    "13210008",
+    "Plasma Receivables - Clearing",
+    "1320 - PLASMA RECEIVABLES",
+    "sheet",
+    null,
+    "Tidak dipakai di SIMP hanya utk PT yg punya plasma"
+  ],
+  [
+    "13210009",
+    "Plasma Receivables - Phase 3",
+    "1320 - PLASMA RECEIVABLES",
+    "sheet",
+    null,
+    "Cek Di productiontidak ada seharusnya ganti deskripsi menjadi Plasma Receivables dana talangan"
+  ],
+  [
+    "13510001",
+    "Allowance For Plasma Receivables",
+    "1320 - PLASMA RECEIVABLES",
+    "sheet",
+    null,
+    "Tidak dipakai di SIMP hanya utk PT yg punya plasma"
+  ],
+  [
+    "13910001",
+    "Other Long - Term Investments",
+    "1320 - PLASMA RECEIVABLES",
+    "sheet",
+    "OBLIGASInSURAT BERHARGA LAINNYA",
+    null
+  ],
+  [
+    "14111001",
+    "Land",
+    "1400 - PROPERTY, PLANT, EQUIPMENTS",
+    "sheet",
+    null,
+    "SALDO GL HARUS SAMA DENGAN RINCIAN DI TEMPLATE FA (MIS JENIS & BA NYA)"
+  ],
+  [
+    "14111099",
+    "Land - MNL",
+    "1400 - PROPERTY, PLANT, EQUIPMENTS",
+    "sheet",
+    null,
+    "SALDO GL HARUS SAMA DENGAN RINCIAN DI TEMPLATE FA (MIS JENIS & BA NYA)"
+  ],
+  [
+    "14112001",
+    "Land Rights",
+    "1400 - PROPERTY, PLANT, EQUIPMENTS",
+    "sheet",
+    null,
+    "SALDO GL HARUS SAMA DENGAN RINCIAN DI TEMPLATE FA (MIS JENIS & BA NYA)"
+  ],
+  [
+    "14112099",
+    "Land Rights - MNL",
+    "1400 - PROPERTY, PLANT, EQUIPMENTS",
+    "sheet",
+    null,
+    "SALDO GL HARUS SAMA DENGAN RINCIAN DI TEMPLATE FA (MIS JENIS & BA NYA)"
+  ],
+  [
+    "14121001",
+    "Land Improvements",
+    "1400 - PROPERTY, PLANT, EQUIPMENTS",
+    "sheet",
+    null,
+    "SALDO GL HARUS SAMA DENGAN RINCIAN DI TEMPLATE FA (MIS JENIS & BA NYA)"
+  ],
+  [
+    "14131001",
+    "Buildings & Structures",
+    "1400 - PROPERTY, PLANT, EQUIPMENTS",
+    "sheet",
+    "BANGUNAN",
+    "SALDO GL HARUS SAMA DENGAN RINCIAN DI TEMPLATE FA (MIS JENIS & BA NYA)"
+  ],
+  [
+    "14141001",
+    "LeaseHold Improvements",
+    "1400 - PROPERTY, PLANT, EQUIPMENTS",
+    "sheet",
+    null,
+    "SALDO GL HARUS SAMA DENGAN RINCIAN DI TEMPLATE FA (MIS JENIS & BA NYA)"
+  ],
+  [
+    "14151001",
+    "Machineries & Equipment",
+    "1400 - PROPERTY, PLANT, EQUIPMENTS",
+    "sheet",
+    "MESIN-MESIN",
+    "SALDO GL HARUS SAMA DENGAN RINCIAN DI TEMPLATE FA (MIS JENIS & BA NYA)"
+  ],
+  [
+    "14161001",
+    "Vehicles",
+    "1400 - PROPERTY, PLANT, EQUIPMENTS",
+    "sheet",
+    "KENDARAAN & ALAT BERAT",
+    "SALDO GL HARUS SAMA DENGAN RINCIAN DI TEMPLATE FA (MIS JENIS & BA NYA)"
+  ],
+  [
+    "14171001",
+    "Furniture, Fixtures and Equipment",
+    "1400 - PROPERTY, PLANT, EQUIPMENTS",
+    "sheet",
+    "PERALATAN & PERABOT",
+    "SALDO GL HARUS SAMA DENGAN RINCIAN DI TEMPLATE FA (MIS JENIS & BA NYA)"
+  ],
+  [
+    "14201001",
+    "Matured Plantations",
+    "1400 - PROPERTY, PLANT, EQUIPMENTS",
+    "sheet",
+    "TM",
+    "SALDO GL HARUS SAMA DENGAN RINCIAN DI TEMPLATE FA (MIS JENIS & BA NYA)"
+  ],
+  [
+    "14211001",
+    "Infrastructure",
+    "1400 - PROPERTY, PLANT, EQUIPMENTS",
+    "sheet",
+    "PRASARANA",
+    "SALDO GL HARUS SAMA DENGAN RINCIAN DI TEMPLATE FA (MIS JENIS & BA NYA)"
+  ],
+  [
+    "14312001",
+    "Accumulated depreciation-Land Rights",
+    "1400 - PROPERTY, PLANT, EQUIPMENTS",
+    "sheet",
+    null,
+    "SALDO GL HARUS SAMA DENGAN RINCIAN DI TEMPLATE FA (MIS JENIS & BA NYA)"
+  ],
+  [
+    "14321001",
+    "Accumulated Depr - Land Improvement",
+    "1400 - PROPERTY, PLANT, EQUIPMENTS",
+    "sheet",
+    null,
+    "SALDO GL HARUS SAMA DENGAN RINCIAN DI TEMPLATE FA (MIS JENIS & BA NYA)"
+  ],
+  [
+    "14331001",
+    "Accum. Depr - Buildings and Structure",
+    "1400 - PROPERTY, PLANT, EQUIPMENTS",
+    "sheet",
+    "AKUM PENYUSUTAN BANGUNAN",
+    "SALDO GL HARUS SAMA DENGAN RINCIAN DI TEMPLATE FA (MIS JENIS & BA NYA)"
+  ],
+  [
+    "14341001",
+    "Accum. Depr - Leasehold Improvement",
+    "1400 - PROPERTY, PLANT, EQUIPMENTS",
+    "sheet",
+    null,
+    "SALDO GL HARUS SAMA DENGAN RINCIAN DI TEMPLATE FA (MIS JENIS & BA NYA)"
+  ],
+  [
+    "14351001",
+    "Accum. Depr - Machineries & Equipment",
+    "1400 - PROPERTY, PLANT, EQUIPMENTS",
+    "sheet",
+    "AKUM PENYUSUTAN MESIN-MESIN",
+    "SALDO GL HARUS SAMA DENGAN RINCIAN DI TEMPLATE FA (MIS JENIS & BA NYA)"
+  ],
+  [
+    "14361001",
+    "Accum. Depr - Vehicles",
+    "1400 - PROPERTY, PLANT, EQUIPMENTS",
+    "sheet",
+    "AKUM PENY KENDARAAN & ALAT BERAT",
+    "SALDO GL HARUS SAMA DENGAN RINCIAN DI TEMPLATE FA (MIS JENIS & BA NYA)"
+  ],
+  [
+    "14371001",
+    "Accum. Depr Furniture , Fixtures & Equipment",
+    "1400 - PROPERTY, PLANT, EQUIPMENTS",
+    "sheet",
+    "AKUM PENY PERALATAN & PERABOT",
+    "SALDO GL HARUS SAMA DENGAN RINCIAN DI TEMPLATE FA (MIS JENIS & BA NYA)"
+  ],
+  [
+    "14401001",
+    "Accum. Depr Matured Plantations",
+    "1400 - PROPERTY, PLANT, EQUIPMENTS",
+    "sheet",
+    "AKUM PENYUSUTAN TM",
+    "SALDO GL HARUS SAMA DENGAN RINCIAN DI TEMPLATE FA (MIS JENIS & BA NYA)"
+  ],
+  [
+    "14411001",
+    "Accum. Depr Infrastructure",
+    "1400 - PROPERTY, PLANT, EQUIPMENTS",
+    "sheet",
+    "AKUM PENYUSUTAN PRASARANA",
+    "SALDO GL HARUS SAMA DENGAN RINCIAN DI TEMPLATE FA (MIS JENIS & BA NYA)"
+  ],
+  [
+    "15161001",
+    "FA-U.C Vehicles",
+    "1400 - PROPERTY, PLANT, EQUIPMENTS",
+    "sheet",
+    null,
+    "SALDO GL HARUS SAMA DENGAN RINCIAN DI TEMPLATE FA (MIS JENIS & BA NYA)"
+  ],
+  [
+    "15261001",
+    "Acc. FA-U.C. Vehicles",
+    "1400 - PROPERTY, PLANT, EQUIPMENTS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "16200001",
+    "Acc.Amort. Excess of Inv. Over Book Value of Subs",
+    "1400 - PROPERTY, PLANT, EQUIPMENTS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "17100001",
+    "Invest in unit - Capital Fund - Unit / Branches",
+    "1700 - INVESMENT IN UNIT",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "17200001",
+    "Invest in unit - Surplus Fund - Unit / Branches",
+    "1700 - INVESMENT IN UNIT",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "17300001",
+    "Invest. in unit - Capital Fund - Division",
+    "1700 - INVESMENT IN UNIT",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "17400001",
+    "Invest. in unit - Surplus Fund - Division",
+    "1700 - INVESMENT IN UNIT",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "18100001",
+    "Deferred Tax assets",
+    "1800 - DEFERRED TAX ASSETS",
+    "sheet",
+    "AKTIVA PAJAK TANGGUHAN",
+    null
+  ],
+  [
+    "19112001",
+    "C.I.P - Buildings & Structure",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    "AKTIVA DALAM KONSTRUKSI BANGUNAN",
+    "SALDO GL HARUS SAMA DENGAN RINCIAN DI TEMPLATE FA (MIS JENIS & BA NYA)"
+  ],
+  [
+    "19113001",
+    "C.I.P - Machineries & Equitment",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    "AKTIVA DALAM KONSTRUKSI MESIN-MESIN",
+    "SALDO GL HARUS SAMA DENGAN RINCIAN DI TEMPLATE FA (MIS JENIS & BA NYA)"
+  ],
+  [
+    "19115001",
+    "C.I.P. - Infra Structuxture",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    "AKTIVA DALAM KONSTRUKSI INFRASTRUKTUR",
+    "SALDO GL HARUS SAMA DENGAN RINCIAN DI TEMPLATE FA (MIS JENIS & BA NYA)"
+  ],
+  [
+    "19116001",
+    "C.I.P. - Shipping Vehicles",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    null,
+    "SALDO GL HARUS SAMA DENGAN RINCIAN DI TEMPLATE FA (MIS JENIS & BA NYA)"
+  ],
+  [
+    "19117001",
+    "C.I.P. - Immature Plant (TBM)",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    "TBM",
+    "SALDO GL HARUS SAMA DENGAN RINCIAN DI TEMPLATE FA (MIS JENIS & BA NYA)"
+  ],
+  [
+    "19118001",
+    "C.I.P. - Land Clearing (TB)",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    "LC",
+    "SALDO GL HARUS SAMA DENGAN RINCIAN DI TEMPLATE FA (MIS JENIS & BA NYA)"
+  ],
+  [
+    "19119901",
+    "C.I.P. - Others",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    "AKTIVA DALAM KONSTRUKSI LAINNYA",
+    "SALDO GL HARUS SAMA DENGAN RINCIAN DI TEMPLATE FA (MIS JENIS & BA NYA)"
+  ],
+  [
+    "19410001",
+    "Preoperating Expenses",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    "PRA OPERASI",
+    "//NA#"
+  ],
+  [
+    "19420001",
+    "ACC. Amorti-Preoperating Expenses",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    "AMORTISASI PRA OPERASI",
+    "//NA#"
+  ],
+  [
+    "19520001",
+    "Deferred Forex. Differential",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "19530001",
+    "Deferred Other Charges",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "19540001",
+    "Deferred Charges-Land Rights",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    null,
+    "Digunakaa utk posting manual dari FI"
+  ],
+  [
+    "19540002",
+    "Deferred Charges-Land Rights",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    "PEROLEHAN HAK ATAS TANAH",
+    "Memakai account ini krn HGU menggunakan modul FA"
+  ],
+  [
+    "19540003",
+    "Deferred Charges-Land Rights-Accum.Amortization",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    "AMORTISASI HAK ATAS TANAH",
+    "Memakai account ini krn HGU menggunakan modul FA"
+  ],
+  [
+    "19540004",
+    "Deferred Charges-Land Rights in Progress",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    "HAK ATAS TANAH DALAM PROSES",
+    "Memakai account ini krn HGU menggunakan modul FA"
+  ],
+  [
+    "19550001",
+    "Deferred Charges-Car Loan",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    "UANG MUKA KENDARAAN",
+    "Tidak per nama lagi rincian per nama ada di HRD"
+  ],
+  [
+    "19560001",
+    "Deferred Charges-Nursery",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    "PEMBIBITAN",
+    "Untuk menampung cost bibitan dari modul FO"
+  ],
+  [
+    "19570001",
+    "Deferred Charges - Land Preparation Cost",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    "#NA# - Khusus LPI",
+    "Tidak dipakai di SIMP hanya LPI saja"
+  ],
+  [
+    "19570002",
+    "Def Charges-Land Preparation Accu amortization",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    "#NA# - Khusus LPI",
+    "Tidak dipakai di SIMP hanya LPI saja"
+  ],
+  [
+    "19570003",
+    "Deferred Charges - Land Preparation in progre",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    "#NA# - Khusus LPI",
+    "Tidak dipakai di SIMP hanya LPI saja"
+  ],
+  [
+    "19580001",
+    "Deferred Charges-Pas Service Liabilities",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    "BIAYA JASA LALU DITANGGUHKAN",
+    "Tidak di gunakan lagi nett off dng hutang (pembayaran dng modul AP - Vendor manulife)"
+  ],
+  [
+    "19580002",
+    "Deferred Charges-Pas Service Liabilities-Amortizat",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    "BIAYA JASA LALU  - AMORTISASI",
+    "Tidak di gunakan lagi nett off dng hutang (pembayaran dng modul AP - Vendor manulife)"
+  ],
+  [
+    "19590001",
+    "Other asset Plasma managed",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    "Tidak dipakai di SIMP hanya utk PT yg punya plasma",
+    null
+  ],
+  [
+    "19590002",
+    "Accum amortization plasma managed",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    "Tidak dipakai di SIMP hanya utk PT yg punya plasma",
+    null
+  ],
+  [
+    "19590003",
+    "WIP Plasma managed",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    "Tidak dipakai di SIMP hanya utk PT yg punya plasma",
+    null
+  ],
+  [
+    "19610001",
+    "Refundable - Rental Deposit",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    "Refundable - Rental Deposit",
+    "UNTUK MENAMPUNG DEPOSIT KE IFC & SPIT"
+  ],
+  [
+    "19620001",
+    "Refundable - Telephone",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "19630001",
+    "Refundable - Containers",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "19690001",
+    "Refundable - Other Deposit",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "19710001",
+    "Long Term Receivable - Officers & Employee",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    "PIUTANG ANGSURAN KENDARAAN",
+    "Angsuran kendaraan jangka panjang (tidak per nama lagi rincian di HRD)"
+  ],
+  [
+    "19720001",
+    "Long Term Receivable - Third Party",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "19730001",
+    "Long Term Receivable - Related Parties",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "19810001",
+    "Long Term Prepayment - Warehouse Rental",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "19820001",
+    "Long Term Prepayment - Building Rental",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "19830001",
+    "Long Term Prepayment - House Rental",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "19840001",
+    "Long Term Prepayment - Insurance",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "19850001",
+    "Long Term Prepayment - Repair & Maintenance",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "19890001",
+    "Long Term Prepayment - Other",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "19910001",
+    "Others non current assets - others",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "19991001",
+    "Open Balance Offsetting Account",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    null,
+    "Account offsetting hanya utk transaksi pengangkatan saldo balance"
+  ],
+  [
+    "19991002",
+    "A/R offsetting Account",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    null,
+    "Account offsetting hanya utk transaksi pengangkatan saldo balance"
+  ],
+  [
+    "19991003",
+    "A/P offsetting Account",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    null,
+    "Account offsetting hanya utk transaksi pengangkatan saldo balance"
+  ],
+  [
+    "19991004",
+    "Inventory offsetting Account",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    null,
+    "Account offsetting hanya utk transaksi pengangkatan saldo balance"
+  ],
+  [
+    "19991005",
+    "Bank offsetting Account",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    null,
+    "Account offsetting hanya utk transaksi pengangkatan saldo balance"
+  ],
+  [
+    "19991006",
+    "Tax Clearing Account",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "19991007",
+    "Fixed Asset Offsetting Account",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    null,
+    "Account offsetting hanya utk transaksi pengangkatan saldo balance"
+  ],
+  [
+    "19991009",
+    "Bussiness Area Adjusment",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    null,
+    "Digunakan utk off set BA yg tdk balance (PPN, WHT dll)"
+  ],
+  [
+    "19991011",
+    "Treasury & Loans Customer Recon. Account Offseting",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "19991012",
+    "R/K offsetting Account",
+    "1911 - CONSTRUCTION IN PROGRES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21110002",
+    "Account Short Term Loans Local Currency BCA",
+    "2110 - SHORT-TERM LOANS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21110003",
+    "Account Short Term Loans Local Currency Citibank",
+    "2110 - SHORT-TERM LOANS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21110004",
+    "Account Short Term Loans Local Currency HSBC",
+    "2110 - SHORT-TERM LOANS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21110005",
+    "Account Short Term Loans Local Currency BRI",
+    "2110 - SHORT-TERM LOANS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21110006",
+    "Account Short Term Loans Local Currency NISP",
+    "2110 - SHORT-TERM LOANS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21110007",
+    "Account Short Term Loans Local Currency Mega",
+    "2110 - SHORT-TERM LOANS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21110008",
+    "Account Short Term Loans Local Currency StanChart",
+    "2110 - SHORT-TERM LOANS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21110009",
+    "Account Short Term Loans Local Currency Bank Lippo",
+    "2110 - SHORT-TERM LOANS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21110010",
+    "Account Short Term Loans Local Curr Bank Danamon",
+    "2110 - SHORT-TERM LOANS",
+    "sheet",
+    "HUTANG BANK JANGKA PENDEK (IDR)",
+    null
+  ],
+  [
+    "21110011",
+    "Account Short Term Loans Local Curr Bank Mandiri",
+    "2110 - SHORT-TERM LOANS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21110012",
+    "Account Short Term Loans Local Curr Bank Sumitomo",
+    "2110 - SHORT-TERM LOANS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21110013",
+    "Account Short Term Loans Local Curr Bank Paribas",
+    "2110 - SHORT-TERM LOANS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21110014",
+    "Account Short Term Loans Local Curr Bank BNI",
+    "2110 - SHORT-TERM LOANS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21110015",
+    "Account Short Term Loans Local Curr DBS Bank",
+    "2110 - SHORT-TERM LOANS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21110016",
+    "Account Short Term Loans Local Curr ANZ Panin Bank",
+    "2110 - SHORT-TERM LOANS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21110017",
+    "Account Short Term Loans Local Curr CIMB Bank",
+    "2110 - SHORT-TERM LOANS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21120002",
+    "Account Short Term Loans Foreign Currency BCA",
+    "2110 - SHORT-TERM LOANS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21120003",
+    "Account Short Term Loans Foreign Currency Citibank",
+    "2110 - SHORT-TERM LOANS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21120004",
+    "Account Short Term Loans Foreign Currency HSBC",
+    "2110 - SHORT-TERM LOANS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21120005",
+    "Account Short Term Loans Foreign Currency Rabo Bnk",
+    "2110 - SHORT-TERM LOANS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21120006",
+    "Account Short Term Loans Foreign Currency ABN-Amro",
+    "2110 - SHORT-TERM LOANS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21120007",
+    "Account Short Term Loans Foreign Currency Mandiri",
+    "2110 - SHORT-TERM LOANS",
+    "sheet",
+    "HUTANG BANK JANGKA PENDEK (VALAS)",
+    null
+  ],
+  [
+    "21120008",
+    "Account Short Term Loans Foreign Currency BNP Pari",
+    "2110 - SHORT-TERM LOANS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21120012",
+    "Account Short Term Loans Foreign Cur ANZ Panin",
+    "2110 - SHORT-TERM LOANS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21130002",
+    "Account Short Term Loans Foreign Curr Sumitomo Mit",
+    "2110 - SHORT-TERM LOANS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21130003",
+    "Account Short Term Loans Foreign Curr Ing Bank",
+    "2110 - SHORT-TERM LOANS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21311001",
+    "Accounts Payable-Trade Payable-Local Suppliers",
+    "2130 - ACCOUNTS PAYABLE",
+    "sheet",
+    "HUTANG USAHA Suplier dalam negeri",
+    "Tidak bisa lgs posting di akun ini harus dari Modul AP - rincian per suplier di modul AP"
+  ],
+  [
+    "21312001",
+    "Accounts payable-foreign Suppliers",
+    "2130 - ACCOUNTS PAYABLE",
+    "sheet",
+    "HUTANG USAHA Suplier luar negeri",
+    "Tidak bisa lgs posting di akun ini harus dari Modul AP - rincian per suplier di modul AP"
+  ],
+  [
+    "21313001",
+    "Accounts payable - Related Parties",
+    "2130 - ACCOUNTS PAYABLE",
+    "sheet",
+    "HUTANG USAHA Suplier hubungan istimewa (tidak di konsolidai)",
+    "Tidak bisa lgs posting di akun ini harus dari Modul AP - rincian per suplier di modul AP"
+  ],
+  [
+    "21314001",
+    "Account Accrued A/P",
+    "2130 - ACCOUNTS PAYABLE",
+    "sheet",
+    "HUTANG USAHA - belum ada invoicenya",
+    "Tidak bisa lgs posting di akun ini harus dari Modul AP - rincian per suplier di modul AP"
+  ],
+  [
+    "21315001",
+    "Account Accrued Freight",
+    "2130 - ACCOUNTS PAYABLE",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21319001",
+    "Account Accrued Others",
+    "2130 - ACCOUNTS PAYABLE",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21321001",
+    "Accounts Intercompany - Trade",
+    "2130 - ACCOUNTS PAYABLE",
+    "sheet",
+    "HUTANG USAHA Suplier hubungan istimewa (di konsolidai)",
+    "Tidak bisa lgs posting di akun ini harus dari Modul AP - rincian per suplier di modul AP"
+  ],
+  [
+    "21322001",
+    "Accounts Intercompany - Non Trade",
+    "2130 - ACCOUNTS PAYABLE",
+    "sheet",
+    "HUBUNGAN R/K (diluar PT / company code)",
+    "Tidak bisa lgs posting di akun ini harus dari Modul AP - rincian per suplier di modul AP"
+  ],
+  [
+    "21331001",
+    "Accounts Inter-Branches - Trade",
+    "2130 - ACCOUNTS PAYABLE",
+    "sheet",
+    null,
+    "Tidak bisa lgs posting di akun ini harus dari Modul AP - rincian per suplier di modul AP"
+  ],
+  [
+    "21332001",
+    "Accounts Inter-Branches - Non Trade",
+    "2130 - ACCOUNTS PAYABLE",
+    "sheet",
+    "HUBUNGAN R/K (dalam satu PT / company code)",
+    "Tidak bisa lgs posting di akun ini harus dari Modul AP - rincian per suplier di modul AP"
+  ],
+  [
+    "21341001",
+    "Plasma Payables",
+    "2130 - ACCOUNTS PAYABLE",
+    "sheet",
+    "PIUTANG PLASMA",
+    "Hanya utk yg mempunyai kebun plasma"
+  ],
+  [
+    "21341002",
+    "Plasma Payables-Saving",
+    "2130 - ACCOUNTS PAYABLE",
+    "sheet",
+    null,
+    "Hanya utk yg mempunyai kebun plasma"
+  ],
+  [
+    "21341003",
+    "Plasma Payables-Installment",
+    "2130 - ACCOUNTS PAYABLE",
+    "sheet",
+    null,
+    "Hanya utk yg mempunyai kebun plasma"
+  ],
+  [
+    "21341004",
+    "Plasma Payables-Installment-Non KKPA",
+    "2130 - ACCOUNTS PAYABLE",
+    "sheet",
+    null,
+    "Hanya utk yg mempunyai kebun plasma"
+  ],
+  [
+    "21341005",
+    "Plasma Payable-Accrual Transport",
+    "2130 - ACCOUNTS PAYABLE",
+    "sheet",
+    null,
+    "Hanya utk yg mempunyai kebun plasma"
+  ],
+  [
+    "21341006",
+    "Plasma Payable-Up Keep Road Saving",
+    "2130 - ACCOUNTS PAYABLE",
+    "sheet",
+    null,
+    "Hanya utk yg mempunyai kebun plasma"
+  ],
+  [
+    "21341007",
+    "Plasma Payable-Accrual KUD Fee",
+    "2130 - ACCOUNTS PAYABLE",
+    "sheet",
+    null,
+    "Hanya utk yg mempunyai kebun plasma"
+  ],
+  [
+    "21341008",
+    "Plasma Payable-Replanting",
+    "2130 - ACCOUNTS PAYABLE",
+    "sheet",
+    null,
+    "Hanya utk yg mempunyai kebun plasma"
+  ],
+  [
+    "21391001",
+    "Others-Account Related Parties",
+    "2130 - ACCOUNTS PAYABLE",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21392001",
+    "Others - Account Claims",
+    "2130 - ACCOUNTS PAYABLE",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21393001",
+    "Others - Accounts Suppliers - Non Trade",
+    "2130 - ACCOUNTS PAYABLE",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21399001",
+    "Others-Accounts Miscellaneous",
+    "2130 - ACCOUNTS PAYABLE",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21411001",
+    "Accrued Local Currency Interest",
+    "2140 - ACCRUED EXPENSES",
+    "sheet",
+    "HUTANG BUNGA (Rp)",
+    null
+  ],
+  [
+    "21412001",
+    "Accrued Foreign Currency Interest",
+    "2140 - ACCRUED EXPENSES",
+    "sheet",
+    "HUTANG BUNGA (Valas)",
+    null
+  ],
+  [
+    "21414001",
+    "Interest Expenses - Related Parties",
+    "2140 - ACCRUED EXPENSES",
+    "sheet",
+    "HUTANG BUNGA (Related Parties)",
+    null
+  ],
+  [
+    "21491001",
+    "Accrued Variable Selling Expenses",
+    "2140 - ACCRUED EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21492001",
+    "Accrued- Others - A & P Expenses",
+    "2140 - ACCRUED EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21493001",
+    "Accrued- Others - Financial Related Charges",
+    "2140 - ACCRUED EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21494001",
+    "Accrued- Others - Importation charges Exp.",
+    "2140 - ACCRUED EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21495001",
+    "Accrued Others -Salaries & Empl. Benefits",
+    "2140 - ACCRUED EXPENSES",
+    "sheet",
+    "GAJI YANG MASIH HARUS DIBAYAR",
+    "Jamsostek (akun 32.210) dianggap sebagai VENDOR (dari modul AP)"
+  ],
+  [
+    "21499001",
+    "Accrued- Others -  Expenses",
+    "2140 - ACCRUED EXPENSES",
+    "sheet",
+    "SEWA, LAINNYA",
+    "Hanya utk transaksi yang tidak menggunakan Vendor"
+  ],
+  [
+    "21510001",
+    "Withholding Tax PPh Ps 21",
+    "2150 - TAXES PAYABLE",
+    "sheet",
+    "PPH 21",
+    null
+  ],
+  [
+    "21510002",
+    "Employees Income Tax Payable (PCB)",
+    "2150 - TAXES PAYABLE",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21520001",
+    "Withholding Tax PPh Ps 23",
+    "2150 - TAXES PAYABLE",
+    "sheet",
+    "PPH 23",
+    null
+  ],
+  [
+    "21520002",
+    "Withholding Tax PPh Ps 4 (2)",
+    "2150 - TAXES PAYABLE",
+    "sheet",
+    "PPH 23 (FINAL)",
+    null
+  ],
+  [
+    "21520003",
+    "Withholding Tax PPh Ps 22",
+    "2150 - TAXES PAYABLE",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21530001",
+    "Corporate Income Tax",
+    "2150 - TAXES PAYABLE",
+    "sheet",
+    "PPH 29",
+    null
+  ],
+  [
+    "21540001",
+    "Withholding Tax PPh Ps 26",
+    "2150 - TAXES PAYABLE",
+    "sheet",
+    "PPH 26",
+    null
+  ],
+  [
+    "21550001",
+    "VAT OUT",
+    "2150 - TAXES PAYABLE",
+    "sheet",
+    "PPN KELUARAN",
+    null
+  ],
+  [
+    "21550002",
+    "Sales Tax Payable",
+    "2150 - TAXES PAYABLE",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21560001",
+    "VAT OUT - Curried Forward",
+    "2150 - TAXES PAYABLE",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21580001",
+    "Withholding Tax PPh Ps 15",
+    "2150 - TAXES PAYABLE",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21590001",
+    "Taxes Payable - Others Tax",
+    "2150 - TAXES PAYABLE",
+    "sheet",
+    "PBB",
+    null
+  ],
+  [
+    "21610001",
+    "Dividends Payable",
+    "2150 - TAXES PAYABLE",
+    "sheet",
+    "HUTANG DEVIDEN",
+    null
+  ],
+  [
+    "21711012",
+    "Domestic Loans - Local Currency - Bank Danamon",
+    "2170 - CURRENT MATURITIES OF LONG-TERM DEBTS",
+    "sheet",
+    "HUTANG BANK YG AKAN JATUH TEMPO",
+    null
+  ],
+  [
+    "21711017",
+    "Domestic Loans - Local Currency - Bank CIMB Niaga",
+    "2170 - CURRENT MATURITIES OF LONG-TERM DEBTS",
+    "sheet",
+    "HUTANG BANK YG AKAN JATUH TEMPO",
+    null
+  ],
+  [
+    "21711018",
+    "Domestic Loans - Local Currency - DBSI Bank",
+    "2170 - CURRENT MATURITIES OF LONG-TERM DEBTS",
+    "sheet",
+    "HUTANG BANK YG AKAN JATUH TEMPO",
+    "21711018"
+  ],
+  [
+    "21712016",
+    "Domestic Loans -Foreign Currency Standard Charter.",
+    "2170 - CURRENT MATURITIES OF LONG-TERM DEBTS",
+    "sheet",
+    "HUTANG BANK YG AKAN JATUH TEMPO",
+    null
+  ],
+  [
+    "21731001",
+    "Obligation Under capital Lease",
+    "2170 - CURRENT MATURITIES OF LONG-TERM DEBTS",
+    "sheet",
+    "HUTANG LEASING YANG AKAN JATUH TEMPO",
+    null
+  ],
+  [
+    "21741001",
+    "Bond Payable -Current Portion",
+    "2170 - CURRENT MATURITIES OF LONG-TERM DEBTS",
+    "sheet",
+    "OBLIGASI YG AKAN JATUH TEMPO",
+    null
+  ],
+  [
+    "21742001",
+    "Sukuk Ijarah Payable -Current Portion",
+    "2170 - CURRENT MATURITIES OF LONG-TERM DEBTS",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "21990002",
+    "Deposit Received Jamsostek",
+    "2170 - CURRENT MATURITIES OF LONG-TERM DEBTS",
+    "sheet",
+    null,
+    "Uang yg diterima dari jamsostek yg akan dibayar kembali ke karyawan"
+  ],
+  [
+    "21990003",
+    "Deposit Received Retirement Fund",
+    "2170 - CURRENT MATURITIES OF LONG-TERM DEBTS",
+    "sheet",
+    null,
+    "Uang yg diterima dari manulife yg akan dibayar kembali ke karyawan"
+  ],
+  [
+    "21990005",
+    "Deposit Received Customer",
+    "2170 - CURRENT MATURITIES OF LONG-TERM DEBTS",
+    "sheet",
+    "PEMBAYARAN DIMUKA OLEH PEMBELI",
+    "Pakai Modul AR tidak bisa langsung"
+  ],
+  [
+    "21990008",
+    "Prepaid Income",
+    "2170 - CURRENT MATURITIES OF LONG-TERM DEBTS",
+    "sheet",
+    "PENDAPATAN BUNGA/SEWA DITERIMA DIMUKA",
+    null
+  ],
+  [
+    "22110001",
+    "Due to Subsidiaries - Interest Bearing",
+    "22 - DUE TO RELATED PARTIES",
+    "inferred",
+    "WESEL BAYAR (DENGAN BUNGA)",
+    "Menggunakan Modul LOAN"
+  ],
+  [
+    "22120001",
+    "Due to Subsidiaries - Non Interest Bearing",
+    "22 - DUE TO RELATED PARTIES",
+    "inferred",
+    "HUTANG AFILIASI (TANPA BUNGA)",
+    null
+  ],
+  [
+    "22210001",
+    "Due to Affiliaties - Interest Bearing",
+    "22 - DUE TO RELATED PARTIES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "22220001",
+    "Due to Affiliaties - Non Interest Bearing",
+    "22 - DUE TO RELATED PARTIES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "22310001",
+    "Due to Shareholder - Interest Bearing",
+    "22 - DUE TO RELATED PARTIES",
+    "inferred",
+    "HPS (DENGAN BUNGA)",
+    null
+  ],
+  [
+    "22320001",
+    "Due to Shareholder - Non Interest Bearing",
+    "22 - DUE TO RELATED PARTIES",
+    "inferred",
+    "HPS (TANPA BUNGA)",
+    null
+  ],
+  [
+    "22410001",
+    "Non affiliated Related Parties",
+    "22 - DUE TO RELATED PARTIES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "23110002",
+    "Long-Term Debt - Domestic Loans-Local Currency-BCA",
+    "23 - LONG-TERM DEBTS",
+    "inferred",
+    "HUTANG BANK JANGKA PANJANG (Rp)",
+    null
+  ],
+  [
+    "23110003",
+    "Long-Term Debt - Domestic Loans-Local Currency-BRI",
+    "23 - LONG-TERM DEBTS",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "23110012",
+    "Long-Term Deb -Domestic Loans-Local Curr-B Danamon",
+    "23 - LONG-TERM DEBTS",
+    "inferred",
+    "HUTANG BANK JANGKA PANJANG (Rp)",
+    null
+  ],
+  [
+    "23110017",
+    "Long-Term Deb -Domestic Loans-Local Cur-CIMB Niaga",
+    "23 - LONG-TERM DEBTS",
+    "inferred",
+    "HUTANG BANK JANGKA PANJANG (Rp)",
+    null
+  ],
+  [
+    "23110018",
+    "Long-Term Deb -Domestic Loans-Local Cur-DBSI Bank",
+    "23 - LONG-TERM DEBTS",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "23120005",
+    "Long-Term Debt-Domestic Loans-Foreign Cur Citibank",
+    "23 - LONG-TERM DEBTS",
+    "inferred",
+    "HUTANG BANK JANGKA PANJANG (valas)",
+    null
+  ],
+  [
+    "23120009",
+    "Long-Term Debt-Domestic Loans-Foreign Cur Rabo Bnk",
+    "23 - LONG-TERM DEBTS",
+    "inferred",
+    "HUTANG BANK JANGKA PANJANG (valas)",
+    null
+  ],
+  [
+    "23120010",
+    "Long-Term Debt-Domestic Loans-Foreign Cur ABN Bank",
+    "23 - LONG-TERM DEBTS",
+    "inferred",
+    "HUTANG BANK JANGKA PANJANG (valas)",
+    null
+  ],
+  [
+    "23120011",
+    "Long-Term Debt-Domestic Loans-Foreign Cur BOT Mits",
+    "23 - LONG-TERM DEBTS",
+    "inferred",
+    "HUTANG BANK JANGKA PANJANG (valas)",
+    null
+  ],
+  [
+    "23120012",
+    "Long-Term Debt-Domestic Loans-Foreign Cur MZI Bank",
+    "23 - LONG-TERM DEBTS",
+    "inferred",
+    "HUTANG BANK JANGKA PANJANG (valas)",
+    null
+  ],
+  [
+    "23120016",
+    "Long-Term Debt-Domestic Loans-Foreign Cur SCB Bank",
+    "23 - LONG-TERM DEBTS",
+    "inferred",
+    "HUTANG BANK JANGKA PANJANG (valas)",
+    null
+  ],
+  [
+    "23210012",
+    "Long Term Debt - Foreign Loans - Ing Bank",
+    "23 - LONG-TERM DEBTS",
+    "inferred",
+    "HUTANG BANK JANGKA PANJANG (luar negeri)",
+    null
+  ],
+  [
+    "23210017",
+    "Long Term Debt - Foreign Loans - The Sumitomo Trus",
+    "23 - LONG-TERM DEBTS",
+    "inferred",
+    "HUTANG BANK JANGKA PANJANG (luar negeri)",
+    null
+  ],
+  [
+    "23210019",
+    "Long Term Debt - Foreign Loans - DBS Bank",
+    "23 - LONG-TERM DEBTS",
+    "inferred",
+    "HUTANG BANK JANGKA PANJANG (luar negeri)",
+    null
+  ],
+  [
+    "23310001",
+    "Long Term Debt - Obligation Under Capital Lease",
+    "23 - LONG-TERM DEBTS",
+    "inferred",
+    "HUTANG LEASING JANGKA PANJANG",
+    null
+  ],
+  [
+    "23410001",
+    "Long Term Debt - Bond Payable - LTD",
+    "23 - LONG-TERM DEBTS",
+    "inferred",
+    "OBLIGASI JANGKA PANJANG",
+    null
+  ],
+  [
+    "23420001",
+    "Long Term Debt - Sukuk Ijarah Payable - LTD",
+    "23 - LONG-TERM DEBTS",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "23510001",
+    "Long Term Debt - Plasma Project",
+    "23 - LONG-TERM DEBTS",
+    "inferred",
+    "PIUTANG PLASMA",
+    null
+  ],
+  [
+    "24210001",
+    "Deferred Credi-nearned Revenue On Sales-Lease Back",
+    "24 - OTHER LONG-TERM LIABILITIES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "24310001",
+    "Deposit Received-Customers Deposits",
+    "24 - OTHER LONG-TERM LIABILITIES",
+    "inferred",
+    "UANG MUKA PEMBELI (JANGKA PANJANG)",
+    "Pakai Modul AR tidak bisa langsung"
+  ],
+  [
+    "24320001",
+    "Deposit Received-Guarantee Deposits",
+    "24 - OTHER LONG-TERM LIABILITIES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "24390001",
+    "Deposit Received - Others",
+    "24 - OTHER LONG-TERM LIABILITIES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "24410001",
+    "Employee Benefit - Pension Liabilities",
+    "24 - OTHER LONG-TERM LIABILITIES",
+    "inferred",
+    "HUTANG DANA PENSIUN JANGKA PANJANG",
+    "Tidak digunakan lagi di nett off dng aktivanya (pembayaran akan di create Vendor Manulife)"
+  ],
+  [
+    "24910001",
+    "Long Term Liabilities Others",
+    "24 - OTHER LONG-TERM LIABILITIES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "26100001",
+    "Minority Interest",
+    "26 - MINORITY INTEREST",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "28100001",
+    "Deferred Tax Liabilities",
+    "28 - DEFERRED TAX LIABILITIES",
+    "inferred",
+    "KEWAJIBAN PAJAK TANGGUHAN",
+    null
+  ],
+  [
+    "31120001",
+    "Capital Stock - Common stock -Private shareholders",
+    "31-35,39 - CAPITAL & RESERVES",
+    "inferred",
+    "MODAL DISETOR",
+    null
+  ],
+  [
+    "31220001",
+    "Capital Stock - Prefer.stock -Private shareholders",
+    "31-35,39 - CAPITAL & RESERVES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "32120001",
+    "Add.paid in cap. - comm.stock -Private Shareholder",
+    "31-35,39 - CAPITAL & RESERVES",
+    "inferred",
+    "AGIO/DISAGIO",
+    null
+  ],
+  [
+    "32310001",
+    "Deposit For Fut. Stock Subscriptions",
+    "31-35,39 - CAPITAL & RESERVES",
+    "inferred",
+    "UANG MUKA SETORAN MODAL",
+    null
+  ],
+  [
+    "33100001",
+    "Revaluation Increment In PP & E",
+    "31-35,39 - CAPITAL & RESERVES",
+    "inferred",
+    "SELISIH PENILAIN KEMBALI AKTIVA TETAP",
+    null
+  ],
+  [
+    "34100001",
+    "Defferences Arising From Restructing Transaction",
+    "31-35,39 - CAPITAL & RESERVES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "35100001",
+    "Unrealized Gain(Loss) On Invest. In Marketable Sec",
+    "31-35,39 - CAPITAL & RESERVES",
+    "inferred",
+    "LABA(RUGI) BELUM REALISASI",
+    null
+  ],
+  [
+    "36100001",
+    "Retained Earnings - Prior Years",
+    "36 - RETAINED EARNINGS",
+    "inferred",
+    "LABA RUGI DITAHAN TAHUN LALU",
+    null
+  ],
+  [
+    "36200001",
+    "Retained Earning - Adjustment Prior Years",
+    "36 - RETAINED EARNINGS",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "36300001",
+    "Retained Earning - Current Y.T.D",
+    "36 - RETAINED EARNINGS",
+    "inferred",
+    "LABA RUGI DITAHAN CURRENT",
+    null
+  ],
+  [
+    "39100001",
+    "Corporate Control - Capital Fund",
+    "31-35,39 - CAPITAL & RESERVES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "41111001",
+    "General - Domestic Sales - Gross",
+    "41 - REVENUE",
+    "inferred",
+    "PENJUALAN - DOMESTIK",
+    "Menggunakan MODUL SD tdk bs langsung Klaim mutu dicatat sbg pengurang penjualan"
+  ],
+  [
+    "41112001",
+    "General - Domestic Sales - Return",
+    "41 - REVENUE",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "41113001",
+    "General - Domestic Sales - Discount",
+    "41 - REVENUE",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "41121001",
+    "General - Export  Sales - Gross",
+    "41 - REVENUE",
+    "inferred",
+    "PENJUALAN - EKSPORT",
+    "Menggunakan MODUL SD tdk bs langsung Klaim mutu dicatat sbg pengurang penjualan"
+  ],
+  [
+    "41122001",
+    "General - Export  Sales - Return",
+    "41 - REVENUE",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "41123001",
+    "General - Export  Sales - Discount",
+    "41 - REVENUE",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "41131001",
+    "Intercompany - Domestic Sales - Gross",
+    "41 - REVENUE",
+    "inferred",
+    "PENJUALAN - DOMESTIK - RELATED PARTIES",
+    "Menggunakan MODUL SD tdk bs langsung -  Klaim mutu dicatat sbg pengurang penjualan"
+  ],
+  [
+    "41132001",
+    "Intercompany - Domestic Sales - Return",
+    "41 - REVENUE",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "41133001",
+    "Intercompany - Domestic Sales - Discount",
+    "41 - REVENUE",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "41141001",
+    "Intercompany - Export Sales - Gross",
+    "41 - REVENUE",
+    "inferred",
+    "PENJUALAN - EKSPORT - RELATED PARTIES",
+    null
+  ],
+  [
+    "41142001",
+    "Intercompany -Export Sales - Return",
+    "41 - REVENUE",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "41143001",
+    "Intercompany -Export Sales - Discount",
+    "41 - REVENUE",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "41151001",
+    "Interbranches - Domestic Sales - Gross",
+    "41 - REVENUE",
+    "inferred",
+    null,
+    "Menggunakan MODUL SD tdk bs langsung Klaim mutu dicatat sbg pengurang penjualan"
+  ],
+  [
+    "41152001",
+    "Interbranches - Domestic Sales - Return",
+    "41 - REVENUE",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "41153001",
+    "Interbranches - Domestic Sales -Discount",
+    "41 - REVENUE",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "41161001",
+    "Interdivision - Domestic Sales - Gross",
+    "41 - REVENUE",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "41162001",
+    "Interdivision - Domestic Sales - Return",
+    "41 - REVENUE",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "41163001",
+    "Interdivision - Domestic Sales - Discount",
+    "41 - REVENUE",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "41171001",
+    "Related Parties - Domestic Sales - Gross",
+    "41 - REVENUE",
+    "inferred",
+    null,
+    "Menggunakan MODUL SD tdk bs langsung Klaim mutu dicatat sbg pengurang penjualan"
+  ],
+  [
+    "41172001",
+    "Related Parties - Domestic Sales -Return",
+    "41 - REVENUE",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "41173001",
+    "Related Parties - Domestic Sales -Discount",
+    "41 - REVENUE",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "41181001",
+    "Related Parties - Export Sales - Gross",
+    "41 - REVENUE",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "41182001",
+    "Related Parties - Export Sales - Return",
+    "41 - REVENUE",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "41183001",
+    "Related Parties - Export Sales - Discount",
+    "41 - REVENUE",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "41320001",
+    "Revenue from technical fee",
+    "41 - REVENUE",
+    "inferred",
+    null,
+    "DIPAKAI UNTUK SAIN"
+  ],
+  [
+    "41330001",
+    "Revenue from management fee",
+    "41 - REVENUE",
+    "inferred",
+    null,
+    "DIPAKAI UNTUK SAIN / IIP"
+  ],
+  [
+    "41390001",
+    "Revenue From Processing Fee",
+    "41 - REVENUE",
+    "inferred",
+    null,
+    "Jasa Maklon -->> Jika ada"
+  ],
+  [
+    "51100001",
+    "Cost Of Goods Sold",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "52100001",
+    "Usage Variance - Domestic",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "53100001",
+    "Price Variance - Raw Material",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    "dari modul MM utk menampung selisih harga antara PO dng invoice"
+  ],
+  [
+    "53100002",
+    "Price Variance - Chemical",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    "dari modul MM utk menampung selisih harga antara PO dng invoice"
+  ],
+  [
+    "53200001",
+    "Price Variance - Packaging Material",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    "dari modul MM utk menampung selisih harga antara PO dng invoice"
+  ],
+  [
+    "53300001",
+    "Price Variance - WIP stockable",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    "dari modul MM utk menampung selisih harga antara PO dng invoice"
+  ],
+  [
+    "53300002",
+    "Price Variance - By Product",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    "dari modul MM utk menampung selisih harga antara PO dng invoice"
+  ],
+  [
+    "53400001",
+    "Price Variance - Finished Goods",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    "dari modul MM utk menampung selisih harga antara PO dng invoice"
+  ],
+  [
+    "53500001",
+    "Price Variance - Sparepart",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    "dari modul MM utk menampung selisih harga antara PO dng invoice"
+  ],
+  [
+    "53900001",
+    "Price Variance - Standard Price Variance",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "54100001",
+    "Inv. Consumpt .Basic mat.& ingredients consumption",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    "dari modul MM (menampung pengeluaran barang) - termasuk pembelian TBS (stock)"
+  ],
+  [
+    "54100002",
+    "Inv. Consumpt .chemical consumption",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    "dari modul MM (menampung pengeluaran barang)"
+  ],
+  [
+    "54100003",
+    "Inv. Consumption Fertiliezer",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    "dari modul MM (menampung pengeluaran barang)"
+  ],
+  [
+    "54100004",
+    "Inv. Consumption Agrochemical",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    "dari modul MM (menampung pengeluaran barang)"
+  ],
+  [
+    "54100005",
+    "Inv. Consumption Seed",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    "dari modul MM (menampung pengeluaran barang)"
+  ],
+  [
+    "54100006",
+    "Inv. Consumption Seedling",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    "dari modul MM (menampung pengeluaran barang)"
+  ],
+  [
+    "54200001",
+    "Inv. Consumption - Packaging materials consumption",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "54300001",
+    "Inv Cons. - WIP Stockable Consumption",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "54300002",
+    "Inv Cons. - By Product Consumption",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "54400001",
+    "Inventory Consumption - Finish Good Consumption",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "54500001",
+    "Inv Consumption - Spare part  material consumption",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "54600001",
+    "Inventory Cons.-Material Cons. for Subcontracting",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "54700001",
+    "Inv. Consumption-Ext. Sparepart  Mat. Consumption",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "54800001",
+    "Inv. Consumption-External Repair & Maint. Fee",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "55100001",
+    "Factory Output - FG / SFG",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    "Tidak boleh  jurnal langsung ke account ini",
+    "Sisi kredit dari hasil produksi"
+  ],
+  [
+    "55200001",
+    "Factory Output - Work In Progress",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "55300001",
+    "Factory Output - Intransit Material",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "55400001",
+    "Factory Output - Receipt From Subcontract",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "55500001",
+    "Factory Output - FG / SFG Sparepart",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "55600001",
+    "Factory Output - Work In Progress Spare Part",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "56100001",
+    "Stock Clearing Delivery P/L - Others",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "57210001",
+    "FFB - Purchase Plasma",
+    "57 - PLANTATION & PLASMA COST",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "57811001",
+    "Plantation Cost - Harvesting and Collecting",
+    "57 - PLANTATION & PLASMA COST",
+    "inferred",
+    "Tidak boleh  jurnal langsung ke account ini",
+    "Account ini merupakan account settlement"
+  ],
+  [
+    "57812001",
+    "Plantation Cost - Upkeep",
+    "57 - PLANTATION & PLASMA COST",
+    "inferred",
+    "Tidak boleh  jurnal langsung ke account ini",
+    "Account ini merupakan account settlement"
+  ],
+  [
+    "57813001",
+    "Plantation Cost - Fertilizing",
+    "57 - PLANTATION & PLASMA COST",
+    "inferred",
+    "Tidak boleh  jurnal langsung ke account ini",
+    "Account ini merupakan account settlement"
+  ],
+  [
+    "57814001",
+    "Plantation Cost - Estate Output",
+    "57 - PLANTATION & PLASMA COST",
+    "inferred",
+    "Tidak boleh  jurnal langsung ke account ini",
+    "Account ini merupakan account settlement"
+  ],
+  [
+    "57815001",
+    "Plantation Cost - General Charges",
+    "57 - PLANTATION & PLASMA COST",
+    "inferred",
+    "Tidak boleh  jurnal langsung ke account ini",
+    "Account ini merupakan account settlement"
+  ],
+  [
+    "59999001",
+    "Group Valuation Clearing Account",
+    "51-56,59 - COST OF GOODS SOLD & VARIANCES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "65110001",
+    "A&P - Media - Television Airtime TVRI",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65110002",
+    "A&P - Media - Television Airtime TPI",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65110003",
+    "A&P - Media - Television Airtime RCTI",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65110004",
+    "A&P - Media - Television Airtime SCTV",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65110005",
+    "A&P - Media - Television Airtime Anteve",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65110006",
+    "A&P - Media - Television Airtime Indosiar",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65110007",
+    "A&P - Media - Television Airtime Metro TV",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65110008",
+    "A&P - Media - Television Airtime Lativi",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65110009",
+    "A&P - Media - Television Airtime Trans TV",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65110010",
+    "A&P - Media - Television Airtime TV7",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65110011",
+    "A&P - Media - Television Airtime Global TV",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65110012",
+    "A&P - Media - Television Airtime Local",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65110013",
+    "A&P - Media - Television Airtime Media Prima",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65120001",
+    "A&P - Media - Cinema Showing",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65130001",
+    "A&P - Media - Radio Airtime",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65140001",
+    "A&P - Media - Newspaper Space",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65150001",
+    "A&P - Media - Magazine Space",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65160001",
+    "A&P - Media - Outdoor  Space",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65170001",
+    "A&P - Media - Pos Materials",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65180001",
+    "A&P - Media - Literature / Brochure",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65190001",
+    "A&P - Media - Others",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65210001",
+    "A&P - Production - Television Production Cost",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65210002",
+    "A&P - Production - Talent",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65220001",
+    "A&P - Production - Cinema Production Cost",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65230001",
+    "A&P - Production - Radio Production Cost",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65240001",
+    "A&P - Production - Newspaper Production Cost",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65250001",
+    "A&P - Production - Magazine Production Cost",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65260001",
+    "A&P - Production - Outdoor  Production Cost",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65270001",
+    "A&P - Production - Pos Materials Production Cost",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65280001",
+    "A&P - Product - Literature / Brochure Prod.cost",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65290001",
+    "A&P - Production - Others",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65310001",
+    "A&P - Consumer Promotion - Sampling",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65320001",
+    "A&P - Consumer promotion - Bonus Product",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65330001",
+    "A&P - Consumer Promotion - Price off",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65340001",
+    "A&P - Consumer Promotion - Premium",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65350001",
+    "A&P - Consumer promotion - Game/Lottery",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65360001",
+    "A&P - Consumer Promotion - Refund",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65370001",
+    "A&P - Consumer Promotion -Direct Selling",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65390001",
+    "A&P - Consumer Promotion - Others",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65410001",
+    "A&P - Trade Promotion - Quantity Discount.",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65420001",
+    "A&P - Trade Promotion -Display Expense",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65430001",
+    "A&P - Trade Promotion - Cooperative Advertising",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65440001",
+    "A&P - Trade Promotion - Cooperative Promotion",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65450001",
+    "A&P - Trade Promotion - Prizes/ awards / giveaways",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65460001",
+    "A&P - Trade Promotion - Van subsidy",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65470001",
+    "A&P - Trade Promotion - Price off",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65490001",
+    "A&P - Trade Promotion - Others",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65810001",
+    "A&P - Other Promotion - Salesmen's contest expense",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65820001",
+    "A&P - Other promotion - Sponsorship",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65830001",
+    "A&P - Other Promotion - Show / Exhibit",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65840001",
+    "A&P - Other Promotion - Product samples",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65850001",
+    "A&P - Other Promotion - Sales promotion girls",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65860001",
+    "A&P - Other Promotion - Direct mail / marketing",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65870001",
+    "A&P - Other Promotion - Public relations",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "65890001",
+    "A&P - Other promotion -Others",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    "BEBAN PROMOSI/IKLAN",
+    "Jika ada"
+  ],
+  [
+    "65910001",
+    "A&P - Event Income",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "66110001",
+    "Selling Exp - Distribution expense",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "66120001",
+    "Selling exp- bad goods",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    "Utk Claim quality (TBC)"
+  ],
+  [
+    "66121001",
+    "Selling exp- bad goods handling",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "66130001",
+    "Selling exp- bad goods subsidy",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "66140001",
+    "Selling exp- cash discount",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "66150001",
+    "Selling exp- sales discount",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "66160001",
+    "Selling exp- main distribution commission",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "66170001",
+    "Selling Expenses-Distribution Fee",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "66180001",
+    "Selling exp- export tax",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "66190001",
+    "Selling exp- others",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "66190002",
+    "Sales Incentive",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "66190003",
+    "Bad Debt",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "66190004",
+    "Selling Expense Others - Direct Selling",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    "Di COA ISM tidak ada"
+  ],
+  [
+    "66211001",
+    "Freight to customer  - local",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    "BEBAN PENGANGKUTAN - PIHAK SENDIRI",
+    null
+  ],
+  [
+    "66211101",
+    "Freight out customer-local External Trans Delivery",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    "BEBAN PENGANGKUTAN - EKSTERNAL",
+    null
+  ],
+  [
+    "66212001",
+    "Freight to customer  - export",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    "BEBAN PENGANGKUTAN - EKSTERNAL - EKSPORT",
+    null
+  ],
+  [
+    "66221001",
+    "Delivery, Loading & trans - Insurance - Local",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "66222001",
+    "Delivery, Loading & trans - Insurance - Export",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    "PREMI ASURANSI ANGKUTAN CPO",
+    null
+  ],
+  [
+    "66291001",
+    "Delivery, Loading & trans - Others - Local",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    "LOADING SURVEY -  LOKAL",
+    null
+  ],
+  [
+    "66291002",
+    "Handling & Packing",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    "BEBAN MUAT - LOKAL",
+    null
+  ],
+  [
+    "66291003",
+    "Pumping/Loading Expenses",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    "ONGKOS POMPA",
+    null
+  ],
+  [
+    "66292001",
+    "Delivery, Loading & trans - Others Export",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    "LOADING SURVEY -  EKSPORT",
+    null
+  ],
+  [
+    "66310001",
+    "Selling Exp - Distribution Expenses Variance",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "66320001",
+    "Freight & Others Expense Variance",
+    "6000 - ADVERTISING & PROMOTION AND SELLING EXPENSES",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "70110001",
+    "Salaries",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "GAJInGAJI STAFnGAJI/UPAH NON STAFnGaji & Upah (tergantung jenis upahnya)nUnit Penunjang (Laboratorium)",
+    "Biaya gaji digunakan utk menampung semua level dari PHL s/d Executive tidak dibedakannPengganti Account 50.xxx dng diisi Cost Center kendaraan/mesin ybsnPengganti Account 71.7xx dng diisi Cost Center Laboratorium"
+  ],
+  [
+    "70120001",
+    "Overtime",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "LEMBURnLEMBUR NON STAF",
+    null
+  ],
+  [
+    "70130001",
+    "incentive",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "PREMI",
+    null
+  ],
+  [
+    "70140001",
+    "THR (Fixed Bonus)",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "TUNJANGAN LAINNYA - THR",
+    null
+  ],
+  [
+    "70150001",
+    "Variable Bonus",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "TUNJANGAN LAINNYA - BONUS",
+    null
+  ],
+  [
+    "70160001",
+    "Medical Allowance",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "TUNJANGAN PENGOBATAN",
+    null
+  ],
+  [
+    "70180001",
+    "Transportation & Meal Allowance",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "TRANSPORT & UANG MAKAN",
+    null
+  ],
+  [
+    "70190001",
+    "Salaries & Allowance - Others",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "TUNJANGAN LAINNYA  (TERMASUK TUNJ CAR LOAN STAF)",
+    "Tunjangan Jamsostek (yg merupakan obyek pph 21), tunjangan lain2"
+  ],
+  [
+    "70190002",
+    "Tax Allowance PPh 21/26",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "TUNJANGAN PPH 21 - EXCnTUNJANGAN PPH 21 - STAF",
+    null
+  ],
+  [
+    "70211001",
+    "Medicare / Hospitalization",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    "Tidak kena pajak"
+  ],
+  [
+    "70221001",
+    "Transportation subsidy",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    "Tidak kena pajak"
+  ],
+  [
+    "70222001",
+    "Meals Subsidy",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    "Tidak kena pajak"
+  ],
+  [
+    "70223001",
+    "Employee Benefit-Car Loan",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "TUNJANGAN LAINNYA - CAR LOAN-EXECUTIVE",
+    null
+  ],
+  [
+    "70251001",
+    "Employee Insurance - Accident Insurance",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "TUNJANGAN LAINNYA - ASURANSI KECELAKAAN",
+    null
+  ],
+  [
+    "70252001",
+    "Employee Insurance - Medicare Insurance",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70261001",
+    "Uniform",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    "Bisa dipakai untuk pembelian seragam sekretaris"
+  ],
+  [
+    "70271001",
+    "Car rental",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70281001",
+    "Employee benefit - Other",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70281002",
+    "Employee Benefit Other - Bonus Reserved",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "TUNJANGAN LAINNYA - CADANGAN BONUS",
+    "Non deductible exp"
+  ],
+  [
+    "70292001",
+    "Employee Expenses - Uniform Operation",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70294001",
+    "Employee Expenses - Polyclinic Expenses",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    "Menampung biaya hasil alokasi dari CC clinic sebelum di alokasi ke Blok - Tidak kena pajak"
+  ],
+  [
+    "70295001",
+    "Employee Expenses - Jamsostek - Insurance",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "JAMSOSTEK (JHT)",
+    "Tidak kena pajak"
+  ],
+  [
+    "70296001",
+    "Employee Expenses - Retirement Plan",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70297001",
+    "Employee Expenses - PENSION COST",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "TUNJANGAN DANA PENSIUN - EXCnTUNJANGAN DANA PENSIUN - STAFnTUNJANGAN DANA PENSIUN - NON STAF/SKU",
+    "Belum di extend di 3500, minta di extend"
+  ],
+  [
+    "70299001",
+    "Employee Expenses - Provision for Retirement Plan",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "DANA PENSIUN - PSAK 24",
+    "Non deductible exp"
+  ],
+  [
+    "70311001",
+    "Training&Seminar - Corp.Driven - Group",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "PENDIDIKAN & LATIHAN - OLEH CORPORATE",
+    null
+  ],
+  [
+    "70321001",
+    "Training&Seminar - SBU/CSU Driven - Group",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "PENDIDIKAN & LATIHAN - OLEH COMPANY",
+    null
+  ],
+  [
+    "70322001",
+    "Training&Seminar - SBU/CSU Driven - Individual",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "PENDIDIKAN & LATIHAN - SEMINAR KE PIHAK LUAR",
+    null
+  ],
+  [
+    "70411001",
+    "Rental - land & land rights",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "SEWA TANAH",
+    "LPI akan digunakan utk Amortisasi sewa tanah TBC"
+  ],
+  [
+    "70431001",
+    "Rental Building - Office Buildings",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "SEWA BANGUNAN",
+    null
+  ],
+  [
+    "70433001",
+    "Rental Buildings - Warehouse building",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70451001",
+    "Rental - Machineries & Equipment",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70461001",
+    "Rental - Vehicles Operation",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "SEWA KENDARAAN",
+    null
+  ],
+  [
+    "70471001",
+    "Rental - Furniture, Fixtures & Equipment",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70472001",
+    "Rental - V-SAT",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "VSAT",
+    null
+  ],
+  [
+    "70479001",
+    "Rental - Others",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "LAINNYA",
+    null
+  ],
+  [
+    "70511001",
+    "Amortization - Land rights",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "AMORTISASI HAK ATAS TANAH",
+    "Change description Amortisasi"
+  ],
+  [
+    "70512001",
+    "Depreciation - own assets - Land Improvements",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70513001",
+    "Depreciation - own assets - Buildings & Structures",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "PENYUSUTAN BANGUNAN",
+    null
+  ],
+  [
+    "70513002",
+    "Depreciation - own assets - Infrastructure",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "PENYUSUTAN PRASARANA",
+    null
+  ],
+  [
+    "70514001",
+    "Depreciation - own assets - Leasehold Improvements",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70515001",
+    "Depreciation - own assets - Machineries & Equip.",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "PENYUSUTAN MESIN-MESIN",
+    null
+  ],
+  [
+    "70516001",
+    "Depreciation - own assets - Vehicles",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "PENYUSUTAN KENDARAAN & ALAT BERAT",
+    null
+  ],
+  [
+    "70517001",
+    "Depreciation - own assets - Furni,Fix & Equipment",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "PENYUSUTAN PERALATAN & PERABOT",
+    null
+  ],
+  [
+    "70519002",
+    "Depreciation - own assets -Mature Plant",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "PENYUSUTAN TM",
+    null
+  ],
+  [
+    "70522001",
+    "Depr. cap. lease assets - Machineries & Equipment",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70523001",
+    "Depr. cap. lease assets - Vehicles",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70524001",
+    "Depr. cap. lease assets - Furniture,Fix, Equipment",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70541001",
+    "Amortization plasma managed",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70551001",
+    "Amortization Land Preparation",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70611001",
+    "Repairs - Land Improvements",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70612001",
+    "Repairs - Buildings & Structures",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "PEMELIHARAAN BANGUNAN - REPARASI",
+    "diluar service fee (obyek pph) hanya pemakain bahan dll"
+  ],
+  [
+    "70612002",
+    "Repairs - Infrastructures",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "PEMELIHARAAN PRASARANA - REPARASI",
+    "diluar service fee (obyek pph) hanya pemakain bahan dll"
+  ],
+  [
+    "70613001",
+    "Repairs - Leasehold Improvements",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    "diluar service fee (obyek pph) hanya pemakain bahan dll"
+  ],
+  [
+    "70614001",
+    "Repairs - Machineries & Equipment",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "Reparasi",
+    "diluar service fee (obyek pph) hanya pemakain bahan dllnPengganti Account 50.xxx dng diisi Cost Center mesin ybs"
+  ],
+  [
+    "70615001",
+    "Repairs - Vehicles",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "PEMELIHARAAN KENDARAAN  - REPARASInReparasi",
+    "diluar service fee (obyek pph) hanya pemakain bahan dllnPengganti Account 50.xxx dng diisi Cost Center kendaraan ybs"
+  ],
+  [
+    "70616001",
+    "Repairs - Furniture, Fixtures & Equipment",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "PEMELIHARAAN PERALATAN & PERABOT - REPARASInPEMELIHARAAN UNIT KOMPUTER",
+    "diluar service fee (obyek pph) hanya pemakain bahan dll"
+  ],
+  [
+    "70621001",
+    "Maintenance - Land Improvements",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70622001",
+    "Maintenance Buildings & Structures",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "PEMELIHARAAN BANGUNAN",
+    "diluar service fee (obyek pph) hanya pemakain bahan dll - utk saldo semua ditampung di akun ini"
+  ],
+  [
+    "70622002",
+    "Maintenance Infrastructures",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "PEMELIHARAAN PRASARANA",
+    "diluar service fee (obyek pph) hanya pemakain bahan dll - utk saldo semua ditampung di akun ini"
+  ],
+  [
+    "70623001",
+    "Mantainence - Leasehold Improvements",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70624001",
+    "Maintanence - Machineries & Equipment",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "Reparasi",
+    "Pengganti Account 50.xxx dng diisi Cost Center mesin ybs"
+  ],
+  [
+    "70625001",
+    "Maintenance - Vehicles",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "PEMELIHARAAN KENDARAANnReparasi",
+    "diluar service fee (obyek pph) hanya pemakain bahan dll - utk saldo semua ditampung di akun ininPengganti Account 50.xxx dng diisi Cost Center kendaraan ybs"
+  ],
+  [
+    "70626001",
+    "Mantainence - Furniture, Fixtures & Equipment",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "PEMELIHARAAN PERALATAN & PERABOTnPEMELIHARAAN UNIT KOMPUTERnUnit Penunjang (Laboratorium)",
+    "diluar service fee (obyek pph) hanya pemakain bahan dll - utk saldo semua ditampung di akun inindiluar service fee (obyek pph) hanya pemakain bahan dllnPengganti Account 71.7xx dng diisi Cost Center Laboratorium"
+  ],
+  [
+    "70631001",
+    "Repairs service fees - Buildings & Structures",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "PEMELIHARAAN BANGUNAN - REPARASI",
+    "hanya service fee saja"
+  ],
+  [
+    "70631002",
+    "Repairs service fees - Infrastructures",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "PEMELIHARAAN PRASARANA - REPARASI",
+    "hanya service fee saja"
+  ],
+  [
+    "70632001",
+    "Repairs -service fees - Leasehold Improvements",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70633001",
+    "Repair Service fee Machineries & Equipment",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "Reparasi",
+    "Pengganti Account 50.xxx dng diisi Cost Center mesin ybs"
+  ],
+  [
+    "70634001",
+    "Repairs service fees Vehicles",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "PEMELIHARAAN KENDARAAN  - REPARASInReparasi",
+    "hanya service fee sajanPengganti Account 50.xxx dng diisi Cost Center kendaraan ybs"
+  ],
+  [
+    "70635001",
+    "Repairs Service  fees Furniture, Fixtures & Equip",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "PEMELIHARAAN PERALATAN & PERABOT - REPARASInPEMELIHARAAN UNIT KOMPUTER",
+    "hanya service fee saja"
+  ],
+  [
+    "70641001",
+    "Maintenance Service Fees - Buildings & Structures",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "PEMELIHARAAN BANGUNAN",
+    "hanya service fee saja"
+  ],
+  [
+    "70641002",
+    "Maintenance Service Fees - Infrastructures",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "PEMELIHARAAN PRASARANA",
+    "hanya service fee saja"
+  ],
+  [
+    "70642001",
+    "Maintenance Service Fees - Leasehold Improvements",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70643001",
+    "Maintenance Service Fees Machineries & Equipment",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "Reparasi",
+    "Pengganti Account 50.xxx dng diisi Cost Center mesin ybs"
+  ],
+  [
+    "70644001",
+    "Maintenance  Service Fees Vehicles",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "PEMELIHARAAN KENDARAANnReparasi",
+    "hanya service fee sajanPengganti Account 50.xxx dng diisi Cost Center kendaraan ybs"
+  ],
+  [
+    "70645001",
+    "Maintenance Service Fees Furniture, Fix. & Equip",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "PEMELIHARAAN PERALATAN & PERABOTnPEMELIHARAAN UNIT KOMPUTER",
+    "hanya service fee saja"
+  ],
+  [
+    "70645002",
+    "Maintenance Service Fees Internet",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70710001",
+    "Insurance - Inventories",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "ASURANSI KECURIAN",
+    "COA lama jenis asuransinya, COA baru obyek yg diasuransikan"
+  ],
+  [
+    "70720001",
+    "Insurance - Buildings & Structures",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "ASURANSI KEBAKARAN - Gudang & atau Rumah",
+    null
+  ],
+  [
+    "70730001",
+    "Insurance - leasehold improvements",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70740001",
+    "Insurance - Machineries & Equipment",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70750001",
+    "Insurance - Vehicles",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "ASURANSI KENDARAAN",
+    null
+  ],
+  [
+    "70760001",
+    "Insurance - Furniture, Fixtures & Equipment",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70770001",
+    "Insurance - Collection",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "ASURANSI UANG TUNAI",
+    null
+  ],
+  [
+    "70780001",
+    "Insurance - Oil Palm",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "ASURANSI KEBAKARAN - TANAMAN",
+    null
+  ],
+  [
+    "70790001",
+    "Insurance - Others",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70810001",
+    "Utilities - Water",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "AIR",
+    null
+  ],
+  [
+    "70820001",
+    "Utilities - L.P.G",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70830001",
+    "Utilities - I.D.O",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70840001",
+    "Utilities - Solar",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70850001",
+    "Utilities - Electricity",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "LISTRIK",
+    null
+  ],
+  [
+    "70860001",
+    "Utilities - Coal",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70870001",
+    "Utilities - Bio-Diesel",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70880001",
+    "Utilities - MFO",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70890001",
+    "Utilities - LNG",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "70910001",
+    "Travelling - overseas",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "PERJALANAN DINAS - LUAR NEGERI",
+    null
+  ],
+  [
+    "70920001",
+    "Travelling - Local",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "PERJALANAN DINAS - LOKAL",
+    null
+  ],
+  [
+    "70920008",
+    "Travelling - Local Employee Mutation",
+    "70 - OPERATING EXPENSES",
+    "inferred",
+    "PINDAH /MUTASI",
+    null
+  ],
+  [
+    "71010001",
+    "Parking & Toll Fees",
+    "OPERATING EXPENSES",
+    "inferred",
+    "OPERASI KENDARAAN KANTOR",
+    null
+  ],
+  [
+    "71020001",
+    "Transport",
+    "OPERATING EXPENSES",
+    "inferred",
+    "OPERASI KENDARAAN KANTOR",
+    null
+  ],
+  [
+    "71030001",
+    "Gasoline & Solar",
+    "OPERATING EXPENSES",
+    "inferred",
+    "OPERASI KENDARAAN KANTORnBahan Bakar & Pelumas",
+    "Pengganti Account 50.xxx dng diisi Cost Center kendaraan ybs"
+  ],
+  [
+    "71110001",
+    "Meeting Expenses",
+    "OPERATING EXPENSES",
+    "inferred",
+    "KONSUMSI KANTOR",
+    null
+  ],
+  [
+    "71210001",
+    "Association & Membership Dues",
+    "OPERATING EXPENSES",
+    "inferred",
+    null,
+    "Bisa di gunakan utk transaksi iuran BKSPPS atau keanggotaan lainnya"
+  ],
+  [
+    "71310001",
+    "Telephone / Telegram",
+    "OPERATING EXPENSES",
+    "inferred",
+    "TELEKOMUNIKASI",
+    null
+  ],
+  [
+    "71320001",
+    "Radio Telecomunication Expenses",
+    "OPERATING EXPENSES",
+    "inferred",
+    "RATEL",
+    null
+  ],
+  [
+    "71410001",
+    "Stationeries & Office Supplies",
+    "OPERATING EXPENSES",
+    "inferred",
+    "ALAT TULIS KANTOR",
+    null
+  ],
+  [
+    "71510001",
+    "Printing & Fotocopying",
+    "OPERATING EXPENSES",
+    "inferred",
+    "CETAKAN / FORMULIRnFOTO COPY & JILID",
+    null
+  ],
+  [
+    "71610001",
+    "Subscriptions & Periodicals",
+    "OPERATING EXPENSES",
+    "inferred",
+    "IURAN & LANGGANAN",
+    null
+  ],
+  [
+    "71710001",
+    "Stamps & Postages",
+    "OPERATING EXPENSES",
+    "inferred",
+    "PENGIRIMAN SURAT/ DOKUMEN",
+    null
+  ],
+  [
+    "71710002",
+    "Materai",
+    "OPERATING EXPENSES",
+    "inferred",
+    "METERAI",
+    null
+  ],
+  [
+    "71820001",
+    "Taxes & Licences -Land & Buildings",
+    "OPERATING EXPENSES",
+    "inferred",
+    "PBB",
+    null
+  ],
+  [
+    "71830001",
+    "Taxes & Licences -Vehicles",
+    "OPERATING EXPENSES",
+    "inferred",
+    "PAJAK KHUSUSnPajak & Asuransi",
+    "STNK, BBN, KIER DLLnPengganti Account 50.xxx dng diisi Cost Center kendaraan ybs"
+  ],
+  [
+    "71840001",
+    "Taxes & Licences Trade",
+    "OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "71890001",
+    "Taxes & Licences Others",
+    "OPERATING EXPENSES",
+    "inferred",
+    "PERIZINAN PUSATnPERIZINAN PEKERJA ASINGnPAJAK KHUSUSnPERIZINAN",
+    null
+  ],
+  [
+    "71910001",
+    "Repr. & Entertainment",
+    "OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "72010001",
+    "Social Contributions",
+    "OPERATING EXPENSES",
+    "inferred",
+    "DUKA CITAnPERAYAAN / UPACARAnPEMBERDAYAAN MASYARAKAT",
+    "Non deductible Exp"
+  ],
+  [
+    "72020001",
+    "Donation PPh",
+    "OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "72110001",
+    "Recruitment - Advertising",
+    "OPERATING EXPENSES",
+    "inferred",
+    "REKRUT/PENGADAAN KARYAWAN - Iklan",
+    null
+  ],
+  [
+    "72120001",
+    "Recruitment - Consultant Fee",
+    "OPERATING EXPENSES",
+    "inferred",
+    "REKRUT/PENGADAAN KARYAWAN - biaya konsultan",
+    null
+  ],
+  [
+    "72190001",
+    "Recruitment - Others",
+    "OPERATING EXPENSES",
+    "inferred",
+    "REKRUT/PENGADAAN KARYAWAN - Lainnya",
+    null
+  ],
+  [
+    "72310001",
+    "Security",
+    "OPERATING EXPENSES",
+    "inferred",
+    "GAJI / UPAH KEAMANANnKEAMANAN LAINNYA",
+    null
+  ],
+  [
+    "72520001",
+    "Market Research",
+    "OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "72530001",
+    "Product Research",
+    "OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "72540001",
+    "Price Research",
+    "OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "72550001",
+    "Place Research",
+    "OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "72560001",
+    "Promotion Research",
+    "OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "72590001",
+    "Other Market Research",
+    "OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    null,
+    "Plantations Research",
+    "OPERATING EXPENSES",
+    "inferred",
+    "JASA RISET",
+    "Belum ada Minta baru"
+  ],
+  [
+    "72610001",
+    "Product Qc & Micro Lab. Suppl.",
+    "OPERATING EXPENSES",
+    "inferred",
+    "UNIT PENUNJANG LAB (Pemakain Bahan & peralatan & Lainnya)",
+    "dng diisi Cost Center Laboratorium"
+  ],
+  [
+    "72810001",
+    "Manufacturing Supplies",
+    "OPERATING EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "72910001",
+    "Moving & Storage",
+    "OPERATING EXPENSES",
+    "inferred",
+    "PENGANGKUTAN BARANGnBIAYA ANGKUT HASIL OLAHAN",
+    "Bila menggunakan landed cost include di PO menambah stok"
+  ],
+  [
+    "73210001",
+    "Professional Fees -Legal",
+    "73 - PROFESSIONAL FEES, SUPPLIES & PROJECT EXPENSES",
+    "inferred",
+    "HUKUM DAN NOTARIS",
+    null
+  ],
+  [
+    "73220001",
+    "Professional fees - Audit",
+    "73 - PROFESSIONAL FEES, SUPPLIES & PROJECT EXPENSES",
+    "inferred",
+    "KONSULTAN - Auditor",
+    null
+  ],
+  [
+    "73230001",
+    "Professional fees - Consultant",
+    "73 - PROFESSIONAL FEES, SUPPLIES & PROJECT EXPENSES",
+    "inferred",
+    "KONSULTAN - Lainnya",
+    null
+  ],
+  [
+    "73250001",
+    "Professional Fees -Tax",
+    "73 - PROFESSIONAL FEES, SUPPLIES & PROJECT EXPENSES",
+    "inferred",
+    "KONSULTAN - Pajak",
+    null
+  ],
+  [
+    "73310001",
+    "Factory Supplies",
+    "73 - PROFESSIONAL FEES, SUPPLIES & PROJECT EXPENSES",
+    "inferred",
+    null,
+    "Termasuk penggunaan alat2 perkebunan"
+  ],
+  [
+    "73610001",
+    "Sub-Contract MFG Cost",
+    "73 - PROFESSIONAL FEES, SUPPLIES & PROJECT EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "73910001",
+    "Project Expenses",
+    "73 - PROFESSIONAL FEES, SUPPLIES & PROJECT EXPENSES",
+    "inferred",
+    null,
+    "Sisi kredit dari Akun Biaya/Proyek (AUC)"
+  ],
+  [
+    "73920001",
+    "Project Settlement",
+    "73 - PROFESSIONAL FEES, SUPPLIES & PROJECT EXPENSES",
+    "inferred",
+    null,
+    "Sisi kredit dari Akun Biaya/Proyek (AUC)"
+  ],
+  [
+    "73930001",
+    "Project Expenses-Contractor",
+    "73 - PROFESSIONAL FEES, SUPPLIES & PROJECT EXPENSES",
+    "inferred",
+    null,
+    "Sisi kredit dari Akun Biaya/Proyek (AUC)"
+  ],
+  [
+    "73930002",
+    "Project Expenses-Transport",
+    "73 - PROFESSIONAL FEES, SUPPLIES & PROJECT EXPENSES",
+    "inferred",
+    null,
+    "Sisi kredit dari Akun Biaya/Proyek (AUC)"
+  ],
+  [
+    "73930003",
+    "Project Expenses-Material",
+    "73 - PROFESSIONAL FEES, SUPPLIES & PROJECT EXPENSES",
+    "inferred",
+    null,
+    "Sisi kredit dari Akun Biaya/Proyek (AUC)"
+  ],
+  [
+    "73940001",
+    "Project Settlement from Land Clearing",
+    "73 - PROFESSIONAL FEES, SUPPLIES & PROJECT EXPENSES",
+    "inferred",
+    null,
+    "Sisi kredit dari Akun Biaya/Proyek (AUC)"
+  ],
+  [
+    "73940002",
+    "Project Settlement from Land Preparation",
+    "73 - PROFESSIONAL FEES, SUPPLIES & PROJECT EXPENSES",
+    "inferred",
+    null,
+    "Sisi kredit dari Akun Biaya/Proyek (AUC)"
+  ],
+  [
+    "73940003",
+    "Project Settlement from Nursery",
+    "73 - PROFESSIONAL FEES, SUPPLIES & PROJECT EXPENSES",
+    "inferred",
+    null,
+    "Sisi kredit dari Akun Biaya/Proyek (AUC)"
+  ],
+  [
+    "73940004",
+    "Project Settlement from Immature",
+    "73 - PROFESSIONAL FEES, SUPPLIES & PROJECT EXPENSES",
+    "inferred",
+    null,
+    "Sisi kredit dari Akun Biaya/Proyek (AUC)"
+  ],
+  [
+    "73940005",
+    "Project Settlement from Mature",
+    "73 - PROFESSIONAL FEES, SUPPLIES & PROJECT EXPENSES",
+    "inferred",
+    null,
+    "Sisi kredit dari Akun Biaya/Proyek (AUC)"
+  ],
+  [
+    "73940006",
+    "Project Settlement from Block Infrastructure",
+    "73 - PROFESSIONAL FEES, SUPPLIES & PROJECT EXPENSES",
+    "inferred",
+    null,
+    "Sisi kredit dari Akun Biaya/Proyek (AUC)"
+  ],
+  [
+    "73940007",
+    "Project Settlement from Plasma Project",
+    "73 - PROFESSIONAL FEES, SUPPLIES & PROJECT EXPENSES",
+    "inferred",
+    null,
+    "Sisi kredit dari Akun Biaya/Proyek (AUC)"
+  ],
+  [
+    "74010001",
+    "Other Operating PL-Phy Invty G/L-Finished Goods",
+    "74 - INVENTORY ADJUSTMENT (STOCK OPNAME)",
+    "inferred",
+    null,
+    "utk menjurnal hasil dari stock opname & selisih pengiriman dr pabrik ke bulking"
+  ],
+  [
+    "74020001",
+    "Other Operating PL-Phy Invty G/L-WIP Stockable",
+    "74 - INVENTORY ADJUSTMENT (STOCK OPNAME)",
+    "inferred",
+    null,
+    "Dipakai utk menjurnal hasil dari stock opname (selisih)"
+  ],
+  [
+    "74020002",
+    "Other Operating PL-Phy Invty G/L-By Product",
+    "74 - INVENTORY ADJUSTMENT (STOCK OPNAME)",
+    "inferred",
+    null,
+    "Dipakai utk menjurnal hasil dari stock opname (selisih)"
+  ],
+  [
+    "74030001",
+    "Other Operating PL-Phy Invty G/L-Raw Materials",
+    "74 - INVENTORY ADJUSTMENT (STOCK OPNAME)",
+    "inferred",
+    null,
+    "Dipakai utk menjurnal hasil dari stock opname (selisih)"
+  ],
+  [
+    "74030002",
+    "Other Operating PL-Phy Invty G/L-Chemical",
+    "74 - INVENTORY ADJUSTMENT (STOCK OPNAME)",
+    "inferred",
+    null,
+    "Dipakai utk menjurnal hasil dari stock opname (selisih)"
+  ],
+  [
+    "74040001",
+    "Other Operating PL-Phy Invty G/L-Packaging Matls",
+    "74 - INVENTORY ADJUSTMENT (STOCK OPNAME)",
+    "inferred",
+    null,
+    "Dipakai utk menjurnal hasil dari stock opname (selisih)"
+  ],
+  [
+    "74050001",
+    "Other Operating PL-Phy Invty G/L - Fuel",
+    "74 - INVENTORY ADJUSTMENT (STOCK OPNAME)",
+    "inferred",
+    null,
+    "Dipakai utk menjurnal hasil dari stock opname (selisih)"
+  ],
+  [
+    "74060001",
+    "Other Operating PL-Phy Invty G/L-Spare Parts",
+    "74 - INVENTORY ADJUSTMENT (STOCK OPNAME)",
+    "inferred",
+    null,
+    "Dipakai utk menjurnal hasil dari stock opname (selisih)"
+  ],
+  [
+    "74090001",
+    "Other Operating PL-Phy Invty G/L-Others",
+    "74 - INVENTORY ADJUSTMENT (STOCK OPNAME)",
+    "inferred",
+    null,
+    "Dipakai utk menjurnal hasil dari stock opname (selisih)"
+  ],
+  [
+    "75100001",
+    "Outsourcing Operation Expense",
+    "75 - OUTSOURCING",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "75200001",
+    "Outsourcing Fee",
+    "75 - OUTSOURCING",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "76100001",
+    "Plasma ampragh fee",
+    "76 - PLASMA EXPENSES",
+    "inferred",
+    null,
+    "76100001"
+  ],
+  [
+    "76200001",
+    "Plasma bad debt expense",
+    "76 - PLASMA EXPENSES",
+    "inferred",
+    null,
+    "76200001"
+  ],
+  [
+    "76300001",
+    "Plasma field rehabilitation",
+    "76 - PLASMA EXPENSES",
+    "inferred",
+    null,
+    "76300001"
+  ],
+  [
+    "76400001",
+    "Plasma subsidize on farmer income",
+    "76 - PLASMA EXPENSES",
+    "inferred",
+    null,
+    "76400001"
+  ],
+  [
+    "76500001",
+    "Plasma leased payment",
+    "76 - PLASMA EXPENSES",
+    "inferred",
+    null,
+    "76500001"
+  ],
+  [
+    "76600001",
+    "Plasma managed bank installment",
+    "76 - PLASMA EXPENSES",
+    "inferred",
+    null,
+    "76600001"
+  ],
+  [
+    "77100001",
+    "Bad Stock - Finished Goods",
+    "77 - BAD STOCK EXPENSES",
+    "inferred",
+    "PENGHAPUSAN PERSEDIAAN - Barang jadi",
+    null
+  ],
+  [
+    "77200001",
+    "Bad Stock - WIP Stockable",
+    "77 - BAD STOCK EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "77200002",
+    "Bad Stock - By Product",
+    "77 - BAD STOCK EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "77300001",
+    "Bad Stock - Raw Material",
+    "77 - BAD STOCK EXPENSES",
+    "inferred",
+    "PENGHAPUSAN PERSEDIAAN - Bahan mentah",
+    "Termasuk pupuk  &  agrochemical"
+  ],
+  [
+    "77300002",
+    "Bad Stock - Chemical",
+    "77 - BAD STOCK EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "77400001",
+    "Bad Stock - Packaging Material",
+    "77 - BAD STOCK EXPENSES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "79016001",
+    "Other Revenues-Handling Service Fee",
+    "79 - MISCELLANEOUS INCOME/EXPENSE",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "79910001",
+    "Miscellaneous - Expense",
+    "79 - MISCELLANEOUS INCOME/EXPENSE",
+    "inferred",
+    "PENITIPAN BAYI",
+    null
+  ],
+  [
+    "79910003",
+    "Sport & Recreation",
+    "79 - MISCELLANEOUS INCOME/EXPENSE",
+    "inferred",
+    "OLAH RAGA & REKREASI",
+    null
+  ],
+  [
+    "81300001",
+    "Other Operationg PL-Amortization-Deferred Charges",
+    "8130 - OTHER - OPERATING",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "81400001",
+    "Other Operating PL-Amortization-PreOperating Cost",
+    "8130 - OTHER - OPERATING",
+    "sheet",
+    "AMORTISASI PRA-OPERASI",
+    null
+  ],
+  [
+    "82100001",
+    "Other Operating PL-Uncollectible Debts-Bad Debts",
+    "82 - BAD DEBTS",
+    "inferred",
+    "PENGHAPUSAN PIUTANG",
+    null
+  ],
+  [
+    "86100001",
+    "Other Operating PL-Sundry Sales-Scrap Matls-Prod",
+    "86 - SCRAP SALES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "86200001",
+    "Other Operating PL-Sundry Sales-Scrap Matls-Non Pr",
+    "86 - SCRAP SALES",
+    "inferred",
+    null,
+    null
+  ],
+  [
+    "86900001",
+    "Other Operating PL-Sundry Sales-Others",
+    "86 - SCRAP SALES",
+    "inferred",
+    "PENDAPATAN PRODUK SAMPINGAN",
+    null
+  ],
+  [
+    "87120001",
+    "Other Operating PL-Forex G/L-Account Payable",
+    "87 - FOREX GAIN/LOSS",
+    "inferred",
+    "SELISIH KURS VALUTA ASING",
+    "Sesuai dengan Nature transaksinya"
+  ],
+  [
+    "87130001",
+    "Other Operating PL-Forex G/L-Spare Parts",
+    "87 - FOREX GAIN/LOSS",
+    "inferred",
+    "SELISIH KURS VALUTA ASING",
+    "Sesuai dengan Nature transaksinya"
+  ],
+  [
+    "87140001",
+    "Other Operating PL-Forex G/L-Account Receivable",
+    "87 - FOREX GAIN/LOSS",
+    "inferred",
+    "SELISIH KURS VALUTA ASING",
+    "Sesuai dengan Nature transaksinya"
+  ],
+  [
+    "87190001",
+    "Other Operating PL-Forex G/L-Others",
+    "87 - FOREX GAIN/LOSS",
+    "inferred",
+    "SELISIH KURS VALUTA ASING",
+    "Sesuai dengan Nature transaksinya"
+  ],
+  [
+    "87210001",
+    "Other Operating PL-Forex G/L-Cash In Bank",
+    "87 - FOREX GAIN/LOSS",
+    "inferred",
+    "SELISIH KURS VALUTA ASING",
+    "Sesuai dengan Nature transaksinya"
+  ],
+  [
+    "87220001",
+    "Other Operating PL-Forex G/L-Account Receivable",
+    "87 - FOREX GAIN/LOSS",
+    "inferred",
+    "SELISIH KURS VALUTA ASING",
+    "Sesuai dengan Nature transaksinya"
+  ],
+  [
+    "87230001",
+    "Other Operating PL-Forex G/L-Account Payable",
+    "87 - FOREX GAIN/LOSS",
+    "inferred",
+    "SELISIH KURS VALUTA ASING",
+    "Sesuai dengan Nature transaksinya"
+  ],
+  [
+    "87240001",
+    "Other Operating PL-Forex G/L-Others",
+    "87 - FOREX GAIN/LOSS",
+    "inferred",
+    "SELISIH KURS VALUTA ASING",
+    "Sesuai dengan Nature transaksinya"
+  ],
+  [
+    "89100001",
+    "Other Operating PL-Other-Miscellaneous Income",
+    "89 - MISC. OPERATING INCOME/CHARGES",
+    "inferred",
+    "PENDAPATAN LAINNYA - OPERASI",
+    null
+  ],
+  [
+    "89200001",
+    "Other Operating PL-Other-Miscellaneous Charges",
+    "89 - MISC. OPERATING INCOME/CHARGES",
+    "inferred",
+    "BEBAN LAINNYA - OPERASI",
+    null
+  ],
+  [
+    "89300001",
+    "Plasma Conversion Cost",
+    "89 - MISC. OPERATING INCOME/CHARGES",
+    "inferred",
+    "BIAYA KONVERSI",
+    null
+  ],
+  [
+    "91100001",
+    "Non-Operating Income/Charges-Misc-Royalty",
+    "OTHER - NON OPERATING",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "91300001",
+    "Non-Operating Income/Charges-Misc-Management Fee",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "MANAGEMENT FEE",
+    null
+  ],
+  [
+    "93120001",
+    "Other Non-Operating Inc/Exp-Div Inc-Cash and Stock",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "PENDAPATAN DIVIDEN",
+    null
+  ],
+  [
+    "93210001",
+    "Other Non-Operating Inc/Exp-Gain on Marketable Sec",
+    "OTHER - NON OPERATING",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "93230001",
+    "Other Non-Operating Inc/Exp-Gain on Mutual Fund",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "LABA(RUGI) INVESTASI REKSA DNA",
+    null
+  ],
+  [
+    "93240001",
+    "Other Non-Operating Inc/Exp-Loss on Mutual Fund",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "LABA(RUGI) INVESTASI REKSA DNA",
+    null
+  ],
+  [
+    "93310001",
+    "Other Non-Operating Inc/Exp-Gain of FA-Cost",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "LABA PENJUALAN AKTIVA TETAP",
+    null
+  ],
+  [
+    "93320001",
+    "Other Non-Operating Inc/Exp-Gain of FA-Depn/Amort",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "LABA PENJUALAN AKTIVA TETAP",
+    null
+  ],
+  [
+    "93330001",
+    "Other Non-Operating Inc/Exp-Gain of FA-Proceeds",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "PENGHAPUSAN AKTIVA TETAP",
+    null
+  ],
+  [
+    "93410001",
+    "Other Non-Operating Inc/Exp-Loss of FA-Cost",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "RUGI PENJUALAN AKTIVA TETAP",
+    null
+  ],
+  [
+    "93420001",
+    "Other Non-Operating Inc/Exp-Loss of FA-Deon/Amort",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "RUGI PENJUALAN AKTIVA TETAP",
+    null
+  ],
+  [
+    "93430001",
+    "Other Non-Operating Inc/Exp-Loss of FA-Proceeds",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "PENGHAPUSAN AKTIVA TETAP",
+    null
+  ],
+  [
+    "93510001",
+    "Other Non-Oper Inc/Exp-Rev on Sale of Leaseback FA",
+    "OTHER - NON OPERATING",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "93520001",
+    "Other Non-Oper Inc/Exp-Los on Sale of Leaseback FA",
+    "OTHER - NON OPERATING",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "93910001",
+    "Other Non-Oper Inc/Exp-Other Income",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "PENDAPATAN LAINNYA - NON OPERASInPENJUALAN BARANG BEKAS",
+    null
+  ],
+  [
+    "93920001",
+    "Other Non-Oper Inc/Exp-Other Expense",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "BEBAN LAINNYA - NON OPERASI",
+    null
+  ],
+  [
+    "93920004",
+    "Oth Non Operating (Inc) Exp - Market Price Adj SFG",
+    "OTHER - NON OPERATING",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "94111001",
+    "Non-Operating Income/Charges-Interest Exp-Local",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "BUNGA PINJAMAN",
+    null
+  ],
+  [
+    "94112001",
+    "Non-Operating Income/Charges-Interest Exp-For Cur",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "BUNGA PINJAMAN",
+    null
+  ],
+  [
+    "94120001",
+    "Non-Operating Income/Charges-Int Exp-Foreign Loans",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "BUNGA PINJAMAN",
+    null
+  ],
+  [
+    "94130001",
+    "Non-Operating Income/Charges-Int Exp-Leasing",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "BUNGA LEASING",
+    null
+  ],
+  [
+    "94190001",
+    "Non-Operating Income/Charges-Int Exp-Others",
+    "OTHER - NON OPERATING",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "94291001",
+    "Non Oper Inc/Chg-Interest-Others",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "BUNGA LAINNYA - NON OPERASI",
+    null
+  ],
+  [
+    "94331001",
+    "Bank Commitment/Provision Fee",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "BIAYA ADMINISTRASI BANK",
+    "Untuk biaya provisi dll yg nilainya besar / selain by admin"
+  ],
+  [
+    "94391001",
+    "Other Bank Charges",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "BIAYA ADMINISTRASI BANK",
+    null
+  ],
+  [
+    "94510001",
+    "Interest Income-Current account with Bank",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "PENDAPATAN JAS GIRO",
+    null
+  ],
+  [
+    "94520001",
+    "Interest Income-Call & Time Deposit-Local Currency",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "PENDAPATAN BUNGA DEPOSITO - IDR",
+    null
+  ],
+  [
+    "94530001",
+    "Interest Income-Call & Time Deposit-Foreign Curr.",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "PENDAPATAN BUNGA DEPOSITO - VALAS",
+    null
+  ],
+  [
+    "94590001",
+    "Interest Income - Others",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "BUNGA LAINNYA",
+    null
+  ],
+  [
+    "94611001",
+    "Normal-Realised-FX Gain - Time Deposit",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "SELISIH KURS VALUTA ASING",
+    null
+  ],
+  [
+    "94612001",
+    "Normal-Realised-FX Loss - Time Deposit",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "SELISIH KURS VALUTA ASING",
+    null
+  ],
+  [
+    "94613001",
+    "Normal-Realised-FX Gain - Loans",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "SELISIH KURS VALUTA ASING",
+    null
+  ],
+  [
+    "94614001",
+    "Normal-Realised-FX Loss - Loans",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "SELISIH KURS VALUTA ASING",
+    null
+  ],
+  [
+    "94621001",
+    "Normal-Unrealised-FX Gain -Time Deposit",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "SELISIH KURS VALUTA ASING",
+    null
+  ],
+  [
+    "94622001",
+    "Normal-Unrealised-FX Loss -Time Deposit",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "SELISIH KURS VALUTA ASING",
+    null
+  ],
+  [
+    "94623001",
+    "Normal-Unrealised-FX Gain -Loans",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "SELISIH KURS VALUTA ASING",
+    null
+  ],
+  [
+    "94624001",
+    "Normal-Unrealised-FX Loss -Loans",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "SELISIH KURS VALUTA ASING",
+    null
+  ],
+  [
+    "94711001",
+    "ExtraOrdinary-Realised-FX Gain - Time Deposit",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "SELISIH KURS VALUTA ASING - LUAR BIASA",
+    "Jika ada"
+  ],
+  [
+    "94712001",
+    "ExtraOrdinary-Realised-FX Loss - Time Deposit",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "SELISIH KURS VALUTA ASING - LUAR BIASA",
+    "Jika ada"
+  ],
+  [
+    "94713001",
+    "ExtraOrdinary-Realised-FX Gain - Loans",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "SELISIH KURS VALUTA ASING - LUAR BIASA",
+    "Jika ada"
+  ],
+  [
+    "94714001",
+    "ExtraOrdinary-Realised-FX Loss - Loans",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "SELISIH KURS VALUTA ASING - LUAR BIASA",
+    "Jika ada"
+  ],
+  [
+    "94721001",
+    "ExtraOrdinary-Unrealised-FX Gain - Time Deposit",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "SELISIH KURS VALUTA ASING - LUAR BIASA",
+    "Jika ada"
+  ],
+  [
+    "94722001",
+    "ExtraOrdinary-Unrealised-FX Loss - Time Deposit",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "SELISIH KURS VALUTA ASING - LUAR BIASA",
+    "Jika ada"
+  ],
+  [
+    "94723001",
+    "ExtraOrdinary-Unrealised-FX Gain  Loans",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "SELISIH KURS VALUTA ASING - LUAR BIASA",
+    "Jika ada"
+  ],
+  [
+    "94724001",
+    "ExtraOrdinary-Unrealised-FX Loss  Loans",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "SELISIH KURS VALUTA ASING - LUAR BIASA",
+    "Jika ada"
+  ],
+  [
+    "95100001",
+    "Minority Interests",
+    "OTHER - NON OPERATING",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "98100006",
+    "Allocation of Indirect Cost Plantation",
+    "OTHER - NON OPERATING",
+    "sheet",
+    null,
+    null
+  ],
+  [
+    "99100001",
+    "Provision For Income Tax - Current",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "PPH BADAN",
+    null
+  ],
+  [
+    "99200001",
+    "Provision For Income Tax - Deferred",
+    "OTHER - NON OPERATING",
+    "sheet",
+    "PPH BADAN DITANGGUHKAN",
+    null
+  ]
+]

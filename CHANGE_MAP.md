@@ -1,5 +1,12 @@
 # Peta Perubahan Aktif
 
+## 2026-10-30 — Master GL account untuk generator jurnal biaya
+
+- **Ringkasan:** menambahkan migration tabel `gl_accounts` dan seeder berisi 791 akun dari `backend/gl_accounts.sql`; `DatabaseSeeder` kini menjalankan seeder tersebut.
+- **Modul/file:** schema dan seeder database backend, termasuk sumber data JSON yang ikut terdistribusi dengan repository.
+- **Dampak API/database/dependency:** menambah tabel referensi `gl_accounts`; belum mengubah API atau dependency. Nilai `gl_acc` tidak unik sehingga entri duplikat dari sumber tetap dipertahankan.
+- **Status/verifikasi:** pemeriksaan sintaks PHP, struktur JSON, dan `git diff --check` lulus. Migrasi/seed belum dijalankan terhadap database.
+
 ## 2026-10-30 — Detail actor dan aktivitas pada audit/notifikasi
 
 - **Ringkasan:** inbox menampilkan actor, action, subject, dan event; halaman Audit Activity dapat membuka metadata serta perubahan sebelum/sesudah. Notifikasi grup memuat actor terakhir, konteks aktivitas, dan jumlah baris/bagian atau aksi. Percobaan login gagal kini menandai actor sebagai belum terautentikasi tanpa menyimpan email.
