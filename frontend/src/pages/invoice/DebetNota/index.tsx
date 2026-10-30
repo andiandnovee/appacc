@@ -4,6 +4,7 @@ import { AlertCircle, CheckCircle2, Download, FileSpreadsheet, LoaderCircle, Rot
 import * as XLSX from "xlsx";
 import api from "../../../api/axios";
 import Button from "../../../components/ui/Button";
+import Input from "../../../components/ui/Input";
 import { useDebetNotaDraft, type DebetNotaGlHistoryItem, type DebetNotaRow } from "../../../stores/debetNotaDraft";
 import { exportDebetNotaExcel, exportDebetNotaText } from "./exportDebetNotaZf0002";
 import styles from "./DebetNota.module.css";
@@ -513,15 +514,20 @@ export default function DebetNotaPage() {
               <span className={styles.totalPill}>Total <strong>{money.format(total)}</strong></span>
             </div>
             <div className={styles.exportPanel}>
-              <label className={styles.dateField}>
-                <span>Tanggal Posting / Dokumen</span>
-                <input type="date" value={exportDate} onChange={(event) => setExportDate(event.target.value)} />
-              </label>
+              <div className={styles.dateField}>
+                <Input
+                  label="Tanggal Posting / Dokumen"
+                  type="date"
+                  value={exportDate}
+                  onChange={(event) => setExportDate(event.target.value)}
+                  required
+                />
+              </div>
               <div className={styles.exportActions}>
-                <Button variant="outline" disabled={!canExport} loading={exporting} onClick={() => void handleExport("xlsx")}>
+                <Button variant="primary" disabled={!canExport} loading={exporting} onClick={() => void handleExport("xlsx")}>
                   <Download size={15} /> Export XLSX
                 </Button>
-                <Button variant="outline" disabled={!canExport} loading={exporting} onClick={() => void handleExport("txt")}>
+                <Button variant="primary" disabled={!canExport} loading={exporting} onClick={() => void handleExport("txt")}>
                   <Download size={15} /> Export TXT
                 </Button>
               </div>
