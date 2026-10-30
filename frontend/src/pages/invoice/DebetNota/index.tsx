@@ -1,9 +1,9 @@
-import { ChangeEvent, useCallback, useMemo, useRef, useState } from "react";
-import { AlertCircle, CheckCircle2, FileSpreadsheet, RotateCcw, Upload } from "lucide-react";
+import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { AlertCircle, CheckCircle2, FileSpreadsheet, LoaderCircle, RotateCcw, Search, Upload } from "lucide-react";
 import * as XLSX from "xlsx";
 import api from "../../../api/axios";
 import Button from "../../../components/ui/Button";
-import Select from "../../../components/ui/Select";
 import { useDebetNotaDraft, type DebetNotaRow } from "../../../stores/debetNotaDraft";
 import styles from "./DebetNota.module.css";
 
@@ -18,12 +18,9 @@ interface GLAccount {
 }
 interface CostCenter { id: number; sap_id: string | null; description: string | null; short_name: string | null }
 interface PageResponse<T> { data: T[]; meta?: { last_page?: number }; last_page?: number }
-interface MasterData {
-  companies: Company[];
-  businessAreas: BusinessArea[];
-  glAccounts: GLAccount[];
-  costCenters: CostCenter[];
-}
+interface SearchOption { id: number; code: string; label: string; isExpense: boolean }
+interface DropdownPosition { top: number; left: number; width: number; maxHeight: number }
+const masterSearchCache = new Map<string, Promise<PageResponse<GLAccount | CostCenter>>>();
 
 const REQUIRED_HEADERS = [
   "Sender CC", "Sender BA", "Sender Doc", "Posting Date", "Period", "Fiscal Year",
@@ -35,18 +32,6 @@ function unwrap<T>(payload: any): T[] {
   if (Array.isArray(payload)) return payload as T[];
   if (Array.isArray(payload?.data)) return payload.data as T[];
   return [];
-}
-
-async function fetchAllPages<T>(url: string): Promise<T[]> {
-  const first = await api.get<PageResponse<T>>(url, { params: { per_page: 100, page: 1 } });
-  const firstPayload = first.data;
-  const all = unwrap<T>(firstPayload);
-  const lastPage = Number(firstPayload?.meta?.last_page ?? firstPayload?.last_page ?? 1);
-  if (lastPage <= 1) return all;
-  const rest = await Promise.all(Array.from({ length: lastPage - 1 }, (_, index) =>
-    api.get<PageResponse<T>>(url, { params: { per_page: 100, page: index + 2 } }),
-  ));
-  return all.concat(...rest.map((response) => unwrap<T>(response.data)));
 }
 
 function text(value: unknown): string {
@@ -76,49 +61,241 @@ function accountIsExpense(account: GLAccount): boolean {
     .some((value) => EXPENSE_WORDS.test(value ?? ""));
 }
 
+interface AsyncMasterSelectProps {
+  kind: "gl" | "cost-center";
+  receiverBusinessArea: string;
+  selectedLabel: string;
+  onSelect: (option: SearchOption) => void;
+}
+
+function AsyncMasterSelect({ kind, receiverBusinessArea, selectedLabel, onSelect }: AsyncMasterSelectProps) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [options, setOptions] = useState<SearchOption[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const requestRef = useRef(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<DropdownPosition | null>(null);
+  const endpoint = kind === "gl" ? "/gl-accounts" : "/cost-centers";
+  const initialQuery = kind === "gl" ? "expense" : receiverBusinessArea;
+
+  const fetchOptions = useCallback(async (search: string, requestedPage = 1, append = false) => {
+    const requestId = ++requestRef.current;
+    setLoading(true);
+    try {
+      const cacheKey = `${endpoint}:${search}:${requestedPage}`;
+      let responsePromise = masterSearchCache.get(cacheKey);
+      if (!responsePromise) {
+        if (masterSearchCache.size >= 40) {
+          const oldestKey = masterSearchCache.keys().next().value;
+          if (oldestKey) masterSearchCache.delete(oldestKey);
+        }
+        responsePromise = api.get<PageResponse<GLAccount | CostCenter>>(endpoint, {
+          params: { search, per_page: 100, page: requestedPage },
+        }).then((response) => response.data);
+        masterSearchCache.set(cacheKey, responsePromise);
+      }
+      const response = await responsePromise;
+      if (requestId !== requestRef.current) return;
+      const source = unwrap<GLAccount | CostCenter>(response);
+      const found: SearchOption[] = kind === "gl"
+          ? (source as GLAccount[]).filter((item) => item.gl_acc).map((item) => ({
+            id: item.id,
+            code: item.gl_acc!,
+            label: `${item.gl_acc} — ${item.gl_text || item.desc || "Tanpa nama"}`,
+            isExpense: accountIsExpense(item),
+          }))
+        : (source as CostCenter[]).filter((item) =>
+            item.sap_id && item.sap_id.startsWith(receiverBusinessArea),
+          ).map((item) => ({
+            id: item.id,
+            code: item.sap_id!,
+            label: `${item.sap_id} — ${item.short_name || item.description || ""}`,
+            isExpense: false,
+          }));
+      setOptions((previous) => append ? [...previous, ...found] : found);
+      const lastPage = Number(response?.meta?.last_page ?? response?.last_page ?? 1);
+      setHasMore(requestedPage < lastPage);
+      setPage(requestedPage);
+    } catch {
+      masterSearchCache.delete(`${endpoint}:${search}:${requestedPage}`);
+      if (requestId === requestRef.current) {
+        if (!append) setOptions([]);
+        setHasMore(false);
+      }
+    } finally {
+      if (requestId === requestRef.current) setLoading(false);
+    }
+  }, [endpoint, kind, receiverBusinessArea]);
+
+  const openAndLoad = (event: React.FocusEvent<HTMLInputElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const width = Math.min(Math.max(rect.width, 260), window.innerWidth - 24);
+    const spaceBelow = window.innerHeight - rect.bottom - 16;
+    const spaceAbove = rect.top - 16;
+    const openAbove = spaceBelow < 180 && spaceAbove > spaceBelow;
+    const maxHeight = Math.max(120, Math.min(260, openAbove ? spaceAbove : spaceBelow));
+    setDropdownPosition({
+      top: openAbove ? rect.top - maxHeight - 4 : rect.bottom + 4,
+      left: Math.max(12, Math.min(rect.left, window.innerWidth - width - 12)),
+      width,
+      maxHeight,
+    });
+    setOpen(true);
+    if (!options.length && !loading) {
+      const search = query || initialQuery;
+      setQuery(search);
+      void fetchOptions(search);
+    }
+  };
+
+  const updateDropdownPosition = useCallback(() => {
+    const rect = inputRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const width = Math.min(Math.max(rect.width, 260), window.innerWidth - 24);
+    const spaceBelow = window.innerHeight - rect.bottom - 16;
+    const spaceAbove = rect.top - 16;
+    const openAbove = spaceBelow < 180 && spaceAbove > spaceBelow;
+    const maxHeight = Math.max(120, Math.min(260, openAbove ? spaceAbove : spaceBelow));
+    setDropdownPosition({
+      top: openAbove ? rect.top - maxHeight - 4 : rect.bottom + 4,
+      left: Math.max(12, Math.min(rect.left, window.innerWidth - width - 12)),
+      width,
+      maxHeight,
+    });
+  }, []);
+
+  const handleQuery = (event: ChangeEvent<HTMLInputElement>) => {
+    const next = event.target.value;
+    setQuery(next);
+    setOptions([]);
+    setPage(1);
+    setHasMore(false);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      const search = next || initialQuery;
+      if (search) void fetchOptions(search);
+    }, 250);
+  };
+
+  useEffect(() => () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    requestRef.current++;
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    window.addEventListener("resize", updateDropdownPosition);
+    window.addEventListener("scroll", updateDropdownPosition, true);
+    return () => {
+      window.removeEventListener("resize", updateDropdownPosition);
+      window.removeEventListener("scroll", updateDropdownPosition, true);
+    };
+  }, [open, updateDropdownPosition]);
+
+  return (
+    <div className={styles.asyncSelect}>
+      <div className={styles.asyncInputWrap}>
+        <Search size={14} />
+        <input
+          ref={inputRef}
+          value={open ? query : selectedLabel}
+          placeholder={kind === "gl" ? "Cari GL biaya…" : `Cari CC ${receiverBusinessArea}…`}
+          onFocus={openAndLoad}
+          onChange={handleQuery}
+          onBlur={() => window.setTimeout(() => { setOpen(false); setDropdownPosition(null); }, 150)}
+          aria-label={kind === "gl" ? "Cari GL Account" : "Cari Cost Center"}
+        />
+        {loading && <LoaderCircle size={14} className={styles.spinner} />}
+      </div>
+      {open && dropdownPosition && createPortal(
+        <div
+          ref={listRef}
+          className={styles.asyncOptions}
+          style={dropdownPosition}
+          onMouseDown={(event) => event.preventDefault()}
+          onScroll={(event) => {
+            const element = event.currentTarget;
+            if (hasMore && !loading && element.scrollHeight - element.scrollTop - element.clientHeight < 40) {
+              void fetchOptions(query || initialQuery, page + 1, true);
+            }
+          }}
+        >
+          {options.map((option) => (
+            <button
+              type="button"
+              key={`${option.id}-${option.code}`}
+              className={styles.asyncOption}
+              onClick={() => {
+                onSelect(option);
+                setOpen(false);
+                setQuery("");
+                inputRef.current?.blur();
+              }}
+            >
+              <strong>{option.code}</strong><span>{option.label.slice(option.code.length + 3)}</span>
+              {option.isExpense && <small>Biaya</small>}
+            </button>
+          ))}
+          {loading && <div className={styles.asyncMessage}>Memuat pilihan…</div>}
+          {!loading && options.length === 0 && <div className={styles.asyncMessage}>Tidak ada hasil. Ubah kata pencarian.</div>}
+          {!loading && hasMore && <div className={styles.asyncMessage}>Scroll untuk memuat pilihan berikutnya</div>}
+        </div>,
+        document.body,
+      )}
+    </div>
+  );
+}
+
 export default function DebetNotaPage() {
   const inputRef = useRef<HTMLInputElement>(null);
-  const mastersRef = useRef<MasterData | null>(null);
-  const { fileName, rows, setUpload, updateRow, clear } = useDebetNotaDraft();
-  const [glAccounts, setGlAccounts] = useState<GLAccount[]>([]);
-  const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
+  const { fileName, rows, setUpload, resolveReferences, updateRow, clear } = useDebetNotaDraft();
   const [masterLoading, setMasterLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
 
-  const loadMasters = useCallback(async (): Promise<MasterData> => {
-    if (mastersRef.current) return mastersRef.current;
+  const resolveUploadedReferences = useCallback(async (
+    senderBusinessAreaCode: string,
+    receiverBusinessAreaCode: string,
+    senderCompanyCode: string,
+  ) => {
+    setError("");
     setMasterLoading(true);
     try {
-      const [companyResponse, areaResponse, accounts, centers] = await Promise.all([
-        api.get("/companies"),
-        api.get("/busa"),
-        fetchAllPages<GLAccount>("/gl-accounts"),
-        fetchAllPages<CostCenter>("/cost-centers"),
+      const [senderAreaResponse, receiverAreaResponse] = await Promise.all([
+        api.get("/busa", { params: { search: senderBusinessAreaCode } }),
+        api.get("/busa", { params: { search: receiverBusinessAreaCode } }),
       ]);
-      const masters: MasterData = {
-        companies: unwrap<Company>(companyResponse.data),
-        businessAreas: unwrap<BusinessArea>(areaResponse.data),
-        glAccounts: accounts.filter((account) => account.gl_acc),
-        costCenters: centers.filter((center) => center.sap_id),
-      };
-      mastersRef.current = masters;
-      setGlAccounts(masters.glAccounts);
-      setCostCenters(masters.costCenters);
-      return masters;
+      const senderArea = unwrap<BusinessArea>(senderAreaResponse.data)
+        .find((area) => String(area.sap_id) === senderBusinessAreaCode);
+      const receiverArea = unwrap<BusinessArea>(receiverAreaResponse.data)
+        .find((area) => String(area.sap_id) === receiverBusinessAreaCode);
+      if (!senderArea) throw new Error(`Business Area pengirim ${senderBusinessAreaCode} tidak ditemukan di master.`);
+      if (!senderArea.sap_vendor_code) throw new Error(`Vendor SAP belum diisi pada Business Area pengirim ${senderBusinessAreaCode}.`);
+      if (!receiverArea) throw new Error(`Business Area penerima ${receiverBusinessAreaCode} tidak ditemukan di master.`);
+
+      const companyIds = [...new Set([senderArea.company_id, receiverArea.company_id])];
+      const companyResponses = await Promise.all(companyIds.map((id) => api.get(`/companies/${id}`)));
+      const companies = companyResponses.map((response) => response.data?.data as Company);
+      const senderCompany = companies.find((company) => String(company.id) === String(senderArea.company_id));
+      const receiverCompany = companies.find((company) => String(company.id) === String(receiverArea.company_id));
+      if (!senderCompany || String(senderCompany.sap_id) !== senderCompanyCode) {
+        throw new Error(`Sender CC ${senderCompanyCode} tidak sesuai dengan company pemilik BA ${senderBusinessAreaCode}.`);
+      }
+      if (!receiverCompany) throw new Error(`Company penerima untuk BA ${receiverBusinessAreaCode} tidak ditemukan.`);
+
+      resolveReferences(String(senderArea.sap_vendor_code), String(receiverCompany.sap_id), receiverCompany.name);
     } catch (requestError: any) {
-      setError(requestError?.response?.data?.message || "Master Company, Business Area, GL, atau Cost Center gagal dimuat.");
+      setError(requestError?.response?.data?.message || "Referensi Business Area atau Company gagal dimuat.");
       throw requestError;
     } finally {
       setMasterLoading(false);
     }
-  }, []);
-
-  const expenseFirstAccounts = useMemo(() => [...glAccounts].sort((a, b) => {
-    const priority = Number(accountIsExpense(b)) - Number(accountIsExpense(a));
-    if (priority !== 0) return priority;
-    return `${a.gl_acc} ${a.gl_text}`.localeCompare(`${b.gl_acc} ${b.gl_text}`);
-  }), [glAccounts]);
+  }, [resolveReferences]);
 
   const handleFile = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -157,21 +334,9 @@ export default function DebetNotaPage() {
         throw new Error("Satu file harus berisi satu Sender CC, Sender BA, dan Receiver BA.");
       }
 
-      const masters = await loadMasters();
       const senderCode = [...senderAreas][0];
       const receiverCode = [...receiverAreas][0];
       const senderCompanyCode = [...senderCompanies][0];
-      const senderArea = masters.businessAreas.find((area) => String(area.sap_id) === senderCode);
-      const receiverArea = masters.businessAreas.find((area) => String(area.sap_id) === receiverCode);
-      if (!senderArea) throw new Error(`Business Area pengirim ${senderCode} tidak ditemukan di master.`);
-      if (!senderArea.sap_vendor_code) throw new Error(`Vendor SAP belum diisi pada Business Area pengirim ${senderCode}.`);
-      if (!receiverArea) throw new Error(`Business Area penerima ${receiverCode} tidak ditemukan di master.`);
-      const senderCompany = masters.companies.find((company) => String(company.id) === String(senderArea.company_id));
-      if (!senderCompany || String(senderCompany.sap_id) !== senderCompanyCode) {
-        throw new Error(`Sender CC ${senderCompanyCode} tidak sesuai dengan company pemilik BA ${senderCode}.`);
-      }
-      const receiverCompany = masters.companies.find((company) => String(company.id) === String(receiverArea.company_id));
-      if (!receiverCompany) throw new Error(`Company penerima untuk BA ${receiverCode} tidak ditemukan.`);
 
       const parsed: DebetNotaRow[] = records.map((record, index): DebetNotaRow => {
         const amount = amountValue(read(record, "Amount in Local"));
@@ -192,30 +357,31 @@ export default function DebetNotaPage() {
           postingDate: postingDateValue(read(record, "Posting Date")),
           period,
           fiscalYear,
-          senderVendorCode: String(senderArea.sap_vendor_code),
-          receiverCompanyCode: String(receiverCompany.sap_id),
-          receiverCompanyName: receiverCompany.name,
+          senderVendorCode: "",
+          receiverCompanyCode: "",
+          receiverCompanyName: "",
           receiverBusinessArea: receiverCode,
           description,
           amount,
           glAccountId: null,
+          glAccountCode: "",
+          glAccountLabel: "",
           costCenterCode: "",
+          costCenterLabel: "",
         };
       });
       setUpload(file.name, parsed);
+      await resolveUploadedReferences(senderCode, receiverCode, senderCompanyCode);
     } catch (parseError: any) {
       setError(parseError?.message || "File XLSX gagal dibaca.");
     } finally {
       setUploading(false);
     }
-  }, [loadMasters, setUpload]);
+  }, [resolveUploadedReferences, setUpload]);
 
   const total = rows.reduce((sum, row) => sum + row.amount, 0);
   const receiver = rows[0];
   const centerPrefix = receiver?.receiverBusinessArea ?? "";
-  const receiverCostCenters = useMemo(() => costCenters.filter((center) =>
-    String(center.sap_id ?? "").startsWith(centerPrefix),
-  ), [costCenters, centerPrefix]);
   const money = useMemo(() => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }), []);
 
   return (
@@ -246,7 +412,7 @@ export default function DebetNotaPage() {
         </Button>
       </section>
 
-      {masterLoading && <div className={styles.notice}>Memuat master Company, Business Area, GL Account, dan Cost Center…</div>}
+      {masterLoading && <div className={styles.notice}>Draft tersimpan. Memuat referensi BA pengirim dan Company penerima…</div>}
       {error && <div className={styles.errorNotice} role="alert"><AlertCircle size={17} /> {error}</div>}
 
       {rows.length > 0 && receiver && (
@@ -254,7 +420,7 @@ export default function DebetNotaPage() {
           <section className={styles.receiverCard}>
             <div>
               <span className={styles.eyebrow}>Company Code / Nama Receiver</span>
-              <strong>{receiver.receiverCompanyCode} · {receiver.receiverCompanyName}</strong>
+              <strong>{receiver.receiverCompanyCode || "—"} · {receiver.receiverCompanyName || (masterLoading ? "Memuat referensi…" : "Belum tersedia")}</strong>
             </div>
             <div>
               <span className={styles.eyebrow}>BusArea Penerima</span>
@@ -263,7 +429,16 @@ export default function DebetNotaPage() {
             </div>
             <div>
               <span className={styles.eyebrow}>Referensi Pengirim</span>
-              <strong>BA {receiver.senderBusinessArea} · Vendor {receiver.senderVendorCode}</strong>
+              <strong>BA {receiver.senderBusinessArea} · Vendor {receiver.senderVendorCode || (masterLoading ? "Memuat referensi…" : "Belum tersedia")}</strong>
+              {!masterLoading && (!receiver.senderVendorCode || !receiver.receiverCompanyCode) && (
+                <button
+                  type="button"
+                  className={styles.retryReferences}
+                  onClick={() => void resolveUploadedReferences(receiver.senderBusinessArea, receiver.receiverBusinessArea, receiver.senderCompanyCode)}
+                >
+                  Coba muat ulang referensi
+                </button>
+              )}
             </div>
           </section>
 
@@ -272,7 +447,6 @@ export default function DebetNotaPage() {
               <div><h2>Rincian biaya</h2><p>{rows.length} baris dari {fileName}</p></div>
               <span className={styles.totalPill}>Total <strong>{money.format(total)}</strong></span>
             </div>
-            {receiverCostCenters.length === 0 && <div className={styles.inlineWarning}>Belum ada Cost Center pada master dengan prefix {centerPrefix}.</div>}
             <div className={styles.tableScroll}>
               <table>
                 <thead><tr><th>Description</th><th>GL Acc <span>· biaya diprioritaskan</span></th><th>CostCenter <span>· {centerPrefix}…</span></th><th className={styles.amountHead}>Jumlah</th></tr></thead>
@@ -280,27 +454,26 @@ export default function DebetNotaPage() {
                   <tr key={row.id}>
                     <td className={styles.descriptionCell}>{row.description}</td>
                     <td>
-                      <Select
-                        aria-label={`GL biaya untuk ${row.description}`}
-                        value={row.glAccountId ?? ""}
-                        placeholder="Pilih GL Account"
-                        size="sm"
-                        options={expenseFirstAccounts.map((account) => ({
-                          value: account.id,
-                          label: `${account.gl_acc} — ${account.gl_text || account.desc || "Tanpa nama"}${accountIsExpense(account) ? " · Biaya" : ""}`,
-                        }))}
-                        onChange={(event: { target: { value: unknown } }) => updateRow(row.id, { glAccountId: event.target.value ? Number(event.target.value) : null })}
+                      <AsyncMasterSelect
+                        kind="gl"
+                        receiverBusinessArea={centerPrefix}
+                        selectedLabel={row.glAccountLabel || ""}
+                        onSelect={(option) => updateRow(row.id, {
+                          glAccountId: option.id,
+                          glAccountCode: option.code,
+                          glAccountLabel: option.label,
+                        })}
                       />
                     </td>
                     <td>
-                      <Select
-                        aria-label={`Cost Center untuk ${row.description}`}
-                        value={row.costCenterCode}
-                        placeholder={receiverCostCenters.length ? `Pilih CC ${centerPrefix}…` : `CC ${centerPrefix} tidak tersedia`}
-                        size="sm"
-                        disabled={receiverCostCenters.length === 0}
-                        options={receiverCostCenters.map((center) => ({ value: center.sap_id!, label: `${center.sap_id} — ${center.short_name || center.description || ""}` }))}
-                        onChange={(event: { target: { value: string } }) => updateRow(row.id, { costCenterCode: event.target.value })}
+                      <AsyncMasterSelect
+                        kind="cost-center"
+                        receiverBusinessArea={centerPrefix}
+                        selectedLabel={row.costCenterLabel || ""}
+                        onSelect={(option) => updateRow(row.id, {
+                          costCenterCode: option.code,
+                          costCenterLabel: option.label,
+                        })}
                       />
                     </td>
                     <td className={styles.amountCell}>{money.format(row.amount)}</td>

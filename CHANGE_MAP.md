@@ -167,6 +167,7 @@ Arah signifikan sebelumnya adalah pematangan logbook/biaya kendaraan, kesinambun
 - **Ringkasan:** menambahkan satu halaman upload XLS/XLSX dan preview jurnal Debet Nota. File diparsing di browser; baris dan pilihan GL/Cost Center disimpan dalam Zustand persist local storage.
 - **Modul/file:** `frontend/src/pages/invoice/DebetNota/*`, `frontend/src/stores/debetNotaDraft.ts`, router aktif `frontend/src/App.tsx`, dan sidebar.
 - **Aturan master:** sender BA divalidasi dan vendor kredit diambil dari `sap_vendor_code` sender; receiver BA menentukan Company Code/nama receiver. GL terkait biaya/beban diprioritaskan. Cost Center dibatasi ke `sap_id` berawalan receiver BA.
+- **Flow master:** data transaksi divalidasi dan disimpan ke Zustand sebelum lookup empat referensi BA/company terpilih. GL dan Cost Center baru dicari saat dropdown disentuh, dengan pencarian server dan cache opsi lokal.
 - **Dampak API/database/dependency:** tidak ada endpoint atau schema baru dan tidak ada data upload yang dikirim/disimpan backend. Memakai endpoint master yang sudah ada; akses GL memerlukan permission `view gl accounts`. Tidak ada dependency baru.
 - **Status:** tahap 1, preview dan pemilihan akun; export ZF0002 belum termasuk tahap ini.
 
