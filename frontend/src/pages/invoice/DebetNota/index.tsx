@@ -1,10 +1,11 @@
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { AlertCircle, CheckCircle2, FileSpreadsheet, LoaderCircle, RotateCcw, Search, Upload } from "lucide-react";
+import { AlertCircle, CheckCircle2, Download, FileSpreadsheet, LoaderCircle, RotateCcw, Search, Upload } from "lucide-react";
 import * as XLSX from "xlsx";
 import api from "../../../api/axios";
 import Button from "../../../components/ui/Button";
 import { useDebetNotaDraft, type DebetNotaGlHistoryItem, type DebetNotaRow } from "../../../stores/debetNotaDraft";
+import { exportDebetNotaExcel, exportDebetNotaText } from "./exportDebetNotaZf0002";
 import styles from "./DebetNota.module.css";
 
 interface Company { id: number; sap_id: string; name: string }
@@ -292,6 +293,8 @@ export default function DebetNotaPage() {
   const { fileName, rows, glHistory, setUpload, resolveReferences, rememberGlAccount, updateRow, clear } = useDebetNotaDraft();
   const [masterLoading, setMasterLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportDate, setExportDate] = useState("");
   const [error, setError] = useState("");
 
   const resolveUploadedReferences = useCallback(async (
@@ -338,6 +341,7 @@ export default function DebetNotaPage() {
     event.target.value = "";
     if (!file) return;
     setError("");
+    setExportDate("");
     setUploading(true);
     try {
       const workbook = XLSX.read(await file.arrayBuffer(), { type: "array", cellDates: true });
@@ -418,7 +422,32 @@ export default function DebetNotaPage() {
   const total = rows.reduce((sum, row) => sum + row.amount, 0);
   const receiver = rows[0];
   const centerPrefix = receiver?.receiverBusinessArea ?? "";
+  const missingAccountRows = rows.flatMap((row, index) =>
+    row.glAccountCode && row.costCenterCode ? [] : [index + 1],
+  );
+  const hasResolvedReferences = Boolean(receiver?.receiverCompanyCode && receiver?.senderVendorCode);
+  const hasSinglePeriod = rows.every((row) => row.period === receiver?.period && row.fiscalYear === receiver?.fiscalYear);
+  const canExport = rows.length > 0 && Boolean(exportDate) && missingAccountRows.length === 0
+    && hasResolvedReferences && hasSinglePeriod && !masterLoading && !uploading && !exporting;
   const money = useMemo(() => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }), []);
+
+  const handleExport = async (format: "xlsx" | "txt") => {
+    if (!canExport) {
+      setError("Lengkapi tanggal, referensi Company/Vendor, GL, dan Cost Center sebelum export.");
+      return;
+    }
+    setError("");
+    setExporting(true);
+    try {
+      if (format === "xlsx") await exportDebetNotaExcel(rows, exportDate);
+      else exportDebetNotaText(rows, exportDate);
+      setExportDate("");
+    } catch (exportError: any) {
+      setError(exportError?.message || "File ZF0002 gagal dibuat.");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <main className={styles.page}>
@@ -430,7 +459,7 @@ export default function DebetNotaPage() {
             <p>Unggah XLSX sumber, pilih akun biaya dan Cost Center untuk BusArea penerima.</p>
           </div>
         </div>
-        {rows.length > 0 && <Button variant="outline" onClick={() => { clear(); setError(""); }}><RotateCcw size={15} /> Reset draft</Button>}
+        {rows.length > 0 && <Button variant="outline" onClick={() => { clear(); setError(""); setExportDate(""); }}><RotateCcw size={15} /> Reset draft</Button>}
       </header>
 
       <section className={styles.uploadCard}>
@@ -482,6 +511,25 @@ export default function DebetNotaPage() {
             <div className={styles.tableHeading}>
               <div><h2>Rincian biaya</h2><p>{rows.length} baris dari {fileName}</p></div>
               <span className={styles.totalPill}>Total <strong>{money.format(total)}</strong></span>
+            </div>
+            <div className={styles.exportPanel}>
+              <label className={styles.dateField}>
+                <span>Tanggal Posting / Dokumen</span>
+                <input type="date" value={exportDate} onChange={(event) => setExportDate(event.target.value)} />
+              </label>
+              <div className={styles.exportActions}>
+                <Button variant="outline" disabled={!canExport} loading={exporting} onClick={() => void handleExport("xlsx")}>
+                  <Download size={15} /> Export XLSX
+                </Button>
+                <Button variant="outline" disabled={!canExport} loading={exporting} onClick={() => void handleExport("txt")}>
+                  <Download size={15} /> Export TXT
+                </Button>
+              </div>
+              {missingAccountRows.length > 0 && (
+                <small className={styles.exportHint}>Pilih GL dan Cost Center pada seluruh baris sebelum export ({missingAccountRows.length} baris belum lengkap).</small>
+              )}
+              {!exportDate && <small className={styles.exportHint}>Tanggal wajib dipilih; tanggal ini dipakai untuk Posting Date dan Document Date.</small>}
+              {!hasSinglePeriod && <small className={styles.exportHint}>Periode dan Fiscal Year harus seragam dalam satu file.</small>}
             </div>
             <div className={styles.tableScroll}>
               <table>
