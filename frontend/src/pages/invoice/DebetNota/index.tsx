@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, useCallback, useMemo, useRef, useState } from "react";
 import { AlertCircle, CheckCircle2, FileSpreadsheet, RotateCcw, Upload } from "lucide-react";
 import * as XLSX from "xlsx";
 import api from "../../../api/axios";
@@ -72,32 +72,37 @@ function accountIsExpense(account: GLAccount): boolean {
 
 export default function DebetNotaPage() {
   const inputRef = useRef<HTMLInputElement>(null);
+  const mastersLoaded = useRef(false);
   const { fileName, rows, setUpload, updateRow, clear } = useDebetNotaDraft();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [businessAreas, setBusinessAreas] = useState<BusinessArea[]>([]);
   const [glAccounts, setGlAccounts] = useState<GLAccount[]>([]);
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
-  const [masterLoading, setMasterLoading] = useState(true);
+  const [masterLoading, setMasterLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    let active = true;
-    Promise.all([
+  const loadMasters = useCallback(async () => {
+    if (mastersLoaded.current) return;
+    setMasterLoading(true);
+    try {
+      const [companyResponse, areaResponse, accounts, centers] = await Promise.all([
       api.get("/companies"),
       api.get("/busa"),
       fetchAllPages<GLAccount>("/gl-accounts"),
       fetchAllPages<CostCenter>("/cost-centers"),
-    ]).then(([companyResponse, areaResponse, accounts, centers]) => {
-      if (!active) return;
+      ]);
       setCompanies(unwrap<Company>(companyResponse.data));
       setBusinessAreas(unwrap<BusinessArea>(areaResponse.data));
       setGlAccounts(accounts.filter((account) => account.gl_acc));
       setCostCenters(centers.filter((center) => center.sap_id));
-    }).catch((requestError: any) => {
-      if (active) setError(requestError?.response?.data?.message || "Master Company, Business Area, GL, atau Cost Center gagal dimuat.");
-    }).finally(() => { if (active) setMasterLoading(false); });
-    return () => { active = false; };
+      mastersLoaded.current = true;
+    } catch (requestError: any) {
+      setError(requestError?.response?.data?.message || "Master Company, Business Area, GL, atau Cost Center gagal dimuat.");
+      throw requestError;
+    } finally {
+      setMasterLoading(false);
+    }
   }, []);
 
   const expenseFirstAccounts = useMemo(() => [...glAccounts].sort((a, b) => {
@@ -113,6 +118,7 @@ export default function DebetNotaPage() {
     setError("");
     setUploading(true);
     try {
+      await loadMasters();
       const workbook = XLSX.read(await file.arrayBuffer(), { type: "array", cellDates: true });
       const sheetName = workbook.SheetNames[0];
       if (!sheetName) throw new Error("File tidak memiliki sheet yang dapat dibaca.");
@@ -190,7 +196,7 @@ export default function DebetNotaPage() {
     } finally {
       setUploading(false);
     }
-  }, [businessAreas, companies, setUpload]);
+  }, [businessAreas, companies, loadMasters, setUpload]);
 
   const total = rows.reduce((sum, row) => sum + row.amount, 0);
   const receiver = rows[0];
@@ -223,7 +229,7 @@ export default function DebetNotaPage() {
           </div>
         </div>
         <input ref={inputRef} className={styles.hiddenInput} type="file" accept=".xlsx,.xls" onChange={handleFile} />
-        <Button onClick={() => inputRef.current?.click()} loading={uploading || masterLoading} disabled={masterLoading}>
+        <Button onClick={() => inputRef.current?.click()} loading={uploading || masterLoading}>
           <Upload size={16} /> Pilih File XLSX
         </Button>
       </section>
