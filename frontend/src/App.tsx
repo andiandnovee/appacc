@@ -30,6 +30,7 @@ const CostCenterManagement = lazy(() => import("./pages/invoice/CostCenterManage
 const GLAccountManagement = lazy(() => import("./pages/invoice/GLAccountManagementPage"));
 const CustomerManagement = lazy(() => import("./pages/invoice/CustomerManagementPage"));
 const StnkJournal = lazy(() => import("./pages/invoice/StnkJournal"));
+const DebetNota = lazy(() => import("./pages/invoice/DebetNota"));
 
 const App: FC = (): ReactElement => {
   useEffect(() => {
@@ -73,6 +74,7 @@ const App: FC = (): ReactElement => {
                 <Route path="/invoice/pph" element={<PphReportPage />} />
                 {/* <Route path="/utility/import-f53" element={<F53ImportPage />} /> */}
                 <Route path="/invoice/receipts" element={<Receipt />} />
+                <Route path="/invoice/debet-nota" element={<DebetNota />} />
                 <Route path="/ref/stages" element={<Stages />} />
                 <Route
                   path="/ref/cost-centers"

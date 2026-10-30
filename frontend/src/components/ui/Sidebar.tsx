@@ -3,6 +3,7 @@ import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   FileText,
+  FileSpreadsheet,
   Percent,
   Car,
   Upload,
@@ -38,6 +39,7 @@ const NAV_GROUPS = [
       { to: "/invoice/receipts", icon: FileText, label: "Monitor Invoice" },
       { to: "/invoice/pph", icon: Percent, label: "Rekap PPh" },
       { to: "/invoice/f53-helper", icon: DollarSign, label: "F53 Helper" },
+      { to: "/invoice/debet-nota", icon: FileSpreadsheet, label: "Jurnal Debet Nota", permission: "view gl accounts" },
     
     ],
   },
