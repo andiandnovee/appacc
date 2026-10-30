@@ -18,6 +18,12 @@ interface GLAccount {
 }
 interface CostCenter { id: number; sap_id: string | null; description: string | null; short_name: string | null }
 interface PageResponse<T> { data: T[]; meta?: { last_page?: number }; last_page?: number }
+interface MasterData {
+  companies: Company[];
+  businessAreas: BusinessArea[];
+  glAccounts: GLAccount[];
+  costCenters: CostCenter[];
+}
 
 const REQUIRED_HEADERS = [
   "Sender CC", "Sender BA", "Sender Doc", "Posting Date", "Period", "Fiscal Year",
@@ -72,31 +78,34 @@ function accountIsExpense(account: GLAccount): boolean {
 
 export default function DebetNotaPage() {
   const inputRef = useRef<HTMLInputElement>(null);
-  const mastersLoaded = useRef(false);
+  const mastersRef = useRef<MasterData | null>(null);
   const { fileName, rows, setUpload, updateRow, clear } = useDebetNotaDraft();
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [businessAreas, setBusinessAreas] = useState<BusinessArea[]>([]);
   const [glAccounts, setGlAccounts] = useState<GLAccount[]>([]);
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
   const [masterLoading, setMasterLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
 
-  const loadMasters = useCallback(async () => {
-    if (mastersLoaded.current) return;
+  const loadMasters = useCallback(async (): Promise<MasterData> => {
+    if (mastersRef.current) return mastersRef.current;
     setMasterLoading(true);
     try {
       const [companyResponse, areaResponse, accounts, centers] = await Promise.all([
-      api.get("/companies"),
-      api.get("/busa"),
-      fetchAllPages<GLAccount>("/gl-accounts"),
-      fetchAllPages<CostCenter>("/cost-centers"),
+        api.get("/companies"),
+        api.get("/busa"),
+        fetchAllPages<GLAccount>("/gl-accounts"),
+        fetchAllPages<CostCenter>("/cost-centers"),
       ]);
-      setCompanies(unwrap<Company>(companyResponse.data));
-      setBusinessAreas(unwrap<BusinessArea>(areaResponse.data));
-      setGlAccounts(accounts.filter((account) => account.gl_acc));
-      setCostCenters(centers.filter((center) => center.sap_id));
-      mastersLoaded.current = true;
+      const masters: MasterData = {
+        companies: unwrap<Company>(companyResponse.data),
+        businessAreas: unwrap<BusinessArea>(areaResponse.data),
+        glAccounts: accounts.filter((account) => account.gl_acc),
+        costCenters: centers.filter((center) => center.sap_id),
+      };
+      mastersRef.current = masters;
+      setGlAccounts(masters.glAccounts);
+      setCostCenters(masters.costCenters);
+      return masters;
     } catch (requestError: any) {
       setError(requestError?.response?.data?.message || "Master Company, Business Area, GL, atau Cost Center gagal dimuat.");
       throw requestError;
@@ -118,7 +127,6 @@ export default function DebetNotaPage() {
     setError("");
     setUploading(true);
     try {
-      await loadMasters();
       const workbook = XLSX.read(await file.arrayBuffer(), { type: "array", cellDates: true });
       const sheetName = workbook.SheetNames[0];
       if (!sheetName) throw new Error("File tidak memiliki sheet yang dapat dibaca.");
@@ -146,19 +154,20 @@ export default function DebetNotaPage() {
         throw new Error("Satu file harus berisi satu Sender CC, Sender BA, dan Receiver BA.");
       }
 
+      const masters = await loadMasters();
       const senderCode = [...senderAreas][0];
       const receiverCode = [...receiverAreas][0];
       const senderCompanyCode = [...senderCompanies][0];
-      const senderArea = businessAreas.find((area) => String(area.sap_id) === senderCode);
-      const receiverArea = businessAreas.find((area) => String(area.sap_id) === receiverCode);
+      const senderArea = masters.businessAreas.find((area) => String(area.sap_id) === senderCode);
+      const receiverArea = masters.businessAreas.find((area) => String(area.sap_id) === receiverCode);
       if (!senderArea) throw new Error(`Business Area pengirim ${senderCode} tidak ditemukan di master.`);
       if (!senderArea.sap_vendor_code) throw new Error(`Vendor SAP belum diisi pada Business Area pengirim ${senderCode}.`);
       if (!receiverArea) throw new Error(`Business Area penerima ${receiverCode} tidak ditemukan di master.`);
-      const senderCompany = companies.find((company) => String(company.id) === String(senderArea.company_id));
+      const senderCompany = masters.companies.find((company) => String(company.id) === String(senderArea.company_id));
       if (!senderCompany || String(senderCompany.sap_id) !== senderCompanyCode) {
         throw new Error(`Sender CC ${senderCompanyCode} tidak sesuai dengan company pemilik BA ${senderCode}.`);
       }
-      const receiverCompany = companies.find((company) => String(company.id) === String(receiverArea.company_id));
+      const receiverCompany = masters.companies.find((company) => String(company.id) === String(receiverArea.company_id));
       if (!receiverCompany) throw new Error(`Company penerima untuk BA ${receiverCode} tidak ditemukan.`);
 
       const parsed: DebetNotaRow[] = records.map((record, index): DebetNotaRow => {
@@ -196,7 +205,7 @@ export default function DebetNotaPage() {
     } finally {
       setUploading(false);
     }
-  }, [businessAreas, companies, loadMasters, setUpload]);
+  }, [loadMasters, setUpload]);
 
   const total = rows.reduce((sum, row) => sum + row.amount, 0);
   const receiver = rows[0];
