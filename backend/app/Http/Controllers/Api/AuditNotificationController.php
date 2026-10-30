@@ -16,7 +16,7 @@ class AuditNotificationController extends Controller
         ]);
 
         $notifications = AuditNotification::query()
-            ->with('event:id,event_code,business_domain')
+            ->with('event:id,event_code,business_domain,actor_name,action,subject_label,description,occurred_at')
             ->where('user_id', $request->user()->id)
             ->when($validated['unread_only'] ?? false, fn ($query) => $query->whereNull('read_at'))
             ->latest()

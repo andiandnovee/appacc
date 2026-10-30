@@ -37,7 +37,7 @@ class AuditService
         $actor = $attributes['actor'] ?? $request?->user();
         $event = AuditEvent::create([
             'actor_user_id' => $actor?->id,
-            'actor_name' => $actor?->name,
+            'actor_name' => $attributes['actor_name'] ?? $actor?->name,
             'actor_roles' => $actor instanceof User ? $actor->getRoleNames()->values()->all() : [],
             'business_domain' => $attributes['business_domain'] ?? Str::before($eventCode, '.'),
             'event_code' => $eventCode,

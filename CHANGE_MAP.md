@@ -1,5 +1,12 @@
 # Peta Perubahan Aktif
 
+## 2026-10-30 — Detail actor dan aktivitas pada audit/notifikasi
+
+- **Ringkasan:** inbox menampilkan actor, action, subject, dan event; halaman Audit Activity dapat membuka metadata serta perubahan sebelum/sesudah. Notifikasi grup memuat actor terakhir, konteks aktivitas, dan jumlah baris/bagian atau aksi. Percobaan login gagal kini menandai actor sebagai belum terautentikasi tanpa menyimpan email.
+- **Modul/file:** audit service dan dispatcher backend, endpoint notifikasi, halaman Audit Activity, inbox notifikasi.
+- **Dampak API/database/dependency:** response `/api/notifications` menambahkan field event untuk actor/action/subject/description/waktu; schema dan dependency tetap.
+- **Status/verifikasi:** build frontend dan ESLint pada halaman Audit Activity/inbox berhasil; pemeriksaan sintaks PHP dan Pint test dispatcher berhasil. Build memberi peringatan chunk JavaScript besar.
+
 ## 2026-10-30 — Pengelompokan notifikasi event berfrekuensi tinggi
 
 - **Ringkasan:** event chunk impor PO/F53/PPh/ICAT digabung per sesi impor; perubahan status digabung per receipt; tambah/edit/hapus baris logbook digabung per header kendaraan dalam jendela lima menit. Audit event detail tetap tersimpan.

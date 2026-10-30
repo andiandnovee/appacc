@@ -67,6 +67,8 @@ class AuthController extends Controller
                 'action' => 'login',
                 'severity' => 'warning',
                 'outcome' => 'failed',
+                'actor_name' => 'Pengguna tidak terautentikasi',
+                'subject_label' => $user?->name ? 'Target akun: '.$user->name : 'Target akun tidak dikenali',
                 'description' => 'Percobaan login gagal.',
                 'http_status' => 401,
                 'metadata' => ['reason' => 'invalid_credentials'],

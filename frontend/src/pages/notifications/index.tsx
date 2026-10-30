@@ -15,7 +15,15 @@ interface NotificationItem {
   link: string | null;
   read_at: string | null;
   created_at: string;
-  event?: { event_code: string; business_domain: string } | null;
+  event?: {
+    event_code: string;
+    business_domain: string;
+    actor_name: string | null;
+    action: string;
+    subject_label: string | null;
+    description: string;
+    occurred_at: string;
+  } | null;
 }
 
 interface NotificationResponse {
@@ -155,7 +163,15 @@ export default function NotificationsPage() {
                 <time dateTime={item.created_at}>{new Date(item.created_at).toLocaleString("id-ID")}</time>
               </span>
               <span>{item.body}</span>
-              {item.event && <small>{item.event.business_domain} · {item.event.event_code}</small>}
+              {item.event && (
+                <>
+                  <small>
+                    {item.event.actor_name ?? (item.event.event_code === "auth.login.failed" ? "Pengguna tidak terautentikasi" : "Sistem")} · {item.event.action}
+                    {item.event.subject_label ? ` · ${item.event.subject_label}` : ` · ${item.event.description}`}
+                  </small>
+                  <small>{item.event.business_domain} · {item.event.event_code}</small>
+                </>
+              )}
             </span>
             <ExternalLink size={16} />
           </button>

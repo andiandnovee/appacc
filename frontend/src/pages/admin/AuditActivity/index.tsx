@@ -23,6 +23,9 @@ interface AuditEvent {
   actor_name: string | null;
   ip_address: string | null;
   occurred_at: string;
+  metadata: Record<string, unknown> | null;
+  changes_before: Record<string, unknown> | null;
+  changes_after: Record<string, unknown> | null;
 }
 
 interface AuditRule {
@@ -174,6 +177,16 @@ export default function AuditActivityPage() {
               {event.subject_label && <span>· {event.subject_label}</span>}
               {event.ip_address && <span>· {event.ip_address}</span>}
             </div>
+            {(event.metadata || event.changes_before || event.changes_after) && (
+              <details className={styles.eventDetails}>
+                <summary>Detail aktivitas</summary>
+                <pre>{JSON.stringify({
+                  metadata: event.metadata,
+                  changes_before: event.changes_before,
+                  changes_after: event.changes_after,
+                }, null, 2)}</pre>
+              </details>
+            )}
           </Card>
         ))}
       </section>

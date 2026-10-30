@@ -48,7 +48,7 @@ class AuditNotificationDispatcher
                     ['audit_event_id' => $event->id, 'user_id' => $user->id],
                     [
                         'title' => $rule->label,
-                        'body' => $event->description,
+                        'body' => ($event->actor_name ?? ($event->event_code === 'auth.login.failed' ? 'Pengguna tidak terautentikasi' : 'Sistem')).' · '.$event->description,
                         'link' => '/notifications',
                     ]
                 );
@@ -69,7 +69,7 @@ class AuditNotificationDispatcher
                     $event,
                     $notification,
                     $rule->label,
-                    $event->description
+                    ($event->actor_name ?? ($event->event_code === 'auth.login.failed' ? 'Pengguna tidak terautentikasi' : 'Sistem')).' · '.$event->description
                 );
             }
         }
@@ -124,6 +124,7 @@ class AuditNotificationDispatcher
             ->when($field === 'notification_batch_id', fn ($query) => $query->where('actor_user_id', $event->actor_user_id));
 
         $body = $group['body'];
+        $actorName = $event->actor_name ?? 'Sistem';
         if ($field === 'vehicle_cost_header_id') {
             $header = DB::table('vehicle_cost_headers')
                 ->join('vehicles', 'vehicles.id', '=', 'vehicle_cost_headers.vehicle_id')
@@ -134,13 +135,17 @@ class AuditNotificationDispatcher
                 ? sprintf('%s · %02d/%s', $header->plate_number, $header->month, $header->year)
                 : 'kendaraan';
             $count = $groupEvents()->where('created_at', '>=', $windowStart)->count();
-            $body = sprintf('%d perubahan baris logbook untuk %s.', $count, $subject);
+            $body = sprintf('%d aktivitas: %s %s; terakhir oleh %s.', $count, $event->description, $subject, $actorName);
         } elseif ($field === 'receipt_id') {
             $count = $groupEvents()->where('created_at', '>=', $windowStart)->count();
-            $body = sprintf('%d perubahan status pada Receipt #%s.', $count, $value);
+            $status = data_get($event->changes_after, 'status_value');
+            $statusDetail = $status ? ' Status terbaru: '.$status.'.' : '';
+            $body = sprintf('%d perubahan status pada Receipt #%s oleh %s.%s', $count, $value, $actorName, $statusDetail);
         } elseif ($field === 'notification_batch_id') {
-            $count = $groupEvents()->count();
-            $body = sprintf('%s (%d bagian).', $event->description, $count);
+            $batchEvents = $groupEvents()->get(['metadata']);
+            $partCount = $batchEvents->count();
+            $rowCount = $batchEvents->sum(fn (AuditEvent $batchEvent) => (int) data_get($batchEvent->metadata, 'row_count', 0));
+            $body = sprintf('%s %d baris dalam %d bagian; oleh %s.', $event->description, $rowCount, $partCount, $actorName);
         }
 
         foreach ($users as $user) {
