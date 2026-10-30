@@ -137,8 +137,11 @@ export default function DebetNotaPage() {
       const missing = REQUIRED_HEADERS.filter((header) => !headers.includes(header));
       if (missing.length) throw new Error(`Kolom wajib tidak ditemukan: ${missing.join(", ")}.`);
       const column = new Map(headers.map((header, index) => [header, index]));
-      const records = matrix.slice(1).filter((record) => record.some((value) => text(value)));
-      if (!records.length) throw new Error("Tidak ada baris transaksi pada sheet pertama.");
+      const senderCcColumn = column.get("Sender CC");
+      const records = matrix.slice(1).filter((record) =>
+        senderCcColumn != null && Boolean(text(record[senderCcColumn])),
+      );
+      if (!records.length) throw new Error("Tidak ada baris transaksi dengan Sender CC pada sheet pertama.");
 
       const read = (record: unknown[], header: string) => record[column.get(header) ?? -1];
       const senderAreaValues = records.map((record) => text(read(record, "Sender BA")));
