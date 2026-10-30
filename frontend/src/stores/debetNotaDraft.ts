@@ -22,11 +22,19 @@ export interface DebetNotaRow {
   costCenterLabel: string;
 }
 
+export interface DebetNotaGlHistoryItem {
+  id: number;
+  code: string;
+  label: string;
+}
+
 interface DebetNotaDraftState {
   fileName: string;
   rows: DebetNotaRow[];
+  glHistory: DebetNotaGlHistoryItem[];
   setUpload: (fileName: string, rows: DebetNotaRow[]) => void;
   resolveReferences: (senderVendorCode: string, receiverCompanyCode: string, receiverCompanyName: string) => void;
+  rememberGlAccount: (account: DebetNotaGlHistoryItem) => void;
   updateRow: (id: string, patch: Partial<Pick<DebetNotaRow, "glAccountId" | "glAccountCode" | "glAccountLabel" | "costCenterCode" | "costCenterLabel">>) => void;
   clear: () => void;
 }
@@ -36,6 +44,7 @@ export const useDebetNotaDraft = create<DebetNotaDraftState>()(
     (set) => ({
       fileName: "",
       rows: [],
+      glHistory: [],
       setUpload: (fileName, rows) => set({ fileName, rows }),
       resolveReferences: (senderVendorCode, receiverCompanyCode, receiverCompanyName) =>
         set((state) => ({ rows: state.rows.map((row) => ({
@@ -44,6 +53,9 @@ export const useDebetNotaDraft = create<DebetNotaDraftState>()(
           receiverCompanyCode,
           receiverCompanyName,
         })) })),
+      rememberGlAccount: (account) => set((state) => ({
+        glHistory: [account, ...state.glHistory.filter((item) => item.id !== account.id)].slice(0, 20),
+      })),
       updateRow: (id, patch) =>
         set((state) => ({
           rows: state.rows.map((row) => row.id === id ? { ...row, ...patch } : row),

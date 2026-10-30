@@ -4,7 +4,7 @@ import { AlertCircle, CheckCircle2, FileSpreadsheet, LoaderCircle, RotateCcw, Se
 import * as XLSX from "xlsx";
 import api from "../../../api/axios";
 import Button from "../../../components/ui/Button";
-import { useDebetNotaDraft, type DebetNotaRow } from "../../../stores/debetNotaDraft";
+import { useDebetNotaDraft, type DebetNotaGlHistoryItem, type DebetNotaRow } from "../../../stores/debetNotaDraft";
 import styles from "./DebetNota.module.css";
 
 interface Company { id: number; sap_id: string; name: string }
@@ -18,7 +18,7 @@ interface GLAccount {
 }
 interface CostCenter { id: number; sap_id: string | null; description: string | null; short_name: string | null }
 interface PageResponse<T> { data: T[]; meta?: { last_page?: number }; last_page?: number }
-interface SearchOption { id: number; code: string; label: string; isExpense: boolean }
+interface SearchOption { id: number; code: string; label: string; isExpense: boolean; isHistory?: boolean }
 interface DropdownPosition { top: number; left: number; width: number; maxHeight: number }
 const masterSearchCache = new Map<string, Promise<PageResponse<GLAccount | CostCenter>>>();
 
@@ -65,10 +65,11 @@ interface AsyncMasterSelectProps {
   kind: "gl" | "cost-center";
   receiverBusinessArea: string;
   selectedLabel: string;
+  glHistory: DebetNotaGlHistoryItem[];
   onSelect: (option: SearchOption) => void;
 }
 
-function AsyncMasterSelect({ kind, receiverBusinessArea, selectedLabel, onSelect }: AsyncMasterSelectProps) {
+function AsyncMasterSelect({ kind, receiverBusinessArea, selectedLabel, glHistory, onSelect }: AsyncMasterSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [options, setOptions] = useState<SearchOption[]>([]);
@@ -104,8 +105,8 @@ function AsyncMasterSelect({ kind, receiverBusinessArea, selectedLabel, onSelect
       const response = await responsePromise;
       if (requestId !== requestRef.current) return;
       const source = unwrap<GLAccount | CostCenter>(response);
-      const found: SearchOption[] = kind === "gl"
-          ? (source as GLAccount[]).filter((item) => item.gl_acc).map((item) => ({
+      const serverOptions: SearchOption[] = kind === "gl"
+          ? (source as GLAccount[]).filter((item) => item.gl_acc?.startsWith(preferredGlPrefix)).map((item) => ({
             id: item.id,
             code: item.gl_acc!,
             label: `${item.gl_acc} — ${item.gl_text || item.desc || "Tanpa nama"}`,
@@ -119,14 +120,35 @@ function AsyncMasterSelect({ kind, receiverBusinessArea, selectedLabel, onSelect
             label: `${item.sap_id} — ${item.short_name || item.description || ""}`,
             isExpense: false,
           }));
+      const historyOptions: SearchOption[] = kind === "gl"
+        ? glHistory
+          .filter((item) => {
+            const normalizedSearch = search.trim().toLocaleLowerCase();
+            return item.code.startsWith(preferredGlPrefix)
+              && (!normalizedSearch || `${item.code} ${item.label}`.toLocaleLowerCase().includes(normalizedSearch));
+          })
+          .map((item) => ({ ...item, isExpense: true, isHistory: true }))
+        : [];
+      const matchingHistoryIds = new Set(historyOptions.map((option) => option.id));
+      const merged = [
+        ...historyOptions,
+        ...serverOptions.filter((option) => !matchingHistoryIds.has(option.id)),
+      ];
       const sorted = kind === "gl"
-        ? found.sort((left, right) => {
+        ? merged.sort((left, right) => {
+          const leftHistoryIndex = historyOptions.findIndex((option) => option.id === left.id);
+          const rightHistoryIndex = historyOptions.findIndex((option) => option.id === right.id);
+          if (leftHistoryIndex !== -1 || rightHistoryIndex !== -1) {
+            if (leftHistoryIndex === -1) return 1;
+            if (rightHistoryIndex === -1) return -1;
+            return leftHistoryIndex - rightHistoryIndex;
+          }
           const leftPreferred = left.code.startsWith(preferredGlPrefix);
           const rightPreferred = right.code.startsWith(preferredGlPrefix);
           return Number(rightPreferred) - Number(leftPreferred)
             || left.code.localeCompare(right.code, "en", { numeric: true });
         })
-        : found;
+        : merged;
       setOptions((previous) => append ? [...previous, ...sorted] : sorted);
       const lastPage = Number(response?.meta?.last_page ?? response?.last_page ?? 1);
       setHasMore(requestedPage < lastPage);
@@ -140,7 +162,7 @@ function AsyncMasterSelect({ kind, receiverBusinessArea, selectedLabel, onSelect
     } finally {
       if (requestId === requestRef.current) setLoading(false);
     }
-  }, [costCenterPrefix, endpoint, kind, preferredGlPrefix]);
+  }, [costCenterPrefix, endpoint, glHistory, kind, preferredGlPrefix]);
 
   const openAndLoad = (event: React.FocusEvent<HTMLInputElement>) => {
     if ((kind === "gl" && !receiverBusinessArea) || (kind === "cost-center" && !costCenterPrefix)) return;
@@ -250,7 +272,8 @@ function AsyncMasterSelect({ kind, receiverBusinessArea, selectedLabel, onSelect
               }}
             >
               <strong>{option.code}</strong><span>{option.label.slice(option.code.length + 3)}</span>
-              {kind === "gl" && option.code.startsWith(preferredGlPrefix) && <small>Biaya</small>}
+              {kind === "gl" && option.isHistory && <small>Riwayat</small>}
+              {kind === "gl" && !option.isHistory && option.code.startsWith(preferredGlPrefix) && <small>Biaya</small>}
               {kind === "cost-center" && <small>Prefix BA</small>}
             </button>
           ))}
@@ -266,7 +289,7 @@ function AsyncMasterSelect({ kind, receiverBusinessArea, selectedLabel, onSelect
 
 export default function DebetNotaPage() {
   const inputRef = useRef<HTMLInputElement>(null);
-  const { fileName, rows, setUpload, resolveReferences, updateRow, clear } = useDebetNotaDraft();
+  const { fileName, rows, glHistory, setUpload, resolveReferences, rememberGlAccount, updateRow, clear } = useDebetNotaDraft();
   const [masterLoading, setMasterLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -471,11 +494,15 @@ export default function DebetNotaPage() {
                         kind="gl"
                         receiverBusinessArea={centerPrefix}
                         selectedLabel={row.glAccountLabel || ""}
-                        onSelect={(option) => updateRow(row.id, {
-                          glAccountId: option.id,
-                          glAccountCode: option.code,
-                          glAccountLabel: option.label,
-                        })}
+                        glHistory={glHistory}
+                        onSelect={(option) => {
+                          rememberGlAccount({ id: option.id, code: option.code, label: option.label });
+                          updateRow(row.id, {
+                            glAccountId: option.id,
+                            glAccountCode: option.code,
+                            glAccountLabel: option.label,
+                          });
+                        }}
                       />
                     </td>
                     <td>
