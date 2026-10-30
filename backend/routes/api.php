@@ -2,25 +2,26 @@
 
 use App\Http\Controllers\Admin\RoleManagementController;
 use App\Http\Controllers\Admin\UserManagementController;
-use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AuditEventController;
 use App\Http\Controllers\Api\AuditNotificationController;
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BusinessAreaController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\CostCenterController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\F53ImportController;
+use App\Http\Controllers\Api\GLAccountController;
 use App\Http\Controllers\Api\InvoiceReceiptController;
 use App\Http\Controllers\Api\PgrController;
 use App\Http\Controllers\Api\PphImportController;
 use App\Http\Controllers\Api\SapImportController;
 use App\Http\Controllers\Api\StageController;
+use App\Http\Controllers\Api\UserDeviceController;
 use App\Http\Controllers\Api\VehicleController;
 use App\Http\Controllers\Api\VehicleCostImportController;
 use App\Http\Controllers\Api\VehicleLogbookController;
 use App\Http\Controllers\Api\VehicleSelectController;
 use App\Http\Controllers\Api\VendorController;
-use App\Http\Controllers\Api\UserDeviceController;
 use App\Http\Controllers\Auth\MobileAuthController;
 use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\DashboardController;
@@ -105,6 +106,13 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/', [SettingController::class, 'index']);
         Route::put('/', [SettingController::class, 'update'])->middleware('check-permission:edit settings');
     });
+
+    // GL account master uses granular permissions so roles can be configured independently.
+    Route::get('gl-accounts', [GLAccountController::class, 'index'])->middleware('check-permission:view gl accounts');
+    Route::get('gl-accounts/{glAccount}', [GLAccountController::class, 'show'])->middleware('check-permission:view gl accounts');
+    Route::post('gl-accounts', [GLAccountController::class, 'store'])->middleware('check-permission:create gl accounts');
+    Route::put('gl-accounts/{glAccount}', [GLAccountController::class, 'update'])->middleware('check-permission:edit gl accounts');
+    Route::delete('gl-accounts/{glAccount}', [GLAccountController::class, 'destroy'])->middleware('check-permission:delete gl accounts');
 
     // ── ROLE: accounting ──────────────────────────────────────────────────
     Route::middleware('role:accounting')->group(function () {

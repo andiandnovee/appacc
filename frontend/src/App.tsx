@@ -27,6 +27,7 @@ const F53HelperPage = lazy(() => import("./pages/invoice/F53HelperPage"));
 const VehicleLogbookPage = lazy(() => import("./pages/invoice/VehicleLogBook"));
 const VehicleManagement = lazy(() => import("./pages/invoice/VehicleManagementPage"));
 const CostCenterManagement = lazy(() => import("./pages/invoice/CostCenterManagementPage"));
+const GLAccountManagement = lazy(() => import("./pages/invoice/GLAccountManagementPage"));
 const CustomerManagement = lazy(() => import("./pages/invoice/CustomerManagementPage"));
 const StnkJournal = lazy(() => import("./pages/invoice/StnkJournal"));
 
@@ -78,6 +79,7 @@ const App: FC = (): ReactElement => {
                   element={<CostCenterManagement />}
                 />
                 <Route path="/ref/customers" element={<CustomerManagement />} />
+                <Route path="/ref/gl-accounts" element={<GLAccountManagement />} />
 
                 {/* ── Kendaraan ── */}
                 <Route

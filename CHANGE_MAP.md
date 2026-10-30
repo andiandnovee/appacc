@@ -7,6 +7,13 @@
 - **Dampak API/database/dependency:** menambah tabel referensi `gl_accounts`; belum mengubah API atau dependency. Nilai `gl_acc` tidak unik sehingga entri duplikat dari sumber tetap dipertahankan.
 - **Status/verifikasi:** pemeriksaan sintaks PHP, struktur JSON, dan `git diff --check` lulus. Migrasi/seed belum dijalankan terhadap database.
 
+## 2026-10-30 — Manajemen GL Account dan permission role
+
+- **Ringkasan:** menambahkan CRUD/list GL Account untuk field `gl_acc`, nama/group akun, sumber group, dan catatan; memperluas editor Role agar permission dapat dibaca dan diatur.
+- **Modul/file:** API backend GL Account, seeder permission role, route dan menu web, halaman/form GL Account, editor Role, serta aset build web.
+- **Dampak API/database/dependency:** endpoint `/api/gl-accounts` memakai permission `view/create/edit/delete gl accounts`; tidak mengubah schema GL yang sudah dibuat migration sebelumnya. Role `admin` dan `super-admin` mendapat seluruh permission GL dari `RolePermissionSeeder`; role lain dapat dikonfigurasi pada halaman Users & Role.
+- **Status/verifikasi:** route terdaftar; PHP lint dan Pint lulus; build frontend lulus; ESLint tanpa error dengan warning yang sudah ada di `UserManagement.tsx` dan file lain. `tsc --noEmit` masih gagal pada sejumlah error TypeScript lama di halaman/komponen lain; tidak ada error pada form/halaman GL setelah koreksi tipe. Perubahan permission aktif setelah `php artisan db:seed --class='Database\Seeders\RolePermissionSeeder'`.
+
 ## 2026-10-30 — Detail actor dan aktivitas pada audit/notifikasi
 
 - **Ringkasan:** inbox menampilkan actor, action, subject, dan event; halaman Audit Activity dapat membuka metadata serta perubahan sebelum/sesudah. Notifikasi grup memuat actor terakhir, konteks aktivitas, dan jumlah baris/bagian atau aksi. Percobaan login gagal kini menandai actor sebagai belum terautentikasi tanpa menyimpan email.

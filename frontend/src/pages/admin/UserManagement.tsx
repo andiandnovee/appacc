@@ -125,8 +125,22 @@ function AssignRoleModal({ user, allRoles, onClose, onSaved }) {
 function RoleFormModal({ role, onClose, onSaved }) {
   const isEdit = Boolean(role);
   const [name, setName] = useState(role?.name ?? "");
+  const [permissions, setPermissions] = useState(role?.permissions ?? []);
+  const [availablePermissions, setAvailablePermissions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    api.get("/permissions")
+      .then((res) => setAvailablePermissions(res.data?.data ?? []))
+      .catch(() => setError("Gagal memuat daftar permission."));
+  }, []);
+
+  const togglePermission = (permission) => {
+    setPermissions((current) => current.includes(permission)
+      ? current.filter((item) => item !== permission)
+      : [...current, permission]);
+  };
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -137,15 +151,9 @@ function RoleFormModal({ role, onClose, onSaved }) {
     setError(null);
     try {
       const res = isEdit
-        ? await AdminApi(`/roles/${role.id}`, {
-            method: "PUT",
-            body: JSON.stringify({ name }),
-          })
-        : await AdminApi("/roles", {
-            method: "POST",
-            body: JSON.stringify({ name }),
-          });
-      onSaved(res.data, isEdit);
+        ? await api.put(`/roles/${role.id}`, { name, permissions })
+        : await api.post("/roles", { name, permissions });
+      onSaved(res.data.data, isEdit);
     } catch {
       setError(
         isEdit
@@ -175,6 +183,25 @@ function RoleFormModal({ role, onClose, onSaved }) {
           error={error}
           autoFocus
         />
+        <div className={styles.permissionSection}>
+          <p className={styles.chipLabel}>Permissions</p>
+          {availablePermissions.length === 0 ? (
+            <p className={styles.muted}>Daftar permission belum tersedia.</p>
+          ) : (
+            <div className={styles.permissionGrid}>
+              {availablePermissions.map((permission) => (
+                <label key={permission.id} className={styles.permissionOption}>
+                  <input
+                    type="checkbox"
+                    checked={permissions.includes(permission.name)}
+                    onChange={() => togglePermission(permission.name)}
+                  />
+                  <span>{permission.name}</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
       </Modal.Body>
       <Modal.Footer>
         <Button variant="ghost" onClick={onClose} disabled={loading}>
@@ -531,7 +558,7 @@ export default function UserManagement() {
   const { addToast } = useToast();
 
   useEffect(() => {
-    AdminApi("/roles").then((res) => setAllRoles(res.data));
+    api.get("/roles").then((res) => setAllRoles(res.data.data));
   }, []);
 
   const tabs = [

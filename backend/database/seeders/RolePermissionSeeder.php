@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\Role;
 use App\Models\Permission;
+use App\Models\Role;
+use Illuminate\Database\Seeder;
 
 class RolePermissionSeeder extends Seeder
 {
@@ -33,6 +33,11 @@ class RolePermissionSeeder extends Seeder
             'edit settings',
             // Dashboard permissions
             'view dashboard',
+            // GL account master
+            'view gl accounts',
+            'create gl accounts',
+            'edit gl accounts',
+            'delete gl accounts',
         ];
 
         foreach ($permissions as $permission) {
@@ -53,6 +58,7 @@ class RolePermissionSeeder extends Seeder
             'view users', 'create users', 'edit users', 'delete users',
             'view settings', 'edit settings',
             'view dashboard',
+            'view gl accounts', 'create gl accounts', 'edit gl accounts', 'delete gl accounts',
         ];
         $adminRole->syncPermissions($adminPermissions);
 

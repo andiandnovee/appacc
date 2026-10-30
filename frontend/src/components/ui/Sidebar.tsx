@@ -15,6 +15,7 @@ import {
   X,
   BookOpen,
   History,
+  Calculator,
 } from "lucide-react";
 import styles from "./Sidebar.module.css";
 import { DollarSign, HatGlassesIcon } from "lucide-react";
@@ -55,6 +56,7 @@ const NAV_GROUPS = [
       { to: "/ref/busa", icon: MapPin, label: "Business Area" },
       { to: "/ref/stages", icon: Star, label: "Periode " },
       { to: "/ref/cost-centers", icon: DollarSign, label: "Cost Centers" },
+      { to: "/ref/gl-accounts", icon: Calculator, label: "GL Accounts", permission: "view gl accounts" },
       { to: "/ref/customers", icon: Users, label: "Customers" },
     ],
   },
@@ -102,7 +104,12 @@ export default function Sidebar({
           ],
         }
       : group,
-  );
+  ).map((group) => ({
+    ...group,
+    items: group.items.filter((item: any) =>
+      !item.permission || user?.permission_names?.includes(item.permission) || user?.permissions?.includes(item.permission),
+    ),
+  })).filter((group) => group.items.length > 0);
 
   useEffect(() => {
     if (isMobile) return;
