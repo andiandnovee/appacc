@@ -1,5 +1,12 @@
 # Peta Perubahan Aktif
 
+## 2026-10-30 — Perapihan input penerima dan notifikasi logbook
+
+- **Ringkasan:** input penerima rule Audit Activity mempertahankan teks yang sedang diketik (termasuk koma); notifikasi logbook dikelompokkan per header kendaraan/periode selama lima menit agar baris berulang tidak membuat inbox dan push penuh.
+- **Modul/file:** halaman Audit Activity frontend, dispatcher notifikasi audit, dan relasi event pada model log notifikasi.
+- **Dampak API/database/dependency:** tidak ada perubahan kontrak API, schema, atau dependency; audit event per baris tetap dicatat.
+- **Status/verifikasi:** build frontend berhasil; pemeriksaan sintaks PHP dan diff menunggu verifikasi akhir.
+
 ## 2026-10-28 — Audit Activity dan fondasi FCM web
 
 - **Ringkasan:** menambahkan audit event backend untuk auth, receipt, impor, kendaraan, dan perubahan admin; Audit Activity khusus `super-admin`; inbox notifikasi; registrasi/nonaktifkan web device token; pengirim FCM HTTP v1; dan Firebase Messaging service worker web.

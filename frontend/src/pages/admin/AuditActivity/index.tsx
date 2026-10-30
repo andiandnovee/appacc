@@ -57,6 +57,7 @@ export default function AuditActivityPage() {
   const canView = roles.includes("super-admin");
   const [events, setEvents] = useState<AuditEvent[]>([]);
   const [rules, setRules] = useState<AuditRule[]>([]);
+  const [recipientDrafts, setRecipientDrafts] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [domain, setDomain] = useState("");
@@ -80,6 +81,7 @@ export default function AuditActivityPage() {
       ]);
       setEvents(eventResponse.data.data ?? []);
       setRules(ruleResponse.data.data ?? []);
+      setRecipientDrafts({});
     } catch (error) {
       addToast({ variant: "danger", title: "Gagal memuat Audit Activity." });
       console.error("Gagal memuat Audit Activity.", error);
@@ -109,6 +111,11 @@ export default function AuditActivityPage() {
         recipient_targets: updated.recipient_targets ?? [],
       });
       setRules((current) => current.map((item) => item.id === rule.id ? response.data.data : item));
+      setRecipientDrafts((current) => {
+        const next = { ...current };
+        delete next[rule.id];
+        return next;
+      });
       addToast({ variant: "success", title: "Rule notifikasi tersimpan." });
     } catch (error: any) {
       setRules((current) => current.map((item) => item.id === rule.id ? rule : item));
@@ -187,10 +194,9 @@ export default function AuditActivityPage() {
                 type="text"
                 aria-label={`Penerima ${rule.event_code}`}
                 placeholder="actor, role:accounting, user:12"
-                value={(rule.recipient_targets ?? []).join(", ")}
+                value={recipientDrafts[rule.id] ?? (rule.recipient_targets ?? []).join(", ")}
                 onChange={(event) => {
-                  const recipientTargets = [...new Set(event.target.value.split(",").map((target) => target.trim()).filter(Boolean))];
-                  setRules((current) => current.map((item) => item.id === rule.id ? { ...item, recipient_targets: recipientTargets } : item));
+                  setRecipientDrafts((current) => ({ ...current, [rule.id]: event.target.value }));
                 }}
                 onBlur={(event) => {
                   const recipientTargets = [...new Set(event.target.value.split(",").map((target) => target.trim()).filter(Boolean))];

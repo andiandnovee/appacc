@@ -22,4 +22,9 @@ class NotificationLog extends Model
     protected $casts = [
         'sent_at' => 'datetime',
     ];
+
+    public function auditEvent()
+    {
+        return $this->belongsTo(AuditEvent::class, 'audit_event_id');
+    }
 }
