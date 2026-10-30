@@ -23,7 +23,7 @@ function buildHeaderText(row: DebetNotaRow): string {
 }
 
 function buildReference(row: DebetNotaRow): string {
-  return `${row.senderCompanyCode}${row.senderDocument}`;
+  return `${row.senderCompanyCode}-${row.senderDocument}`;
 }
 
 function makeRow(fields: {
