@@ -81,7 +81,8 @@ function AsyncMasterSelect({ kind, receiverBusinessArea, selectedLabel, onSelect
   const listRef = useRef<HTMLDivElement>(null);
   const [dropdownPosition, setDropdownPosition] = useState<DropdownPosition | null>(null);
   const endpoint = kind === "gl" ? "/gl-accounts" : "/cost-centers";
-  const initialQuery = kind === "gl" ? "expense" : receiverBusinessArea;
+  const preferredGlPrefix = `${receiverBusinessArea}3`;
+  const initialQuery = kind === "gl" ? preferredGlPrefix : receiverBusinessArea;
 
   const fetchOptions = useCallback(async (search: string, requestedPage = 1, append = false) => {
     const requestId = ++requestRef.current;
@@ -117,7 +118,15 @@ function AsyncMasterSelect({ kind, receiverBusinessArea, selectedLabel, onSelect
             label: `${item.sap_id} — ${item.short_name || item.description || ""}`,
             isExpense: false,
           }));
-      setOptions((previous) => append ? [...previous, ...found] : found);
+      const sorted = kind === "gl"
+        ? found.sort((left, right) => {
+          const leftPreferred = left.code.startsWith(preferredGlPrefix);
+          const rightPreferred = right.code.startsWith(preferredGlPrefix);
+          return Number(rightPreferred) - Number(leftPreferred)
+            || left.code.localeCompare(right.code, "en", { numeric: true });
+        })
+        : found;
+      setOptions((previous) => append ? [...previous, ...sorted] : sorted);
       const lastPage = Number(response?.meta?.last_page ?? response?.last_page ?? 1);
       setHasMore(requestedPage < lastPage);
       setPage(requestedPage);
@@ -130,9 +139,10 @@ function AsyncMasterSelect({ kind, receiverBusinessArea, selectedLabel, onSelect
     } finally {
       if (requestId === requestRef.current) setLoading(false);
     }
-  }, [endpoint, kind, receiverBusinessArea]);
+  }, [endpoint, kind, preferredGlPrefix, receiverBusinessArea]);
 
   const openAndLoad = (event: React.FocusEvent<HTMLInputElement>) => {
+    if (kind === "gl" && !receiverBusinessArea) return;
     const rect = event.currentTarget.getBoundingClientRect();
     const width = Math.min(Math.max(rect.width, 260), window.innerWidth - 24);
     const spaceBelow = window.innerHeight - rect.bottom - 16;
@@ -176,6 +186,7 @@ function AsyncMasterSelect({ kind, receiverBusinessArea, selectedLabel, onSelect
     setPage(1);
     setHasMore(false);
     if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (kind === "gl" && !receiverBusinessArea) return;
     debounceRef.current = setTimeout(() => {
       const search = next || initialQuery;
       if (search) void fetchOptions(search);
@@ -204,7 +215,7 @@ function AsyncMasterSelect({ kind, receiverBusinessArea, selectedLabel, onSelect
         <input
           ref={inputRef}
           value={open ? query : selectedLabel}
-          placeholder={kind === "gl" ? "Cari GL biaya…" : `Cari CC ${receiverBusinessArea}…`}
+          placeholder={kind === "gl" ? `GL ${preferredGlPrefix}… cari kode/nama` : `Cari CC ${receiverBusinessArea}…`}
           onFocus={openAndLoad}
           onChange={handleQuery}
           onBlur={() => window.setTimeout(() => { setOpen(false); setDropdownPosition(null); }, 150)}
@@ -238,7 +249,8 @@ function AsyncMasterSelect({ kind, receiverBusinessArea, selectedLabel, onSelect
               }}
             >
               <strong>{option.code}</strong><span>{option.label.slice(option.code.length + 3)}</span>
-              {option.isExpense && <small>Biaya</small>}
+              {kind === "gl" && option.code.startsWith(preferredGlPrefix) && <small>Prioritas BA</small>}
+              {kind === "gl" && !option.code.startsWith(preferredGlPrefix) && option.isExpense && <small>Biaya</small>}
             </button>
           ))}
           {loading && <div className={styles.asyncMessage}>Memuat pilihan…</div>}
