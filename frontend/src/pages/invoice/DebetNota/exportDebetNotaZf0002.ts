@@ -22,6 +22,10 @@ function buildHeaderText(row: DebetNotaRow): string {
   return `CTT DN ${row.senderBusinessArea} ${monthName} ${row.fiscalYear}`;
 }
 
+function buildReference(row: DebetNotaRow): string {
+  return `${row.senderCompanyCode}${row.senderDocument}`;
+}
+
 function makeRow(fields: {
   dc: "D" | "C";
   companyCode: string;
@@ -94,7 +98,7 @@ export function buildDebetNotaZf0002Rows(rows: DebetNotaRow[], date: string): Zf
     assignment,
     text: row.description,
     taxCode: "I0",
-    reference: row.senderDocument,
+    reference: buildReference(row),
     headerText,
   }));
 
@@ -112,7 +116,7 @@ export function buildDebetNotaZf0002Rows(rows: DebetNotaRow[], date: string): Zf
     assignment,
     text: headerText,
     taxCode: "**",
-    reference: first.senderDocument,
+    reference: buildReference(first),
     headerText,
   });
 
