@@ -231,7 +231,10 @@ if ($sortBy === 'vendor') {
 
     public function importIcatChunk(Request $request)
 {
-    $request->validate(['rows' => 'required|array']);
+    $request->validate([
+        'rows' => 'required|array',
+        'notification_batch_id' => 'nullable|uuid',
+    ]);
 
     $service = new IcatIdImportService();
     $result = $service->importChunk($request->input('rows'));
@@ -239,7 +242,10 @@ if ($sortBy === 'vendor') {
         'business_domain' => 'receipt',
         'action' => 'import',
         'description' => 'Impor ICAT ID diproses.',
-        'metadata' => ['row_count' => count($request->input('rows'))],
+        'metadata' => [
+            'row_count' => count($request->input('rows')),
+            'notification_batch_id' => $request->input('notification_batch_id'),
+        ],
     ], $request);
 
     return response()->json($result);

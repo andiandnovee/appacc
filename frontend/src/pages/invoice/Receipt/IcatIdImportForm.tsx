@@ -44,6 +44,7 @@ export default function IcatIdImportForm({ rows, fileName, onSuccess, onReset }:
     abortRef.current = false;
 
     try {
+      const notificationBatchId = crypto.randomUUID();
       const chunks: any[][] = [];
       for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
         chunks.push(rows.slice(i, i + CHUNK_SIZE));
@@ -60,6 +61,7 @@ export default function IcatIdImportForm({ rows, fileName, onSuccess, onReset }:
 
         const { data } = await api.post("/receipts/import-icat-chunk", {
           rows: chunks[i],
+          notification_batch_id: notificationBatchId,
         });
 
         totalImported += data.imported ?? 0;

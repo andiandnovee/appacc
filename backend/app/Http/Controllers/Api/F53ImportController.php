@@ -24,6 +24,7 @@ class F53ImportController extends Controller
             'rows'         => 'required|array',
             'rows.*'       => 'array',
             'stage_sap_id' => 'required|integer',
+            'notification_batch_id' => 'nullable|uuid',
         ]);
 
         $rows       = $request->input('rows');
@@ -48,7 +49,11 @@ class F53ImportController extends Controller
                 'outcome' => 'failed',
                 'severity' => 'warning',
                 'description' => 'Impor F53 gagal karena kolom wajib tidak tersedia.',
-                'metadata' => ['stage_sap_id' => $stageSapId, 'row_count' => count($rows)],
+                'metadata' => [
+                    'stage_sap_id' => $stageSapId,
+                    'row_count' => count($rows),
+                    'notification_batch_id' => $request->input('notification_batch_id'),
+                ],
                 'http_status' => 422,
             ], $request);
 
@@ -67,7 +72,11 @@ class F53ImportController extends Controller
                 'outcome' => 'failed',
                 'severity' => 'warning',
                 'description' => 'Impor F53 gagal diproses.',
-                'metadata' => ['stage_sap_id' => $stageSapId, 'row_count' => count($rows)],
+                'metadata' => [
+                    'stage_sap_id' => $stageSapId,
+                    'row_count' => count($rows),
+                    'notification_batch_id' => $request->input('notification_batch_id'),
+                ],
                 'http_status' => 500,
             ], $request);
 
@@ -78,7 +87,11 @@ class F53ImportController extends Controller
             'business_domain' => 'imports',
             'action' => 'import',
             'description' => 'Impor F53 selesai.',
-            'metadata' => ['row_count' => count($rows), 'stage_sap_id' => $stageSapId],
+            'metadata' => [
+                'row_count' => count($rows),
+                'stage_sap_id' => $stageSapId,
+                'notification_batch_id' => $request->input('notification_batch_id'),
+            ],
         ], $request);
 
         return response()->json($result);

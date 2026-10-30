@@ -112,6 +112,7 @@ export default function PphImportForm({ onSuccess }: Props) {
     abortRef.current = false;
 
     try {
+      const notificationBatchId = crypto.randomUUID();
       const rows = await parseExcel(file);
       if (!rows.length) throw new Error("File kosong atau tidak memiliki data");
 
@@ -132,6 +133,7 @@ export default function PphImportForm({ onSuccess }: Props) {
 
         const { data } = await api.post("/sap/import-pph-chunk", {
           rows: chunks[i],
+          notification_batch_id: notificationBatchId,
         });
 
         totalImported += data.imported ?? 0;

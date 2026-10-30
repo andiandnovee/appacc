@@ -103,6 +103,7 @@ export default function F53ImportForm({ onSuccess }: Props) {
     abortRef.current = false;
 
     try {
+      const notificationBatchId = crypto.randomUUID();
       const rows = await parseExcel(file);
       const chunks: any[][] = [];
       for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
@@ -121,6 +122,7 @@ export default function F53ImportForm({ onSuccess }: Props) {
         const { data } = await api.post("/sap/f53-import", {
           rows: chunks[i],
           stage_sap_id: parseInt(stageSapId),
+          notification_batch_id: notificationBatchId,
         });
 
         totalImported   += data.imported   ?? 0;

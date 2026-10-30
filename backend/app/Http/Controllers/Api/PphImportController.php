@@ -23,6 +23,7 @@ class PphImportController extends Controller
         $request->validate([
             'rows'   => 'required|array',
             'rows.*' => 'array',
+            'notification_batch_id' => 'nullable|uuid',
         ]);
 
         $rows    = $request->input('rows');
@@ -53,6 +54,7 @@ class PphImportController extends Controller
                 'metadata' => [
                     'row_count' => count($rows),
                     'upload_type' => $hasGl ? 'main' : 'vendor',
+                    'notification_batch_id' => $request->input('notification_batch_id'),
                 ],
                 'http_status' => 500,
             ], $request);
@@ -67,6 +69,7 @@ class PphImportController extends Controller
             'metadata' => [
                 'row_count' => count($rows),
                 'upload_type' => $hasGl ? 'main' : 'vendor',
+                'notification_batch_id' => $request->input('notification_batch_id'),
             ],
         ], $request);
 

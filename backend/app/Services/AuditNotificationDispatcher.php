@@ -9,6 +9,7 @@ use App\Models\NotificationLog;
 use App\Models\User;
 use App\Models\UserDevice;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 
@@ -33,71 +34,9 @@ class AuditNotificationDispatcher
             return;
         }
 
-        $logbookGroup = $event->event_code === 'vehicle.logbook.created'
-            ? data_get($event->metadata, 'vehicle_cost_header_id')
-            : null;
-
-        if ($logbookGroup !== null) {
-            $header = DB::table('vehicle_cost_headers')
-                ->join('vehicles', 'vehicles.id', '=', 'vehicle_cost_headers.vehicle_id')
-                ->where('vehicle_cost_headers.id', $logbookGroup)
-                ->select('vehicles.plate_number', 'vehicle_cost_headers.month', 'vehicle_cost_headers.year')
-                ->first();
-            $subject = $header
-                ? sprintf('%s · %02d/%s', $header->plate_number, $header->month, $header->year)
-                : 'kendaraan';
-            $notificationTitle = 'Logbook diperbarui';
-            $notificationBody = 'Baris logbook ditambahkan untuk '.$subject.'.';
-
-            foreach ($users as $user) {
-                if ($rule->notify_in_app) {
-                    $existing = AuditNotification::query()
-                        ->where('user_id', $user->id)
-                        ->where('title', $notificationTitle)
-                        ->where('created_at', '>=', now()->subMinutes(5))
-                        ->whereHas('event', fn ($query) => $query
-                            ->where('event_code', 'vehicle.logbook.created')
-                            ->where('metadata->vehicle_cost_header_id', $logbookGroup))
-                        ->latest('created_at')
-                        ->first();
-
-                    if ($existing) {
-                        $existing->update(['audit_event_id' => $event->id, 'body' => $notificationBody]);
-                    } else {
-                        AuditNotification::create([
-                            'user_id' => $user->id,
-                            'audit_event_id' => $event->id,
-                            'title' => $notificationTitle,
-                            'body' => $notificationBody,
-                            'link' => '/notifications',
-                        ]);
-                    }
-                }
-
-                if ($rule->notify_push && config('services.fcm.enabled')) {
-                    $devices = UserDevice::query()
-                        ->where('user_id', $user->id)
-                        ->where('is_active', true)
-                        ->get();
-
-                    foreach ($devices as $device) {
-                        $alreadySentForGroup = NotificationLog::query()
-                            ->where('user_device_id', $device->id)
-                            ->where('channel', 'fcm')
-                            ->where('status', 'sent')
-                            ->where('created_at', '>=', now()->subMinutes(5))
-                            ->whereHas('auditEvent', fn ($query) => $query
-                                ->where('event_code', 'vehicle.logbook.created')
-                                ->where('metadata->vehicle_cost_header_id', $logbookGroup));
-
-                        if ($alreadySentForGroup->exists()) {
-                            continue;
-                        }
-
-                        $this->fcmService->sendToDevice($device, $event, null, $notificationTitle, $notificationBody);
-                    }
-                }
-            }
+        $group = $this->notificationGroup($event);
+        if ($group !== null) {
+            $this->dispatchGrouped($event, $rule, $users, $group);
 
             return;
         }
@@ -132,6 +71,124 @@ class AuditNotificationDispatcher
                     $rule->label,
                     $event->description
                 );
+            }
+        }
+    }
+
+    /** @return array{field: string, value: int|string, title: string, body: string}|null */
+    private function notificationGroup(AuditEvent $event): ?array
+    {
+        $metadata = $event->metadata ?? [];
+        $field = match ($event->event_code) {
+            'vehicle.logbook.created', 'vehicle.logbook.updated', 'vehicle.logbook.deleted' => 'vehicle_cost_header_id',
+            'receipt.status.created' => 'receipt_id',
+            'import.po.completed', 'import.f53.completed', 'import.pph.completed', 'receipt.icat.imported',
+            'import.po.failed', 'import.f53.failed', 'import.pph.failed' => 'notification_batch_id',
+            default => null,
+        };
+        $value = $field ? data_get($metadata, $field) : null;
+
+        if (! $field || ! is_scalar($value) || (string) $value === '') {
+            return null;
+        }
+
+        $title = str_starts_with($event->event_code, 'vehicle.logbook.')
+            ? 'Logbook diperbarui'
+            : ($event->event_code === 'receipt.status.created' ? 'Status receipt diperbarui' : 'Impor diproses');
+
+        return ['field' => $field, 'value' => $value, 'title' => $title, 'body' => $event->description];
+    }
+
+    private function dispatchGrouped(AuditEvent $event, AuditNotificationRule $rule, Collection $users, array $group): void
+    {
+        $lockKey = 'audit-notification-group:'.hash('sha256', implode('|', [
+            $event->event_code,
+            $group['field'],
+            (string) $group['value'],
+            $group['field'] === 'notification_batch_id' ? (string) $event->actor_user_id : '',
+        ]));
+
+        Cache::lock($lockKey, 60)->block(20, function () use ($event, $rule, $users, $group): void {
+            $this->dispatchGroupedWithLock($event, $rule, $users, $group);
+        });
+    }
+
+    private function dispatchGroupedWithLock(AuditEvent $event, AuditNotificationRule $rule, Collection $users, array $group): void
+    {
+        $field = $group['field'];
+        $value = $group['value'];
+        $windowStart = $field === 'notification_batch_id' ? null : now()->subMinutes(5);
+        $groupEvents = fn () => AuditEvent::query()
+            ->where('event_code', $event->event_code)
+            ->where("metadata->{$field}", $value)
+            ->when($field === 'notification_batch_id', fn ($query) => $query->where('actor_user_id', $event->actor_user_id));
+
+        $body = $group['body'];
+        if ($field === 'vehicle_cost_header_id') {
+            $header = DB::table('vehicle_cost_headers')
+                ->join('vehicles', 'vehicles.id', '=', 'vehicle_cost_headers.vehicle_id')
+                ->where('vehicle_cost_headers.id', $value)
+                ->select('vehicles.plate_number', 'vehicle_cost_headers.month', 'vehicle_cost_headers.year')
+                ->first();
+            $subject = $header
+                ? sprintf('%s · %02d/%s', $header->plate_number, $header->month, $header->year)
+                : 'kendaraan';
+            $count = $groupEvents()->where('created_at', '>=', $windowStart)->count();
+            $body = sprintf('%d perubahan baris logbook untuk %s.', $count, $subject);
+        } elseif ($field === 'receipt_id') {
+            $count = $groupEvents()->where('created_at', '>=', $windowStart)->count();
+            $body = sprintf('%d perubahan status pada Receipt #%s.', $count, $value);
+        } elseif ($field === 'notification_batch_id') {
+            $count = $groupEvents()->count();
+            $body = sprintf('%s (%d bagian).', $event->description, $count);
+        }
+
+        foreach ($users as $user) {
+            $notification = null;
+            if ($rule->notify_in_app) {
+                $notification = AuditNotification::query()
+                    ->where('user_id', $user->id)
+                    ->where('title', $group['title'])
+                    ->when($windowStart, fn ($query) => $query->where('created_at', '>=', $windowStart))
+                    ->whereHas('event', fn ($query) => $query
+                        ->where('event_code', $event->event_code)
+                        ->where("metadata->{$field}", $value)
+                        ->when($field === 'notification_batch_id', fn ($query) => $query->where('actor_user_id', $event->actor_user_id)))
+                    ->latest('created_at')
+                    ->first();
+
+                if ($notification) {
+                    $notification->update(['audit_event_id' => $event->id, 'body' => $body]);
+                } else {
+                    $notification = AuditNotification::create([
+                        'user_id' => $user->id,
+                        'audit_event_id' => $event->id,
+                        'title' => $group['title'],
+                        'body' => $body,
+                        'link' => '/notifications',
+                    ]);
+                }
+            }
+
+            if (! $rule->notify_push || ! config('services.fcm.enabled')) {
+                continue;
+            }
+
+            $devices = UserDevice::query()->where('user_id', $user->id)->where('is_active', true)->get();
+            foreach ($devices as $device) {
+                $alreadySent = NotificationLog::query()
+                    ->where('user_device_id', $device->id)
+                    ->where('channel', 'fcm')
+                    ->when($windowStart, fn ($query) => $query->where('created_at', '>=', $windowStart))
+                    ->whereHas('auditEvent', fn ($query) => $query
+                        ->where('event_code', $event->event_code)
+                        ->where("metadata->{$field}", $value)
+                        ->when($field === 'notification_batch_id', fn ($query) => $query->where('actor_user_id', $event->actor_user_id)))
+                    ->exists();
+
+                if (! $alreadySent) {
+                    $this->fcmService->sendToDevice($device, $event, $notification, $group['title'], $body);
+                }
             }
         }
     }

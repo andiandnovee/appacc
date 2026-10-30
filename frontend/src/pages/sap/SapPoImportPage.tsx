@@ -75,6 +75,7 @@ export default function SapPoImportPage() {
     abortRef.current = false;
 
     try {
+      const notificationBatchId = crypto.randomUUID();
       // Parse Excel
       const rows = await parseExcel(file);
 
@@ -114,6 +115,7 @@ export default function SapPoImportPage() {
         const { data } = await api.post("/sap/import-po-chunk", {
           rows: chunks[i],
           batch_id: batchId,
+          notification_batch_id: notificationBatchId,
         });
 
         totalImported += data.imported ?? 0;

@@ -1,5 +1,12 @@
 # Peta Perubahan Aktif
 
+## 2026-10-30 — Pengelompokan notifikasi event berfrekuensi tinggi
+
+- **Ringkasan:** event chunk impor PO/F53/PPh/ICAT digabung per sesi impor; perubahan status digabung per receipt; tambah/edit/hapus baris logbook digabung per header kendaraan dalam jendela lima menit. Audit event detail tetap tersimpan.
+- **Modul/file:** dispatcher audit, controller impor dan receipt, serta consumer impor web SAP/receipt.
+- **Dampak API/database/dependency:** request chunk menerima field opsional `notification_batch_id` UUID; schema dan dependency tidak berubah. Client lama tetap kompatibel, tetapi perlu mengirim ID sesi untuk mendapatkan pengelompokan impor.
+- **Status/verifikasi:** build frontend berhasil (Vite memberi peringatan chunk besar); ESLint target selesai tanpa error dan satu warning unused parameter pada `SapPoImportPage.tsx`; pemeriksaan sintaks PHP lulus untuk semua file backend yang diubah dan Pint lulus untuk dispatcher. Pemeriksaan Pint gabungan lima controller menandai style issues; tidak dilakukan autoformat pada controller tersebut.
+
 ## 2026-10-30 — Perapihan input penerima dan notifikasi logbook
 
 - **Ringkasan:** input penerima rule Audit Activity mempertahankan teks yang sedang diketik (termasuk koma); notifikasi logbook dikelompokkan per header kendaraan/periode selama lima menit agar baris berulang tidak membuat inbox dan push penuh.

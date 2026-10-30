@@ -74,6 +74,7 @@ class SapImportController extends Controller
         $request->validate([
             'rows'     => 'required|array|min:1',
             'batch_id' => 'required|string|max:50',
+            'notification_batch_id' => 'nullable|uuid',
         ]);
 
         $result = $this->importService->importPoData(
@@ -84,7 +85,10 @@ class SapImportController extends Controller
             'business_domain' => 'imports',
             'action' => 'import',
             'description' => 'Impor PO SAP selesai.',
-            'metadata' => ['row_count' => count($request->input('rows'))],
+            'metadata' => [
+                'row_count' => count($request->input('rows')),
+                'notification_batch_id' => $request->input('notification_batch_id'),
+            ],
         ], $request);
 
         return response()->json($result);

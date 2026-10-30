@@ -93,6 +93,7 @@ const [stageYear, setStageYear] = useState<string>(
     abortRef.current = false;
 
     try {
+      const notificationBatchId = crypto.randomUUID();
       const rows = await parseExcel(file);
 
       const chunks: any[][] = [];
@@ -112,6 +113,7 @@ const [stageYear, setStageYear] = useState<string>(
         const { data } = await api.post("/sap/f53-import", {
           rows: chunks[i],
           stage_sap_id: parseInt(stageSapId),
+          notification_batch_id: notificationBatchId,
         });
 
         totalImported += data.imported ?? 0;

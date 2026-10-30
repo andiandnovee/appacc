@@ -43,6 +43,7 @@ export default function SapPoImportForm({ rows, fileName, onSuccess, onReset }: 
     abortRef.current = false;
 
     try {
+      const notificationBatchId = crypto.randomUUID();
       const batchId = new Date().toISOString().slice(0, 7); // YYYY-MM
 
       const chunks: any[][] = [];
@@ -64,6 +65,7 @@ export default function SapPoImportForm({ rows, fileName, onSuccess, onReset }: 
         const { data } = await api.post("/sap/import-po-chunk", {
           rows: chunks[i],
           batch_id: batchId,
+          notification_batch_id: notificationBatchId,
         });
 
         totalImported   += data.imported ?? 0;
