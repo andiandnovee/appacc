@@ -1,1 +1,0 @@
-import{j as s}from"./index-DNErpbB_.js";function r(){return s.jsxs("div",{children:[s.jsx("h1",{className:"text-3xl font-bold mb-6",children:"Users"}),s.jsx("div",{className:"bg-white dark:bg-gray-600 p-6 rounded-lg shadow",children:"Users list will appear here"})]})}export{r as default};
