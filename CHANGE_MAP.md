@@ -178,6 +178,7 @@ Arah signifikan sebelumnya adalah pematangan logbook/biaya kendaraan, kesinambun
 - **Flow master:** data transaksi divalidasi dan disimpan ke Zustand sebelum lookup empat referensi BA/company terpilih. GL dan Cost Center baru dicari saat dropdown disentuh, dengan pencarian server dan cache opsi lokal.
 - **Tahap II export:** setelah semua GL/Cost Center terisi dan tanggal dipilih, browser membentuk XLSX atau TXT ZF0002; tiap biaya menjadi baris debit dan totalnya satu baris kredit ke vendor BA pengirim. Tanggal input tidak memiliki nilai awal dan dikosongkan setelah export berhasil.
 - **Format export:** header text `CTT DN {Sender BA} {nama bulan periode} {Fiscal Year}`; Reference debit memakai `{Sender CC}-{Sender Doc}` tiap baris, sedangkan Reference kredit memakai gabungan untuk Sender Doc baris pertama sebagai dokumen acuan agregat.
+- **Header bulan:** export XLSX dan TXT memakai singkatan bulan tiga huruf pada text header, misalnya `JAN`, `AGS`, dan `SEP`.
 - **Dampak API/database/dependency:** tidak ada endpoint atau schema baru dan tidak ada data upload yang dikirim/disimpan backend. Memakai endpoint master yang sudah ada; akses GL memerlukan permission `view gl accounts`. Tidak ada dependency baru.
 - **Status:** tahap 1 preview/pemilihan akun dan tahap II export ZF0002 XLSX/TXT tersedia.
 

@@ -6,9 +6,9 @@ import type { DebetNotaRow } from "../../../stores/debetNotaDraft";
 type ZfCell = string | number | null;
 type ZfRow = ZfCell[];
 
-const MONTH_NAMES = [
-  "JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI",
-  "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER",
+const MONTH_ABBREVIATIONS = [
+  "JAN", "FEB", "MAR", "APR", "MEI", "JUN",
+  "JUL", "AGS", "SEP", "OKT", "NOV", "DES",
 ];
 
 function formatDateSAP(value: string): string {
@@ -18,8 +18,8 @@ function formatDateSAP(value: string): string {
 
 function buildHeaderText(row: DebetNotaRow): string {
   const periodNumber = Number.parseInt(row.period, 10);
-  const monthName = MONTH_NAMES[periodNumber - 1] ?? row.period;
-  return `CTT DN ${row.senderBusinessArea} ${monthName} ${row.fiscalYear}`;
+  const monthAbbreviation = MONTH_ABBREVIATIONS[periodNumber - 1] ?? row.period;
+  return `CTT DN ${row.senderBusinessArea} ${monthAbbreviation} ${row.fiscalYear}`;
 }
 
 function buildReference(row: DebetNotaRow): string {
