@@ -36,6 +36,7 @@
 .predictionPanel { display: grid; gap: 12px; padding: 16px 18px; border-bottom: 1px solid var(--border-default); background: var(--bg-surface-2); }
 .predictionPanel h2 { margin: 0; font-size: .92rem; }
 .predictionPanel p { margin: 4px 0 0; color: var(--text-secondary); font-size: .75rem; }
+.ruleFileActions { display: flex; flex-wrap: wrap; gap: 8px; }
 .predictionForm { display: grid; grid-template-columns: minmax(150px, 1fr) minmax(130px, .8fr) minmax(150px, 1fr) auto; align-items: end; gap: 10px; }
 .ruleField { display: grid; gap: 6px; color: var(--text-secondary); font-size: .75rem; }
 .ruleField select { min-height: 38px; padding: 0 10px; border: 1px solid var(--border-default); border-radius: var(--radius-md); background: var(--bg-input, var(--bg-surface)); color: var(--text-primary); font: inherit; }

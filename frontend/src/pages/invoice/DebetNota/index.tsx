@@ -1,6 +1,6 @@
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { AlertCircle, CheckCircle2, Download, FileSpreadsheet, LoaderCircle, Plus, RotateCcw, Search, Trash2, Upload } from "lucide-react";
+import { AlertCircle, CheckCircle2, Download, FileSpreadsheet, LoaderCircle, Plus, RotateCcw, Search, Trash2, Upload, Save } from "lucide-react";
 import * as XLSX from "xlsx";
 import api from "../../../api/axios";
 import Button from "../../../components/ui/Button";
@@ -307,6 +307,7 @@ export default function DebetNotaPage() {
   const [ruleKeyword, setRuleKeyword] = useState("");
   const [ruleKind, setRuleKind] = useState<DebetNotaPredictionRule["kind"]>("gl");
   const [ruleValue, setRuleValue] = useState("");
+  const rulesInputRef = useRef<HTMLInputElement>(null);
 
   const applyPredictions = useCallback(async (sourceRows: DebetNotaRow[]) => {
     const rules = useDebetNotaDraft.getState().predictionRules;
@@ -482,6 +483,49 @@ export default function DebetNotaPage() {
     if (rows.length) void applyPredictions(rows);
   };
 
+  const savePredictionRules = () => {
+    const payload = {
+      format: "debet-nota-prediction-rules",
+      version: 1,
+      rules: predictionRules.map(({ keyword, kind, value }) => ({ keyword, kind, value })),
+    };
+    const blob = new Blob([`${JSON.stringify(payload, null, 2)}\n`], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "aturan-prediksi-debet-nota.txt";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importPredictionRules = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    try {
+      const parsed: unknown = JSON.parse(await file.text());
+      if (!parsed || typeof parsed !== "object" || !("format" in parsed) || parsed.format !== "debet-nota-prediction-rules"
+        || !("version" in parsed) || parsed.version !== 1 || !("rules" in parsed) || !Array.isArray(parsed.rules)) {
+        throw new Error("Format file aturan prediksi tidak dikenali.");
+      }
+      const importedRules: DebetNotaPredictionRule[] = parsed.rules.map((rule: unknown, index: number) => {
+        if (!rule || typeof rule !== "object") throw new Error(`Aturan ke-${index + 1} tidak valid.`);
+        const item = rule as Record<string, unknown>;
+        const keyword = typeof item.keyword === "string" ? item.keyword.trim() : "";
+        const value = typeof item.value === "string" ? item.value.trim() : "";
+        if (!keyword || !value || (item.kind !== "gl" && item.kind !== "cost-center")) {
+          throw new Error(`Aturan ke-${index + 1} harus memiliki kata kunci, jenis GL/Cost Center, dan nilai.`);
+        }
+        return { id: `${Date.now()}-${index}-${Math.random().toString(36).slice(2)}`, keyword, kind: item.kind, value };
+      });
+      setPredictionRules(importedRules);
+      setError("");
+      if (rows.length) await applyPredictions(rows);
+    } catch (importError: any) {
+      setError(importError?.message || "File aturan prediksi gagal dibaca.");
+    }
+  };
+
   const total = rows.reduce((sum, row) => sum + row.amount, 0);
   const receiver = rows[0];
   const centerPrefix = receiver?.receiverBusinessArea ?? "";
@@ -575,6 +619,11 @@ export default function DebetNotaPage() {
           <section className={styles.tableCard}>
             <div className={styles.predictionPanel}>
               <div><h2>Aturan prediksi</h2><p>Kata pada Description akan mengisi akun yang cocok secara otomatis.</p></div>
+              <input ref={rulesInputRef} className={styles.hiddenInput} type="file" accept=".txt,text/plain" onChange={(event) => void importPredictionRules(event)} />
+              <div className={styles.ruleFileActions}>
+                <Button type="button" variant="outline" onClick={savePredictionRules} disabled={!predictionRules.length}><Save size={15} /> Save As TXT</Button>
+                <Button type="button" variant="outline" onClick={() => rulesInputRef.current?.click()}><Upload size={15} /> Import TXT</Button>
+              </div>
               <div className={styles.predictionForm}>
                 <Input label="Jika Description mengandung" value={ruleKeyword} onChange={(event) => setRuleKeyword(event.target.value)} placeholder="Contoh: saku" />
                 <label className={styles.ruleField}>Prediksi sebagai<select value={ruleKind} onChange={(event) => setRuleKind(event.target.value as DebetNotaPredictionRule["kind"])}><option value="gl">GL Account</option><option value="cost-center">Cost Center</option></select></label>
