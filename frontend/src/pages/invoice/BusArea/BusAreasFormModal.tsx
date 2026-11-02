@@ -114,19 +114,10 @@ const BusAreaFormModal: FC<BusAreaFormModalProps> = ({
         sap_vendor_code: form.sap_vendor_code || null,
       };
 
-      // ← TAMBAH INI
-      console.log("=== DEBUG SAVE ===");
-      console.log("isEdit:", isEdit);
-      console.log("busArea prop:", busArea);
-      console.log("payload:", payload);
-      // ← SAMPAI SINI
-
       if (isEdit && busArea) {
-        const res = await api.put(`/busa/${busArea.id}`, payload);
-        console.log("PUT response:", res.data); // ← dan ini
+        await api.put(`/busa/${busArea.id}`, payload);
       } else {
-        const res = await api.post("/busa", payload);
-        console.log("POST response:", res.data); // ← dan ini
+        await api.post("/busa", payload);
       }
 
       onSaved();
@@ -182,7 +173,8 @@ const BusAreaFormModal: FC<BusAreaFormModalProps> = ({
 
           <Input
             label="SAP ID"
-            type="number"
+            type="text"
+            inputMode="numeric"
             value={form.sap_id}
             onChange={handleInputChange("sap_id")}
             error={errors.sap_id}
