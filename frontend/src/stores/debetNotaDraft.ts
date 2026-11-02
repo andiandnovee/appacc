@@ -28,13 +28,22 @@ export interface DebetNotaGlHistoryItem {
   label: string;
 }
 
+export interface DebetNotaPredictionRule {
+  id: string;
+  keyword: string;
+  kind: "gl" | "cost-center";
+  value: string;
+}
+
 interface DebetNotaDraftState {
   fileName: string;
   rows: DebetNotaRow[];
   glHistory: DebetNotaGlHistoryItem[];
+  predictionRules: DebetNotaPredictionRule[];
   setUpload: (fileName: string, rows: DebetNotaRow[]) => void;
   resolveReferences: (senderVendorCode: string, receiverCompanyCode: string, receiverCompanyName: string) => void;
   rememberGlAccount: (account: DebetNotaGlHistoryItem) => void;
+  setPredictionRules: (rules: DebetNotaPredictionRule[]) => void;
   updateRow: (id: string, patch: Partial<Pick<DebetNotaRow, "glAccountId" | "glAccountCode" | "glAccountLabel" | "costCenterCode" | "costCenterLabel">>) => void;
   clear: () => void;
 }
@@ -45,6 +54,7 @@ export const useDebetNotaDraft = create<DebetNotaDraftState>()(
       fileName: "",
       rows: [],
       glHistory: [],
+      predictionRules: [],
       setUpload: (fileName, rows) => set({ fileName, rows }),
       resolveReferences: (senderVendorCode, receiverCompanyCode, receiverCompanyName) =>
         set((state) => ({ rows: state.rows.map((row) => ({
@@ -56,6 +66,7 @@ export const useDebetNotaDraft = create<DebetNotaDraftState>()(
       rememberGlAccount: (account) => set((state) => ({
         glHistory: [account, ...state.glHistory.filter((item) => item.id !== account.id)].slice(0, 20),
       })),
+      setPredictionRules: (predictionRules) => set({ predictionRules }),
       updateRow: (id, patch) =>
         set((state) => ({
           rows: state.rows.map((row) => row.id === id ? { ...row, ...patch } : row),

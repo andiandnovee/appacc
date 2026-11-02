@@ -31,6 +31,17 @@
 .exportActions { display: flex; flex-wrap: wrap; gap: 8px; }
 .exportHint { flex-basis: 100%; color: var(--text-secondary); font-size: .74rem; }
 .asyncSelect { position: relative; min-width: 205px; }
+.selectionConfirmation { display: block; margin: 5px 2px 0; color: #15803d; font-size: .7rem; line-height: 1.35; }
+.predictionPanel { display: grid; gap: 12px; padding: 16px 18px; border-bottom: 1px solid var(--border-default); background: var(--bg-surface-2); }
+.predictionPanel h2 { margin: 0; font-size: .92rem; }
+.predictionPanel p { margin: 4px 0 0; color: var(--text-secondary); font-size: .75rem; }
+.predictionForm { display: grid; grid-template-columns: minmax(150px, 1fr) minmax(130px, .8fr) minmax(150px, 1fr) auto; align-items: end; gap: 10px; }
+.ruleField { display: grid; gap: 6px; color: var(--text-secondary); font-size: .75rem; }
+.ruleField select { min-height: 38px; padding: 0 10px; border: 1px solid var(--border-default); border-radius: var(--radius-md); background: var(--bg-input, var(--bg-surface)); color: var(--text-primary); font: inherit; }
+.predictionRules { display: flex; flex-wrap: wrap; gap: 7px; margin: 0; padding: 0; list-style: none; }
+.predictionRules li { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border: 1px solid var(--border-default); border-radius: var(--radius-md); color: var(--text-secondary); font-size: .72rem; }
+.predictionRules strong { color: var(--text-primary); }
+.predictionRules button { display: inline-flex; padding: 2px; border: 0; background: transparent; color: var(--text-secondary); cursor: pointer; }
 .asyncInputWrap { display: flex; align-items: center; gap: 7px; min-height: 34px; padding: 0 9px; border: 1px solid var(--border-default); border-radius: var(--radius-md); background: var(--bg-input, var(--bg-surface)); color: var(--text-secondary); }
 .asyncInputWrap:focus-within { border-color: var(--color-primary, #2563eb); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary, #2563eb) 12%, transparent); }
 .asyncInputWrap input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text-primary); font: inherit; font-size: .78rem; }
@@ -58,4 +69,5 @@
   .page { padding: var(--space-4); gap: var(--space-4); }
   .header, .uploadCard, .tableHeading { align-items: flex-start; flex-direction: column; }
   .receiverCard { grid-template-columns: 1fr; gap: 14px; }
+  .predictionForm { grid-template-columns: 1fr; }
 }

@@ -1,11 +1,11 @@
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { AlertCircle, CheckCircle2, Download, FileSpreadsheet, LoaderCircle, RotateCcw, Search, Upload } from "lucide-react";
+import { AlertCircle, CheckCircle2, Download, FileSpreadsheet, LoaderCircle, Plus, RotateCcw, Search, Trash2, Upload } from "lucide-react";
 import * as XLSX from "xlsx";
 import api from "../../../api/axios";
 import Button from "../../../components/ui/Button";
 import Input from "../../../components/ui/Input";
-import { useDebetNotaDraft, type DebetNotaGlHistoryItem, type DebetNotaRow } from "../../../stores/debetNotaDraft";
+import { useDebetNotaDraft, type DebetNotaGlHistoryItem, type DebetNotaPredictionRule, type DebetNotaRow } from "../../../stores/debetNotaDraft";
 import { exportDebetNotaExcel, exportDebetNotaText } from "./exportDebetNotaZf0002";
 import styles from "./DebetNota.module.css";
 
@@ -67,11 +67,12 @@ interface AsyncMasterSelectProps {
   kind: "gl" | "cost-center";
   receiverBusinessArea: string;
   selectedLabel: string;
+  confirmationLabel: string;
   glHistory: DebetNotaGlHistoryItem[];
   onSelect: (option: SearchOption) => void;
 }
 
-function AsyncMasterSelect({ kind, receiverBusinessArea, selectedLabel, glHistory, onSelect }: AsyncMasterSelectProps) {
+function AsyncMasterSelect({ kind, receiverBusinessArea, selectedLabel, confirmationLabel, glHistory, onSelect }: AsyncMasterSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [options, setOptions] = useState<SearchOption[]>([]);
@@ -248,6 +249,7 @@ function AsyncMasterSelect({ kind, receiverBusinessArea, selectedLabel, glHistor
         />
         {loading && <LoaderCircle size={14} className={styles.spinner} />}
       </div>
+      {confirmationLabel && <small className={styles.selectionConfirmation}>Terpilih: {confirmationLabel}</small>}
       {open && dropdownPosition && createPortal(
         <div
           ref={listRef}
@@ -291,12 +293,51 @@ function AsyncMasterSelect({ kind, receiverBusinessArea, selectedLabel, glHistor
 
 export default function DebetNotaPage() {
   const inputRef = useRef<HTMLInputElement>(null);
-  const { fileName, rows, glHistory, setUpload, resolveReferences, rememberGlAccount, updateRow, clear } = useDebetNotaDraft();
+  const { fileName, rows, glHistory, predictionRules, setPredictionRules, setUpload, resolveReferences, rememberGlAccount, updateRow, clear } = useDebetNotaDraft();
   const [masterLoading, setMasterLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportDate, setExportDate] = useState("");
   const [error, setError] = useState("");
+  const [ruleKeyword, setRuleKeyword] = useState("");
+  const [ruleKind, setRuleKind] = useState<DebetNotaPredictionRule["kind"]>("gl");
+  const [ruleValue, setRuleValue] = useState("");
+
+  const applyPredictions = useCallback(async (sourceRows: DebetNotaRow[]) => {
+    const rules = useDebetNotaDraft.getState().predictionRules;
+    if (!rules.length) return;
+    const matches = sourceRows.map((row) => ({ row,
+      glRule: rules.find((rule) => rule.kind === "gl" && row.description.toLocaleLowerCase().includes(rule.keyword.toLocaleLowerCase())),
+      centerRule: rules.find((rule) => rule.kind === "cost-center" && row.description.toLocaleLowerCase().includes(rule.keyword.toLocaleLowerCase())),
+    }));
+    const glCodes = [...new Set(matches.flatMap(({ glRule }) => glRule ? [glRule.value] : []))];
+    const centerQueries = [...new Set(matches.flatMap(({ centerRule }) => centerRule ? [centerRule.value] : []))];
+    const [glResults, centerResults] = await Promise.all([
+      Promise.all(glCodes.map(async (code) => {
+        const response = await api.get<PageResponse<GLAccount>>("/gl-accounts", { params: { search: code, per_page: 100 } });
+        const account = unwrap<GLAccount>(response.data).find((item) => item.gl_acc === code && item.gl_acc.startsWith("7"));
+        return account ? [code, { id: account.id, code, label: `${code} — ${account.gl_text || account.desc || "Tanpa nama"}` }] as const : null;
+      })),
+      Promise.all(centerQueries.map(async (query) => {
+        const sample = matches.find(({ centerRule }) => centerRule?.value === query)?.row;
+        const prefix = `${sample?.receiverBusinessArea ?? ""}3`;
+        const response = await api.get<PageResponse<CostCenter>>("/cost-centers", { params: { search: query, per_page: 100 } });
+        const center = unwrap<CostCenter>(response.data).find((item) => item.sap_id?.startsWith(prefix)
+          && `${item.sap_id} ${item.short_name || ""} ${item.description || ""}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()));
+        return center?.sap_id ? [query, { code: center.sap_id, label: `${center.sap_id} — ${center.short_name || center.description || ""}` }] as const : null;
+      })),
+    ]);
+    const glByCode = new Map(glResults.filter((item): item is NonNullable<typeof item> => Boolean(item)));
+    const centerByQuery = new Map(centerResults.filter((item): item is NonNullable<typeof item> => Boolean(item)));
+    matches.forEach(({ row, glRule, centerRule }) => {
+      const patch: Partial<DebetNotaRow> = {};
+      const gl = glRule && glByCode.get(glRule.value);
+      const center = centerRule && centerByQuery.get(centerRule.value);
+      if (gl) Object.assign(patch, { glAccountId: gl.id, glAccountCode: gl.code, glAccountLabel: gl.label });
+      if (center) Object.assign(patch, { costCenterCode: center.code, costCenterLabel: center.label });
+      if (Object.keys(patch).length) updateRow(row.id, patch);
+    });
+  }, [updateRow]);
 
   const resolveUploadedReferences = useCallback(async (
     senderBusinessAreaCode: string,
@@ -413,12 +454,26 @@ export default function DebetNotaPage() {
       });
       setUpload(file.name, parsed);
       await resolveUploadedReferences(senderCode, receiverCode, senderCompanyCode);
+      await applyPredictions(parsed);
     } catch (parseError: any) {
       setError(parseError?.message || "File XLSX gagal dibaca.");
     } finally {
       setUploading(false);
     }
   }, [resolveUploadedReferences, setUpload]);
+
+  const addPredictionRule = () => {
+    const keyword = ruleKeyword.trim();
+    const value = ruleValue.trim();
+    if (!keyword || !value) return;
+    const nextRules = [...predictionRules.filter((rule) => !(rule.keyword.toLocaleLowerCase() === keyword.toLocaleLowerCase() && rule.kind === ruleKind)), {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`, keyword, kind: ruleKind, value,
+    }];
+    setPredictionRules(nextRules);
+    setRuleKeyword("");
+    setRuleValue("");
+    if (rows.length) void applyPredictions(rows);
+  };
 
   const total = rows.reduce((sum, row) => sum + row.amount, 0);
   const receiver = rows[0];
@@ -509,6 +564,16 @@ export default function DebetNotaPage() {
           </section>
 
           <section className={styles.tableCard}>
+            <div className={styles.predictionPanel}>
+              <div><h2>Aturan prediksi</h2><p>Kata pada Description akan mengisi akun yang cocok secara otomatis.</p></div>
+              <div className={styles.predictionForm}>
+                <Input label="Jika Description mengandung" value={ruleKeyword} onChange={(event) => setRuleKeyword(event.target.value)} placeholder="Contoh: saku" />
+                <label className={styles.ruleField}>Prediksi sebagai<select value={ruleKind} onChange={(event) => setRuleKind(event.target.value as DebetNotaPredictionRule["kind"])}><option value="gl">GL Account</option><option value="cost-center">Cost Center</option></select></label>
+                <Input label={ruleKind === "gl" ? "Kode GL" : "Kata pencarian Cost Center"} value={ruleValue} onChange={(event) => setRuleValue(event.target.value)} placeholder={ruleKind === "gl" ? "70921001" : "IAD"} />
+                <Button type="button" onClick={addPredictionRule}><Plus size={15} /> Tambah aturan</Button>
+              </div>
+              {predictionRules.length > 0 && <ul className={styles.predictionRules}>{predictionRules.map((rule) => <li key={rule.id}><span><strong>{rule.keyword}</strong> → {rule.kind === "gl" ? `GL ${rule.value}` : `Cost Center cari “${rule.value}”`}</span><button type="button" aria-label={`Hapus aturan ${rule.keyword}`} onClick={() => setPredictionRules(predictionRules.filter((item) => item.id !== rule.id))}><Trash2 size={14} /></button></li>)}</ul>}
+            </div>
             <div className={styles.tableHeading}>
               <div><h2>Rincian biaya</h2><p>{rows.length} baris dari {fileName}</p></div>
               <span className={styles.totalPill}>Total <strong>{money.format(total)}</strong></span>
@@ -548,6 +613,7 @@ export default function DebetNotaPage() {
                         kind="gl"
                         receiverBusinessArea={centerPrefix}
                         selectedLabel={row.glAccountLabel || ""}
+                        confirmationLabel={row.glAccountCode ? `GL ${row.glAccountCode} — ${row.glAccountLabel.split(" — ").slice(1).join(" — ")}` : ""}
                         glHistory={glHistory}
                         onSelect={(option) => {
                           rememberGlAccount({ id: option.id, code: option.code, label: option.label });
@@ -564,6 +630,7 @@ export default function DebetNotaPage() {
                         kind="cost-center"
                         receiverBusinessArea={centerPrefix}
                         selectedLabel={row.costCenterLabel || ""}
+                        confirmationLabel={row.costCenterCode ? `Cost Center ${row.costCenterCode} — ${row.costCenterLabel.split(" — ").slice(1).join(" — ")}` : ""}
                         onSelect={(option) => updateRow(row.id, {
                           costCenterCode: option.code,
                           costCenterLabel: option.label,

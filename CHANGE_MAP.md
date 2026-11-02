@@ -162,6 +162,13 @@ Arah signifikan sebelumnya adalah pematangan logbook/biaya kendaraan, kesinambun
 
 # Perubahan Signifikan Terakhir
 
+## 2026-11-02 — Prediksi akun Debet Nota berbasis kata
+
+- **Ringkasan:** aturan kata kunci untuk GL dan Cost Center disimpan pada Zustand persist; aturan mencocokkan Description lalu mengisi akun/center yang ditemukan di master. Aturan baru juga diterapkan ke draft aktif.
+- **Modul/file:** `frontend/src/stores/debetNotaDraft.ts` dan `frontend/src/pages/invoice/DebetNota/`.
+- **Dampak API/database/dependency:** tidak ada perubahan API, database, atau dependency; pencarian memakai endpoint master yang sudah tersedia dan aturan tersimpan lokal pada browser.
+- **Status:** aktif; GL tetap divalidasi prefix `7` dan Cost Center tetap mengikuti prefix receiver BA ditambah `3`. UI menampilkan konfirmasi pilihan di bawah setiap dropdown.
+
 ## 2026-10-30 — Draft lokal generator jurnal biaya Debet Nota
 
 - **Ringkasan:** menambahkan satu halaman upload XLS/XLSX dan preview jurnal Debet Nota. File diparsing di browser; baris dan pilihan GL/Cost Center disimpan dalam Zustand persist local storage.
