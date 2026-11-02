@@ -62,6 +62,8 @@
 .tableScroll th span { font-weight: 400; color: #15803d; }
 .tableScroll td { padding: 11px 14px; border-top: 1px solid var(--border-default); vertical-align: middle; }
 .descriptionCell { min-width: 280px; max-width: 440px; font-size: .81rem; line-height: 1.45; }
+.descriptionInput { display: block; width: 100%; min-width: 260px; min-height: 54px; padding: 8px 9px; border: 1px solid var(--border-default); border-radius: var(--radius-md); background: var(--bg-input, var(--bg-surface)); color: var(--text-primary); font: inherit; line-height: 1.45; resize: vertical; }
+.descriptionInput:focus { outline: 0; border-color: var(--color-primary, #2563eb); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary, #2563eb) 12%, transparent); }
 .amountHead, .amountCell { text-align: right !important; white-space: nowrap; }
 .amountCell { font-variant-numeric: tabular-nums; font-size: .83rem; font-weight: 600; }
 .tableScroll tfoot td { background: var(--bg-surface-2); color: var(--text-primary); border-top: 2px solid var(--border-strong); font-weight: 700; }

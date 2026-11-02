@@ -44,7 +44,7 @@ interface DebetNotaDraftState {
   resolveReferences: (senderVendorCode: string, receiverCompanyCode: string, receiverCompanyName: string) => void;
   rememberGlAccount: (account: DebetNotaGlHistoryItem) => void;
   setPredictionRules: (rules: DebetNotaPredictionRule[]) => void;
-  updateRow: (id: string, patch: Partial<Pick<DebetNotaRow, "glAccountId" | "glAccountCode" | "glAccountLabel" | "costCenterCode" | "costCenterLabel">>) => void;
+  updateRow: (id: string, patch: Partial<Pick<DebetNotaRow, "description" | "glAccountId" | "glAccountCode" | "glAccountLabel" | "costCenterCode" | "costCenterLabel">>) => void;
   clear: () => void;
 }
 

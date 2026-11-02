@@ -629,7 +629,15 @@ export default function DebetNotaPage() {
                 <thead><tr><th>Description</th><th>GL Acc <span>· prefix 7 biaya</span></th><th>CostCenter <span>· {centerPrefix}3…</span></th><th className={styles.amountHead}>Jumlah</th></tr></thead>
                 <tbody>{rows.map((row) => (
                   <tr key={row.id}>
-                    <td className={styles.descriptionCell}>{row.description}</td>
+                    <td className={styles.descriptionCell}>
+                      <textarea
+                        className={styles.descriptionInput}
+                        aria-label={`Ubah Description baris ${index + 1}`}
+                        value={row.description}
+                        rows={2}
+                        onChange={(event) => updateRow(row.id, { description: event.target.value })}
+                      />
+                    </td>
                     <td>
                       <AsyncMasterSelect
                         kind="gl"
