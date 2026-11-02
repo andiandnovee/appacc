@@ -46,14 +46,14 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 .tableScroll { overflow-x: auto; }
 .tableScroll table { width: 100%; min-width: 940px; border-collapse: collapse; }
-.tableScroll th { padding: 12px 14px; background: var(--bg-subtle, #f8fafc); color: var(--text-secondary); font-size: .73rem; text-align: left; white-space: nowrap; font-weight: 650; }
+.tableScroll th { padding: 12px 14px; background: var(--bg-surface-2); color: var(--text-primary); border-bottom: 1px solid var(--border-strong); font-size: .73rem; text-align: left; white-space: nowrap; font-weight: 700; }
 .tableScroll th span { font-weight: 400; color: #15803d; }
 .tableScroll td { padding: 11px 14px; border-top: 1px solid var(--border-default); vertical-align: middle; }
 .descriptionCell { min-width: 280px; max-width: 440px; font-size: .81rem; line-height: 1.45; }
 .amountHead, .amountCell { text-align: right !important; white-space: nowrap; }
 .amountCell { font-variant-numeric: tabular-nums; font-size: .83rem; font-weight: 600; }
-.tableScroll tfoot td { background: var(--bg-subtle, #f8fafc); font-weight: 700; }
-.tableScroll tfoot td:first-child { text-align: right; color: var(--text-secondary); }
+.tableScroll tfoot td { background: var(--bg-surface-2); color: var(--text-primary); border-top: 2px solid var(--border-strong); font-weight: 700; }
+.tableScroll tfoot td:first-child { text-align: right; color: var(--text-primary); }
 @media (max-width: 760px) {
   .page { padding: var(--space-4); gap: var(--space-4); }
   .header, .uploadCard, .tableHeading { align-items: flex-start; flex-direction: column; }
