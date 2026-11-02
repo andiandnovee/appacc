@@ -14,7 +14,7 @@ import { useFilterStore } from '../../../stores/filterReceipt';
 
 interface BusA {
   id: number;
-  sap_id: number;
+  sap_id: number | string;
   company_id: string;
   name: string;
   name_long: string;
@@ -116,7 +116,7 @@ export default function BusAreas() {
         sortable: true,
         render: (row: BusA) => (
           <div className={styles.busAreaCell}>
-            <span className={styles.code}>{row.sap_id || "—"}</span>
+            <span className={styles.code}>{String(row.sap_id ?? "") || "—"}</span>
             {row.current_bus_area && (
               <Badge variant="success" size="sm">
                 <Star size={9} /> Current
