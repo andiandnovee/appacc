@@ -121,9 +121,7 @@ function groupRows(rows: F53Row[], checked: CheckedMap) {
 
   for (const row of selected) {
     const perdin = isSakuMkn(row.po_text);
-    const key = perdin
-      ? `perdin__${row.reference ?? row.vendor_sap_id}`
-      : row.vendor_sap_id || row.vendor_name;
+    const key = row.vendor_sap_id || row.vendor_name;
 
     if (!map.has(key)) {
       map.set(key, {
@@ -137,6 +135,10 @@ function groupRows(rows: F53Row[], checked: CheckedMap) {
       });
     }
     const g = map.get(key)!;
+    if (perdin && !g.isPerdin) {
+      g.isPerdin = true;
+      g.xblnr = row.reference ?? row.vendor_name;
+    }
     g.rows.push(row);
     g.totalAmount += Number(row.amount);
     if (row.doc_date > g.docDate) g.docDate = row.doc_date;
