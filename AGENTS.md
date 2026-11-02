@@ -77,10 +77,11 @@ Ikuti alur dari UI/client ke route, middleware, request/controller/service/model
 Setelah setiap task/request yang menghasilkan perubahan repository selesai:
 
 1. Jalankan build yang sesuai dengan area yang diubah dan pastikan berhasil. Jika build tidak relevan (misalnya perubahan dokumentasi saja), tidak tersedia, atau gagal karena masalah lingkungan/kode yang sudah ada, catat alasannya dan hasilnya.
-2. Tinjau `git diff` dan status worktree; stage hanya file yang terkait dengan task ini, tanpa memasukkan perubahan pengguna atau file sensitif.
-3. Buat commit untuk perubahan task ini setelah verifikasi selesai.
-4. Push commit tersebut ke remote dan branch saat ini.
-5. Laporkan hasil build, commit, dan push. Jika commit atau push tidak dapat dilakukan (misalnya tidak ada perubahan untuk di-commit, tidak ada remote/akses, atau push ditolak), jelaskan kondisi yang menghalangi dan jangan mengklaimnya berhasil.
+2. Untuk setiap perubahan source frontend, build frontend wajib dijalankan dan seluruh hasil build terbaru di `frontend/dist/` wajib disertakan dalam perubahan/commit. Deployment VPS dilakukan melalui `git pull`, sehingga source tanpa artefak build terbaru tidak cukup.
+3. Tinjau `git diff` dan status worktree; stage hanya file yang terkait dengan task ini, tanpa memasukkan perubahan pengguna atau file sensitif.
+4. Buat commit untuk perubahan task ini setelah verifikasi selesai.
+5. Push commit tersebut ke remote dan branch saat ini.
+6. Laporkan hasil build, commit, dan push. Jika commit atau push tidak dapat dilakukan (misalnya tidak ada perubahan untuk di-commit, tidak ada remote/akses, atau push ditolak), jelaskan kondisi yang menghalangi dan jangan mengklaimnya berhasil.
 
 Instruksi ini tidak mengizinkan force-push, mengubah branch, atau menimpa pekerjaan pengguna. Gunakan push biasa ke branch saat ini; bila ada konflik atau penolakan remote, hentikan push dan laporkan.
 
