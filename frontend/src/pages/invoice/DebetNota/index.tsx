@@ -37,7 +37,7 @@ function unwrap<T>(payload: any): T[] {
 }
 
 function text(value: unknown): string {
-  return value == null ? "" : String(value).trim();
+  return value == null ? "" : String(value).trim().toLocaleUpperCase();
 }
 
 function amountValue(value: unknown): number {
