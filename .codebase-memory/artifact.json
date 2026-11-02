@@ -1,11 +1,11 @@
 {
     "schema_version": 2,
-    "commit": "e5b3a61e842e2d977b896d9a6ccb2eef22c3a1f2",
-    "indexed_at": "2026-09-24T01:54:46Z",
-    "project": "appacc",
-    "nodes": 2044,
-    "edges": 4459,
-    "original_size": 4980736,
-    "compressed_size": 1148671,
-    "compression_level": 9
+    "commit": "0a8fb15a9628621f52c654cc0c94c62138771e4e",
+    "indexed_at": "2026-11-02T06:40:42Z",
+    "project": "var-www-html-appacc",
+    "nodes": 2513,
+    "edges": 5905,
+    "original_size": 8323072,
+    "compressed_size": 1662347,
+    "compression_level": 3
 }
