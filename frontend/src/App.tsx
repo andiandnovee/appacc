@@ -29,6 +29,7 @@ const VehicleManagement = lazy(() => import("./pages/invoice/VehicleManagementPa
 const CostCenterManagement = lazy(() => import("./pages/invoice/CostCenterManagementPage"));
 const GLAccountManagement = lazy(() => import("./pages/invoice/GLAccountManagementPage"));
 const CustomerManagement = lazy(() => import("./pages/invoice/CustomerManagementPage"));
+const CompanyManagement = lazy(() => import("./pages/invoice/CompanyManagementPage"));
 const StnkJournal = lazy(() => import("./pages/invoice/StnkJournal"));
 const DebetNota = lazy(() => import("./pages/invoice/DebetNota"));
 
@@ -81,6 +82,7 @@ const App: FC = (): ReactElement => {
                   element={<CostCenterManagement />}
                 />
                 <Route path="/ref/customers" element={<CustomerManagement />} />
+                <Route path="/ref/companies" element={<CompanyManagement />} />
                 <Route path="/ref/gl-accounts" element={<GLAccountManagement />} />
 
                 {/* ── Kendaraan ── */}

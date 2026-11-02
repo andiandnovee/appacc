@@ -14,6 +14,7 @@ class CompanyResource extends JsonResource
             'name'       => $this->name,
             'npwp'       => $this->npwp,
             'address'    => $this->address,
+            'accbank'    => $this->accbank,
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
         ];
     }

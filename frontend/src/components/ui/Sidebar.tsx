@@ -60,6 +60,7 @@ const NAV_GROUPS = [
       { to: "/ref/cost-centers", icon: DollarSign, label: "Cost Centers" },
       { to: "/ref/gl-accounts", icon: Calculator, label: "GL Accounts", permission: "view gl accounts" },
       { to: "/ref/customers", icon: Users, label: "Customers" },
+      { to: "/ref/companies", icon: Users, label: "Companies" },
     ],
   },
   // {

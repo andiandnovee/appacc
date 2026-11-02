@@ -162,6 +162,13 @@ Arah signifikan sebelumnya adalah pematangan logbook/biaya kendaraan, kesinambun
 
 # Perubahan Signifikan Terakhir
 
+## 2026-11-02 — Interface CRUD Companies
+
+- **Ringkasan:** menambahkan halaman web untuk pencarian, pengurutan, pagination, ekspor, tambah, edit, dan hapus Company, beserta validasi backend untuk operasi tulis. SAP ID dan nama wajib; NPWP, alamat, dan rekening bank opsional.
+- **Modul/file:** `frontend/src/pages/invoice/CompanyManagementPage/*`, router aktif `frontend/src/App.tsx`, sidebar, `CompanyController`, `CompanyResource`, dan route API.
+- **Dampak API/database:** menambahkan `POST`, `PUT`, dan `DELETE /api/companies`; field mengikuti tabel/model yang ada. Delete ditolak jika masih ada Business Area atau Invoice Receipt terkait. Tidak ada migration atau dependency baru.
+- **Status/verifikasi:** implementasi selesai; build frontend dan pemeriksaan backend dicatat setelah verifikasi.
+
 ## 2026-11-02 — Prediksi akun Debet Nota berbasis kata
 
 - **Ringkasan:** aturan kata kunci untuk GL dan Cost Center disimpan pada Zustand persist; aturan mencocokkan Description lalu mengisi akun/center yang ditemukan di master. Aturan baru juga diterapkan ke draft aktif.

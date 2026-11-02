@@ -7,6 +7,7 @@ use App\Http\Resources\CompanyResource;
 use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\Rule;
 
 class CompanyController extends Controller
 {
@@ -26,6 +27,47 @@ class CompanyController extends Controller
     public function show(Company $company)
     {
         return new CompanyResource($company);
+    }
+
+    public function store(Request $request): CompanyResource
+    {
+        $data = $request->validate([
+            'sap_id' => ['required', 'integer', 'unique:companies,sap_id'],
+            'name' => ['required', 'string', 'max:100'],
+            'npwp' => ['nullable', 'string', 'max:50'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'accbank' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        return new CompanyResource(Company::create($data));
+    }
+
+    public function update(Request $request, Company $company): CompanyResource
+    {
+        $data = $request->validate([
+            'sap_id' => ['required', 'integer', Rule::unique('companies', 'sap_id')->ignore($company->id)],
+            'name' => ['required', 'string', 'max:100'],
+            'npwp' => ['nullable', 'string', 'max:50'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'accbank' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $company->update($data);
+
+        return new CompanyResource($company->refresh());
+    }
+
+    public function destroy(Company $company): JsonResponse
+    {
+        if ($company->businessAreas()->exists() || $company->invoiceReceipts()->exists()) {
+            return response()->json([
+                'message' => 'Company tidak dapat dihapus karena masih digunakan oleh Business Area atau Invoice Receipt.',
+            ], 422);
+        }
+
+        $company->delete();
+
+        return response()->json(['message' => 'Company berhasil dihapus.']);
     }
 
 
