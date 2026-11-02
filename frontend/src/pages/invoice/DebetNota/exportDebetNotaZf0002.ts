@@ -16,9 +16,9 @@ function formatDateSAP(value: string): string {
   return `${day}.${month}.${year}`;
 }
 
-function buildHeaderText(row: DebetNotaRow): string {
-  const periodNumber = Number.parseInt(row.period, 10);
-  const monthAbbreviation = MONTH_ABBREVIATIONS[periodNumber - 1] ?? row.period;
+function buildHeaderText(row: DebetNotaRow, period: string): string {
+  const periodNumber = Number.parseInt(period, 10);
+  const monthAbbreviation = MONTH_ABBREVIATIONS[periodNumber - 1] ?? period;
   return `CTT DN ${row.senderBusinessArea} ${monthAbbreviation} ${row.fiscalYear}`;
 }
 
@@ -76,10 +76,10 @@ function makeRow(fields: {
   ];
 }
 
-export function buildDebetNotaZf0002Rows(rows: DebetNotaRow[], date: string): ZfRow[] {
+export function buildDebetNotaZf0002Rows(rows: DebetNotaRow[], date: string, period: string): ZfRow[] {
   const first = rows[0];
   if (!first) throw new Error("Tidak ada baris Debet Nota untuk diekspor.");
-  const headerText = buildHeaderText(first);
+  const headerText = buildHeaderText(first, period);
   const assignment = `CTT DN ${first.senderBusinessArea}`;
   const postingDate = date;
   const documentDate = date;
@@ -88,7 +88,7 @@ export function buildDebetNotaZf0002Rows(rows: DebetNotaRow[], date: string): Zf
     dc: "D",
     companyCode: row.receiverCompanyCode,
     postingDate,
-    period: row.period,
+    period,
     documentDate,
     glAccount: row.glAccountCode,
     vendorAccount: null,
@@ -106,7 +106,7 @@ export function buildDebetNotaZf0002Rows(rows: DebetNotaRow[], date: string): Zf
     dc: "C",
     companyCode: first.receiverCompanyCode,
     postingDate,
-    period: first.period,
+    period,
     documentDate,
     glAccount: null,
     vendorAccount: first.senderVendorCode,
@@ -128,8 +128,8 @@ function buildFileBaseName(rows: DebetNotaRow[]): string {
   return `upload_ZF0002_DEBET_NOTA_${first?.receiverCompanyCode || "COMPANY"}_${first?.period || "PERIOD"}_${first?.fiscalYear || "YEAR"}`;
 }
 
-export async function exportDebetNotaExcel(rows: DebetNotaRow[], date: string): Promise<void> {
-  const zfRows = buildDebetNotaZf0002Rows(rows, date);
+export async function exportDebetNotaExcel(rows: DebetNotaRow[], date: string, period: string): Promise<void> {
+  const zfRows = buildDebetNotaZf0002Rows(rows, date, period);
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet("Sheet1");
   worksheet.addRow(ZF0002_HEADERS);
@@ -145,8 +145,8 @@ export async function exportDebetNotaExcel(rows: DebetNotaRow[], date: string): 
   );
 }
 
-export function exportDebetNotaText(rows: DebetNotaRow[], date: string): void {
-  const lines = buildDebetNotaZf0002Rows(rows, date).map((row) =>
+export function exportDebetNotaText(rows: DebetNotaRow[], date: string, period: string): void {
+  const lines = buildDebetNotaZf0002Rows(rows, date, period).map((row) =>
     row.map((cell) => cell == null ? "" : String(cell)).join("\t"),
   );
   saveAs(

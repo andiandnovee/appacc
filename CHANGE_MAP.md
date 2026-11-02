@@ -169,6 +169,13 @@ Arah signifikan sebelumnya adalah pematangan logbook/biaya kendaraan, kesinambun
 - **Dampak API/database/dependency:** tidak ada perubahan API, database, atau dependency; pencarian memakai endpoint master yang sudah tersedia dan aturan tersimpan lokal pada browser.
 - **Status:** aktif; GL tetap divalidasi prefix `7` dan Cost Center tetap mengikuti prefix receiver BA ditambah `3`. UI menampilkan konfirmasi pilihan di bawah setiap dropdown.
 
+## 2026-11-02 — Periode export Debet Nota dapat diedit
+
+- **Ringkasan:** nilai Period dari upload ditampilkan sebagai default pada textbox di sebelah tanggal export; pengguna dapat mengubahnya. Nilai textbox dipakai untuk kolom Period dan bulan pada header CTT di export XLSX/TXT.
+- **Modul/file:** halaman Debet Nota, helper export ZF0002, dan artefak `frontend/dist`.
+- **Dampak API/database/dependency:** tidak ada perubahan API, schema, atau dependency.
+- **Status:** aktif; periode export dibatasi ke angka 1–12.
+
 ## 2026-10-30 — Draft lokal generator jurnal biaya Debet Nota
 
 - **Ringkasan:** menambahkan satu halaman upload XLS/XLSX dan preview jurnal Debet Nota. File diparsing di browser; baris dan pilihan GL/Cost Center disimpan dalam Zustand persist local storage.
