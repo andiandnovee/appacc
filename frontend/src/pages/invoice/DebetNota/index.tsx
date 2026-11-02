@@ -627,7 +627,7 @@ export default function DebetNotaPage() {
             <div className={styles.tableScroll}>
               <table>
                 <thead><tr><th>Description</th><th>GL Acc <span>· prefix 7 biaya</span></th><th>CostCenter <span>· {centerPrefix}3…</span></th><th className={styles.amountHead}>Jumlah</th></tr></thead>
-                <tbody>{rows.map((row) => (
+                <tbody>{rows.map((row, index) => (
                   <tr key={row.id}>
                     <td className={styles.descriptionCell}>
                       <textarea
