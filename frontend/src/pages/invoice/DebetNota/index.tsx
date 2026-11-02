@@ -37,7 +37,11 @@ function unwrap<T>(payload: any): T[] {
 }
 
 function text(value: unknown): string {
-  return value == null ? "" : String(value).trim().toLocaleUpperCase();
+  return value == null ? "" : String(value).trim();
+}
+
+function importedText(value: unknown): string {
+  return text(value).toLocaleUpperCase();
 }
 
 function amountValue(value: unknown): number {
@@ -405,9 +409,9 @@ export default function DebetNotaPage() {
       if (!records.length) throw new Error("Tidak ada baris transaksi dengan Sender CC pada sheet pertama.");
 
       const read = (record: unknown[], header: string) => record[column.get(header) ?? -1];
-      const senderAreaValues = records.map((record) => text(read(record, "Sender BA")));
-      const receiverAreaValues = records.map((record) => text(read(record, "Receiver BA")));
-      const senderCompanyValues = records.map((record) => text(read(record, "Sender CC")));
+      const senderAreaValues = records.map((record) => importedText(read(record, "Sender BA")));
+      const receiverAreaValues = records.map((record) => importedText(read(record, "Receiver BA")));
+      const senderCompanyValues = records.map((record) => importedText(read(record, "Sender CC")));
       if ([...senderAreaValues, ...receiverAreaValues, ...senderCompanyValues].some((value) => !value)) {
         throw new Error("Sender CC, Sender BA, dan Receiver BA wajib terisi pada setiap baris.");
       }
@@ -424,10 +428,10 @@ export default function DebetNotaPage() {
 
       const parsed: DebetNotaRow[] = records.map((record, index): DebetNotaRow => {
         const amount = amountValue(read(record, "Amount in Local"));
-        const description = text(read(record, "Description"));
-        const senderDocument = text(read(record, "Sender Doc"));
-        const period = text(read(record, "Period"));
-        const fiscalYear = text(read(record, "Fiscal Year"));
+        const description = importedText(read(record, "Description"));
+        const senderDocument = importedText(read(record, "Sender Doc"));
+        const period = importedText(read(record, "Period"));
+        const fiscalYear = importedText(read(record, "Fiscal Year"));
         if (!Number.isFinite(amount) || amount <= 0) throw new Error(`Amount in Local pada baris Excel ${index + 2} harus angka positif.`);
         if (!description) throw new Error(`Description pada baris Excel ${index + 2} wajib diisi.`);
         if (!senderDocument || !period || !fiscalYear || !postingDateValue(read(record, "Posting Date"))) {
