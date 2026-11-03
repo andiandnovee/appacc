@@ -49,6 +49,7 @@ class RolePermissionSeeder extends Seeder
         $adminRole = Role::updateOrCreate(['name' => 'admin', 'guard_name' => 'api']);
         $editorRole = Role::updateOrCreate(['name' => 'editor', 'guard_name' => 'api']);
         $viewerRole = Role::updateOrCreate(['name' => 'viewer', 'guard_name' => 'api']);
+        $accountingRole = Role::updateOrCreate(['name' => 'accounting', 'guard_name' => 'api']);
 
         // Assign permissions to super-admin (all permissions)
         $superAdminRole->syncPermissions($permissions);
@@ -69,5 +70,8 @@ class RolePermissionSeeder extends Seeder
         // Assign permissions to viewer
         $viewerPermissions = ['view dashboard'];
         $viewerRole->syncPermissions($viewerPermissions);
+
+        // Accounting pages for GL master and Debet Nota require this permission.
+        $accountingRole->givePermissionTo('view gl accounts');
     }
 }

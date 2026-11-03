@@ -4,6 +4,7 @@ import { AuthProvider } from "./hooks/useAuth";
 import { ToastProvider } from "./components/ui/Toast";
 import ProtectedRoute from "./components/ui/ProtectedRoute";
 import PageLoading from "./components/ui/PageLoading";
+import { useAuth } from "./hooks/useAuth";
 
 import DashboardLayout from "./layouts/Dashboardlayout";
 
@@ -32,6 +33,15 @@ const CustomerManagement = lazy(() => import("./pages/invoice/CustomerManagement
 const CompanyManagement = lazy(() => import("./pages/invoice/CompanyManagementPage"));
 const StnkJournal = lazy(() => import("./pages/invoice/StnkJournal"));
 const DebetNota = lazy(() => import("./pages/invoice/DebetNota"));
+
+const SuperAdminOnlyAuditActivity: FC = () => {
+  const { user } = useAuth();
+  const isSuperAdmin = user?.roles?.some(
+    (role: string) => role.toLowerCase() === "super-admin",
+  );
+
+  return isSuperAdmin ? <AuditActivity /> : <Navigate to="/" replace />;
+};
 
 const App: FC = (): ReactElement => {
   useEffect(() => {
@@ -63,7 +73,7 @@ const App: FC = (): ReactElement => {
                 <Route path="/admin/users" element={<UserManagement />} />
                 <Route
                   path="/admin/audit-activity"
-                  element={<AuditActivity />}
+                  element={<SuperAdminOnlyAuditActivity />}
                 />
                 <Route path="/ref/vendors" element={<VendorManagement />} />
                 <Route path="/ref/busa" element={<BusinessArea />} />

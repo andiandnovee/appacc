@@ -162,6 +162,13 @@ Arah signifikan sebelumnya adalah pematangan logbook/biaya kendaraan, kesinambun
 
 # Perubahan Signifikan Terakhir
 
+## 2026-11-03 — Akses accounting untuk GL dan Debet Nota
+
+- **Ringkasan:** `RolePermissionSeeder` kini memastikan role `accounting` tersedia dan memiliki permission baca `view gl accounts`, yang dipakai menu GL Accounts dan Jurnal Debet Nota serta endpoint baca GL. Route Audit Activity web dibatasi ke super-admin; API audit sudah berada di middleware `role:super-admin`.
+- **Modul/file:** `backend/database/seeders/RolePermissionSeeder.php`, `frontend/src/App.tsx`, serta artefak `frontend/dist`.
+- **Dampak API/database:** tidak ada perubahan kontrak atau schema. Seeder menambah role accounting bila belum ada dan menambahkan permission baca; role accounting tetap memperoleh akses domain sesuai group route/policy yang sudah ada. Audit Activity tetap hanya untuk super-admin.
+- **Status:** implementasi selesai; perubahan permission pada database aktif memerlukan menjalankan seeder `RolePermissionSeeder`.
+
 ## 2026-11-02 — Interface CRUD Companies
 
 - **Ringkasan:** menambahkan halaman web untuk pencarian, pengurutan, pagination, ekspor, tambah, edit, dan hapus Company, beserta validasi backend untuk operasi tulis. SAP ID dan nama wajib; NPWP, alamat, dan rekening bank opsional.
